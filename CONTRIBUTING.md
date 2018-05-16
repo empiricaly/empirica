@@ -27,8 +27,6 @@ All members of our community are expected to follow our
 [Code of Conduct](code_of_conduct). Please make sure you are welcoming and
 friendly in all of our spaces.
 
-This includes not just how to communicate with others (being respectful, considerate, etc) but also technical responsibilities (importance of testing, project dependencies, etc). Mention and link to your code of conduct, if you have one.
-
 ## Responsibilities
 
 * Your code was formatted by [Prettier](https://prettier.io/). All code MUST be formatted using Prettier.
