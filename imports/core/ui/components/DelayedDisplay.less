@@ -1,0 +1,12 @@
+.delayed {
+  opacity: 0;
+  transform: translateZ(0); // Jitter...
+  transition: opacity 1ms linear;
+  height: inherit;
+  width: inherit;
+
+  &.visible {
+    opacity: 1;
+    transition: opacity 500ms ease-out;
+  }
+}

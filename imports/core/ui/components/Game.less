@@ -1,0 +1,24 @@
+.game {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .round {
+    flex-grow: 1;
+  }
+}
+
+.finished {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  align-items: center;
+  justify-content: center;
+}
+
+.game.finished,
+.game.waiting {
+  height: @page-height;
+  padding: 0;
+}

@@ -1,0 +1,99 @@
+.admin {
+  height: 100%;
+  width: 100%;
+
+  h2 {
+    color: @admin-header-text-color;
+
+    .pt-icon-standard,
+    .pt-icon-large {
+      color: @admin-header-icon-color;
+      margin-right: 0.6rem;
+      position: relative;
+      top: -0.1em;
+    }
+  }
+
+  main {
+    overflow: auto;
+    padding: 7rem 1.5rem;
+  }
+
+  // .batches {
+  //   .pt-table {
+  //     width: 100%;
+  //   }
+  //   .add-treatment {
+  //     background-color: #eee;
+  //     border-radius: 1rem;
+  //     padding: 2rem;
+  //     width: min-content;
+  //     white-space: nowrap;
+
+  //     select {
+  //       margin-right: 1rem;
+  //     }
+  //   }
+
+  //   table {
+  //     td {
+  //       text-transform: capitalize;
+  //     }
+  //   }
+  // }
+
+  .games,
+  .players {
+    height: calc(~"100vh - 14rem");
+  }
+
+  .inner-table tbody tr td {
+    box-shadow: none !important;
+  }
+}
+
+.add-treatment-popover {
+  padding: 1rem;
+}
+
+.new-batch {
+  .pt-input-group .pt-input {
+    width: 5rem;
+  }
+}
+
+.conditions {
+  .conditions-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40rem, 1fr));
+    grid-gap: 3rem;
+
+    // .condition {
+    //   width: 40rem;
+    // }
+  }
+}
+
+.condition {
+  .pt-button {
+    float: right;
+  }
+}
+
+.required {
+  label:not(.pt-radio)::after {
+    content: "*";
+    position: relative;
+    left: 0.2em;
+    color: red;
+  }
+}
+
+.pt-select,
+.pt-select select {
+  max-width: 100%;
+}
+
+table.pt-table td.numeric {
+  text-align: right;
+}

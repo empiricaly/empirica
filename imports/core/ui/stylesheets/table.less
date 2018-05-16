@@ -1,0 +1,46 @@
+table {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.12), 0 1px 2px 0 rgba(0, 0, 0, 0.24);
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 2em;
+  background-color: #fff;
+  border: 0;
+  border-collapse: collapse;
+  font-family: "RobotoDraft", "Roboto", "Helvetica Neue, Helvetica, Arial",
+    sans-serif;
+  color: #212121;
+}
+table th,
+table td {
+  text-align: left;
+  padding: 1.6em;
+  vertical-align: top;
+  border: inherit;
+}
+table thead tr {
+  border-bottom: 1px solid #e1e1e1;
+}
+table thead th {
+  font-weight: 400;
+  color: #3f3f3f;
+  vertical-align: bottom;
+}
+table caption + thead tr:first-child,
+table colgroup + thead tr:first-child,
+table thead:first-child tr:first-child {
+  border-top: 0;
+}
+table caption + thead tbody + table caption + thead tbody,
+table colgroup + thead tbody + table colgroup + thead tbody,
+table thead:first-child tbody + table thead:first-child tbody {
+  border-top: 1px solid #dedede;
+}
+table caption {
+  opacity: 0.5;
+  font-size: 0.8em;
+  text-transform: uppercase;
+  font-style: italic;
+  text-align: left;
+  line-height: 2;
+  margin: 1em 0;
+}

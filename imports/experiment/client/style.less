@@ -1,0 +1,174 @@
+.consent {
+  button {
+    width: 16rem;
+  }
+}
+
+.exit-survey {
+  .form-line {
+    display: flex;
+
+    .pt-form-group {
+      margin-right: 30px;
+
+      textarea {
+        min-height: 90px;
+      }
+    }
+
+    &.thirds {
+      .pt-form-group {
+        flex-grow: 0;
+        flex-shrink: 0;
+        flex-basis: 30%;
+
+        .pt-label {
+          min-height: 36px;
+        }
+      }
+    }
+  }
+}
+
+.player-profile {
+  display: flex;
+  flex-direction: column;
+  // width: 24rem;
+  // background-color: #f5f5f5;
+  min-height: 100%;
+  align-items: center;
+  padding: 4rem;
+
+  .profile-avatar {
+    width: 8rem;
+    height: 8rem;
+    margin: 3rem 0;
+  }
+
+  .profile-score {
+    text-align: center;
+    span {
+      font-size: 3rem;
+      font-weight: bold;
+    }
+  }
+}
+
+.round {
+  font-stretch: ultra-expanded;
+
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  .content {
+    flex-grow: 1;
+    height: 100%;
+    display: flex;
+    align-items: flex-start;
+  }
+}
+
+.social-exposure {
+  margin: 1rem;
+
+  .alter {
+    // TODO remove "css grid", no necessary here
+    display: grid;
+    grid-gap: 3rem;
+    grid-template-areas: "img range";
+    padding-right: 3rem;
+
+    img {
+      grid-area: img;
+      width: 6rem;
+      height: 6rem;
+    }
+    .range {
+      grid-area: range;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .empty {
+      .pt-slider-handle {
+        visibility: hidden;
+      }
+    }
+  }
+}
+
+.task {
+  align-content: right;
+  padding-left: 3rem;
+  overflow: auto;
+
+  .form {
+    margin: 0 auto;
+    padding: 100px 30px 0;
+
+    @media (min-width: 800px) {
+      max-width: 60%;
+    }
+  }
+
+  .input-range {
+    margin-bottom: 160px;
+  }
+
+  .task-image {
+    width: 60rem;
+  }
+}
+
+//importing the Orbitron font which makes it look like a digital clock
+@import url(https://fonts.googleapis.com/css?family=Orbitron);
+.timer {
+  margin-top: 2rem;
+  text-align: center;
+
+  .seconds {
+    font-size: 3rem;
+    font-family: Orbitron, sans-serif;
+    color: green;
+  }
+  &.lessThan10 {
+    .seconds {
+      color: orange;
+    }
+  }
+  &.lessThan5 {
+    .seconds {
+      color: red;
+    }
+  }
+}
+
+.task-stimulus {
+  .task-image {
+    height: 35rem;
+    width: 50rem;
+    object-fit: contain;
+  }
+  .transparent {
+    opacity: 0.5;
+  }
+}
+
+.task-response {
+  width: 50rem;
+  margin: 3rem 0 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
+  form {
+    width: 40rem;
+  }
+
+  .empty {
+    .pt-slider-handle {
+      visibility: hidden;
+    }
+  }
+}

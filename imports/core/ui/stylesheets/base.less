@@ -1,0 +1,64 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  font-size: 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+#app,
+.app,
+.pt-portal,
+.pt-overlay {
+  font-size: 1.4rem;
+}
+#app,
+.app {
+  height: 100%;
+  width: 100%;
+}
+
+.grid {
+  height: 100%;
+  width: 100%;
+
+  h1 {
+    margin: 2rem 0;
+  }
+}
+
+.pt-navbar.header {
+  position: fixed;
+  width: inherit;
+}
+
+main {
+  overflow: auto;
+  padding: 6rem 1.5rem;
+}
+
+footer {
+  background-color: @header-background-color;
+  color: @header-color;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.devnote {
+  font-style: italic;
+  font-weight: 100;
+  color: #888;
+  font-size: 1.2rem;
+  margin: 2rem 0;
+
+  strong {
+    color: #444;
+  }
+}

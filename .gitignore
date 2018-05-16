@@ -1,0 +1,10 @@
+node_modules/
+**/.idea
+.DS_Store
+dev.json
+local.json
+development.json
+staging.json
+production.json
+settings.json
+builder
