@@ -28,7 +28,7 @@ local webserver by running `meteor`. The app boot on http://localhost:3000/
 by default. You can access the admin at http://localhost:3000/admin, the login
 credentials can be found in `/import/core/startup/server/bootstrap.js`.
 
-## Settings
+## Advanced Settings (you can ignore)
 
 Don't be intimidated by the settings, they are not currently important to
 develop an experiement, you can easily ignore them for now.
