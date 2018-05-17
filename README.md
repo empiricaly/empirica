@@ -33,13 +33,10 @@ credentials can be found in `/import/core/startup/server/bootstrap.js`.
 Don't be intimidated by the settings, they are not currently important to
 develop an experiement, you can easily ignore them for now.
 
-If you decide to continue reading: 
-**IMPORTANT** **IMPORTANT** **IMPORTANT** **IMPORTANT**  
 Settings files MUST NOT be saved into the repo. They should not be transmitted
 over an insecure transport such as Email. Ideally, they are shared in person by
 USB key, otherwise, encrypt the files with something like
 [VeraCrypt](https://www.veracrypt.fr) before sharing over an insecure transport.  
-**IMPORTANT** **IMPORTANT** **IMPORTANT** **IMPORTANT**
 
 Settings are set on the app by passing the `--setting JSON_SETTINGS_FILE_NAME`
 flag to the `meteor` command. Learn about Meteor Settings in the
