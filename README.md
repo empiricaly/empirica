@@ -4,6 +4,14 @@ Open source project to tackle the problem of long development cycles required to
 produce software to conduct multi-participant and real-time human experiments
 online.
 
+## Features
+- Design complex tasks and set up interactions that happen over any period of time, from seconds to months, or among any number of people, from a single player to groups of any size.
+- Implement simple A/B tests with independent players in this framework. But it's just as easy to implement group experiments with real-time or asynchronous interactions in a factorial or within-subjects design, or designs involving multiple types of units and conditional logic.
+- Add configurable artificial players and allowing for the study of Human + AI social systems. This hybrid system could be the future of our society!
+- Create your own experimental games with only little prior programming knowledge as the framework is based on widely-used web technology standards: Javascript and React.js.
+- Watch the progress of experiments in real time with the ability to create one-way mirrors to observe the behavior of players in the virtual lab.
+
+
 ## Experiment development
 
 Empirica was built with the experiement developer in mind. The `core` of
