@@ -4,6 +4,11 @@ Open source project to tackle the problem of long development cycles required to
 produce software to conduct multi-participant and real-time human experiments
 online.
 
+## Why Empirica?
+Do you develop interactive experiments? If so, you’ve probably had the experience where you had an idea, then decided on the independent variables that you will manipulate, the task that the participants will perform, and the overall environment that they will operate in. Then you've probably sat down to code the experiment but got side-tracked by all the logistics: crossing your independent conditions to form treatments, repeating your conditions, randomization, storing intermediate data, managing participants, synchronization, timers, waiting rooms, setting up an infrastructure, etc. It’s frustrating to put all that effort in before even getting to what’s really unique about your experiment. This is a lot of work ... and this work is redundant. Worse, it encourages bad practices like copy-pasting boilerplate from someone else’s experiment code without understanding it or creating ad-hoc experiments that are not reusable.
+
+The purpose of Empirica is to address the problem of long development cycles required to produce software to conduct human online experiments by handling all the boring logistics and allowing you to get straight to what really interests you, whatever that may be. It was built with the experiment developer in mind. Your time should not be spent in implementing the software and reinventing the wheel every time you try to experiment with your ideas.
+
 ## Features
 - Design complex tasks and set up interactions that happen over any period of time, from seconds to months, or among any number of people, from a single player to groups of any size.
 - Implement simple A/B tests with independent players in this framework. But it's just as easy to implement group experiments with real-time or asynchronous interactions in a factorial or within-subjects design, or designs involving multiple types of units and conditional logic.
