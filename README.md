@@ -1,16 +1,13 @@
 # Empirica
 
-Open source project to tackle the problem of long development cycles required to
-produce software to conduct multi-participant and real-time human experiments
-online.
+Open source project to tackle the problem of long development cycles required to produce software to conduct multi-participant and real-time human experiments online. Here is [some sort of a tutorial](https://github.com/empiricaly/tutorial) (still work in progress!).
+
 
 ## We are in Beta
 This is a REAL beta - this means that you will be using a version of Empirica that is not yet ready for public release and still lacks proper documentation and examples. You should be prepared to find things which don't work perfectly, so please give us feedback on how to make them better. You can provide us with feedback by sending an email to hello@empirica.ly or by creating an issue on GitHub. The more feedback you give us, the better!
 
 
 ## Why Empirica?
-Do you develop interactive experiments? If so, you’ve probably had the experience where you had an idea, then decided on the independent variables that you will manipulate, the task that the participants will perform, and the overall environment that they will operate in. Then you've probably sat down to code the experiment but got side-tracked by all the logistics: crossing your independent conditions to form treatments, repeating your conditions, randomization, storing intermediate data, managing participants, synchronization, timers, waiting rooms, setting up an infrastructure, etc. It’s frustrating to put all that effort in before even getting to what’s really unique about your experiment. This is a lot of work ... and this work is redundant. Worse, it encourages bad practices like copy-pasting boilerplate from someone else’s experiment code without understanding it or creating ad-hoc experiments that are not reusable.
-
 The purpose of Empirica is to address the problem of long development cycles required to produce software to conduct human online experiments by handling all the boring logistics and allowing you to get straight to what really interests you, whatever that may be. It was built with the experiment developer in mind. Your time should not be spent in implementing the software and reinventing the wheel every time you try to experiment with your ideas.
 
 ## Features
@@ -35,7 +32,6 @@ To develop a new game, you will only be interested in a couple of folders:
 All other folders contain `core` Empirica code, which you should not need to
 change in the vast majority of cases.
 
-Some sort of a tutorial can be found here: https://github.com/empiricaly/tutorial (still work in progress!)
 
 ## Running locally
 
