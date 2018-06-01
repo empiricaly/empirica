@@ -7,7 +7,33 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
-Nothing.
+### Added
+
+* Indexes on all fields used in queries.
+
+### Changed
+
+* Exit Step components now require a unique static property named `stepName` to
+  be defined. This is used by Empirica Core to register steps as done. E.g.
+
+  ```jsx
+  export default class Thanks extends React.Component {
+    static stepName = "Thanks";
+    render() {
+      return (
+        <div className="thanks">
+          <h3>Thanks!</h3>
+        </div>
+      );
+    }
+  }
+  ```
+
+### Fixed
+
+* Reset DB settings were not honored in a "production" deployment.
+* Exit Steps now work in production build. See new Exit Step requirements in
+  Changed section above.
 
 <!-- Add unreleased changes here -->
 

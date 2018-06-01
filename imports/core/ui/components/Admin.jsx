@@ -19,12 +19,16 @@ export default class Admin extends React.Component {
     this.redirectLoggedOut(nextProps);
   }
 
+  resetDatabaseIsActived() {
+    return Meteor.isDevelopment || Meteor.settings.public.debug_resetDatabase;
+  }
+
   handleLogout = () => {
     Meteor.logout();
   };
 
   handleClear = () => {
-    if (Meteor.isProduction && !Meteor.settings.public.debug_resetDatabase) {
+    if (!this.resetDatabaseIsActived()) {
       return;
     }
     Meteor.call("adminResetDB", true);
@@ -41,7 +45,7 @@ export default class Admin extends React.Component {
     if (!confirmed2) {
       return;
     }
-    if (Meteor.isProduction && !Meteor.settings.public.debug_resetDatabase) {
+    if (!this.resetDatabaseIsActived()) {
       return;
     }
     Meteor.call("adminResetDB");
@@ -127,8 +131,7 @@ export default class Admin extends React.Component {
             </button>
           </div>
 
-          {Meteor.isDevelopment ||
-          Meteor.settings.public.debug_resetDatabase ? (
+          {this.resetDatabaseIsActived() ? (
             <div className="pt-navbar-group pt-align-right">
               <Tooltip
                 content="This will remove batches/games/players and keep treatments/conditions"
