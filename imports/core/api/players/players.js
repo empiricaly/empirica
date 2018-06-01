@@ -19,7 +19,8 @@ Players.schema = new SimpleSchema({
   bot: {
     label: "Name of bot definition if player is a bot",
     type: String,
-    optional: true
+    optional: true,
+    index: 1
   },
 
   // Time at witch the player became ready (done with intro)

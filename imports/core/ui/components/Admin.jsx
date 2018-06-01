@@ -24,7 +24,7 @@ export default class Admin extends React.Component {
   };
 
   handleClear = () => {
-    if (Meteor.isProduction) {
+    if (Meteor.isProduction && !Meteor.settings.public.debug_resetDatabase) {
       return;
     }
     Meteor.call("adminResetDB", true);
@@ -41,7 +41,7 @@ export default class Admin extends React.Component {
     if (!confirmed2) {
       return;
     }
-    if (Meteor.isProduction) {
+    if (Meteor.isProduction && !Meteor.settings.public.debug_resetDatabase) {
       return;
     }
     Meteor.call("adminResetDB");

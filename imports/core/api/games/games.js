@@ -12,16 +12,19 @@ export const Games = new Mongo.Collection("games");
 
 Games.schema = new SimpleSchema({
   estFinishedTime: {
-    type: Date
+    type: Date,
+    index: 1
   },
   finishedAt: {
     type: Date,
-    optional: true
+    optional: true,
+    index: 1
   },
   currentStageId: {
     type: String,
     optional: true,
-    regEx: SimpleSchema.RegEx.Id
+    regEx: SimpleSchema.RegEx.Id,
+    index: 1
   }
 });
 

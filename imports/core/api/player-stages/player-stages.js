@@ -13,7 +13,8 @@ PlayerStages.schema = new SimpleSchema({
   submittedAt: {
     type: Date,
     denyInsert: true,
-    optional: true
+    optional: true,
+    index: 1
   }
 });
 

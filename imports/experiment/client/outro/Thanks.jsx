@@ -3,6 +3,7 @@ import React from "react";
 import Centered from "../../../core/ui/components/Centered.jsx";
 
 export default class Thanks extends React.Component {
+  static stepName = "Thanks";
   render() {
     return (
       <div className="game finished">

@@ -59,7 +59,8 @@ Batches.statusSchema = new SimpleSchema({
       // NOTE(np): cancelled might break a game if it's running at the moment, gotta be careful
       "cancelled" // Batch was cancelled and cannot be restarted
     ],
-    defaultValue: "init"
+    defaultValue: "init",
+    index: 1
   }
 });
 

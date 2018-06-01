@@ -1,8 +1,9 @@
 node_modules/
 **/.idea
 .DS_Store
-dev.json
 local.json
+test.json
+dev.json
 development.json
 staging.json
 production.json

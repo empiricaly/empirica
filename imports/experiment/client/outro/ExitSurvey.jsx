@@ -17,6 +17,7 @@ const Radio = ({ selected, name, value, label, onChange }) => (
 );
 
 export default class ExitSurvey extends React.Component {
+  static stepName = "ExitSurvey";
   state = { age: "", gender: "", strength: "", fair: "", feedback: "" };
 
   handleChange = event => {

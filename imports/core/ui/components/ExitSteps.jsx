@@ -1,9 +1,23 @@
 import React from "react";
 
-const errExitStepMissingName =
-  "At least one 'Exit Step' is missing a name or a displayName. All 'Exist Steps' Components must have a name or displayName or all hell will break loose. See https://reactjs.org/docs/higher-order-components.html#convention-wrap-the-display-name-for-easy-debugging to add a displayName.";
+const errExitStepMissingName = `
+At least one Exit Step is missing a stepName. All Exist Steps Components must
+have a stepName. E.g.:
+
+export default class Thanks extends React.Component {
+  static stepName = "Thanks";
+  render() {
+    return (
+      <div className="thanks">
+        <h3>Thanks!</h3>
+      </div>
+    );
+  }
+}
+
+`;
 const errExitStepDups = dups =>
-  `All 'Exit Steps' must be unique (have a unique name/displayName). Duplicated: ${dups}.`;
+  `All 'Exit Steps' must be unique (have a unique stepName). Duplicated: ${dups}.`;
 
 export default class ExitSteps extends React.Component {
   constructor(props) {
@@ -11,9 +25,7 @@ export default class ExitSteps extends React.Component {
     const { game, player, steps: unfilteredSteps } = props;
 
     // Checks steps have a name
-    stepNames = unfilteredSteps.map(s =>
-      (s.displayName || s.name || "").trim()
-    );
+    stepNames = unfilteredSteps.map(s => (s.stepName || "").trim());
     for (let index = 0; index < stepNames.length; index++) {
       const sname = stepNames[index];
       if (_.isEmpty(sname)) {
@@ -38,9 +50,7 @@ export default class ExitSteps extends React.Component {
     }
 
     const done = player.exitStepsDone || [];
-    const steps = unfilteredSteps.filter(
-      s => !done.includes(s.displayName || s.name)
-    );
+    const steps = unfilteredSteps.filter(s => !done.includes(s.stepName));
 
     this.state = { current: 0, steps };
   }
@@ -49,7 +59,7 @@ export default class ExitSteps extends React.Component {
     let { onSubmit } = this.props;
     let { steps, current } = this.state;
     const Step = steps[current];
-    onSubmit(Step.name || Step.displayName, data);
+    onSubmit(Step.stepName, data);
     current = current + 1;
     this.setState({ current });
   };

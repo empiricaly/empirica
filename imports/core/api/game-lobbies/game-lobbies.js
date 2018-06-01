@@ -62,7 +62,8 @@ GameLobbies.schema = new SimpleSchema({
   startedAt: {
     label: "Time when the corresponding game started",
     type: Date,
-    optional: true
+    optional: true,
+    index: 1
   },
 
   timeoutStartedAt: {
@@ -74,7 +75,8 @@ GameLobbies.schema = new SimpleSchema({
   timedOutAt: {
     label: "Time when the lobby timed out and was cancelled",
     type: Date,
-    optional: true
+    optional: true,
+    index: 1
   },
 
   // Queued players are players that have been associated with the lobby
