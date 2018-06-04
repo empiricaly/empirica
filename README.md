@@ -74,7 +74,7 @@ is the repository to be mirrored.
 2. Create a bare clone of the Empirica framework.
 
 ```
-git clone --barehttps://github.com/empiricaly/empirica.git
+git clone --bare https://github.com/empiricaly/empirica.git
 ```
 
 3. Mirror-push to your new experiment repository.
@@ -86,8 +86,9 @@ git push -mirror https://github.com/yourusername/yourexperimentname.git
 
 4. Remove the temporary Empirica repository you created in step 1.
 
-```cd .. rm -rf
-   empirica.git
+```
+cd .. rm -rf
+empirica.git
 ```
 
 5. Clone your new experiment repository.
