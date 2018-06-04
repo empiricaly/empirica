@@ -81,14 +81,14 @@ git clone --bare https://github.com/empiricaly/empirica.git
 
 ```
 cd empirica.git
-git push -mirror https://github.com/yourusername/yourexperimentname.git
+git push --mirror https://github.com/yourusername/yourexperimentname.git
 ```
 
 4. Remove the temporary Empirica repository you created in step 1.
 
 ```
-cd .. rm -rf
-empirica.git
+cd ..
+rm -rf empirica.git
 ```
 
 5. Clone your new experiment repository.
