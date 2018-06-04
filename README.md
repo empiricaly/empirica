@@ -73,8 +73,8 @@ is the repository to be mirrored.
 1. Open Terminal.
 2. Create a bare clone of the Empirica framework.
 
-```git clone --bare
-   https://github.com/empiricaly/empirica.git
+```
+git clone --barehttps://github.com/empiricaly/empirica.git
 ```
 
 3. Mirror-push to your new experiment repository.
