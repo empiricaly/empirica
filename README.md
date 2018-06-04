@@ -84,16 +84,23 @@ cd empirica.git
 git push -mirror https://github.com/yourusername/yourexperimentname.git
 ```
 
-4. Remove the temporary Empirica repository you created in step 1. `cd .. rm -rf
-   empirica.git`
+4. Remove the temporary Empirica repository you created in step 1.
 
-5. Clone your new experiment repository. `git clone
-   https://github.com/yourusername/yourexperimentname.git`
+```cd .. rm -rf
+   empirica.git
+```
+
+5. Clone your new experiment repository.
+
+```
+git clone https://github.com/yourusername/yourexperimentname.git
+```
 
 Now you are set. All you need to do is to change directory `cd
 yourexperimentname/` and start editing the files in `imports/experiment` to
-design your own experiment. You can make the repository private, if you wish, or
-public.
+design your own experiment. You can
+[make the repository private](https://help.github.com/articles/making-a-public-repository-private/),
+if you wish, or public.
 
 ### Getting updates from Empirica
 
