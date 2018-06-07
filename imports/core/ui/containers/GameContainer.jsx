@@ -26,11 +26,11 @@ const withTimer = withTracker(({ game, stage, player, ...rest }) => {
   // withTracker function every 1s.
   const now = moment(TimeSync.serverTime(null, 100));
 
-  const startTimeAt = stage && moment(stage.startTimeAt);
-  const started = stage && now.isSameOrAfter(startTimeAt);
+  const startTimeAt = stage && stage.startTimeAt && moment(stage.startTimeAt);
+  const started = startTimeAt && now.isSameOrAfter(startTimeAt);
   const endTimeAt =
-    stage && startTimeAt.add(stage.durationInSeconds, "seconds");
-  const ended = stage && now.isSameOrAfter(endTimeAt);
+    startTimeAt && startTimeAt.add(stage.durationInSeconds, "seconds");
+  const ended = endTimeAt && now.isSameOrAfter(endTimeAt);
   const timedOut = stage && !player.stage.submitted && ended;
   const roundOver = (stage && player.stage.submitted) || timedOut;
 

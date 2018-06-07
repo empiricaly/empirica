@@ -59,13 +59,6 @@ GameLobbies.schema = new SimpleSchema({
     label: "Ready Players Count"
   },
 
-  startedAt: {
-    label: "Time when the corresponding game started",
-    type: Date,
-    optional: true,
-    index: 1
-  },
-
   timeoutStartedAt: {
     label: "Time the first player arrived in the lobby",
     type: Date,

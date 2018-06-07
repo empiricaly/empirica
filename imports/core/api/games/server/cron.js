@@ -1,4 +1,3 @@
-import { SyncedCron } from "meteor/percolate:synced-cron";
 import moment from "moment";
 
 import { Games } from "../games.js";
@@ -12,14 +11,12 @@ import {
 } from "../../player-stages/augment.js";
 import { config } from "../../../../experiment/server";
 import { endOfStage } from "../../stages/finish.js";
+import Cron from "../../../startup/server/cron.js";
 
-SyncedCron.add({
-  name: "Check end of stage timer and make bots play",
-  schedule: function(parser) {
-    // Run about once a second
-    return parser.text("every 1 second");
-  },
-  job: function() {
+Cron.add({
+  name: "Trigger stage timeout or Run bots",
+  interval: 1000,
+  task: function(log) {
     const query = {
       status: "running",
       estFinishedTime: { $gte: new Date() }
@@ -52,7 +49,7 @@ SyncedCron.add({
         botPlayers.forEach(botPlayer => {
           const bot = config.bots[botPlayer.bot];
           if (!bot) {
-            console.error(
+            log.error(
               `Definition for bot "${
                 botPlayer.bot
               }" was not found in the server config!`

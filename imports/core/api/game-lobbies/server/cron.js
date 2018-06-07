@@ -1,12 +1,12 @@
-import { SyncedCron } from "meteor/percolate:synced-cron";
 import moment from "moment";
 
 import { GameLobbies } from "../game-lobbies.js";
 import { LobbyConfigs } from "../../lobby-configs/lobby-configs";
 import { Players } from "../../players/players.js";
 import { createGameFromLobby } from "../../games/create.js";
+import Cron from "../../../startup/server/cron.js";
 
-const checkLobbyTimeout = (lobby, lobbyConfig) => {
+const checkLobbyTimeout = (log, lobby, lobbyConfig) => {
   // Timeout hasn't started yet
   if (!lobby.timeoutStartedAt) {
     return;
@@ -47,13 +47,13 @@ const checkLobbyTimeout = (lobby, lobbyConfig) => {
     // }
 
     default:
-      console.error(
+      log.error(
         `unknown LobbyConfig.timeoutStrategy: ${lobbyConfig.timeoutStrategy}`
       );
   }
 };
 
-const checkIndividualTimeout = (lobby, lobbyConfig) => {
+const checkIndividualTimeout = (log, lobby, lobbyConfig) => {
   const now = moment();
   Players.find({ _id: { $in: lobby.playerIds } }).forEach(player => {
     const startTimeAt = moment(player.timeoutStartedAt);
@@ -79,14 +79,10 @@ const checkIndividualTimeout = (lobby, lobbyConfig) => {
   });
 };
 
-SyncedCron.add({
+Cron.add({
   name: "Check lobby timeouts",
-  schedule: function(parser) {
-    // Run about once a second
-    return parser.text("every 1 second");
-  },
-
-  job: function() {
+  interval: 1000,
+  task: function(log) {
     const query = {
       status: "running",
       gameId: { $exists: false },
@@ -98,13 +94,13 @@ SyncedCron.add({
 
       switch (lobbyConfig.timeoutType) {
         case "lobby":
-          checkLobbyTimeout(lobby, lobbyConfig);
+          checkLobbyTimeout(log, lobby, lobbyConfig);
           break;
         case "individual":
-          checkIndividualTimeout(lobby, lobbyConfig);
+          checkIndividualTimeout(log, lobby, lobbyConfig);
           break;
         default:
-          console.error(
+          log.error(
             `unknown LobbyConfig.timeoutType: ${lobbyConfig.timeoutType}`
           );
       }

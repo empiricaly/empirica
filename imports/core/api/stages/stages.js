@@ -19,7 +19,7 @@ Stages.helpers({
   }
 });
 
-Stages.stagePaddingDuration = moment.duration(0.15, "seconds");
+Stages.stagePaddingDuration = moment.duration(0.25, "seconds");
 
 Stages.schema = new SimpleSchema({
   // Index represents the 0 based position of the current stage in the ordered

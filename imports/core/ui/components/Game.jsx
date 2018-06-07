@@ -14,8 +14,8 @@ import Instructions from "./Instructions.jsx";
 import Loading from "./Loading";
 import WaitingForServer from "./WaitingForServer.jsx";
 
-const DelayedWaitingForServer = DelayedDisplay(WaitingForServer, 100);
-const DelayedGameLobby = DelayedDisplay(GameLobbyContainer, 100);
+const DelayedWaitingForServer = DelayedDisplay(WaitingForServer, 250);
+const DelayedGameLobby = DelayedDisplay(GameLobbyContainer, 250);
 
 const Round = config.RoundComponent;
 

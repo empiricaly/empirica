@@ -14,7 +14,6 @@ import {
 import { config } from "../../../experiment/server";
 
 export const createGameFromLobby = gameLobby => {
-  // Game already created, bail.
   if (Games.find({ gameLobbyId: gameLobby._id }).count() > 0) {
     return;
   }
@@ -89,12 +88,6 @@ export const createGameFromLobby = gameLobby => {
       }
       totalDuration += stage.durationInSeconds;
       const sParams = _.extend({ gameId, roundId, index: stageIndex }, stage);
-      if (!params.currentStageId) {
-        // Set startTimeAt of first stage
-        sParams.startTimeAt = moment()
-          .add(Stages.stagePaddingDuration)
-          .toDate();
-      }
       const stageId = Stages.insert(sParams);
       stageIndex++;
       if (!params.currentStageId) {
@@ -172,4 +165,12 @@ export const createGameFromLobby = gameLobby => {
 
     onRoundStart(game, nextRound, players);
   }
+
+  Stages.update(params.currentStageId, {
+    $set: {
+      startTimeAt: moment()
+        .add(Stages.stagePaddingDuration)
+        .toDate()
+    }
+  });
 };

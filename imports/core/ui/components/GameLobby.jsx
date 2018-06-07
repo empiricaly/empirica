@@ -26,6 +26,24 @@ export default class GameLobby extends React.Component {
     const total = treatment.condition("playerCount").value;
     const exisiting = gameLobby.readyCount;
 
+    if (exisiting >= total) {
+      return (
+        <CoreWrapper>
+          <div className="game-lobby">
+            <div className="pt-non-ideal-state">
+              <div className="pt-non-ideal-state-visual pt-non-ideal-state-icon">
+                <span className="pt-icon pt-icon-play" />
+              </div>
+              <h4 className="pt-non-ideal-state-title">Game loading...</h4>
+              <div className="pt-non-ideal-state-description">
+                <p>You game will be starting shortly, get ready!</p>
+              </div>
+            </div>
+          </div>
+        </CoreWrapper>
+      );
+    }
+
     const showExtensionAlert =
       timedOut &&
       lobbyConfig.timeoutType === "individual" &&

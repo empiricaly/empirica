@@ -59,7 +59,6 @@ export const createPlayer = new ValidatedMethod({
     const lobbies = GameLobbies.find({
       batchId: batch._id,
       status: "running",
-      startedAt: { $exists: false },
       timedOutAt: { $exists: false }
     }).fetch();
 
@@ -116,83 +115,87 @@ export const playerReady = new ValidatedMethod({
   validate: IdSchema.validator(),
 
   run({ _id }) {
-    // TODO: MAYBE, add verification that the user is not current connected
-    // elsewhere and this is not a flagrant impersonation. Note that is
-    // extremely difficult to guaranty. Could also add verification of user's
-    // id with email verication for example. For now the assumption is that
-    // there is no immediate reason or long-term motiviation for people to hack
-    // each other's player account.
+    try {
+      // TODO: MAYBE, add verification that the user is not current connected
+      // elsewhere and this is not a flagrant impersonation. Note that is
+      // extremely difficult to guaranty. Could also add verification of user's
+      // id with email verication for example. For now the assumption is that
+      // there is no immediate reason or long-term motiviation for people to hack
+      // each other's player account.
 
-    const player = Players.findOne(_id);
+      const player = Players.findOne(_id);
 
-    if (!player) {
-      throw `unknown ready player: ${_id}`;
-    }
-    const { readyAt, gameLobbyId } = player;
+      if (!player) {
+        throw `unknown ready player: ${_id}`;
+      }
+      const { readyAt, gameLobbyId } = player;
 
-    if (readyAt) {
-      // Already ready
-      return;
-    }
-
-    // Loop while trying to book a spot on lobby
-    // We need to make sure the booking of slots on the game are not above
-    // the number of available slots, so we try to add the user with a known
-    // readyCount. If the update does not happen, the readyCount was changed
-    // by another thread (another process...) and we should try again until
-    // there are no slots left.
-    // If no slots are left, we marked the player's attempt to participate as
-    // failed, with a reason why. They will be led to the outro.
-    while (true) {
-      const lobby = GameLobbies.findOne(gameLobbyId);
-      if (!lobby) {
-        throw `unknown lobby for ready player: ${_id}`;
+      if (readyAt) {
+        // Already ready
+        return;
       }
 
-      // Game is Full, bail the player
-      if (lobby.readyCount === lobby.availableCount) {
-        // User already ready, something happened out of order
-        if (lobby.playerIds.includes(_id)) {
+      // Loop while trying to book a spot on lobby
+      // We need to make sure the booking of slots on the game are not above
+      // the number of available slots, so we try to add the user with a known
+      // readyCount. If the update does not happen, the readyCount was changed
+      // by another thread (another process...) and we should try again until
+      // there are no slots left.
+      // If no slots are left, we marked the player's attempt to participate as
+      // failed, with a reason why. They will be led to the outro.
+      while (true) {
+        const lobby = GameLobbies.findOne(gameLobbyId);
+        if (!lobby) {
+          throw `unknown lobby for ready player: ${_id}`;
+        }
+
+        // Game is Full, bail the player
+        if (lobby.readyCount === lobby.availableCount) {
+          // User already ready, something happened out of order
+          if (lobby.playerIds.includes(_id)) {
+            return;
+          }
+
+          // Mark the player's participation attemp as failed
+          Players.update(_id, {
+            $set: {
+              exitAt: new Date(),
+              exitStatus: "gameFull"
+            }
+          });
           return;
         }
 
-        // Mark the player's participation attemp as failed
-        Players.update(_id, {
-          $set: {
-            exitAt: new Date(),
-            exitStatus: "gameFull"
+        // Try to upda the GameLobby with the readyCount we just queried.
+        GameLobbies.update(
+          { _id: gameLobbyId, readyCount: lobby.readyCount },
+          {
+            $inc: { readyCount: 1 },
+            $addToSet: { playerIds: _id }
           }
-        });
-        return;
-      }
+        );
 
-      // Try to upda the GameLobby with the readyCount we just queried.
-      GameLobbies.update(
-        { _id: gameLobbyId, readyCount: lobby.readyCount },
-        {
-          $inc: { readyCount: 1 },
-          $addToSet: { playerIds: _id }
+        // If it failed (playerId not added to playerIds), the readyCount has
+        // changed since it was queried and the lobby might not have any available
+        // slots left, loop and retry.
+        const lobbyUpdated = GameLobbies.findOne(gameLobbyId);
+        if (lobbyUpdated.playerIds.includes(_id)) {
+          // If it did work, mark player as ready
+          $set = { readyAt: new Date() };
+
+          // If it's an individual lobby timeout, mark the first timer as started.
+          const lobbyConfig = LobbyConfigs.findOne(lobbyUpdated.lobbyConfigId);
+          if (lobbyConfig.timeoutType === "individual") {
+            $set.timeoutStartedAt = new Date();
+            $set.timeoutWaitCount = 1;
+          }
+
+          Players.update(_id, { $set });
+          return;
         }
-      );
-
-      // If it failed (playerId not added to playerIds), the readyCount has
-      // changed since it was queried and the lobby might not have any available
-      // slots left, loop and retry.
-      const lobbyUpdated = GameLobbies.findOne(gameLobbyId);
-      if (lobbyUpdated.playerIds.includes(_id)) {
-        // If it did work, mark player as ready
-        $set = { readyAt: new Date() };
-
-        // If it's an individual lobby timeout, mark the first timer as started.
-        const lobbyConfig = LobbyConfigs.findOne(lobbyUpdated.lobbyConfigId);
-        if (lobbyConfig.timeoutType === "individual") {
-          $set.timeoutStartedAt = new Date();
-          $set.timeoutWaitCount = 1;
-        }
-
-        Players.update(_id, { $set });
-        return;
       }
+    } catch (error) {
+      console.error("Players.methods.ready", error);
     }
   }
 });

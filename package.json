@@ -1,7 +1,6 @@
 {
   "name": "empirica",
-  "description":
-    "JavaScript framework for running multiplayer interactive experiments and games in the browser. It was created to make it easy to develop and iterate on sophisticated designs in a statistically sound manner, and offers a unique combination of power, flexibility, and speed.",
+  "description": "JavaScript framework for running multiplayer interactive experiments and games in the browser. It was created to make it easy to develop and iterate on sophisticated designs in a statistically sound manner, and offers a unique combination of power, flexibility, and speed.",
   "homepage": "https://empirica.ly/",
   "repository": "https://github.com/empiricaly/empirica",
   "bugs": "https://github.com/empiricaly/empirica/issues",
@@ -18,6 +17,7 @@
     "@blueprintjs/core": "^1.35.5",
     "babel-runtime": "^6.26.0",
     "bcrypt": "^2.0.1",
+    "colors": "^1.3.0",
     "history": "^4.7.2",
     "hoek": "^4.2.1",
     "identicon.js": "^2.3.1",
