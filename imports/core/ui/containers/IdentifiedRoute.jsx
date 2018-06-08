@@ -44,15 +44,22 @@ export const removePlayerId = () => {
   playerIdDep.changed();
 };
 
+const HasPlayers = new Mongo.Collection("hasPlayers");
+let hasPlayers = false;
 export default withTracker(rest => {
   const playerId = getPlayerId();
   const loading = !Meteor.subscribe("playerInfo", { playerId }).ready();
   const player = Players.findOne();
 
-  // If we finished loading and the player was not found, clear saved playerId
-  if (!loading && playerId && !player) {
-    console.error(`clearing player: (${playerId})`);
-    removePlayerId();
+  // We load a flag telling us if the players were cleared, if so remove the
+  // playerId from the local store.
+  const hasPlayersObj = HasPlayers.findOne();
+  if (hasPlayersObj) {
+    if (hasPlayersObj.hasPlayers === false && hasPlayers === true) {
+      console.info(`clearing player: (${playerId})`);
+      removePlayerId();
+    }
+    hasPlayers = hasPlayersObj.hasPlayers;
   }
 
   return {

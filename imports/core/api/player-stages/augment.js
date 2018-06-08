@@ -6,7 +6,11 @@ import { updatePlayerData } from "../players/methods";
 import { updatePlayerRoundData } from "../player-rounds/methods";
 
 const playerSet = playerId => (key, value) => {
-  updatePlayerData.call({ playerId, key, value: JSON.stringify(value) });
+  updatePlayerData.call({
+    playerId,
+    key,
+    value: JSON.stringify(value)
+  });
 };
 const stageSet = playerStageId => (key, value) => {
   updatePlayerStageData.call({
@@ -27,9 +31,10 @@ const roundSet = playerRoundId => (key, value) => {
 };
 
 // Once the operation has succeeded (no throw), set the value
+// "|| null" because undefined is unsupported.
 const set = (obj, func) => (k, v) => {
-  func(k, v);
-  obj[k] = v;
+  func(k, v || null);
+  obj[k] = v || null;
 };
 
 const nullFunc = () => {
