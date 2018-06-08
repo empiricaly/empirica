@@ -62,6 +62,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Reset DB settings were not honored in a "production" deployment.
 - Exit Steps now work in production build. See new Exit Step requirements in
   Changed section above.
+- Example ExitSurvey component input fields no longer trim white spaces
+  continuously, which was blocking the input of multiple words.
 
 <!-- Add unreleased changes here -->
 

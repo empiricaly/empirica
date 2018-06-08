@@ -22,7 +22,7 @@ export default class ExitSurvey extends React.Component {
 
   handleChange = event => {
     const el = event.currentTarget;
-    this.setState({ [el.name]: el.value.trim() });
+    this.setState({ [el.name]: el.value });
   };
 
   handleSubmit = event => {
