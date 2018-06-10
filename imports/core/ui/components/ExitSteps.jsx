@@ -40,9 +40,9 @@ export default class ExitSteps extends React.Component {
     if (stepNames.length !== _.uniq(stepNames).length) {
       const counts = {};
       stepNames.forEach(n => (counts[n] = (counts[n] || 0) + 1));
-      const dups = _.compact(_.map(counts, (v, k) => (v > 1 ? k : null))).join(
-        ", "
-      );
+      const dups = _
+        .compact(_.map(counts, (v, k) => (v > 1 ? k : null)))
+        .join(", ");
       const err = errExitStepDups(dups);
       alert(err);
       this.state = { failed: err };

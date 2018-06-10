@@ -1,7 +1,7 @@
 // PlayerInputs contains small pieces of information associated with a player
 // This can be input forms from intro/outro or intermediate input values while
 // playing the game (e.g. all values while moving a range input, mouse,
-// movements, hesitations...)
+// movements...)
 
 import SimpleSchema from "simpl-schema";
 

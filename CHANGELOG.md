@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 
 - Indexes on all fields used in queries.
+- Treatment conditions and exit steps data added to export.
 
 ### Changed
 
