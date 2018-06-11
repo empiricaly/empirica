@@ -172,7 +172,9 @@ const exportStages = format => (req, res, next) => {
     const stage = Stages.findOne(playerStage.stageId);
     const game = Games.findOne(playerStage.gameId);
     const treatment = Treatments.findOne(game.treatmentId);
-    const inputs = PlayerInputs.find().fetch();
+    const inputs = PlayerInputs.find({
+      playerId: playerStage.playerId
+    }).fetch();
 
     out.set("batchId", playerStage.batchId);
     out.set("gameId", playerStage.gameId);
