@@ -65,10 +65,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   Changed section above.
 - Example ExitSurvey component input fields no longer trim white spaces
   continuously, which was blocking the input of multiple words.
-- Fix `.set("key", undefined)` which would explode, save as `null`, which is
-  suppoted
+- `.set("key", undefined)` no longer explodes, now saves `undefined` as `null`,
+  which is a suppoted value.
 - Better automatic clearing of playerId on DB clearing. Now actually only
   happens if the DB is cleared.
+- CSV Export is not longer mixing up fields.
 
 <!-- Add unreleased changes here -->
 

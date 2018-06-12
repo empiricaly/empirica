@@ -115,17 +115,9 @@ const exportStages = format => (req, res, next) => {
   const roundKeys = getDataKeys(Rounds);
   const stageKeys = getDataKeys(Stages);
 
-  let inputsLen = 0;
-  const inputsPerPlayer = {};
-  PlayerInputs.find().forEach(input => {
-    if (!inputsPerPlayer[input.playerId]) {
-      inputsPerPlayer[input.playerId] = 0;
-    }
-    inputsPerPlayer[input.playerId] += 1;
-    if (inputsPerPlayer[input.playerId] > inputsLen) {
-      inputsLen = inputsPerPlayer[input.playerId];
-    }
-  });
+  for (const type of conditionTypes) {
+    csvHeaders.push(`treatment.${type}`);
+  }
 
   for (const key of roundKeys) {
     csvHeaders.push(`round.data.${key}`);
@@ -147,6 +139,17 @@ const exportStages = format => (req, res, next) => {
     csvHeaders.push(`playerStage.data.${key}`);
   }
 
+  let inputsLen = 0;
+  const inputsPerPlayer = {};
+  PlayerInputs.find().forEach(input => {
+    if (!inputsPerPlayer[input.playerId]) {
+      inputsPerPlayer[input.playerId] = 0;
+    }
+    inputsPerPlayer[input.playerId] += 1;
+    if (inputsPerPlayer[input.playerId] > inputsLen) {
+      inputsLen = inputsPerPlayer[input.playerId];
+    }
+  });
   _.times(inputsLen, i => {
     csvHeaders.push(`data.${i}`);
   });
@@ -183,17 +186,16 @@ const exportStages = format => (req, res, next) => {
     out.set("stageId", playerStage.stageId);
     out.set("playerRoundId", playerRound._id);
     out.set("playerStageId", playerStage._id);
+    out.set(`round.index`, round.index);
+    out.set(`stage.index`, stage.index);
+    out.set(`stage.name`, stage.name);
+    out.set(`stage.duration`, stage.durationInSeconds);
 
     const conditions = treatment.conditionIds.map(getCond);
     for (const type of conditionTypes) {
       const cond = conditions.find(c => c.type === type);
       out.set(`treatment.${type}`, cond && cond.value);
     }
-
-    out.set(`round.index`, round.index);
-    out.set(`stage.index`, stage.index);
-    out.set(`stage.name`, stage.name);
-    out.set(`stage.duration`, stage.duration);
 
     for (const key of roundKeys) {
       out.set(`round.data.${key}`, round.data[key]);
