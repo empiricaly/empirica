@@ -9,3 +9,5 @@ export const onRoundEnd = (game, round, players) => {
     player.set("score", prevScore + value);
   });
 };
+
+export const onGameEnd = (game, players) => {};

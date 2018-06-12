@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 - Indexes on all fields used in queries.
 - Treatment conditions and exit steps data added to export.
+- `onGameEnd(game, players)` is added in the `callback` and will run before the Exit Survey.
 
 ### Changed
 
