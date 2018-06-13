@@ -3,19 +3,22 @@
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
-and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+and this project adheres to
+[Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
 ### Added
 
-- Indexes on all fields used in queries.
-- Treatment conditions and exit steps data added to export.
-- `onGameEnd(game, players)` is added in the `callback` and will run before the Exit Survey.
+* Indexes on all fields used in queries.
+* Treatment conditions and exit steps data added to export.
+* `onGameEnd(game, players)` is added in the `callback` and will run before the
+  Exit Survey.
+* CSV Export includes the extracted Player's ID from the URL parameter (i.e., `playerIdParam` settings).
 
 ### Changed
 
-- Exit Step components now require a unique static property named `stepName` to
+* Exit Step components now require a unique static property named `stepName` to
   be defined. This is used by Empirica Core to register steps as done. E.g.
 
   ```jsx
@@ -31,7 +34,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   }
   ```
 
-- The Background job library was replaced byt simple custom background task
+* The Background job library was replaced byt simple custom background task
   runner. Currently the task runner will run in each process, and will not work
   well in a multi-server deployment.
 
@@ -51,9 +54,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
   Also, for most deployments we can foresee, horizontal scaling will not be used
   much.
 
-- At game start, we now no longer try to start the first round/stage until we
+* At game start, we now no longer try to start the first round/stage until we
   have finished inserting all game records.
-- When the lobby becomes full we now show the players a "Game loading" screen
+* When the lobby becomes full we now show the players a "Game loading" screen
   while we are getting the game ready for launch. This phase shouldn't take more
   than a few seconds but it can seem long when staring at the screen, so we
   added this new screen, which doubles as an indicator for the player to get
@@ -61,16 +64,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Fixed
 
-- Reset DB settings were not honored in a "production" deployment.
-- Exit Steps now work in production build. See new Exit Step requirements in
+* Reset DB settings were not honored in a "production" deployment.
+* Exit Steps now work in production build. See new Exit Step requirements in
   Changed section above.
-- Example ExitSurvey component input fields no longer trim white spaces
+* Example ExitSurvey component input fields no longer trim white spaces
   continuously, which was blocking the input of multiple words.
-- `.set("key", undefined)` no longer explodes, now saves `undefined` as `null`,
+* `.set("key", undefined)` no longer explodes, now saves `undefined` as `null`,
   which is a suppoted value.
-- Better automatic clearing of playerId on DB clearing. Now actually only
+* Better automatic clearing of playerId on DB clearing. Now actually only
   happens if the DB is cleared.
-- CSV Export is not longer mixing up fields.
+* CSV Export is not longer mixing up fields.
 
 <!-- Add unreleased changes here -->
 
@@ -78,7 +81,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ### Added
 
-- Initial Beta release.
+* Initial Beta release.
 
 [unreleased]: https://github.com/empiricaly/empirica/compare/v0.1.0...HEAD
 

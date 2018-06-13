@@ -76,6 +76,7 @@ const csvHeaders = [
   "batchId",
   "gameId",
   "playerId",
+  "playerIdParam",
   "roundId",
   "stageId",
   "playerRoundId",
@@ -182,6 +183,7 @@ const exportStages = format => (req, res, next) => {
     out.set("batchId", playerStage.batchId);
     out.set("gameId", playerStage.gameId);
     out.set("playerId", playerStage.playerId);
+    out.set("playerIdParam", player.id);
     out.set("roundId", playerStage.roundId);
     out.set("stageId", playerStage.stageId);
     out.set("playerRoundId", playerRound._id);
