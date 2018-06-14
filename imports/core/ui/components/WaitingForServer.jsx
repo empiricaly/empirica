@@ -13,7 +13,8 @@ export default class WaitingForServer extends React.Component {
             Waiting for server response...
           </h4>
           <div className="pt-non-ideal-state-description">
-            Please wait until all players are ready.
+            Please wait until all players are ready. if this takes more than 5
+            seconds, please <em>Refresh the page</em>.
           </div>
         </div>
       </div>
