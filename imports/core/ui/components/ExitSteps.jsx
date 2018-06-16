@@ -25,7 +25,7 @@ export default class ExitSteps extends React.Component {
     const { game, player, steps: unfilteredSteps } = props;
 
     // Checks steps have a name
-    stepNames = unfilteredSteps.map(s => (s.stepName || "").trim());
+    const stepNames = unfilteredSteps.map(s => (s.stepName || "").trim());
     for (let index = 0; index < stepNames.length; index++) {
       const sname = stepNames[index];
       if (_.isEmpty(sname)) {

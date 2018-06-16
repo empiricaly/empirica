@@ -4,19 +4,19 @@
 # 'meteor add' and 'meteor remove' will edit this file for you,
 # but you can also edit it by hand.
 
-meteor-base@1.3.0             # Packages every Meteor app needs to have
+meteor-base@1.4.0             # Packages every Meteor app needs to have
 mobile-experience@1.0.5       # Packages for a great mobile UX
-mongo@1.4.2                   # The database Meteor supports right now
+mongo@1.5.0                   # The database Meteor supports right now
 reactive-var@1.0.11            # Reactive variable for tracker
-tracker@1.1.3                 # Meteor's client-side reactive programming library
+tracker@1.2.0                 # Meteor's client-side reactive programming library
 
-standard-minifier-css@1.4.0   # CSS minifier run for production mode
-standard-minifier-js@2.3.1    # JS minifier run for production mode
-es5-shim@4.7.0                # ECMAScript 5 compatibility for older browsers
-ecmascript@0.10.6              # Enable ECMAScript2015+ syntax in app code
+standard-minifier-css@1.4.1   # CSS minifier run for production mode
+standard-minifier-js@2.3.4    # JS minifier run for production mode
+es5-shim@4.8.0                # ECMAScript 5 compatibility for older browsers
+ecmascript@0.11.1              # Enable ECMAScript2015+ syntax in app code
 shell-server@0.3.1            # Server-side component of the `meteor shell` command
 
-less@2.7.11                    # Leaner CSS language
+less@2.7.12                    # Leaner CSS language
 
 aldeed:collection2         # Attach a SimpleSchema to a Mongo.Collection
 dburles:collection-helpers      # Add helper methods to Collection objects
@@ -33,6 +33,7 @@ react-meteor-data                 # Connects the meteor reactive model to react
 mdg:validated-method              # Define Meteor methods in a structured way
 
 random@1.1.0
-dynamic-import@0.3.0
-accounts-password@1.5.0
+dynamic-import@0.4.0
+accounts-password@1.5.1
 mizzao:timesync
+underscore
