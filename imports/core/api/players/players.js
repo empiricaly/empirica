@@ -52,7 +52,7 @@ Players.schema = new SimpleSchema({
 
   // Failed fields are filled when the player's participation in a game failed
   exitAt: {
-    label: "Failed At",
+    label: "Exited At",
     type: Date,
     optional: true
   },
@@ -65,7 +65,8 @@ Players.schema = new SimpleSchema({
       "gameCancelled",
       "gameLobbyTimedOut",
       "playerEndedLobbyWait",
-      "playerLobbyTimedOut"
+      "playerLobbyTimedOut",
+      "finished"
     ]
   }
 });

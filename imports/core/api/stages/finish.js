@@ -82,5 +82,12 @@ export const endOfStage = stageId => {
     Games.update(gameId, {
       $set: { finishedAt: new Date() }
     });
+    Players.update(
+      { _id: { $in: _.pluck(players, "_id"), $exists: { exitStatus: false } } },
+      {
+        $set: { exitStatus: "finished", exitAt: new Date() }
+      },
+      { multi: true }
+    );
   }
 };
