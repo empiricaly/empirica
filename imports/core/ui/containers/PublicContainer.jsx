@@ -3,8 +3,29 @@ import { withTracker } from "meteor/react-meteor-data";
 import { Batches } from "../../api/batches/batches.js";
 import { GameLobbies } from "../../api/game-lobbies/game-lobbies.js";
 import { Games } from "../../api/games/games.js";
-import { createPlayer } from "../../api/players/methods.js";
+import { Stages } from "../../api/stages/stages.js";
 import Public from "../components/Public";
+
+const withGameDependencies = withTracker(
+  ({ loading, game, gameLobby, ...rest }) => {
+    if (loading) {
+      return { loading: true };
+    }
+
+    const gameId = game && game._id;
+    const sub = Meteor.subscribe("gameDependencies", { gameId });
+    const treatmentId =
+      (game && game.treatmentId) || (gameLobby && gameLobby.treatmentId);
+    const subTreatment = Meteor.subscribe("treatment", treatmentId);
+
+    return {
+      loading: !sub.ready() || !subTreatment.ready(),
+      game,
+      gameLobby,
+      ...rest
+    };
+  }
+)(Public);
 
 export default withTracker(({ loading, player, playerId, ...rest }) => {
   if (loading) {
@@ -47,9 +68,6 @@ export default withTracker(({ loading, player, playerId, ...rest }) => {
     player,
     gameLobby,
     game,
-    // playerStages,
-    // playerRounds,
-    // treatment,
     ...rest
   };
-})(Public);
+})(withGameDependencies);

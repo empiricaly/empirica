@@ -1,5 +1,5 @@
+import { Conditions } from "../../conditions/conditions.js";
 import { Treatments } from "../treatments";
-import { config } from "../../../../experiment/server";
 
 Meteor.publish("admin-treatments", function() {
   if (!this.userId) {
@@ -7,4 +7,21 @@ Meteor.publish("admin-treatments", function() {
   }
 
   return [Treatments.find()];
+});
+
+Meteor.publish("treatment", function(treatmentId) {
+  if (!treatmentId) {
+    return [];
+  }
+
+  const treatment = Treatments.findOne(treatmentId);
+
+  return [
+    Treatments.find(treatmentId),
+    Conditions.find({
+      _id: {
+        $in: treatment.conditionIds
+      }
+    })
+  ];
 });

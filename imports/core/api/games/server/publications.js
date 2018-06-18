@@ -9,49 +9,20 @@ import { Rounds } from "../../rounds/rounds";
 import { Stages } from "../../stages/stages";
 import { Treatments } from "../../treatments/treatments";
 
-publishComposite("game", function({ playerId }) {
-  return {
-    find() {
-      return Games.find({ playerIds: playerId });
-    },
-    children: [
-      {
-        find({ treatmentId }) {
-          return Treatments.find(treatmentId);
-        },
-        children: [
-          {
-            find({ conditionIds }) {
-              return Conditions.find({ _id: { $in: conditionIds } });
-            }
-          }
-        ]
-      },
-      {
-        find({ _id: gameId, currentStageId }) {
-          return Rounds.find({ gameId });
-        }
-      },
-      {
-        find({ _id: gameId }) {
-          return Stages.find({ gameId });
-        }
-      },
-      {
-        find({ _id: gameId }) {
-          return Players.find({ gameId });
-        }
-      },
-      {
-        find({ _id: gameId }) {
-          return PlayerStages.find({ gameId });
-        }
-      },
-      {
-        find({ _id: gameId }) {
-          return PlayerRounds.find({ gameId });
-        }
-      }
-    ]
-  };
+Meteor.publish("game", function({ playerId }) {
+  return Games.find({ playerIds: playerId });
+});
+
+Meteor.publish("gameDependencies", function({ gameId }) {
+  if (!gameId) {
+    return [];
+  }
+
+  return [
+    Rounds.find({ gameId }),
+    Stages.find({ gameId }),
+    Players.find({ gameId }),
+    PlayerStages.find({ gameId }),
+    PlayerRounds.find({ gameId })
+  ];
 });

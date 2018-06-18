@@ -15,6 +15,7 @@ and this project adheres to
 - `onGameEnd(game, players)` is added in the `callback` and will run before the
   Exit Survey.
 - CSV Export includes the extracted Player's ID from the URL parameter (i.e., `playerIdParam` settings).
+- New onGameStart, onStageStart callbacks.
 
 ### Changed
 
@@ -76,6 +77,7 @@ and this project adheres to
 - Better automatic clearing of playerId on DB clearing. Now actually only
   happens if the DB is cleared.
 - CSV Export is not longer mixing up fields.
+- Loading issue between stages and at beginning of game.
 
 <!-- Add unreleased changes here -->
 

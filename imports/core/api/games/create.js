@@ -56,7 +56,7 @@ export const createGameFromLobby = gameLobby => {
   params.status = status;
 
   // playerIds is the reference to players stored in the game object
-  params.playerIds = params.players.map(p => p._id);
+  params.playerIds = _.pluck(params.players, "_id");
   // We then need to verify all these ids exist and are unique, the
   // init function might not have returned them correctly
   const len = _.uniq(_.compact(params.playerIds)).length;
@@ -149,13 +149,22 @@ export const createGameFromLobby = gameLobby => {
     { multi: true }
   );
 
-  const { onRoundStart } = config;
-  if (onRoundStart && firstRoundId) {
+  const { onRoundStart, onGameStart, onStageStart } = config;
+  if ((onGameStart || onRoundStart || onStageStart) && firstRoundId) {
     const game = Games.find(gameId);
-    const nextRound = Rounds.findOne(firstRoundId);
     const players = Players.find({
-      _id: { $in: _.pluck(params.players, "_id") }
+      _id: { $in: params.playerIds }
     }).fetch();
+    game.treatment = treatment.conditionsObject();
+    game.players = players;
+    game.rounds = Rounds.find({ gameId }).fetch();
+    game.rounds.forEach(round => {
+      round.stages = Stages.find({ roundId: round._id }).fetch();
+    });
+    const nextRound = game.rounds.find(r => r._id === firstRoundId);
+    const nextStage = nextRound.stages.find(
+      s => s._id === params.currentStageId
+    );
 
     augmentStageRound(null, nextRound);
     players.forEach(player => {
@@ -163,14 +172,24 @@ export const createGameFromLobby = gameLobby => {
       augmentPlayerStageRound(player, null, player.round);
     });
 
-    onRoundStart(game, nextRound, players);
+    if (onGameStart) {
+      onGameStart(game, players);
+    }
+    if (onRoundStart) {
+      onRoundStart(game, nextRound, players);
+    }
+    if (onStageStart) {
+      onStageStart(game, nextRound, nextStage, players);
+    }
   }
+
+  const startTimeAt = moment()
+    .add(Stages.stagePaddingDuration)
+    .toDate();
 
   Stages.update(params.currentStageId, {
     $set: {
-      startTimeAt: moment()
-        .add(Stages.stagePaddingDuration)
-        .toDate()
+      startTimeAt
     }
   });
 };

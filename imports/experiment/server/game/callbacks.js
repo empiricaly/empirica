@@ -1,4 +1,8 @@
+export const onGameStart = (game, players) => {};
+
 export const onRoundStart = (game, round, players) => {};
+
+export const onStageStart = (game, round, stage, players) => {};
 
 export const onStageEnd = (game, round, stage, players) => {};
 

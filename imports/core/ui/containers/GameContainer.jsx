@@ -15,6 +15,8 @@ import {
 import { stubPlayerStageRound } from "../../api/player-stages/augment.js";
 import Game from "../components/Game";
 
+const loadingObj = { loading: true };
+
 // Handles all the timing stuff
 const withTimer = withTracker(({ game, stage, player, ...rest }) => {
   // We no longer need timers if the game ended, skip the timing stuff.
@@ -47,18 +49,84 @@ const withTimer = withTracker(({ game, stage, player, ...rest }) => {
   };
 })(Game);
 
-const loadingObj = { loading: true };
+// Handles all the info below game
+const withGameInfo = withTracker(
+  ({ game, gameLobby, player, treatment, ...rest }) => {
+    if (!game) {
+      return {
+        gameLobby,
+        player,
+        treatment
+      };
+    }
+
+    const gameId = game._id;
+    treatment = Treatments.findOne(game.treatmentId);
+    if (!treatment) {
+      return loadingObj;
+    }
+
+    game.treatment = treatment.conditionsObject();
+    game.players = Players.find({ gameId }).fetch();
+    game.rounds = Rounds.find({ gameId }).fetch();
+    game.rounds.forEach(round => {
+      round.stages = Stages.find({ roundId: round._id }).fetch();
+    });
+
+    const stage = Stages.findOne(game.currentStageId);
+    const round = game.rounds.find(r => r._id === stage.roundId);
+
+    // We're having streaming updates from the backend that put us in an
+    // uncertain state until everything is loaded correctly.
+    const playerIds = game.players.map(p => p._id);
+    const playerStagesCount = PlayerStages.find({
+      stageId: stage._id,
+      playerId: { $in: playerIds }
+    }).count();
+    const playerRoundsCount = PlayerRounds.find({
+      roundId: round._id,
+      playerId: { $in: playerIds }
+    }).count();
+
+    if (
+      playerIds.length !== playerStagesCount ||
+      playerIds.length !== playerRoundsCount
+    ) {
+      return loadingObj;
+    }
+
+    augmentStageRound(stage, round);
+    const applyAugment = player => {
+      player.stage = { _id: stage._id };
+      player.round = { _id: round._id };
+      augmentPlayerStageRound(player, player.stage, player.round);
+    };
+    applyAugment(player);
+    game.players.forEach(applyAugment);
+
+    const params = {
+      game,
+      round,
+      stage,
+      player,
+      treatment,
+      playerStagesCount,
+      playerRoundsCount,
+      ...rest
+    };
+
+    return params;
+  }
+)(withTimer);
 
 // Loads top level Players, Game, Round and Stage data
 export default withTracker(({ player, gameLobby, game, ...rest }) => {
-  let treatment;
-
   // If no game, we're at lobby level
   if (!game) {
     if (!gameLobby) {
       throw new Error("game not found");
     }
-    treatment = Treatments.findOne(gameLobby.treatmentId);
+    const treatment = Treatments.findOne(gameLobby.treatmentId);
     if (!treatment) {
       return loadingObj;
     }
@@ -72,60 +140,8 @@ export default withTracker(({ player, gameLobby, game, ...rest }) => {
     };
   }
 
-  const gameId = game._id;
-  treatment = Treatments.findOne(game.treatmentId);
-  if (!treatment) {
-    return loadingObj;
-  }
-
-  game.treatment = treatment.conditionsObject();
-  game.players = Players.find({ gameId }).fetch();
-  game.rounds = Rounds.find({ gameId }).fetch();
-  game.rounds.forEach(round => {
-    round.stages = Stages.find({ roundId: round._id }).fetch();
-  });
-
-  const stage = Stages.findOne(game.currentStageId);
-  const round = game.rounds.find(r => r._id === stage.roundId);
-
-  // We're having streaming updates from the backend that put us in an
-  // uncertain state until everything is loaded correctly.
-  const playerIds = game.players.map(p => p._id);
-  const playerStagesCount = PlayerStages.find({
-    stageId: stage._id,
-    playerId: { $in: playerIds }
-  }).count();
-  const playerRoundsCount = PlayerRounds.find({
-    roundId: round._id,
-    playerId: { $in: playerIds }
-  }).count();
-
-  if (
-    playerIds.length !== playerStagesCount ||
-    playerIds.length !== playerRoundsCount
-  ) {
-    return loadingObj;
-  }
-
-  augmentStageRound(stage, round);
-  const applyAugment = player => {
-    player.stage = { _id: stage._id };
-    player.round = { _id: round._id };
-    augmentPlayerStageRound(player, player.stage, player.round);
-  };
-  applyAugment(player);
-  game.players.forEach(applyAugment);
-
-  const params = {
+  return {
     game,
-    round,
-    stage,
-    player,
-    treatment,
-    playerStagesCount,
-    playerRoundsCount,
-    ...rest
+    player
   };
-
-  return params;
-})(withTimer);
+})(withGameInfo);
