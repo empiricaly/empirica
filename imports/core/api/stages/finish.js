@@ -33,7 +33,7 @@ export const endOfStage = stageId => {
     augmentPlayerStageRound(player, player.stage, player.round);
   });
 
-  const onStageEnd = config.onStageEnd;
+  const { onStageEnd, onRoundEnd, onRoundStart, onStageStart } = config;
   if (onStageEnd) {
     onStageEnd(game, round, stage, players);
   }
@@ -41,27 +41,26 @@ export const endOfStage = stageId => {
   const nextStage = Stages.findOne({ gameId, index: index + 1 });
 
   if (!nextStage || stage.roundId !== nextStage.roundId) {
-    const { onRoundEnd, onRoundStart, onStageStart } = config;
     if (onRoundEnd) {
       onRoundEnd(game, round, players);
     }
+  }
 
-    if (nextStage && (onRoundStart || onStageStart)) {
-      const nextRound = Rounds.findOne(nextStage.roundId);
-      augmentStageRound(null, nextRound);
-      players.forEach(player => {
-        player.round = _.extend({}, nextRound);
-        player.stage = _.extend({}, nextStage);
-        augmentPlayerStageRound(player, null, player.round, player.stage);
-      });
+  if (nextStage && (onRoundStart || onStageStart)) {
+    const nextRound = Rounds.findOne(nextStage.roundId);
+    augmentStageRound(null, nextRound);
+    players.forEach(player => {
+      player.round = _.extend({}, nextRound);
+      player.stage = _.extend({}, nextStage);
+      augmentPlayerStageRound(player, null, player.round, player.stage);
+    });
 
-      if (onRoundStart) {
-        onRoundStart(game, nextRound, players);
-      }
+    if (onRoundStart && stage.roundId !== nextStage.roundId) {
+      onRoundStart(game, nextRound, players);
+    }
 
-      if (onStageStart) {
-        onStageStart(game, nextRound, nextStage, players);
-      }
+    if (onStageStart) {
+      onStageStart(game, nextRound, nextStage, players);
     }
   }
 
