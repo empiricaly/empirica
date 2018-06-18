@@ -151,7 +151,7 @@ export const createGameFromLobby = gameLobby => {
 
   const { onRoundStart, onGameStart, onStageStart } = config;
   if ((onGameStart || onRoundStart || onStageStart) && firstRoundId) {
-    const game = Games.find(gameId);
+    const game = Games.findOne(gameId);
     const players = Players.find({
       _id: { $in: params.playerIds }
     }).fetch();
