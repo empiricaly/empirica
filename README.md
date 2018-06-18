@@ -3,7 +3,7 @@
 Open source project to tackle the problem of long development cycles required to
 produce software to conduct multi-participant and real-time human experiments
 online. Here is
-[some sort of a tutorial](https://github.com/empiricaly/tutorial) (still work in
+[some sort of a tutorial](https://github.com/empiricaly/guess-correlation-tutorial) (still work in
 progress!).
 
 ## We are in Beta
