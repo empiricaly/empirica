@@ -28,7 +28,6 @@ export const savePlayerId = (connId, playerId) => {
   }
 
   GameLobbies.update(lobby._id, {
-    $inc: { readyCount: 1 },
     $addToSet: { playerIds: playerId }
   });
 };
@@ -48,7 +47,6 @@ Meteor.onConnection(conn => {
     }
 
     GameLobbies.update(lobby._id, {
-      $inc: { readyCount: -1 },
       $pull: { playerIds: playerId }
     });
 

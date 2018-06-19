@@ -60,8 +60,6 @@ Batches.after.insert(function(userId, batch) {
       }
 
       l.playerIds = [];
-      l.readyCount = botsCount;
-      l.queuedCount = botsCount;
       _.times(botsCount, () => {
         const playerId = Players.insert({
           id: Random.id(),

@@ -68,7 +68,9 @@ export const createPlayer = new ValidatedMethod({
     }
 
     // Let's first try to find lobbies for which their queue isn't full yet
-    let lobbyPool = lobbies.filter(l => l.availableCount > l.queuedCount);
+    let lobbyPool = lobbies.filter(
+      l => l.availableCount > l.queuedPlayerIds.length
+    );
     // If no lobbies still have "availability", just fill any lobby
     if (lobbyPool.length === 0) {
       lobbyPool = lobbies;
@@ -100,7 +102,6 @@ export const createPlayer = new ValidatedMethod({
     // If there are no instruction, player is ready, notify the lobby
     if (skipInstructions) {
       GameLobbies.update(gameLobbyId, {
-        $inc: { readyCount: 1 },
         $addToSet: { playerIds: player._id }
       });
     }
@@ -138,11 +139,11 @@ export const playerReady = new ValidatedMethod({
       // Loop while trying to book a spot on lobby
       // We need to make sure the booking of slots on the game are not above
       // the number of available slots, so we try to add the user with a known
-      // readyCount. If the update does not happen, the readyCount was changed
-      // by another thread (another process...) and we should try again until
+      // playerIds value. If the update does not happen, the playerIds was
+      // changed by another server instance and we should try again until
       // there are no slots left.
       // If no slots are left, we marked the player's attempt to participate as
-      // failed, with a reason why. They will be led to the outro.
+      // failed, with a reason why. They will be led to the exit steps.
       while (true) {
         const lobby = GameLobbies.findOne(gameLobbyId);
         if (!lobby) {
@@ -150,7 +151,7 @@ export const playerReady = new ValidatedMethod({
         }
 
         // Game is Full, bail the player
-        if (lobby.readyCount === lobby.availableCount) {
+        if (lobby.playerIds.length === lobby.availableCount) {
           // User already ready, something happened out of order
           if (lobby.playerIds.includes(_id)) {
             return;
@@ -163,21 +164,21 @@ export const playerReady = new ValidatedMethod({
               exitStatus: "gameFull"
             }
           });
+
           return;
         }
 
-        // Try to upda the GameLobby with the readyCount we just queried.
+        // Try to upda the GameLobby with the playerIds we just queried.
         GameLobbies.update(
-          { _id: gameLobbyId, readyCount: lobby.readyCount },
+          { _id: gameLobbyId, playerIds: lobby.playerIds },
           {
-            $inc: { readyCount: 1 },
             $addToSet: { playerIds: _id }
           }
         );
 
-        // If it failed (playerId not added to playerIds), the readyCount has
-        // changed since it was queried and the lobby might not have any available
-        // slots left, loop and retry.
+        // If the playerId insert succeeded (playerId WAS added to playerIds),
+        // mark the user record as ready and potentially start the individual
+        // lobby timer.
         const lobbyUpdated = GameLobbies.findOne(gameLobbyId);
         if (lobbyUpdated.playerIds.includes(_id)) {
           // If it did work, mark player as ready
@@ -193,6 +194,10 @@ export const playerReady = new ValidatedMethod({
           Players.update(_id, { $set });
           return;
         }
+
+        // If the playerId insert failed (playerId NOT added to playerIds), the
+        // playerIds has changed since it was queried and the lobby might not
+        // have any available slots left, loop and retry.
       }
     } catch (error) {
       console.error("Players.methods.ready", error);
@@ -302,11 +307,11 @@ export const endPlayerTimeoutWait = new ValidatedMethod({
       }
     });
     GameLobbies.update(player.gameLobbyId, {
-      $inc: { readyCount: -1, queuedCount: -1 },
       $pull: {
         playerIds: playerId
-        // We keep the player in queued so they will still have it loaded in the UI
-        // queuedPlayerIds: playerId
+        // We keep the player in queuedPlayerIds so they will still have the
+        // fact they were in a lobby available in the UI, and so we can show
+        // them the exit steps.
       }
     });
   }

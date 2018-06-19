@@ -69,11 +69,11 @@ const checkIndividualTimeout = (log, lobby, lobbyConfig) => {
       }
     });
     GameLobbies.update(lobby._id, {
-      $inc: { readyCount: -1, queuedCount: -1 },
       $pull: {
         playerIds: player._id
-        // We keep the player in queued so they will still have it loaded in the UI
-        // queuedPlayerIds: player._id
+        // We keep the player in queuedPlayerIds so they will still have the
+        // fact they were in a lobby available in the UI, and so we can show
+        // them the exit steps.
       }
     });
   });

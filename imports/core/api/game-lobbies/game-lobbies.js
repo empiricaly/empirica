@@ -31,32 +31,12 @@ GameLobbies.schema = new SimpleSchema({
     label: "Position"
   },
 
-  // availableCount tells us how many slots are available in this lobby (== treatment.playerCount)
+  // availableCount tells us how many slots are available in this lobby
+  // (== treatment.playerCount)
   availableCount: {
     type: SimpleSchema.Integer,
     min: 0,
     label: "Available Slots Count"
-  },
-
-  // queuedCount tells us how many players are queued to start, but haven't
-  // finished the intro steps yet. It might be higher than availableCount as we
-  // allow overbooking to make games start faster.
-  queuedCount: {
-    type: SimpleSchema.Integer,
-    min: 0,
-    defaultValue: 0,
-    label: "Queued Players Count"
-  },
-
-  // readyCount tells us how many players are ready to start (finished intro)
-  // Once availableCount == readyCount, the game starts. Player that are queued
-  // but haven't made it past the intro in time will be led to the outro
-  // directly.
-  readyCount: {
-    type: SimpleSchema.Integer,
-    min: 0,
-    defaultValue: 0,
-    label: "Ready Players Count"
   },
 
   timeoutStartedAt: {
@@ -75,6 +55,8 @@ GameLobbies.schema = new SimpleSchema({
   // Queued players are players that have been associated with the lobby
   // but are not confirmed for the game yet. playerIds is used for confirmed
   // players
+  // There might be more queued player than availableCount as we
+  // allow overbooking to make games start faster.
   queuedPlayerIds: {
     type: Array,
     defaultValue: [],
@@ -94,9 +76,14 @@ if (Meteor.isDevelopment || Meteor.settings.public.debug_gameDebugMode) {
 
 GameLobbies.schema.extend(TimestampSchema);
 Meteor.startup(() => {
+  // playerIds tells us how many players are ready to start (finished intro)
+  // Once playerIds.length == availableCount, the game starts. Player that are
+  // queued but haven't made it past the intro in time will be led to the outro
+  // directly.
+  GameLobbies.schema.extend(HasManyByRef(Players));
+
   GameLobbies.schema.extend(BelongsTo(Games, false, false));
   GameLobbies.schema.extend(BelongsTo(Treatments));
-  GameLobbies.schema.extend(HasManyByRef(Players));
   GameLobbies.schema.extend(BelongsTo(Batches));
   GameLobbies.schema.extend(BelongsTo(LobbyConfigs));
   // We are denormalizing the parent batch status in order to make clean queries
