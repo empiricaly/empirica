@@ -67,6 +67,7 @@ export default withTracker(rest => {
     loading,
     playerId,
     player,
-    connected: Meteor.status().connected
+    connected: Meteor.status().connected,
+    playerIdKey: (playerIdKeyOverride || "").slice(0, 5)
   };
 })(IdentifiedRouteInner);

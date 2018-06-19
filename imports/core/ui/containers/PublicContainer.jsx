@@ -3,7 +3,6 @@ import { withTracker } from "meteor/react-meteor-data";
 import { Batches } from "../../api/batches/batches.js";
 import { GameLobbies } from "../../api/game-lobbies/game-lobbies.js";
 import { Games } from "../../api/games/games.js";
-import { Stages } from "../../api/stages/stages.js";
 import Public from "../components/Public";
 
 const withGameDependencies = withTracker(

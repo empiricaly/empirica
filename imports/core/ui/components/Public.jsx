@@ -1,11 +1,9 @@
-import URL from "url";
-
 import { Dialog } from "@blueprintjs/core";
+import { Helmet } from "react-helmet";
 import { Link } from "react-router-dom";
 import React from "react";
 
 import { CoreWrapper } from "./Helpers";
-import { createPlayer } from "../../api/players/methods.js";
 import { removePlayerId } from "../containers/IdentifiedRoute";
 import GameContainer from "../containers/GameContainer";
 import Loading from "./Loading.jsx";
@@ -32,7 +30,7 @@ export default class Public extends React.Component {
   };
 
   render() {
-    const { loading, renderPublic, ...rest } = this.props;
+    const { loading, renderPublic, playerIdKey, ...rest } = this.props;
     const { player } = rest;
 
     if (loading) {
@@ -54,8 +52,17 @@ export default class Public extends React.Component {
       content = <GameContainer {...rest} />;
     }
 
+    let title = "Empirica";
+    if (playerIdKey) {
+      title += ` (${playerIdKey})`;
+    }
+
     return (
       <div className="grid">
+        <Helmet>
+          <title>{title}</title>
+        </Helmet>
+
         <nav className="pt-navbar pt-dark header">
           <div className="pt-navbar-group pt-align-left">
             <div className="pt-navbar-heading">

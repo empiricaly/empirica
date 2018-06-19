@@ -16,6 +16,7 @@ and this project adheres to
   Exit Survey.
 - CSV Export includes the extracted Player's ID from the URL parameter (i.e., `playerIdParam` settings).
 - New onGameStart, onStageStart callbacks.
+- Simple page titles to help distinguish tabs.
 
 ### Changed
 
@@ -78,6 +79,7 @@ and this project adheres to
   happens if the DB is cleared.
 - CSV Export is not longer mixing up fields.
 - Loading issue between stages and at beginning of game.
+- Re-regestering of player with same playerID in lobby.
 
 <!-- Add unreleased changes here -->
 

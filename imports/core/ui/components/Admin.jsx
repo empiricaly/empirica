@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet";
 import { NavLink, Route, Switch } from "react-router-dom";
 import { Tooltip, Position, Intent } from "@blueprintjs/core";
 import PropTypes from "prop-types";
@@ -69,6 +70,9 @@ export default class Admin extends React.Component {
 
     return (
       <div className="admin">
+        <Helmet>
+          <title>Empirica Admin</title>
+        </Helmet>
         <nav className="pt-navbar header">
           <div className="pt-navbar-group pt-align-left">
             <div className="pt-navbar-heading">Empirica Admin</div>
