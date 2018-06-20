@@ -16,6 +16,10 @@ Meteor.publish("treatment", function(treatmentId) {
 
   const treatment = Treatments.findOne(treatmentId);
 
+  if (!treatment) {
+    return [];
+  }
+
   return [
     Treatments.find(treatmentId),
     Conditions.find({
