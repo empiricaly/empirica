@@ -40,10 +40,8 @@ export const endOfStage = stageId => {
 
   const nextStage = Stages.findOne({ gameId, index: index + 1 });
 
-  if (!nextStage || stage.roundId !== nextStage.roundId) {
-    if (onRoundEnd) {
-      onRoundEnd(game, round, players);
-    }
+  if ((onRoundEnd && !nextStage) || stage.roundId !== nextStage.roundId) {
+    onRoundEnd(game, round, players);
   }
 
   if (nextStage && (onRoundStart || onStageStart)) {
