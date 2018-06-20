@@ -32,7 +32,7 @@ export default class Game extends React.Component {
       return <Loading />;
     }
 
-    if ((game && game.finishedAt) || player.exitAt) {
+    if (player.exitAt) {
       const exitSteps = config.ExitSteps && config.ExitSteps(game, player);
 
       return (
