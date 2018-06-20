@@ -80,6 +80,7 @@ and this project adheres to
 - CSV Export is not longer mixing up fields.
 - Loading issue between stages and at beginning of game.
 - Re-regestering of player with same playerID in lobby.
+- `.set()` value `0` was not supported, would be casted into `null`.
 
 <!-- Add unreleased changes here -->
 

@@ -31,10 +31,11 @@ const roundSet = playerRoundId => (key, value) => {
 };
 
 // Once the operation has succeeded (no throw), set the value
-// "|| null" because undefined is unsupported.
+// undefined is not supported, null is, replace undefineds by nulls.
 const set = (obj, func) => (k, v) => {
-  func(k, v || null);
-  obj[k] = v || null;
+  const val = v === undefined ? null : v;
+  func(k, val);
+  obj[k] = val;
 };
 
 const nullFunc = () => {
