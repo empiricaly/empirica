@@ -7,7 +7,7 @@ import { Stages } from "../../stages/stages.js";
 import { Treatments } from "../../treatments/treatments.js";
 import {
   augmentPlayerStageRound,
-  augmentStageRound
+  augmentGameStageRound
 } from "../../player-stages/augment.js";
 import { config } from "../../../../experiment/server";
 import { endOfStage } from "../../stages/finish.js";
@@ -61,7 +61,7 @@ Cron.add({
             return;
           }
 
-          augmentStageRound(stage, round);
+          augmentGameStageRound(game, stage, round);
           players.forEach(player => {
             player.stage = _.extend({}, stage);
             player.round = _.extend({}, round);

@@ -9,7 +9,7 @@ import { Rounds } from "../rounds/rounds";
 import { Stages } from "../stages/stages";
 import {
   augmentPlayerStageRound,
-  augmentStageRound
+  augmentGameStageRound
 } from "../player-stages/augment.js";
 import { config } from "../../../experiment/server";
 
@@ -166,7 +166,7 @@ export const createGameFromLobby = gameLobby => {
       s => s._id === params.currentStageId
     );
 
-    augmentStageRound(null, nextRound);
+    augmentGameStageRound(game, null, nextRound);
     players.forEach(player => {
       player.round = _.extend({}, nextRound);
       augmentPlayerStageRound(player, null, player.round);

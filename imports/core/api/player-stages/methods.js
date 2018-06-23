@@ -15,22 +15,26 @@ export const updatePlayerStageData = new ValidatedMethod({
     },
     value: {
       type: String
+    },
+    append: {
+      type: Boolean,
+      optional: true
     }
   }).validator(),
 
-  run({ playerStageId, key, value }) {
+  run({ playerStageId, key, value, append }) {
     const playerStage = PlayerStages.findOne(playerStageId);
     if (!playerStage) {
       throw new Error("playerStage not found");
     }
+
     // TODO check can update this record playerStage
 
     const val = JSON.parse(value);
-    const $set = {
-      [`data.${key}`]: val
-    };
+    let update = { [`data.${key}`]: val };
+    const modifier = append ? { $push: update } : { $set: update };
 
-    PlayerStages.update(playerStageId, { $set }, { autoConvert: false });
+    PlayerStages.update(playerStageId, modifier, { autoConvert: false });
   }
 });
 

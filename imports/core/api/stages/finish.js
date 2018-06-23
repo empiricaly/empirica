@@ -7,7 +7,7 @@ import { Stages } from "./stages.js";
 import { Treatments } from "../treatments/treatments.js";
 import {
   augmentPlayerStageRound,
-  augmentStageRound
+  augmentGameStageRound
 } from "../player-stages/augment.js";
 import { config } from "../../../experiment/server";
 
@@ -26,7 +26,7 @@ export const endOfStage = stageId => {
     round.stages = Stages.find({ roundId: round._id }).fetch();
   });
 
-  augmentStageRound(stage, round);
+  augmentGameStageRound(game, stage, round);
   players.forEach(player => {
     player.stage = _.extend({}, stage);
     player.round = _.extend({}, round);
@@ -46,7 +46,7 @@ export const endOfStage = stageId => {
 
   if (nextStage && (onRoundStart || onStageStart)) {
     const nextRound = Rounds.findOne(nextStage.roundId);
-    augmentStageRound(null, nextRound);
+    augmentGameStageRound(game, null, nextRound);
     players.forEach(player => {
       player.round = _.extend({}, nextRound);
       player.stage = _.extend({}, nextStage);

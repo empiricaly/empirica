@@ -10,7 +10,7 @@ import { Stages } from "../../api/stages/stages";
 import { Treatments } from "../../api/treatments/treatments.js";
 import {
   augmentPlayerStageRound,
-  augmentStageRound
+  augmentGameStageRound
 } from "../../api/player-stages/augment";
 import { stubPlayerStageRound } from "../../api/player-stages/augment.js";
 import Game from "../components/Game";
@@ -95,7 +95,7 @@ const withGameInfo = withTracker(
       return loadingObj;
     }
 
-    augmentStageRound(stage, round);
+    augmentGameStageRound(game, stage, round);
     const applyAugment = player => {
       player.stage = { _id: stage._id };
       player.round = { _id: round._id };

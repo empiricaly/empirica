@@ -2,11 +2,11 @@ import SimpleSchema from "simpl-schema";
 
 import { Batches } from "../batches/batches";
 import { BelongsTo, HasManyByRef, TimestampSchema } from "../default-schemas";
-import { DebugModeSchema } from "../default-schemas.js";
+import { DebugModeSchema, UserDataSchema } from "../default-schemas.js";
+import { GameLobbies } from "../game-lobbies/game-lobbies";
 import { Players } from "../players/players";
 import { Rounds } from "../rounds/rounds";
 import { Treatments } from "../treatments/treatments";
-import { GameLobbies } from "../game-lobbies/game-lobbies";
 
 export const Games = new Mongo.Collection("games");
 
@@ -33,6 +33,7 @@ if (Meteor.isDevelopment || Meteor.settings.public.debug_gameDebugMode) {
 }
 
 Games.schema.extend(TimestampSchema);
+Games.schema.extend(UserDataSchema);
 Meteor.startup(() => {
   Games.schema.extend(BelongsTo(GameLobbies, false, false));
   Games.schema.extend(BelongsTo(Treatments));

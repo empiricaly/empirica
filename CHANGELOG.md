@@ -17,6 +17,8 @@ and this project adheres to
 - CSV Export includes the extracted Player's ID from the URL parameter (i.e., `playerIdParam` settings).
 - New onGameStart, onStageStart callbacks.
 - Simple page titles to help distinguish tabs.
+- New `append()` method on players, playerRounds, playerStages, games, stages and rounds.
+- Added `set()` to games, rounds and stages, and `get()` to games.
 
 ### Changed
 

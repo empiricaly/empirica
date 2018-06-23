@@ -1,5 +1,5 @@
-import { ValidatedMethod } from "meteor/mdg:validated-method";
 import SimpleSchema from "simpl-schema";
+import { ValidatedMethod } from "meteor/mdg:validated-method";
 
 import { Batches } from "../batches/batches.js";
 import { GameLobbies } from "../game-lobbies/game-lobbies";
@@ -218,10 +218,14 @@ export const updatePlayerData = new ValidatedMethod({
     },
     value: {
       type: String
+    },
+    append: {
+      type: Boolean,
+      optional: true
     }
   }).validator(),
 
-  run({ playerId, key, value }) {
+  run({ playerId, key, value, append }) {
     const player = Players.findOne(playerId);
     if (!player) {
       throw new Error("player not found");
@@ -229,11 +233,10 @@ export const updatePlayerData = new ValidatedMethod({
     // TODO check can update this record player
 
     const val = JSON.parse(value);
-    const $set = {
-      [`data.${key}`]: val
-    };
+    let update = { [`data.${key}`]: val };
+    const modifier = append ? { $push: update } : { $set: update };
 
-    Players.update(playerId, { $set }, { autoConvert: false });
+    Players.update(playerId, modifier, { autoConvert: false });
   }
 });
 

@@ -15,10 +15,14 @@ export const updatePlayerRoundData = new ValidatedMethod({
     },
     value: {
       type: String
+    },
+    append: {
+      type: Boolean,
+      optional: true
     }
   }).validator(),
 
-  run({ playerRoundId, key, value }) {
+  run({ playerRoundId, key, value, append }) {
     const playerRound = PlayerRounds.findOne(playerRoundId);
     if (!playerRound) {
       throw new Error("playerRound not found");
@@ -26,10 +30,9 @@ export const updatePlayerRoundData = new ValidatedMethod({
     // TODO check can update this record playerRound
 
     const val = JSON.parse(value);
-    const $set = {
-      [`data.${key}`]: val
-    };
+    let update = { [`data.${key}`]: val };
+    const modifier = append ? { $push: update } : { $set: update };
 
-    PlayerRounds.update(playerRoundId, { $set }, { autoConvert: false });
+    PlayerRounds.update(playerRoundId, modifier, { autoConvert: false });
   }
 });
