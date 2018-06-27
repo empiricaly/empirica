@@ -60,8 +60,6 @@ export const callOnChange = params => {
 
   let { player, game, round, stage } = params;
 
-  console.log("params", params);
-
   player = player || Players.findOne(params.playerId);
   game = game || Games.findOne(player.gameId);
   if (!game) {
