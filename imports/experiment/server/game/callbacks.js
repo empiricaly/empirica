@@ -34,27 +34,25 @@ export default {
   // If you have not using these callbacks, comment them out so the system does
   // not call them for nothing.
 
-  // onSet is called when the experiment code call the .set() method
-  // on games, rounds, stages, players, playerRounds or playerStages.
-  onSet(
-    game,
-    round,
-    stage,
-    players,
-    player, // Player who made the change
-    target, // Object on which the change was made (eg. player.set() => player)
-    targetType, // Type of object on which the change was made (eg. player.set() => "player")
-    key, // Key of changed value (e.g. player.set("score", 1) => "score")
-    value, // New value
-    prevValue // Previous value
-  ) {
-    console.log("onSet");
-    
-    // // Example filtering
-    // if (key !== "value") {
-    //   return;
-    // }
-  },
+  // // onSet is called when the experiment code call the .set() method
+  // // on games, rounds, stages, players, playerRounds or playerStages.
+  // onSet(
+  //   game,
+  //   round,
+  //   stage,
+  //   players,
+  //   player, // Player who made the change
+  //   target, // Object on which the change was made (eg. player.set() => player)
+  //   targetType, // Type of object on which the change was made (eg. player.set() => "player")
+  //   key, // Key of changed value (e.g. player.set("score", 1) => "score")
+  //   value, // New value
+  //   prevValue // Previous value
+  // ) {
+  //   // // Example filtering
+  //   // if (key !== "value") {
+  //   //   return;
+  //   // }
+  // },
 
   // // onSet is called when the experiment code call the `.append()` method
   // // on games, rounds, stages, players, playerRounds or playerStages.
