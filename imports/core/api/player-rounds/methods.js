@@ -24,10 +24,14 @@ export const updatePlayerRoundData = new ValidatedMethod({
     append: {
       type: Boolean,
       optional: true
+    },
+    noCallback: {
+      type: Boolean,
+      optional: true
     }
   }).validator(),
 
-  run({ playerRoundId, key, value, append }) {
+  run({ playerRoundId, key, value, append, noCallback }) {
     const playerRound = PlayerRounds.findOne(playerRoundId);
     if (!playerRound) {
       throw new Error("playerRound not found");
@@ -40,7 +44,7 @@ export const updatePlayerRoundData = new ValidatedMethod({
 
     PlayerRounds.update(playerRoundId, modifier, { autoConvert: false });
 
-    if (Meteor.isServer) {
+    if (Meteor.isServer && !noCallback) {
       callOnChange({
         playerId: playerRound.playerId,
         playerRoundId,

@@ -12,7 +12,8 @@ const gameSet = (gameId, append = false) => (key, value) => {
     gameId,
     key,
     value: JSON.stringify(value),
-    append
+    append,
+    noCallback: Meteor.isServer
   });
 };
 const playerSet = (playerId, append = false) => (key, value) => {
@@ -20,7 +21,8 @@ const playerSet = (playerId, append = false) => (key, value) => {
     playerId,
     key,
     value: JSON.stringify(value),
-    append
+    append,
+    noCallback: Meteor.isServer
   });
 };
 const stageSet = (playerStageId, append = false) => (key, value) => {
@@ -28,18 +30,26 @@ const stageSet = (playerStageId, append = false) => (key, value) => {
     playerStageId,
     key,
     value: JSON.stringify(value),
-    append
+    append,
+    noCallback: Meteor.isServer
   });
 };
 const stageSubmit = playerStageId => cb => {
-  submitPlayerStage.call({ playerStageId }, cb);
+  submitPlayerStage.call(
+    {
+      playerStageId,
+      noCallback: Meteor.isServer
+    },
+    cb
+  );
 };
 const roundSet = (playerRoundId, append = false) => (key, value) => {
   updatePlayerRoundData.call({
     playerRoundId,
     key,
     value: JSON.stringify(value),
-    append
+    append,
+    noCallback: Meteor.isServer
   });
 };
 
@@ -127,7 +137,8 @@ export const augmentGameStageRound = (game, stage, round) => {
         stageId: stage._id,
         key,
         value: JSON.stringify(value),
-        append: false
+        append: false,
+        noCallback: Meteor.isServer
       });
     });
     stage.append = append(stage.data, (key, value) => {
@@ -135,7 +146,8 @@ export const augmentGameStageRound = (game, stage, round) => {
         stageId: stage._id,
         key,
         value: JSON.stringify(value),
-        append: true
+        append: true,
+        noCallback: Meteor.isServer
       });
     });
     stage.submit = () => {
@@ -152,7 +164,8 @@ export const augmentGameStageRound = (game, stage, round) => {
         roundId: round._id,
         key,
         value: JSON.stringify(value),
-        append: false
+        append: false,
+        noCallback: Meteor.isServer
       });
     });
     round.append = append(round.data, (key, value) => {
@@ -160,7 +173,8 @@ export const augmentGameStageRound = (game, stage, round) => {
         roundId: round._id,
         key,
         value: JSON.stringify(value),
-        append: true
+        append: true,
+        noCallback: Meteor.isServer
       });
     });
   }

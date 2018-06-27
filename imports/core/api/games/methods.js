@@ -27,10 +27,14 @@ export const updateGameData = new ValidatedMethod({
     append: {
       type: Boolean,
       optional: true
+    },
+    noCallback: {
+      type: Boolean,
+      optional: true
     }
   }).validator(),
 
-  run({ gameId, key, value, append }) {
+  run({ gameId, key, value, append, noCallback }) {
     const game = Games.findOne(gameId);
     if (!game) {
       throw new Error("game not found");
@@ -43,7 +47,7 @@ export const updateGameData = new ValidatedMethod({
 
     Games.update(gameId, modifier, { autoConvert: false });
 
-    if (Meteor.isServer) {
+    if (Meteor.isServer && !noCallback) {
       callOnChange({
         playerId: playerIdForConn(this.connection),
         gameId,

@@ -27,10 +27,14 @@ export const updateRoundData = new ValidatedMethod({
     append: {
       type: Boolean,
       optional: true
+    },
+    noCallback: {
+      type: Boolean,
+      optional: true
     }
   }).validator(),
 
-  run({ roundId, key, value, append }) {
+  run({ roundId, key, value, append, noCallback }) {
     const round = Rounds.findOne(roundId);
     if (!round) {
       throw new Error("round not found");
@@ -43,7 +47,7 @@ export const updateRoundData = new ValidatedMethod({
 
     Rounds.update(roundId, modifier, { autoConvert: false });
 
-    if (Meteor.isServer) {
+    if (Meteor.isServer && !noCallback) {
       callOnChange({
         playerId: playerIdForConn(this.connection),
         roundId,

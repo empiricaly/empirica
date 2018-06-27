@@ -24,10 +24,14 @@ export const updatePlayerStageData = new ValidatedMethod({
     append: {
       type: Boolean,
       optional: true
+    },
+    noCallback: {
+      type: Boolean,
+      optional: true
     }
   }).validator(),
 
-  run({ playerStageId, key, value, append }) {
+  run({ playerStageId, key, value, append, noCallback }) {
     const playerStage = PlayerStages.findOne(playerStageId);
     if (!playerStage) {
       throw new Error("playerStage not found");
@@ -41,7 +45,7 @@ export const updatePlayerStageData = new ValidatedMethod({
 
     PlayerStages.update(playerStageId, modifier, { autoConvert: false });
 
-    if (Meteor.isServer) {
+    if (Meteor.isServer && !noCallback) {
       callOnChange({
         playerId: playerStage.playerId,
         playerStageId,
@@ -62,6 +66,10 @@ export const submitPlayerStage = new ValidatedMethod({
     playerStageId: {
       type: String,
       regEx: SimpleSchema.RegEx.Id
+    },
+    noCallback: {
+      type: Boolean,
+      optional: true
     }
   }).validator(),
 
