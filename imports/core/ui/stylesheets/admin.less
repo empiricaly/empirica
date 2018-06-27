@@ -19,29 +19,6 @@
     padding: 7rem 1.5rem;
   }
 
-  // .batches {
-  //   .pt-table {
-  //     width: 100%;
-  //   }
-  //   .add-treatment {
-  //     background-color: #eee;
-  //     border-radius: 1rem;
-  //     padding: 2rem;
-  //     width: min-content;
-  //     white-space: nowrap;
-
-  //     select {
-  //       margin-right: 1rem;
-  //     }
-  //   }
-
-  //   table {
-  //     td {
-  //       text-transform: capitalize;
-  //     }
-  //   }
-  // }
-
   .games,
   .players {
     height: calc(~"100vh - 14rem");
@@ -49,6 +26,15 @@
 
   .inner-table tbody tr td {
     box-shadow: none !important;
+  }
+
+  .button-group {
+    display: flex;
+
+    & > .pt-button,
+    & > .pt-button-group {
+      margin-right: 1rem;
+    }
   }
 }
 

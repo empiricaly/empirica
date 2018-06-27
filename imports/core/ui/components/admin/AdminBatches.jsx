@@ -1,12 +1,7 @@
 import React from "react";
 import moment from "moment";
 
-import {
-  Dialog,
-  Popover,
-  Position,
-  PopoverInteractionKind
-} from "@blueprintjs/core";
+import { Menu, MenuItem, Popover, Position } from "@blueprintjs/core";
 
 import { assignmentTypes, maxGamesCount } from "../../../api/batches/batches";
 import {
@@ -23,13 +18,13 @@ export default class AdminBatches extends React.Component {
     newIsOpen: false
   };
 
-  handleStatusChange = (_id, status, event) => {
+  handleStatusChange = (_id, status, debugMode, event) => {
     event.preventDefault();
     if (
       (Meteor.isDevelopment || Meteor.settings.public.debug_gameDebugMode) &&
       status === "running" &&
       // mac: metaKey (command), window: ctrlKey (Ctrl)
-      (event.ctrlKey || event.metaKey)
+      (event.ctrlKey || event.metaKey || debugMode)
     ) {
       setBatchInDebugMode.call({ _id });
     }
@@ -83,18 +78,48 @@ export default class AdminBatches extends React.Component {
 
                 if (batch.status === "init") {
                   actions.push(
-                    <button
-                      type="button"
-                      className="pt-button pt-small pt-intent-success pt-icon-play"
+                    <div
+                      className="pt-button-group pt-minimal pt-small"
                       key="start"
-                      onClick={this.handleStatusChange.bind(
-                        this,
-                        batch._id,
-                        "running"
-                      )}
                     >
-                      Start
-                    </button>
+                      <button
+                        type="button"
+                        className="pt-button pt-intent-success pt-icon-play"
+                        onClick={this.handleStatusChange.bind(
+                          this,
+                          batch._id,
+                          "running",
+                          false
+                        )}
+                      >
+                        Start
+                      </button>
+
+                      {/* {Meteor.isDevelopment ||
+                      Meteor.settings.public.debug_gameDebugMode ? (
+                        <Popover
+                          content={
+                            <Menu>
+                              <MenuItem
+                                text="Start in Debug Mode"
+                                onClick={this.handleStatusChange.bind(
+                                  this,
+                                  batch._id,
+                                  "running",
+                                  true
+                                )}
+                              />
+                            </Menu>
+                          }
+                          position={Position.RIGHT_TOP}
+                        >
+                          <button
+                            type="button"
+                            className="pt-button pt-intent-success pt-icon-caret-down"
+                          />
+                        </Popover>
+                      ) : null} */}
+                    </div>
                   );
                 }
 
@@ -102,12 +127,13 @@ export default class AdminBatches extends React.Component {
                   actions.push(
                     <button
                       type="button"
-                      className="pt-button pt-small pt-icon-stop"
+                      className="pt-button pt-small pt-icon-stop pt-minimal"
                       key="stop"
                       onClick={this.handleStatusChange.bind(
                         this,
                         batch._id,
-                        "cancelled"
+                        "cancelled",
+                        false
                       )}
                     >
                       Cancel
@@ -122,7 +148,7 @@ export default class AdminBatches extends React.Component {
                   actions.push(
                     <button
                       type="button"
-                      className="pt-button pt-small pt-icon-duplicate"
+                      className="pt-button pt-small pt-icon-duplicate pt-minimal"
                       key="repeat"
                       onClick={this.handleDuplicate.bind(this, batch._id)}
                     >
@@ -195,9 +221,7 @@ export default class AdminBatches extends React.Component {
                     <td>{assignmentTypes[batch.assignment]}</td>
                     <td>{config}</td>
                     <td>
-                      <div className="pt-button-group pt-minimal">
-                        {actions}
-                      </div>
+                      <div className="button-group">{actions}</div>
                     </td>
                   </tr>
                 );
