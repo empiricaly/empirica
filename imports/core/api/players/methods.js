@@ -1,11 +1,16 @@
-import SimpleSchema from "simpl-schema";
 import { ValidatedMethod } from "meteor/mdg:validated-method";
+import SimpleSchema from "simpl-schema";
 
 import { Batches } from "../batches/batches.js";
 import { GameLobbies } from "../game-lobbies/game-lobbies";
 import { IdSchema } from "../default-schemas.js";
 import { LobbyConfigs } from "../lobby-configs/lobby-configs.js";
 import { Players } from "./players";
+
+let callOnChange;
+if (Meteor.isServer) {
+  callOnChange = require("../server/onchange").callOnChange;
+}
 
 export const createPlayer = new ValidatedMethod({
   name: "Players.methods.create",
@@ -237,6 +242,17 @@ export const updatePlayerData = new ValidatedMethod({
     const modifier = append ? { $push: update } : { $set: update };
 
     Players.update(playerId, modifier, { autoConvert: false });
+
+    if (Meteor.isServer) {
+      callOnChange({
+        playerId,
+        player,
+        key,
+        value: val,
+        prevValue: player.data && player.data[key],
+        append
+      });
+    }
   }
 });
 

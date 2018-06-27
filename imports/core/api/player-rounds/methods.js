@@ -1,6 +1,11 @@
+import { ValidatedMethod } from "meteor/mdg:validated-method";
 import SimpleSchema from "simpl-schema";
-
 import { PlayerRounds } from "./player-rounds";
+
+let callOnChange;
+if (Meteor.isServer) {
+  callOnChange = require("../server/onchange").callOnChange;
+}
 
 export const updatePlayerRoundData = new ValidatedMethod({
   name: "PlayerRounds.methods.updateData",
@@ -34,5 +39,17 @@ export const updatePlayerRoundData = new ValidatedMethod({
     const modifier = append ? { $push: update } : { $set: update };
 
     PlayerRounds.update(playerRoundId, modifier, { autoConvert: false });
+
+    if (Meteor.isServer) {
+      callOnChange({
+        playerId: playerRound.playerId,
+        playerRoundId,
+        playerRound,
+        key,
+        value: val,
+        prevValue: playerRound.data && playerRound.data[key],
+        append
+      });
+    }
   }
 });

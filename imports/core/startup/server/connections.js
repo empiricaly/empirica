@@ -14,8 +14,12 @@ const playerInLobby = (playerId, key = "playerIds") => {
   return GameLobbies.findOne(query);
 };
 
-export const savePlayerId = (connId, playerId) => {
-  connections[connId] = playerId;
+export const playerIdForConn = conn => {
+  return connections[conn.id];
+};
+
+export const savePlayerId = (conn, playerId) => {
+  connections[conn.id] = playerId;
 
   const player = Players.findOne(playerId);
   if (!player.readyAt) {
