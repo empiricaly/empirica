@@ -84,6 +84,9 @@ and this project adheres to
 - Loading issue between stages and at beginning of game.
 - Re-regestering of player with same playerID in lobby.
 - `.set()` value `0` was not supported, would be casted into `null`.
+- Callbacks marking the end of the game (including the end of the last round
+  and the last stage) were repeatedly called on a finished game until the whole
+  batch had ended.
 
 <!-- Add unreleased changes here -->
 

@@ -19,7 +19,8 @@ Cron.add({
   task: function(log) {
     const query = {
       status: "running",
-      estFinishedTime: { $gte: new Date() }
+      estFinishedTime: { $gte: new Date() },
+      finishedAt: { $exists: false }
     };
     Games.find(query).forEach(game => {
       const stage = Stages.findOne(game.currentStageId);
