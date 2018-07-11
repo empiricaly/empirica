@@ -166,10 +166,11 @@ export const createGameFromLobby = gameLobby => {
       s => s._id === params.currentStageId
     );
 
-    augmentGameStageRound(game, null, nextRound);
+    augmentGameStageRound(game, nextStage, nextRound);
     players.forEach(player => {
       player.round = _.extend({}, nextRound);
-      augmentPlayerStageRound(player, null, player.round);
+      player.stage = _.extend({}, nextStage);
+      augmentPlayerStageRound(player, player.stage, player.round);
     });
 
     if (onGameStart) {

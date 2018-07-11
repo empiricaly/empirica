@@ -46,11 +46,11 @@ export const endOfStage = stageId => {
 
   if (nextStage && (onRoundStart || onStageStart)) {
     const nextRound = Rounds.findOne(nextStage.roundId);
-    augmentGameStageRound(game, null, nextRound);
+    augmentGameStageRound(game, nextStage, nextRound);
     players.forEach(player => {
       player.round = _.extend({}, nextRound);
       player.stage = _.extend({}, nextStage);
-      augmentPlayerStageRound(player, null, player.round, player.stage);
+      augmentPlayerStageRound(player, player.stage, player.round, player.stage);
     });
 
     if (onRoundStart && stage.roundId !== nextStage.roundId) {
