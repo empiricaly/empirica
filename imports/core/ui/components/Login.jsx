@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import React from "react";
 
-import { AlertToaster } from "./AlertToaster.jsx";
+import { AlertToaster } from "./Toasters.jsx";
 
 export default class Login extends React.Component {
   componentWillUnmount() {

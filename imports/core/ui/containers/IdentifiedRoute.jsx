@@ -3,8 +3,20 @@ import { withTracker } from "meteor/react-meteor-data";
 import React from "react";
 
 import { Players } from "../../api/players/players.js";
+import { playerWasArchived } from "../../api/players/methods.js";
 
 class IdentifiedRouteInner extends React.Component {
+  componentDidMount() {
+    const { playerId: _id } = this.props;
+    if (_id) {
+      playerWasArchived.call({ _id }, (err, wasArchived) => {
+        if (!err && wasArchived) {
+          removePlayerId();
+        }
+      });
+    }
+  }
+
   render() {
     const { path, component: Component, ...rest } = this.props;
     return <Route path={path} render={props => <Component {...rest} />} />;

@@ -2,7 +2,7 @@ import { Dialog, RadioGroup, Radio } from "@blueprintjs/core";
 import { Link } from "react-router-dom";
 import React from "react";
 
-import { AlertToaster } from "../AlertToaster.jsx";
+import { AlertToaster } from "../Toasters.jsx";
 import { createTreatment } from "../../../api/treatments/methods.js";
 
 export default class AdminNewTreatment extends React.Component {

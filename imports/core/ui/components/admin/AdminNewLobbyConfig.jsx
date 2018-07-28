@@ -2,7 +2,7 @@ import { Dialog, NumericInput } from "@blueprintjs/core";
 import React from "react";
 import inflection from "inflection";
 
-import { AlertToaster } from "../AlertToaster.jsx";
+import { AlertToaster } from "../Toasters.jsx";
 import { LobbyConfigs } from "../../../api/lobby-configs/lobby-configs.js";
 import { createLobbyConfig } from "../../../api/lobby-configs/methods.js";
 import HelpTooltip from "../HelpTooltip.jsx";

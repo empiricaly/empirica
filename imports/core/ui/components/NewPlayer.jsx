@@ -1,6 +1,6 @@
 import React from "react";
 
-import { AlertToaster } from "./AlertToaster.jsx";
+import { AlertToaster } from "./Toasters.jsx";
 import { DevNote } from "./Helpers";
 import { config } from "../../../experiment/client";
 import { createPlayer } from "../../api/players/methods";

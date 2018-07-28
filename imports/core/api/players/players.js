@@ -13,7 +13,8 @@ Players.schema = new SimpleSchema({
   // an email address, a Mechanical Turk ID, a manually assigned participation
   // number (saved as string), etc...
   id: {
-    type: String
+    type: String,
+    max: 256
   },
 
   bot: {

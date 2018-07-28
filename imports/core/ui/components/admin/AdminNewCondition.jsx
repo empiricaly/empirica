@@ -1,7 +1,7 @@
 import { Dialog, NumericInput } from "@blueprintjs/core";
 import React from "react";
 
-import { AlertToaster } from "../AlertToaster.jsx";
+import { AlertToaster } from "../Toasters.jsx";
 import { Conditions } from "../../../api/conditions/conditions.js";
 import { createCondition } from "../../../api/conditions/methods.js";
 
