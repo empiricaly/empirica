@@ -12,6 +12,7 @@ import {
   augmentGameStageRound
 } from "../player-stages/augment.js";
 import { config } from "../../../experiment/server";
+import { weightedRandom } from "../../lib/utils.js";
 
 export const createGameFromLobby = gameLobby => {
   if (Games.find({ gameLobbyId: gameLobby._id }).count() > 0) {
@@ -132,22 +133,68 @@ export const createGameFromLobby = gameLobby => {
   // Let Game Lobby know Game ID
   GameLobbies.update(gameLobby._id, { $set: { gameId } });
 
+  //
+  // Overbooking
+  //
+
+  // Overbooked players that did not finish the intro and won't be in this game
   const failedPlayerIds = _.difference(
     gameLobby.queuedPlayerIds,
     gameLobby.playerIds
   );
 
-  // Notify players that didn't make the cut
-  Players.update(
-    { _id: { $in: failedPlayerIds } },
-    {
-      $set: {
-        exitAt: new Date(),
-        exitStatus: "gameFull"
-      }
-    },
-    { multi: true }
-  );
+  // Find other lobbies that are not full yet with the same treatment
+  const lobbies = GameLobbies.find({
+    _id: { $ne: gameLobby._id },
+    batchId,
+    status: "running",
+    timedOutAt: { $exists: false },
+    gameId: { $exists: false },
+    treatmentId
+  }).fetch();
+
+  // If no lobbies left, lead players to exit
+  if (lobbies.length === 0) {
+    Players.update(
+      { _id: { $in: failedPlayerIds } },
+      {
+        $set: {
+          exitAt: new Date(),
+          exitStatus: "gameFull"
+        }
+      },
+      { multi: true }
+    );
+  } else {
+    // If there are lobbies remaining, distribute them across the lobbies
+    // proportinally to the initial playerCount
+    const weigthedLobbyPool = weightedRandom(
+      lobbies.map(lobby => {
+        return {
+          value: lobby,
+          weight: lobby.availableCount
+        };
+      })
+    );
+
+    for (let i = 0; i < failedPlayerIds.length; i++) {
+      const playerId = failedPlayerIds[i];
+      const lobby = weigthedLobbyPool();
+
+      // Adding the player to specified lobby queue
+      GameLobbies.update(lobby._id, {
+        $addToSet: {
+          queuedPlayerIds: playerId
+        }
+      });
+
+      Players.update(playerId, { $set: { gameLobbyId } });
+    }
+  }
+
+  //
+  // Call the callbacks
+  //
 
   const { onRoundStart, onGameStart, onStageStart } = config;
   if ((onGameStart || onRoundStart || onStageStart) && firstRoundId) {
@@ -183,6 +230,10 @@ export const createGameFromLobby = gameLobby => {
       onStageStart(game, nextRound, nextStage, players);
     }
   }
+
+  //
+  // Start the game
+  //
 
   const startTimeAt = moment()
     .add(Stages.stagePaddingDuration)
