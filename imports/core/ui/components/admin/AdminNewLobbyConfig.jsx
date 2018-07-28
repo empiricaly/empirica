@@ -201,7 +201,7 @@ export default class AdminNewLobbyConfig extends React.Component {
             {timeoutType === "lobby" ? (
               <div className="pt-form-group">
                 <label className="pt-label" htmlFor="timeoutStrategy">
-                  Timeout Type
+                  Timeout Strategy
                   <HelpTooltip
                     content={
                       <div>

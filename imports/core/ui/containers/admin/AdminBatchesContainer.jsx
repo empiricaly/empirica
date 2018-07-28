@@ -8,9 +8,12 @@ import AdminBatches from "../../components/admin/AdminBatches";
 
 export default withTracker(props => {
   const batchesLoading = !Meteor.subscribe("admin-batches").ready();
-  const treatmentsLoading = !Meteor.subscribe("admin-treatments").ready();
+  const treatmentsLoading = !Meteor.subscribe("admin-treatments", {}).ready();
   const conditionsLoading = !Meteor.subscribe("admin-conditions").ready();
-  const lobbyConfigsLoading = !Meteor.subscribe("admin-lobby-configs").ready();
+  const lobbyConfigsLoading = !Meteor.subscribe(
+    "admin-lobby-configs",
+    {}
+  ).ready();
 
   return {
     loading:

@@ -97,7 +97,7 @@ export default class AdminNewTreatment extends React.Component {
                   value={name}
                   onChange={this.handleNameChange}
                   ref={e => (this.nameField = e)}
-                  pattern={/^[a-zA-Z0-9_]+$/.source}
+                  // pattern={/^[a-zA-Z0-9_]+$/.source}
                 />
               </div>
             </div>
