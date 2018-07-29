@@ -6,6 +6,7 @@ import { GameLobbies } from "../game-lobbies/game-lobbies";
 import { IdSchema } from "../default-schemas.js";
 import { LobbyConfigs } from "../lobby-configs/lobby-configs.js";
 import { Players } from "./players";
+import { weightedRandom } from "../../lib/utils.js";
 
 let callOnChange;
 if (Meteor.isServer) {
@@ -64,7 +65,8 @@ export const createPlayer = new ValidatedMethod({
     const lobbies = GameLobbies.find({
       batchId: batch._id,
       status: "running",
-      timedOutAt: { $exists: false }
+      timedOutAt: { $exists: false },
+      gameId: { $exists: false }
     }).fetch();
 
     if (lobbies.length === 0) {
@@ -76,13 +78,22 @@ export const createPlayer = new ValidatedMethod({
     let lobbyPool = lobbies.filter(
       l => l.availableCount > l.queuedPlayerIds.length
     );
+
     // If no lobbies still have "availability", just fill any lobby
     if (lobbyPool.length === 0) {
       lobbyPool = lobbies;
     }
 
-    // Choose a random lobby in the available pool
-    const lobby = _.shuffle(lobbyPool)[0];
+    // Book proportially to total expected playerCount
+    const weigthedLobbyPool = lobbyPool.map(lobby => {
+      return {
+        value: lobby,
+        weight: lobby.availableCount
+      };
+    });
+
+    // Choose a lobby in the available weigthed pool
+    const lobby = weightedRandom(weigthedLobbyPool)();
 
     // Adding the player to specified lobby queue
     GameLobbies.update(lobby._id, {

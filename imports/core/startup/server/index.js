@@ -8,3 +8,4 @@ import "./register-api.js";
 import "./avatars.js";
 import "./export.js";
 import "./connections.js";
+import "../../lib/utils.js";
