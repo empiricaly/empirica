@@ -10,3 +10,9 @@ export const AlertToaster = {
     toaster.show({ message, iconName: "warning-sign", intent: Intent.DANGER });
   }
 };
+
+export const SuccessToaster = {
+  show({ message }) {
+    toaster.show({ message, iconName: "tick-circle", intent: Intent.SUCCESS });
+  }
+};

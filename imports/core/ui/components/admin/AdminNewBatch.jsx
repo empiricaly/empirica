@@ -2,7 +2,7 @@ import { Dialog, NumericInput } from "@blueprintjs/core";
 import { Link } from "react-router-dom";
 import React from "react";
 
-import { AlertToaster } from "../AlertToaster.jsx";
+import { AlertToaster } from "../Toasters.jsx";
 import {
   assignmentTypes,
   maxGamesCount

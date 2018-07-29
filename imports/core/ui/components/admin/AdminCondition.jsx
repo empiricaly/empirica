@@ -1,6 +1,6 @@
 import { EditableText } from "@blueprintjs/core";
 import React from "react";
-import { AlertToaster } from "../AlertToaster.jsx";
+import { AlertToaster } from "../Toasters.jsx";
 
 import { updateCondition } from "../../../api/conditions/methods.js";
 

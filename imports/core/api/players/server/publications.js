@@ -2,11 +2,15 @@ import { Players } from "../players.js";
 import { savePlayerId } from "../../../startup/server/connections.js";
 
 Meteor.publish("playerInfo", function({ playerId }) {
-  const playerExists = Players.find(playerId).count() > 0;
+  const selector = {
+    _id: playerId,
+    "data.archivedGameFullAt": { $exists: false }
+  };
+  const playerExists = Players.find(selector).count() > 0;
   if (playerExists) {
     savePlayerId(this.connection, playerId);
   }
-  return Players.find(playerId);
+  return Players.find(selector);
 });
 
 const clients = {};

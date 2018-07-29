@@ -350,3 +350,51 @@ export const endPlayerTimeoutWait = new ValidatedMethod({
     });
   }
 });
+
+export const archiveGameFullPlayers = new ValidatedMethod({
+  name: "Players.methods.admin.archiveGameFull",
+
+  validate: new SimpleSchema({}).validator(),
+
+  run() {
+    if (!this.userId) {
+      throw new Error("unauthorized");
+    }
+
+    const players = Players.find({
+      exitStatus: "gameFull",
+      "data.archivedGameFullAt": { $exists: false }
+    }).fetch();
+
+    const timestamp = new Date().toISOString();
+
+    for (let i = 0; i < players.length; i++) {
+      const player = players[i];
+
+      Players.update(player._id, {
+        $set: {
+          id: `${player.id} (Archived game full at ${timestamp})`,
+          "data.archivedGameFullAt": new Date()
+        }
+      });
+    }
+
+    return players.length;
+  }
+});
+
+export const playerWasArchived = new ValidatedMethod({
+  name: "Players.methods.playerWasArchived",
+
+  validate: IdSchema.validator(),
+
+  run({ _id }) {
+    return Boolean(
+      Players.findOne({
+        _id,
+        exitStatus: "gameFull",
+        "data.archivedGameFullAt": { $exists: true }
+      })
+    );
+  }
+});
