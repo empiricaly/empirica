@@ -80,24 +80,17 @@ export const createPlayer = new ValidatedMethod({
     );
 
     // If no lobbies still have "availability", just fill any lobby
-    let weigthedLobbyPool;
     if (lobbyPool.length === 0) {
-      // Overbook proportially to total expected playerCount
-      weigthedLobbyPool = lobbies.map(lobby => {
-        return {
-          value: lobby,
-          weight: lobby.availableCount
-        };
-      });
-    } else {
-      // Fill remaining empty slots proportionally to number of remaining slots
-      weigthedLobbyPool = lobbyPool.map(lobby => {
-        return {
-          value: lobby,
-          weight: lobby.availableCount - lobby.queuedPlayerIds.length
-        };
-      });
+      lobbyPool = lobbies;
     }
+
+    // Book proportially to total expected playerCount
+    const weigthedLobbyPool = lobbyPool.map(lobby => {
+      return {
+        value: lobby,
+        weight: lobby.availableCount
+      };
+    });
 
     // Choose a lobby in the available weigthed pool
     const lobby = weightedRandom(weigthedLobbyPool)();
