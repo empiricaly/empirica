@@ -184,7 +184,7 @@ export const playerReady = new ValidatedMethod({
           return;
         }
 
-        // Try to upda the GameLobby with the playerIds we just queried.
+        // Try to update the GameLobby with the playerIds we just queried.
         GameLobbies.update(
           { _id: gameLobbyId, playerIds: lobby.playerIds },
           {

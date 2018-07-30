@@ -68,6 +68,9 @@ and this project adheres to
   ready for the game.
 - Upgraded Meteor to 1.7.0.3.
 - Upgraded NPM packages: React, React Router, Simple Schema...
+- We now overbook games proportionally to the playerCount.
+- When games start with overbooked players, we try to reassign players to other
+  games with the same treatment.
 
 ### Fixed
 
