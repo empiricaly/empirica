@@ -21,6 +21,7 @@ export const TimestampSchema = new SimpleSchema({
     type: Date,
     label: "Created at",
     denyUpdate: true,
+    index: true,
     autoValue() {
       if (this.isInsert) {
         return new Date();
@@ -36,6 +37,7 @@ export const TimestampSchema = new SimpleSchema({
     label: "Last updated at",
     optional: true,
     denyInsert: true,
+    index: true,
     autoValue() {
       if (this.isUpdate) {
         return new Date();
