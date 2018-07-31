@@ -182,9 +182,9 @@ export const createGameFromLobby = gameLobby => {
       const lobby = weigthedLobbyPool();
 
       // Adding the player to specified lobby queue
-      const $addToset = { queuedPlayerIds: playerId };
+      const $addToSet = { queuedPlayerIds: playerId };
       if (gameLobby.playerIds.includes(playerId)) {
-        $addToset.playerIds = playerId;
+        $addToSet.playerIds = playerId;
       }
       GameLobbies.update(lobby._id, {
         $addToSet
