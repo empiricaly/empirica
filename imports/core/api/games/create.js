@@ -190,7 +190,7 @@ export const createGameFromLobby = gameLobby => {
         $addToSet
       });
 
-      Players.update(playerId, { $set: { gameLobbyId } });
+      Players.update(playerId, { $set: { gameLobbyId: lobby._id } });
     }
   }
 
