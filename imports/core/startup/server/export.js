@@ -9,6 +9,7 @@ import { Players } from "../../api/players/players.js";
 import { Rounds } from "../../api/rounds/rounds.js";
 import { Stages } from "../../api/stages/stages.js";
 import { Treatments } from "../../api/treatments/treatments.js";
+import LRUMap from "../../lib/lru.js";
 
 //
 // WARNING!!!
@@ -57,6 +58,7 @@ export const cast = out => {
 export const quoteMark = '"';
 export const doubleQuoteMark = '""';
 export const quoteRegex = /"/g;
+export const batchSize = 1000;
 
 export const encodeCells = (line, delimiter = ",", newline = "\n") => {
   const row = line.slice(0);
@@ -88,7 +90,16 @@ const csvHeaders = [
 ];
 
 const exportStages = format => (req, res, next) => {
-  const withheld = req.query.withheld === "true";
+  let cancelRequest = false,
+    requestFinished = false;
+
+  req.on("close", function(err) {
+    if (!requestFinished) {
+      console.info("Export request was cancelled");
+      cancelRequest = true;
+    }
+  });
+
   switch (format) {
     case "csv":
       res.writeHead(200, {
@@ -159,83 +170,134 @@ const exportStages = format => (req, res, next) => {
     res.write(encodeCells(csvHeaders));
   }
 
-  // Query of player stages to export
-  const playerStagesCursor = PlayerStages.find(
-    {},
-    { sort: { gameId: 1, playerId: 1, createdAt: 1 } }
-  );
+  if (cancelRequest) {
+    return;
+  }
 
-  playerStagesCursor.forEach(playerStage => {
-    const out = new Map();
-    const player = Players.findOne(playerStage.playerId);
-    const playerRound = PlayerRounds.findOne({
-      playerId: playerStage.playerId,
-      roundId: playerStage.roundId
+  const caches = {
+    players: new LRUMap(10),
+    games: new LRUMap(10),
+    treatments: new LRUMap(100),
+    rounds: new LRUMap(100),
+    stages: new LRUMap(100),
+    playerInputs: new LRUMap(2),
+    playerRounds: new LRUMap(2)
+  };
+
+  const getCached = (name, id, fetcher) => {
+    let cached = caches[name].get(id);
+    if (!cached) {
+      cached = fetcher();
+      caches[name].set(id, cached);
+    }
+    return cached;
+  };
+
+  // Iterate over player stages to export
+  // console.info("Total playerStages:", PlayerStages.find().count());
+  let skip = 0,
+    playerStages;
+  while (!playerStages || playerStages.length > 0) {
+    if (cancelRequest) {
+      return;
+    }
+
+    playerStages = PlayerStages.find(
+      {},
+      { sort: { gameId: 1, playerId: 1, createdAt: 1 }, limit: batchSize, skip }
+    ).fetch();
+    // console.info("Batch playerStages:", playerStages.length, skip);
+
+    playerStages.forEach(playerStage => {
+      const out = new Map();
+      const player = getCached("players", playerStage.playerId, () =>
+        Players.findOne(playerStage.playerId)
+      );
+      const playerRound = getCached(
+        "playerRounds",
+        playerStage.playerId + "-" + playerStage.roundId,
+        () =>
+          PlayerRounds.findOne({
+            playerId: playerStage.playerId,
+            roundId: playerStage.roundId
+          })
+      );
+      const round = getCached("rounds", playerStage.roundId, () =>
+        Rounds.findOne(playerStage.roundId)
+      );
+      const stage = getCached("stages", playerStage.stageId, () =>
+        Stages.findOne(playerStage.stageId)
+      );
+      const game = getCached("games", playerStage.gameId, () =>
+        Games.findOne(playerStage.gameId)
+      );
+      const treatment = getCached("treatments", game.treatmentId, () =>
+        Treatments.findOne(game.treatmentId)
+      );
+      const inputs = getCached("playerInputs", playerStage.playerId, () =>
+        PlayerInputs.find({
+          playerId: playerStage.playerId
+        }).fetch()
+      );
+
+      out.set("batchId", playerStage.batchId);
+      out.set("gameId", playerStage.gameId);
+      out.set("playerId", playerStage.playerId);
+      out.set("playerIdParam", player.id);
+      out.set("roundId", playerStage.roundId);
+      out.set("stageId", playerStage.stageId);
+      out.set("playerRoundId", playerRound._id);
+      out.set("playerStageId", playerStage._id);
+      out.set(`round.index`, round.index);
+      out.set(`stage.index`, stage.index);
+      out.set(`stage.name`, stage.name);
+      out.set(`stage.duration`, stage.durationInSeconds);
+
+      const conditions = treatment.conditionIds.map(getCond);
+      for (const type of conditionTypes) {
+        const cond = conditions.find(c => c.type === type);
+        out.set(`treatment.${type}`, cond && cond.value);
+      }
+
+      for (const key of roundKeys) {
+        out.set(`round.data.${key}`, round.data[key]);
+      }
+
+      for (const key of stageKeys) {
+        out.set(`stage.data.${key}`, stage.data[key]);
+      }
+
+      for (const key of playerKeys) {
+        out.set(`player.data.${key}`, player.data[key]);
+      }
+
+      for (const key of playerRoundKeys) {
+        out.set(`playerRound.data.${key}`, playerRound.data[key]);
+      }
+
+      for (const key of playerStageKeys) {
+        out.set(`playerStage.data.${key}`, playerStage.data[key]);
+      }
+
+      _.times(inputsLen, i => {
+        out.set(`data.${i}`, inputs[i] && inputs[i].data);
+      });
+
+      switch (format) {
+        case "csv":
+          res.write(encodeCells(mapToArr(out)));
+          break;
+        case "json":
+          res.write(JSON.stringify(mapToObj(out)) + "\n");
+          break;
+        default:
+          throw "unknown export format";
+      }
     });
-    const round = Rounds.findOne(playerStage.roundId);
-    const stage = Stages.findOne(playerStage.stageId);
-    const game = Games.findOne(playerStage.gameId);
-    const treatment = Treatments.findOne(game.treatmentId);
-    const inputs = PlayerInputs.find({
-      playerId: playerStage.playerId
-    }).fetch();
+    skip += batchSize;
+  }
 
-    out.set("batchId", playerStage.batchId);
-    out.set("gameId", playerStage.gameId);
-    out.set("playerId", playerStage.playerId);
-    out.set("playerIdParam", player.id);
-    out.set("roundId", playerStage.roundId);
-    out.set("stageId", playerStage.stageId);
-    out.set("playerRoundId", playerRound._id);
-    out.set("playerStageId", playerStage._id);
-    out.set(`round.index`, round.index);
-    out.set(`stage.index`, stage.index);
-    out.set(`stage.name`, stage.name);
-    out.set(`stage.duration`, stage.durationInSeconds);
-
-    const conditions = treatment.conditionIds.map(getCond);
-    for (const type of conditionTypes) {
-      const cond = conditions.find(c => c.type === type);
-      out.set(`treatment.${type}`, cond && cond.value);
-    }
-
-    for (const key of roundKeys) {
-      out.set(`round.data.${key}`, round.data[key]);
-    }
-
-    for (const key of stageKeys) {
-      out.set(`stage.data.${key}`, stage.data[key]);
-    }
-
-    for (const key of playerKeys) {
-      out.set(`player.data.${key}`, player.data[key]);
-    }
-
-    for (const key of playerRoundKeys) {
-      out.set(`playerRound.data.${key}`, playerRound.data[key]);
-    }
-
-    for (const key of playerStageKeys) {
-      out.set(`playerStage.data.${key}`, playerStage.data[key]);
-    }
-
-    _.times(inputsLen, i => {
-      out.set(`data.${i}`, inputs[i] && inputs[i].data);
-    });
-
-    switch (format) {
-      case "csv":
-        res.write(encodeCells(mapToArr(out)));
-        break;
-      case "json":
-        res.write(JSON.stringify(mapToObj(out)) + "\n");
-        break;
-      default:
-        throw "unknown export format";
-        break;
-    }
-  });
-
+  requestFinished = true;
   res.end();
 };
 

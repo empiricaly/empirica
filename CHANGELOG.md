@@ -71,6 +71,7 @@ and this project adheres to
 - We now overbook games proportionally to the playerCount.
 - When games start with overbooked players, we try to reassign players to other
   games with the same treatment.
+- Improved export performance.
 
 ### Fixed
 
