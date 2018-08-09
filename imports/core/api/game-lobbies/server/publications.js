@@ -9,32 +9,36 @@ import { LobbyConfigs } from "../../lobby-configs/lobby-configs.js";
 publishComposite("gameLobby", function({ playerId }) {
   return {
     find() {
-      return GameLobbies.find({
-        $or: [{ playerIds: playerId }, { queuedPlayerIds: playerId }]
-      });
+      return Players.find(playerId);
     },
+
     children: [
       {
-        find({ treatmentId }) {
-          return Treatments.find(treatmentId);
+        find({ gameLobbyId }) {
+          return GameLobbies.find({
+            _id: gameLobbyId
+            // $or: [{ playerIds: playerId }, { queuedPlayerIds: playerId }]
+          });
         },
         children: [
           {
-            find({ conditionIds }) {
-              return Conditions.find({ _id: { $in: conditionIds } });
+            find({ treatmentId }) {
+              return Treatments.find(treatmentId);
+            },
+            children: [
+              {
+                find({ conditionIds }) {
+                  return Conditions.find({ _id: { $in: conditionIds } });
+                }
+              }
+            ]
+          },
+          {
+            find({ lobbyConfigId }) {
+              return LobbyConfigs.find(lobbyConfigId);
             }
           }
         ]
-      },
-      {
-        find() {
-          return Players.find(playerId);
-        }
-      },
-      {
-        find({ lobbyConfigId }) {
-          return LobbyConfigs.find(lobbyConfigId);
-        }
       }
     ]
   };
