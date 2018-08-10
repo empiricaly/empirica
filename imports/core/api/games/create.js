@@ -161,7 +161,7 @@ export const createGameFromLobby = gameLobby => {
     timedOutAt: { $exists: false },
     gameId: { $exists: false },
     treatmentId
-  });
+  }).fetch();
   possibleLobbies.forEach(lobby => {
     if (lobby.batchId === batchId) {
       lobbiesGroups[0].push(lobby);
