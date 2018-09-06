@@ -9,6 +9,26 @@ export const IdSchema = new SimpleSchema({
   }
 });
 
+export const ArchivedSchema = new SimpleSchema({
+  archivedById: {
+    type: String,
+    optional: true,
+    regEx: SimpleSchema.RegEx.Id,
+    autoValue() {
+      if (this.field("archivedAt").isSet) {
+        return this.userId;
+      }
+      return undefined;
+    }
+  },
+  archivedAt: {
+    type: Date,
+    label: "Archived at",
+    optional: true,
+    denyInsert: true
+  }
+});
+
 export const DebugModeSchema = new SimpleSchema({
   debugMode: {
     type: Boolean,

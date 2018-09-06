@@ -10,6 +10,7 @@ import AdminGames from "./admin/AdminGames.jsx";
 import AdminLobbyConfigsContainer from "../containers/admin/AdminLobbyConfigsContainer.jsx";
 import AdminPlayers from "./admin/AdminPlayers.jsx";
 import AdminTreatmentsContainer from "../containers/admin/AdminTreatmentsContainer";
+import { withStaticProps } from "./Helpers";
 
 export default class Admin extends React.Component {
   componentDidMount() {
@@ -173,12 +174,28 @@ export default class Admin extends React.Component {
             <Route path="/admin/games" component={AdminGames} />
             <Route path="/admin/players" component={AdminPlayers} />
             <Route
+              path="/admin/treatments/archived"
+              component={withStaticProps(AdminTreatmentsContainer, {
+                archived: true
+              })}
+            />
+            <Route
               path="/admin/treatments"
-              component={AdminTreatmentsContainer}
+              component={withStaticProps(AdminTreatmentsContainer, {
+                archived: false
+              })}
+            />
+            <Route
+              path="/admin/lobby-configurations/archived"
+              component={withStaticProps(AdminLobbyConfigsContainer, {
+                archived: true
+              })}
             />
             <Route
               path="/admin/lobby-configurations"
-              component={AdminLobbyConfigsContainer}
+              component={withStaticProps(AdminLobbyConfigsContainer, {
+                archived: false
+              })}
             />
             <Route
               path="/admin/conditions"

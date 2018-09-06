@@ -31,9 +31,9 @@ export default class ExitSurvey extends React.Component {
   };
 
   render() {
+    const { player } = this.props;
     const { age, gender, strength, fair, feedback, education } = this.state;
 
-    const { player } = this.props;
     return (
       <Centered>
         <div className="exit-survey">

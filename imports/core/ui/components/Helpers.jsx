@@ -14,3 +14,11 @@ export const DevNote = ({ children, block = false }) =>
 export const CoreWrapper = ({ children }) => (
   <div className="core">{children}</div>
 );
+
+export const withStaticProps = (WrappedComponent, props) => {
+  return class extends React.Component {
+    render() {
+      return <WrappedComponent {...props} {...this.props} />;
+    }
+  };
+};

@@ -1,12 +1,16 @@
 import { Conditions } from "../../conditions/conditions.js";
 import { Treatments } from "../treatments";
 
-Meteor.publish("admin-treatments", function() {
+Meteor.publish("admin-treatments", function({ archived }) {
   if (!this.userId) {
     return null;
   }
 
-  return [Treatments.find()];
+  if (archived === undefined) {
+    return Treatments.find();
+  }
+
+  return Treatments.find({ archivedAt: { $exists: Boolean(archived) } });
 });
 
 Meteor.publish("treatment", function(treatmentId) {

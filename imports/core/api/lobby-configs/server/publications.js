@@ -1,8 +1,13 @@
 import { LobbyConfigs } from "../lobby-configs.js";
 
-Meteor.publish("admin-lobby-configs", function() {
+Meteor.publish("admin-lobby-configs", function({ archived }) {
   if (!this.userId) {
     return null;
   }
-  return LobbyConfigs.find();
+
+  if (archived === undefined) {
+    return LobbyConfigs.find();
+  }
+
+  return LobbyConfigs.find({ archivedAt: { $exists: Boolean(archived) } });
 });

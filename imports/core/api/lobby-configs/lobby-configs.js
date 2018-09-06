@@ -3,7 +3,11 @@ import inflection from "inflection";
 
 import { Batches } from "../batches/batches";
 import { GameLobbies } from "../game-lobbies/game-lobbies.js";
-import { HasManyByRef, TimestampSchema } from "../default-schemas";
+import {
+  HasManyByRef,
+  TimestampSchema,
+  ArchivedSchema
+} from "../default-schemas";
 
 export const LobbyConfigs = new Mongo.Collection("lobby_configs");
 
@@ -69,7 +73,12 @@ LobbyConfigs.schema = new SimpleSchema({
     type: String,
     max: 256,
     optional: true,
-    regEx: /^[a-zA-Z0-9_]+$/
+    custom() {
+      if (this.isSet && LobbyConfigs.find({ name: this.value }).count() > 0) {
+        return "notUnique";
+      }
+    }
+    // regEx: /^[a-zA-Z0-9_]+$/
   },
 
   // The timeoutType fundamentally changes the behavior of the lobby. See
@@ -128,6 +137,7 @@ LobbyConfigs.schema = new SimpleSchema({
 });
 
 LobbyConfigs.schema.extend(TimestampSchema);
+LobbyConfigs.schema.extend(ArchivedSchema);
 Meteor.startup(() => {
   LobbyConfigs.schema.extend(HasManyByRef(Batches));
   LobbyConfigs.schema.extend(HasManyByRef(GameLobbies));
