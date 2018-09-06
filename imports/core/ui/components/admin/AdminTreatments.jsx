@@ -2,7 +2,7 @@ import { EditableText } from "@blueprintjs/core";
 import { Link } from "react-router-dom";
 import React from "react";
 
-import { AlertToaster } from "../AlertToaster.jsx";
+import { AlertToaster } from "../Toasters.jsx";
 import { updateTreatment } from "../../../api/treatments/methods.js";
 import AdminNewTreatment from "./AdminNewTreatment.jsx";
 import Loading from "../Loading";

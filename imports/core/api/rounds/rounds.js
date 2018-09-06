@@ -27,6 +27,6 @@ Rounds.schema.extend(UserDataSchema);
 Meteor.startup(function() {
   Rounds.schema.extend(HasManyByRef(Stages));
   Rounds.schema.extend(BelongsTo(Games));
-  Stages.schema.extend(HasManyByRef(PlayerRounds));
+  Rounds.schema.extend(HasManyByRef(PlayerRounds));
 });
 Rounds.attachSchema(Rounds.schema);

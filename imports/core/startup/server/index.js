@@ -9,3 +9,4 @@ import "./avatars.js";
 import "./export.js";
 import "./connections.js";
 import "../../lib/utils.js";
+import "../../api/indexes.js";

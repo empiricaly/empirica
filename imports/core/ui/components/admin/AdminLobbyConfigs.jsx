@@ -2,7 +2,7 @@ import React from "react";
 
 import { Link } from "react-router-dom";
 import { EditableText } from "@blueprintjs/core";
-import { AlertToaster } from "../AlertToaster.jsx";
+import { AlertToaster } from "../Toasters.jsx";
 import AdminNewLobbyConfig from "./AdminNewLobbyConfig.jsx";
 import Loading from "../Loading";
 import { updateLobbyConfig } from "../../../api/lobby-configs/methods";

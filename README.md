@@ -26,19 +26,19 @@ wheel every time you try to experiment with your ideas.
 
 ## Features
 
-* Design complex tasks and set up interactions that happen over any period of
+- Design complex tasks and set up interactions that happen over any period of
   time, from seconds to months, or among any number of people, from a single
   player to groups of any size.
-* Implement simple A/B tests with independent players in this framework. But
+- Implement simple A/B tests with independent players in this framework. But
   it's just as easy to implement group experiments with real-time or
   asynchronous interactions in a factorial or within-subjects design, or designs
   involving multiple types of units and conditional logic.
-* Add configurable artificial players and allowing for the study of Human + AI
+- Add configurable artificial players and allowing for the study of Human + AI
   social systems. This hybrid system could be the future of our society!
-* Create your own experimental games with only little prior programming
+- Create your own experimental games with only little prior programming
   knowledge as the framework is based on widely-used web technology standards:
   Javascript and React.js.
-* Watch the progress of experiments in real time with the ability to create
+- Watch the progress of experiments in real time with the ability to create
   one-way mirrors to observe the behavior of players in the virtual lab.
 
 ## Experiment development
@@ -49,8 +49,8 @@ organization method.
 
 To develop a new game, you will only be interested in a couple of folders:
 
-* imports/experiment
-* public/experiment
+- imports/experiment
+- public/experiment
 
 All other folders contain `core` Empirica code, which you should not need to
 change in the vast majority of cases.
@@ -97,8 +97,7 @@ rm -rf empirica.git
 git clone https://github.com/yourusername/yourexperimentname.git
 ```
 
-Now you are set. All you need to do is to change directory `cd
-yourexperimentname/` and start editing the files in `imports/experiment` to
+Now you are set. All you need to do is to change directory `cd yourexperimentname/` and start editing the files in `imports/experiment` to
 design your own experiment. You can
 [make the repository private](https://help.github.com/articles/making-a-public-repository-private/),
 if you wish, or public.
@@ -157,10 +156,10 @@ flag to the `meteor` command. Learn about Meteor Settings in the
 
 By convention, we recommend you call your settings files as follows:
 
-* local.json: For local development (on your own computer).
-* dev.json: For a development development.
-* staging.json: For a staging development.
-* production.json: For a product development.
+- local.json: For local development (on your own computer).
+- dev.json: For a development development.
+- staging.json: For a staging development.
+- production.json: For a product development.
 
 You might not have as many environments but we if you do, we might as well all
 follow a convention.
@@ -178,32 +177,39 @@ Example configuration:
     "debug_newPlayer": false,
     "debug_resetSession": false,
     "debug_resetDatabase": false,
-    "debug_gameDebugMode": false
-  }
+    "debug_gameDebugMode": false,
+    "loglevel": "info"
+  },
+  "admins": [
+    {
+      "username": "myusername",
+      "password": "mygreatpassword"
+    }
+  ]
 }
 ```
 
 Custom settings for Empirica:
 
-* **public.debug_newPlayer** `Boolean` (default: true in development, false in
+- **public.debug_newPlayer** `Boolean` (default: true in development, false in
   production) **This MUST NOT be true in production!** If true, a button in the
   header allows creating a new player without while staying in the same browser.
-* **public.debug_resetSession**: `Boolean` (default: true in development, false
+- **public.debug_resetSession**: `Boolean` (default: true in development, false
   in production) **This MUST NOT be true in production!** If true, a button in
   the header allows the player to reset their session (aka player logout).
-* **public.debug_resetDatabase**: `Boolean` (default: true in development, false
+- **public.debug_resetDatabase**: `Boolean` (default: true in development, false
   in production) **This MUST NOT be true in production!** If true, this will
   activate 2 buttons in the Admin that allow to partially or fully clear the DB.
   CAREFUL!!
-* **public.debug_gameDebugMode**: `Boolean` (default: true in development, false
+- **public.debug_gameDebugMode**: `Boolean` (default: true in development, false
   in production) **This MUST NOT be true in production!** If true, this
   activates a "Game Debug mode". This mode is very useful to develop, test and
   debug an experiment. In this mode, if you click on the `▶️ Start` button of a
   batch while holding `⌘` (mac) or `ctrl` (pc), all the games in the batch will
   be in debug mode, which does 2 things:
-  * it skips the instruction steps
-  * it sets the timer for a very long time
-* **public.playerIdParam**: `String` (default: ""). If provided, Empirica will
+  - it skips the instruction steps
+  - it sets the timer for a very long time
+- **public.playerIdParam**: `String` (default: ""). If provided, Empirica will
   try to extract the Player's ID from the URL parameter of the given key. This
   helps with integration with external tools such as Mechanical Turk. For
   example, if the `playerIdParam` is set to "workerId" and the URL is:
@@ -212,18 +218,27 @@ Custom settings for Empirica:
   you are working with MTurk, see the
   [URL docs](https://docs.aws.amazon.com/AWSMechTurk/latest/AWSMturkAPI/ApiReference_ExternalQuestionArticle.html#ApiReference_ExternalQuestionArticle-the-external-form)
   for more info about which fields they provide.
-* **public.playerIdParamExclusive**: `Boolean` (default: false"). If provided,
+- **public.playerIdParamExclusive**: `Boolean` (default: false"). If provided,
   the "Enter Player ID" will not be show, users are expected to sign up only
   through a URL param, see `public.playerIdParam` above. If
   `public.playerIdParam` is missing, `public.playerIdParamExclusive` is ignored.
+- **public.loglevel**: `String` (default: "warn" in prod, "info" in dev). Log
+  level controls the amount of logging the app will do. Setting to a lower level
+  can be useful while debugging. Valid log level strings are: trace, debug,
+  info, warn, error or silent.
+- **admins**: `Array`. This field allows you to create one or more admins for
+  the app. The array should contain objects, which each should contain a
+  `username` and a `password` field. By default, a default `admin` account will
+  be generated, and a password will automatically be set for that user, but the
+  password will change on each reload. It is highly recommended you set this
+  value and use a strong password, with 8+ random characters. See example above.
 
 ## Deployment
 
 There are many ways the app can be deployed. Empirica has no special
 dependencies beyond normal Meteor requirements: Node.js + Mongo.
 
-We will go through the deployment on one of the easiest solution using `Meteor
-Galaxy`. But there are many other options so we recommend you take a look at the
+We will go through the deployment on one of the easiest solution using `Meteor Galaxy`. But there are many other options so we recommend you take a look at the
 Meteor Deployment Guide: https://guide.meteor.com/deployment.html
 
 ### Meteor Galaxy
@@ -253,8 +268,7 @@ add you Mongo URL config as follows:
 {
   "galaxy.meteor.com": {
     "env": {
-      "MONGO_URL":
-        "mongodb://myuser:A6629E8B-F4D2-4EC1-ACE3-DF5AA9F2F9A6@43243gh43.mlab.com:6604/my-empirica-db"
+      "MONGO_URL": "mongodb://myuser:A6629E8B-F4D2-4EC1-ACE3-DF5AA9F2F9A6@43243gh43.mlab.com:6604/my-empirica-db"
     }
   }
 }

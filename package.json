@@ -24,6 +24,7 @@
     "indexof": "0.0.1",
     "inflection": "^1.12.0",
     "jdenticon": "^2.1.0",
+    "loglevel": "^1.6.1",
     "meteor-node-stubs": "^0.4.1",
     "moment": "^2.22.2",
     "prop-types": "^15.6.1",
