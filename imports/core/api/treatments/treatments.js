@@ -1,7 +1,7 @@
 import SimpleSchema from "simpl-schema";
 
 import { Conditions } from "../conditions/conditions.js";
-import { TimestampSchema } from "../default-schemas";
+import { TimestampSchema, ArchivedSchema } from "../default-schemas";
 
 export const Treatments = new Mongo.Collection("treatments");
 
@@ -103,7 +103,13 @@ Treatments.schema = new SimpleSchema({
     type: String,
     max: 256,
     optional: true,
-    regEx: /^[a-zA-Z0-9_]+$/
+    custom() {
+      if (this.isSet && Treatments.find({ name: this.value }).count() > 0) {
+        return "notUnique";
+      }
+    }
+
+    // regEx: /^[a-zA-Z0-9_]+$/
   },
 
   // Array of conditionIds
@@ -112,11 +118,12 @@ Treatments.schema = new SimpleSchema({
     minCount: requiredConditions.length,
     label: "Conditions",
     index: true,
+    denyUpdate: true,
     // Custom validation verifies required conditions are present and that
     // there are no duplicate conditions with the same key. We cannot easily
     // verify one of each conditions is present.
     custom() {
-      if (!Meteor.isServer) {
+      if (!Meteor.isServer || !this.isInsert) {
         return;
       }
 
@@ -147,6 +154,9 @@ Treatments.schema = new SimpleSchema({
 });
 
 Treatments.schema.addDocValidator(({ conditionIds }) => {
+  if (!this.isInsert) {
+    return [];
+  }
   const query = {
     conditionIds: {
       $size: conditionIds.length,
@@ -165,4 +175,5 @@ Treatments.schema.addDocValidator(({ conditionIds }) => {
 });
 
 Treatments.schema.extend(TimestampSchema);
+Treatments.schema.extend(ArchivedSchema);
 Treatments.attachSchema(Treatments.schema);

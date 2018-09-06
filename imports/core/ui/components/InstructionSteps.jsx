@@ -3,7 +3,7 @@ import React from "react";
 import { config } from "../../../experiment/client";
 import Loading from "./Loading.jsx";
 
-export default class Instructions extends React.Component {
+export default class InstructionSteps extends React.Component {
   state = { current: 0 };
   componentWillMount() {
     const { treatment, onDone } = this.props;
@@ -46,13 +46,15 @@ export default class Instructions extends React.Component {
     const Step = steps[current];
     const hasNext = steps.length - 1 > current;
     const hasPrev = current > 0;
+    const conds = treatment.conditionsObject();
     return (
       <Step
         hasPrev={hasPrev}
         hasNext={hasNext}
         onPrev={this.onPrev}
         onNext={this.onNext}
-        treatment={treatment.conditionsObject()}
+        treatment={conds}
+        game={{ treatment: conds }}
       />
     );
   }

@@ -6,15 +6,21 @@ import { Treatments } from "../../../api/treatments/treatments";
 import AdminTreatments from "../../components/admin/AdminTreatments";
 
 export default withTracker(props => {
-  const treatmentsLoading = !Meteor.subscribe("admin-treatments").ready();
+  const { archived } = props;
+  const treatmentsLoading = !Meteor.subscribe("admin-treatments", {
+    archived
+  }).ready();
   const conditionsLoading = !Meteor.subscribe("admin-conditions").ready();
   const typesLoading = !Meteor.subscribe("admin-condition-types").ready();
 
   return {
     loading: treatmentsLoading || conditionsLoading,
     typesLoading,
-    treatments: Treatments.find().fetch(),
+    treatments: Treatments.find().fetch({
+      archivedAt: { $exists: Boolean(archived) }
+    }),
     conditions: Conditions.find({}, { sort: { value: 1 } }).fetch(),
-    conditionTypes: ConditionTypes.find().fetch()
+    conditionTypes: ConditionTypes.find().fetch(),
+    ...props
   };
 })(AdminTreatments);

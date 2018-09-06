@@ -7,7 +7,7 @@ import AdminConditions from "../../components/admin/AdminConditions.jsx";
 export const ConditionTypes = new Mongo.Collection("condition_types");
 
 export default withTracker(props => {
-  const treatmentsLoading = !Meteor.subscribe("admin-treatments").ready();
+  const treatmentsLoading = !Meteor.subscribe("admin-treatments", {}).ready();
   const conditionsLoading = !Meteor.subscribe("admin-conditions").ready();
   const typesLoading = !Meteor.subscribe("admin-condition-types").ready();
 

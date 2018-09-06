@@ -14,7 +14,7 @@ export default class AdminCondition extends React.Component {
   }
 
   componentWillUpdate(props) {
-    if (props.name !== this.props.name) {
+    if (props.condition.name !== this.props.condition.name) {
       this.initialName = props.condition.name;
       this.setState({ name: props.condition.name });
     }
@@ -28,7 +28,7 @@ export default class AdminCondition extends React.Component {
     const { _id } = this.props.condition;
     const { name } = this.state;
     if (!name || name.trim() === "") {
-      this.setState({ name: this.props.condition.name });
+      this.setState({ name: this.initialName });
       return;
     }
     updateCondition.call({ _id, name }, err => {

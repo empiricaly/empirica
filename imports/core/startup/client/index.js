@@ -3,3 +3,5 @@
 import "../both/index.js";
 import "./style.js";
 import "./routes.js";
+
+TimeSync.loggingEnabled = false;
