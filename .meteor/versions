@@ -6,7 +6,7 @@ aldeed:schema-index@3.0.0
 allow-deny@1.1.0
 autoupdate@1.4.0
 babel-compiler@7.1.1
-babel-runtime@1.2.2
+babel-runtime@1.2.4
 base64@1.0.11
 binary-heap@1.0.10
 blaze-tools@1.0.10
@@ -23,7 +23,7 @@ ddp-rate-limiter@1.0.7
 ddp-server@2.2.0
 deps@1.0.12
 diff-sequence@1.1.0
-dynamic-import@0.4.1
+dynamic-import@0.4.2
 ecmascript@0.11.1
 ecmascript-runtime@0.7.0
 ecmascript-runtime-client@0.7.1
@@ -53,7 +53,7 @@ mizzao:timesync@0.5.0
 mobile-experience@1.0.5
 mobile-status-bar@1.0.14
 modern-browsers@0.1.1
-modules@0.12.0
+modules@0.12.2
 modules-runtime@0.10.0
 mongo@1.5.0
 mongo-dev-server@1.1.0

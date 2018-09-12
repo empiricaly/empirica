@@ -33,7 +33,7 @@ react-meteor-data                 # Connects the meteor reactive model to react
 mdg:validated-method              # Define Meteor methods in a structured way
 
 random@1.1.0
-dynamic-import@0.4.0
+dynamic-import@0.4.2
 accounts-password@1.5.1
 mizzao:timesync
-underscore
+underscore@1.0.10
