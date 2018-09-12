@@ -7,6 +7,15 @@ import { TimestampSchema, UserDataSchema, BelongsTo } from "../default-schemas";
 
 export const Players = new Mongo.Collection("players");
 
+export const exitStatuses = [
+  "gameFull",
+  "gameCancelled",
+  "gameLobbyTimedOut",
+  "playerEndedLobbyWait",
+  "playerLobbyTimedOut",
+  "finished"
+];
+
 Players.schema = new SimpleSchema({
   // The Player `id` is used to uniquely identify the player to avoid
   // having a user play multiple times. It can be any string, for example
@@ -61,14 +70,22 @@ Players.schema = new SimpleSchema({
     label: "Failed Reason",
     type: String,
     optional: true,
-    allowedValues: [
-      "gameFull",
-      "gameCancelled",
-      "gameLobbyTimedOut",
-      "playerEndedLobbyWait",
-      "playerLobbyTimedOut",
-      "finished"
-    ]
+    allowedValues: exitStatuses
+  },
+
+  // A player can be retired. Retired players should no longer be used in active
+  // game, but NOTHING is done in the code to block that from happening. It's
+  // more of an indicator for debugging down the line.
+  retiredAt: {
+    label: "Retired At",
+    type: Date,
+    optional: true
+  },
+  retiredReason: {
+    label: "Retired Reason",
+    type: String,
+    optional: true,
+    allowedValues: exitStatuses
   }
 });
 

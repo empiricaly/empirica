@@ -21,6 +21,7 @@ and this project adheres to
 - Added `set()` to games, rounds and stages, and `get()` to games.
 - Added `onSet()`, `onAppend()` and `onChange()` callbacks.
 - Added `get()` are `set()` now available on `player` introduction steps. #71
+- Retiring players who did not play to allow them to play again. #70
 
 ### Changed
 
