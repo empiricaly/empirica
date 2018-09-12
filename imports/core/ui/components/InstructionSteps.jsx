@@ -36,7 +36,7 @@ export default class InstructionSteps extends React.Component {
   };
 
   render() {
-    const { treatment } = this.props;
+    const { treatment, player } = this.props;
     const { steps, current, noInstruction } = this.state;
 
     if (noInstruction) {
@@ -55,6 +55,7 @@ export default class InstructionSteps extends React.Component {
         onNext={this.onNext}
         treatment={conds}
         game={{ treatment: conds }}
+        player={player}
       />
     );
   }

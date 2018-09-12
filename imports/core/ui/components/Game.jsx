@@ -65,6 +65,7 @@ export default class Game extends React.Component {
       return (
         <InstructionSteps
           treatment={treatment}
+          player={player}
           onDone={() => {
             playerReady.call({ _id: player._id });
           }}

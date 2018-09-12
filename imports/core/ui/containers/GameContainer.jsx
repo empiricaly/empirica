@@ -9,10 +9,10 @@ import { Rounds } from "../../api/rounds/rounds";
 import { Stages } from "../../api/stages/stages";
 import { Treatments } from "../../api/treatments/treatments.js";
 import {
+  augmentPlayer,
   augmentPlayerStageRound,
   augmentGameStageRound
 } from "../../api/player-stages/augment";
-import { stubPlayerStageRound } from "../../api/player-stages/augment.js";
 import Game from "../components/Game";
 
 const loadingObj = { loading: true };
@@ -131,7 +131,7 @@ export default withTracker(({ player, gameLobby, game, ...rest }) => {
       return loadingObj;
     }
 
-    stubPlayerStageRound(player);
+    augmentPlayer(player);
 
     return {
       gameLobby,

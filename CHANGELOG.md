@@ -20,6 +20,7 @@ and this project adheres to
 - New `append()` method on players, playerRounds, playerStages, games, stages and rounds.
 - Added `set()` to games, rounds and stages, and `get()` to games.
 - Added `onSet()`, `onAppend()` and `onChange()` callbacks.
+- Added `get()` are `set()` now available on `player` introduction steps. #71
 
 ### Changed
 

@@ -73,12 +73,18 @@ const nullFunc = () => {
   throw "You called .get(...) or .set(...) but there is no data for the player yet. Did the game run for this player?";
 };
 
-export const augmentPlayerStageRound = (player, stage, round) => {
+export const augmentPlayer = (player) => {
   const { _id: playerId } = player;
 
   player.get = key => player.data[key];
   player.set = set(player.data, playerSet(playerId));
   player.append = append(player.data, playerSet(playerId, true));
+}
+
+export const augmentPlayerStageRound = (player, stage, round) => {
+  const { _id: playerId } = player;
+
+  augmentPlayer(player);
 
   if (stage) {
     const playerStage = PlayerStages.findOne({ stageId: stage._id, playerId });
