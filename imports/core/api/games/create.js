@@ -69,7 +69,10 @@ export const createGameFromLobby = gameLobby => {
   // We want to copy over the changes made by the init function and save the
   // gameId in the player objects already in the DB
   params.players.forEach(({ _id, data }) => {
-    Players.update(_id, { $set: { gameId, data } });
+    const player = Players.findOne(_id, { fields: { data: 1 } });
+    Players.update(_id, {
+      $set: { gameId, data: _.extend(player.data, data) }
+    });
   });
 
   // Create the round objects
