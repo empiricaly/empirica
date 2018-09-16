@@ -173,10 +173,22 @@ export default class AdminNewBatch extends React.Component {
     });
   };
 
-  renderRequired() {
-    const { treatments, lobbyConfigs } = this.props;
+  validTreatments() {
+    const { treatments } = this.props;
 
+    return treatments.filter(t => !t.archivedAt);
+  }
+
+  validLobbyConfigs() {
+    const { lobbyConfigs } = this.props;
+
+    return lobbyConfigs.filter(l => !l.archivedAt);
+  }
+
+  renderRequired() {
     const issues = [];
+    const treatments = this.validTreatments();
+    const lobbyConfigs = this.validLobbyConfigs();
 
     if (_.isEmpty(treatments)) {
       issues.push(<Link to="/admin/treatments">Create a Treatment</Link>);
@@ -193,13 +205,18 @@ export default class AdminNewBatch extends React.Component {
     return (
       <div className="pt-dialog-body">
         You must first:
-        <ul>{issues.map((issue, i) => <li key={i}>{issue}</li>)}</ul>
+        <ul>
+          {issues.map((issue, i) => (
+            <li key={i}>{issue}</li>
+          ))}
+        </ul>
       </div>
     );
   }
 
   renderContent() {
-    const { treatments, conditions, lobbyConfigs } = this.props;
+    const treatments = this.validTreatments();
+    const lobbyConfigs = this.validLobbyConfigs();
 
     const {
       gamesCount,
@@ -379,7 +396,10 @@ export default class AdminNewBatch extends React.Component {
   }
 
   render() {
-    const { isOpen, onClose, treatments, lobbyConfigs } = this.props;
+    const { isOpen, onClose } = this.props;
+
+    const treatments = this.validTreatments();
+    const lobbyConfigs = this.validLobbyConfigs();
 
     const content =
       _.isEmpty(treatments) || _.isEmpty(lobbyConfigs)
