@@ -24,13 +24,14 @@ export default class NewPlayer extends React.Component {
     }
   }
 
+  componentWillMount() {
+    if (!ConsentComponent) {
+      this.playerFromIdParam();
+    }
+  }
   componentWillUnmount() {
     if (this.timeout) {
       clearTimeout(this.timeout);
-    }
-
-    if (!ConsentComponent) {
-      this.playerFromIdParam();
     }
   }
 
