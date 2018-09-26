@@ -9,7 +9,6 @@ import Centered from "./Centered.jsx";
 
 const { ConsentComponent } = config;
 import Loading from "./Loading.jsx";
-const { playerIdParam } = Meteor.settings.public;
 
 export default class NewPlayer extends React.Component {
   state = { id: "", consented: false };
@@ -28,6 +27,10 @@ export default class NewPlayer extends React.Component {
   componentWillUnmount() {
     if (this.timeout) {
       clearTimeout(this.timeout);
+    }
+
+    if (!ConsentComponent) {
+      this.playerFromIdParam();
     }
   }
 
@@ -52,7 +55,10 @@ export default class NewPlayer extends React.Component {
 
   handleConsent = () => {
     this.setState({ consented: true });
+    this.playerFromIdParam();
+  };
 
+  playerFromIdParam() {
     const { playerIdParam } = Meteor.settings.public;
 
     if (playerIdParam) {
@@ -71,7 +77,7 @@ export default class NewPlayer extends React.Component {
         });
       }
     }
-  };
+  }
 
   render() {
     const { id, consented, attemptingAutoLogin } = this.state;
