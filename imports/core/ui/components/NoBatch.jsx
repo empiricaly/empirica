@@ -17,7 +17,7 @@ export default class NoBatch extends React.Component {
         </div>
         <h4 className="pt-non-ideal-state-title">No experiments available</h4>
         <div className="pt-non-ideal-state-description">
-          There are currently no available experiement. Please wait until an
+          There are currently no available experiments. Please wait until an
           experiment becomes available or come back at a later date.
         </div>
       </div>
