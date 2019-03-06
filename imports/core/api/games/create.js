@@ -126,7 +126,15 @@ export const createGameFromLobby = gameLobby => {
   // An estimation of the finish time to help querying.
   // At the moment, this will 100% break with pausing the game/batch.
   params.estFinishedTime = moment()
-    .add(totalDuration + 300, "seconds") // Give it a 5min window for sync
+    // Give it an extra 24h (86400s) window for the inter-stage sync buffer.
+    // It was 5 min and that failed on an experiment with many rounds.
+    // This value is not extremely useful, it's main purpose is currently
+    // to stop querying games indefinitely in the update game background job.
+    // It was also meant to be an approximate estimate for when the game could
+    // end at the maximum, that we could show in the admin, but it can no longer
+    // work, and it is questionable if the "stop querying" "feature" is still
+    // adequate.
+    .add(totalDuration + 86400, "seconds")
     .toDate();
 
   // Insert game. As soon as it comes online, the game will start for the
