@@ -1,0 +1,57 @@
+package empirica
+
+import (
+	"context"
+
+	"github.com/empiricaly/empirica/internal/server"
+	logger "github.com/empiricaly/empirica/internal/utils/log"
+	"github.com/empiricaly/tajriba"
+	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
+)
+
+// Runner manages Empirica's running state.
+type Runner struct {
+	server *server.Server
+	taj    *tajriba.Runner
+}
+
+// Close waits for empirica to be done.
+func (r *Runner) Close(ctx context.Context) {
+	if r.server != nil {
+		r.server.Close()
+	}
+
+	if r.taj != nil {
+		r.taj.Close(ctx)
+	}
+}
+
+// Start sets up the Empirica environment and creates an HTTP server.
+func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, error) {
+	err := logger.Init(config.Log)
+	if err != nil {
+		return nil, errors.Wrap(err, "init logs")
+	}
+
+	if usingConfigFile {
+		log.Trace().Str("file", viper.ConfigFileUsed()).Msg("Using config file")
+	}
+
+	log.Trace().Interface("config", config).Msg("Configuration")
+
+	r := &Runner{}
+
+	r.server, err = server.Start(ctx, config.Server)
+	if err != nil {
+		return nil, errors.Wrap(err, "init server")
+	}
+
+	r.taj, err = tajriba.Init(ctx, config.Tajriba, r.server.Router)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to start tajriba")
+	}
+
+	return r, nil
+}

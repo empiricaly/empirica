@@ -1,0 +1,24 @@
+{
+  "name": "svelte-vite-windi",
+  "license": "MIT",
+  "author": "Ales Vaupotic <ales@reepolee.com>",
+  "homepage": "https://github.com/reepolee/svelte-vite-windi",
+  "description": "Svelte + Vite + Windi Starter template",
+  "version": "1.0.5",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "tajriba": "../pkg/"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^1.0.0-next.6",
+    "path": "^0.12.7",
+    "svelte": "^3.37.0",
+    "vite": "^2.1.5",
+    "vite-plugin-restart": "0.0.1",
+    "vite-plugin-windicss": "^0.13.0"
+  }
+}
