@@ -5,16 +5,17 @@ import { ObjectPool } from "./pool";
 
 export class Root extends Base {
   _batches: { [key: string]: Batch } = {};
+  children = [
+    {
+      key: "batchIDs",
+      type: "batch",
+      field: "_batches",
+    },
+  ];
 
   constructor(pool: ObjectPool, scope: Scope, id: string) {
     super(pool, scope, id);
-    this.children = [
-      {
-        key: "batchIDs",
-        type: "batch",
-        field: "_batches",
-      },
-    ];
+    this.init();
   }
 
   batch(id: string) {

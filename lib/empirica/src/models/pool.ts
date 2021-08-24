@@ -28,8 +28,10 @@ export function Pool(
 
 export abstract class ObjectPool {
   private objs: { [key: string]: Base } = {};
+  private objsByScopeID: { [key: string]: Base } = {};
   private stepObjs: { [key: string]: Base } = {};
   private objsByType: { [key: string]: Base[] } = {};
+  private changeQueue: BaseC[] = [];
   private emitter: EventEmitter;
 
   constructor(private types: { [key: string]: PoolConstructable }) {
@@ -54,8 +56,23 @@ export abstract class ObjectPool {
     return o;
   }
 
+  queueChange(baseC: BaseC) {
+    this.changeQueue.push(baseC);
+  }
+
+  queuedChanges() {
+    const changes = this.changeQueue;
+    this.changeQueue = [];
+
+    return changes;
+  }
+
   obj(id: string) {
     return this.objs[id];
+  }
+
+  scpIDObj(id: string) {
+    return this.objsByScopeID[id];
   }
 
   async object(t: string, id: string, ctx?: BaseC) {
@@ -87,6 +104,7 @@ export abstract class ObjectPool {
     }
 
     this.objs[id] = o;
+    this.objsByScopeID[scope.id] = o;
 
     this.emitter.emit("added", o);
 

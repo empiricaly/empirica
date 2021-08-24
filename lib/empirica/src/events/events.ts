@@ -30,17 +30,20 @@ export enum EmpiricaEvent {
 // LINK_ADD
 // ATTRIBUTE_UPDATE
 
-export const eventMap: Partial<{ [key in EmpiricaEvent]: EventType }> = {
-  [EmpiricaEvent.NewPlayer]: EventType.ParticipantAdd,
-  [EmpiricaEvent.PlayerConnected]: EventType.ParticipantConnect,
-  [EmpiricaEvent.PlayerDisonnected]: EventType.ParticipantDisconnect,
-  [EmpiricaEvent.NewBatch]: EventType.ScopeAdd,
+export const eventMap: Partial<{ [key in EmpiricaEvent]: EventType[] }> = {
+  [EmpiricaEvent.NewPlayer]: [EventType.ParticipantAdd],
+  [EmpiricaEvent.PlayerConnected]: [
+    EventType.ParticipantConnect,
+    EventType.ParticipantConnected,
+  ],
+  [EmpiricaEvent.PlayerDisonnected]: [EventType.ParticipantDisconnect],
+  [EmpiricaEvent.NewBatch]: [EventType.ScopeAdd],
 
-  [EmpiricaEvent.GameEnd]: EventType.TransitionAdd,
-  [EmpiricaEvent.RoundStart]: EventType.TransitionAdd,
-  [EmpiricaEvent.RoundEnd]: EventType.TransitionAdd,
-  [EmpiricaEvent.StageStart]: EventType.TransitionAdd,
-  [EmpiricaEvent.StageEnd]: EventType.TransitionAdd,
+  [EmpiricaEvent.GameEnd]: [EventType.TransitionAdd],
+  [EmpiricaEvent.RoundStart]: [EventType.TransitionAdd],
+  [EmpiricaEvent.RoundEnd]: [EventType.TransitionAdd],
+  [EmpiricaEvent.StageStart]: [EventType.TransitionAdd],
+  [EmpiricaEvent.StageEnd]: [EventType.TransitionAdd],
 
   // [EmpiricaEvent.AttributeChange]: EventType.AttributeUpdate,
 };
@@ -73,6 +76,12 @@ export interface StageEventArgs {
 export interface AttrEventArgs {
   attr: Attribute;
   isNew: boolean;
+  isInit: boolean;
+  player?: PlayerC;
+  batch?: BatchC;
+  game?: GameC;
+  round?: RoundC;
+  stage?: StageC;
 }
 
 export const EventCallbackArgs: {

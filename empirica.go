@@ -3,6 +3,7 @@ package empirica
 import (
 	"context"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/empiricaly/empirica/internal/server"
 	logger "github.com/empiricaly/empirica/internal/utils/log"
 	"github.com/empiricaly/tajriba"
@@ -43,12 +44,19 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 
 	r := &Runner{}
 
+	var schema graphql.ExecutableSchema
+
+	ctx, r.taj, schema, err = tajriba.Setup(ctx, config.Tajriba, usingConfigFile)
+	if err != nil {
+		log.Fatal().Err(err).Msg("failed to start tajriba")
+	}
+
 	r.server, err = server.Start(ctx, config.Server)
 	if err != nil {
 		return nil, errors.Wrap(err, "init server")
 	}
 
-	r.taj, err = tajriba.Init(ctx, config.Tajriba, r.server.Router)
+	err = tajriba.Init(ctx, config.Tajriba, schema, r.server.Router)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start tajriba")
 	}

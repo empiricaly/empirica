@@ -45,8 +45,6 @@ func root(_ *cobra.Command, _ []string, usingConfigFile bool) {
 		log.Fatal().Msg("Force quit")
 	}()
 
-	log.Info().Msg("Empirica starting")
-
 	t, err := empirica.Start(ctx, conf, usingConfigFile)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed starting empirica")

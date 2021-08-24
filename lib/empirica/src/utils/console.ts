@@ -29,7 +29,7 @@ function logger(level: string) {
 
     log.apply(
       console,
-      [formatConsoleDate(new Date()) + first_parameter].concat(other_parameters)
+      [formatConsoleDate(new Date()), first_parameter].concat(other_parameters)
     );
   };
 }

@@ -29,11 +29,22 @@ export class Stage extends Base {
 }
 
 export class StageC extends BaseC {
+  private _ended: boolean = false;
+
   constructor(public name: string, public duration: number, base?: Stage) {
     super(base);
   }
 
   get round() {
     return <RoundC>this.base?.round?.ctx;
+  }
+
+  end() {
+    this._ended = true;
+    this.queueChange();
+  }
+
+  get ended() {
+    return this._ended;
   }
 }

@@ -35,7 +35,7 @@ export class Attribute {
     private taj: TajribaUser,
     private attr: Attr | null = null,
     public key: string = "",
-    private nodeID: string = ""
+    public nodeID: string = ""
   ) {
     if (attr) {
       this.val = attr.val ? JSON.parse(attr.val) : null;
@@ -109,6 +109,8 @@ export class Attribute {
         },
         options
       );
+
+      this.val = val;
 
       this.taj
         .setAttributes([

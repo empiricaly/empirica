@@ -7,16 +7,17 @@ import { Stage, StageC } from "./stage";
 
 export class Round extends Base {
   _stages: { [key: string]: Stage } = {};
+  children = [
+    {
+      key: "stageIDs",
+      type: "stage",
+      field: "_stages",
+    },
+  ];
 
   constructor(pool: ObjectPool, scope: Scope, id: string) {
     super(pool, scope, id);
-    this.children = [
-      {
-        key: "stageIDs",
-        type: "stage",
-        field: "_stages",
-      },
-    ];
+    this.init();
   }
 
   get game(): Game | undefined {
@@ -46,6 +47,7 @@ export class RoundC extends BaseC {
     const stage = new StageC(name, duration);
     this.stages.push(stage);
 
+    this.queueChange();
     return stage;
   }
 }

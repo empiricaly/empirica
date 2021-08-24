@@ -9,11 +9,15 @@ export default function Game({ children, participant, game, player }) {
       return game.currentStage.remaining.subscribe((n) => setSeconds(n));
     }
   }, [game.currentStage]);
-  console.dir(game.currentStage);
 
   function handleClick() {
-    player.set("score", score + 1);
+    // player.set("score", score + 1);
+    // player.set("readyForAssigment", player.get("score"));
+    player.stage.set("submit", true);
+    // console.info("submit", player.stage.get("submit"));
   }
+
+  // console.log("round", game?.currentStage?.id);
 
   if (game.state == "ended") {
     return (
@@ -34,13 +38,17 @@ export default function Game({ children, participant, game, player }) {
       </div>
       <div className="mb-20">{seconds}</div>
 
-      <button
-        onClick={handleClick}
-        type="button"
-        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-empirica-600 hover:bg-empirica-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
-      >
-        Click me
-      </button>
+      {player.stage?.get("submit") ? (
+        "Submitted"
+      ) : (
+        <button
+          onClick={handleClick}
+          type="button"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-empirica-600 hover:bg-empirica-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
+        >
+          Click me
+        </button>
+      )}
 
       <div className="mt-8 font-bold text-2xl">{score}</div>
 

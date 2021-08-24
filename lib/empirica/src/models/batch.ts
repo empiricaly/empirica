@@ -6,16 +6,17 @@ import { ObjectPool } from "./pool";
 
 export class Batch extends Base {
   _games: { [key: string]: Game } = {};
+  children = [
+    {
+      key: "gameIDs",
+      type: "game",
+      field: "_games",
+    },
+  ];
 
   constructor(pool: ObjectPool, scope: Scope, id: string) {
     super(pool, scope, id);
-    this.children = [
-      {
-        key: "gameIDs",
-        type: "game",
-        field: "_games",
-      },
-    ];
+    this.init();
   }
 
   createCtx(): BatchC {
@@ -33,6 +34,7 @@ export class BatchC extends BaseC {
   addGame(treatment: Json) {
     const game = new GameC(treatment);
     this.games.push(game);
+    this.queueChange();
     return game;
   }
 }

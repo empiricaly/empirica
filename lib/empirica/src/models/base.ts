@@ -1,5 +1,5 @@
 import { newID } from "tajriba";
-import { internalPrefix, Scope } from "../scope";
+import { internalKey, Scope } from "../scope";
 import { AttributeOptions } from "./attribute";
 import { Json, JsonValue } from "./json";
 import { ObjectPool } from "./pool";
@@ -21,12 +21,13 @@ export class Base {
     protected _id: string
   ) {
     this.ctx = this.createCtx();
+  }
+
+  protected init() {
     for (const child of this.children) {
-      this.scope
-        .sub(`${internalPrefix}:${child.key}`)
-        .subscribe(async (ids) => {
-          this.updateIDs(ids, child.field, child.type);
-        });
+      this.scope.sub(internalKey(child.key)).subscribe(async (ids) => {
+        this.updateIDs(ids || [], child.field, child.type);
+      });
     }
   }
 
@@ -62,6 +63,10 @@ export class Base {
     return new BaseC(this);
   }
 
+  queueChange() {
+    this.pool.queueChange(this.ctx);
+  }
+
   get id() {
     return this._id;
   }
@@ -83,15 +88,15 @@ export class Base {
   }
 
   getInternal(key: string) {
-    return this.scope.get(`${internalPrefix}:${key}`);
+    return this.scope.get(internalKey(key));
   }
 
   subInternal(key: string) {
-    return this.scope.sub(`${internalPrefix}:${key}`);
+    return this.scope.sub(internalKey(key));
   }
 
   setInternal(key: string, val: any, immutable: boolean = false) {
-    this.scope.set(`${internalPrefix}:${key}`, val, { immutable });
+    this.scope.set(internalKey(key), val, { immutable });
   }
 }
 
@@ -114,13 +119,17 @@ export class BaseC {
     return this._id;
   }
 
+  queueChange() {
+    this.base?.queueChange();
+  }
+
   get(key: string) {
     if (key in this._ks) {
       return this._ks[key];
     }
 
     if (this.base) {
-      return this.base.sub(key);
+      return this.base.get(key);
     }
 
     return;
@@ -136,5 +145,7 @@ export class BaseC {
     if (ao) {
       this._kopts[key] = ao;
     }
+
+    this.queueChange();
   }
 }

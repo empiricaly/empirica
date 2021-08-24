@@ -10,6 +10,7 @@ import { AttrEventArgs, EventCallback } from "./events/events";
 import { Attribute, AttributeOptions } from "./models/attribute";
 
 export const internalPrefix = "ei";
+export const internalKey = (k: string) => `${internalPrefix}:${k}`;
 
 export class ScopeManager {
   private emitter: EventEmitter;
@@ -75,9 +76,13 @@ export class ScopeManager {
       scp.id,
       scp.name,
       this.taj,
-      (attr: Attribute, isNew: boolean) => {
-        const name = `${type}-${attr.key}`;
-        this.emitter.emit(name, { attr, isNew });
+      (attr: Attribute, isNew: boolean, isInit: boolean) => {
+        let k = attr.key;
+        if (k.includes(":") && !k.startsWith("ei:") && !k.endsWith(":")) {
+          k = k.split(":")[1];
+        }
+        const name = `${type}-${k}`;
+        this.emitter.emit(name, { attr, isNew, isInit });
       }
     );
     this.scopes[scp.name] = scope;
@@ -90,6 +95,7 @@ export class ScopeManager {
 
 export class Scope {
   private syncing: boolean = false;
+  private initialized: boolean = false;
   private attrs: { [key: string]: Attribute } = {};
   private done: boolean = false;
   private dones: ((value: unknown) => any)[] = [];
@@ -98,7 +104,11 @@ export class Scope {
     public id: string,
     public name: string,
     private taj: TajribaAdmin | TajribaParticipant,
-    private onChange?: (attr: Attribute, isNew: boolean) => void
+    private onChange?: (
+      attr: Attribute,
+      isNew: boolean,
+      isInit: boolean
+    ) => void
   ) {
     // Disable syncing for Participant
     if (taj instanceof TajribaParticipant) {
@@ -158,6 +168,9 @@ export class Scope {
     }
 
     this.done = done;
+    if (done) {
+      this.initialized = true;
+    }
   }
 
   updateAttr(at: Attr, isNew: boolean) {
@@ -169,7 +182,7 @@ export class Scope {
       this.attrs[at.key] = a;
     }
 
-    this.onChange && this.onChange(a, isNew);
+    this.onChange && this.onChange(a, isNew, !this.initialized);
   }
 
   get keys() {
@@ -199,6 +212,7 @@ export class Scope {
   set(key: string, val: any, ao?: Partial<AttributeOptions>) {
     let attr = this.attrs[key];
     if (!attr) {
+      // console.log("SET", this.id);
       attr = new Attribute(this.taj, null, key, this.id);
       this.attrs[key] = attr;
     }

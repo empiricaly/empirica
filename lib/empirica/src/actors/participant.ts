@@ -1,10 +1,11 @@
 import { EventEmitter } from "events";
 import { Readable, Writable, writable } from "svelte/store";
 import { Attribute, Node, TajribaParticipant } from "tajriba";
+import { JsonValue } from "../models/json";
 import { ObjectPool } from "../models/pool";
-import { internalPrefix, Scope } from "../scope";
+import { internalKey, Scope } from "../scope";
 
-class EObj {
+export class EObj {
   protected scope: Scope;
   constructor(
     scpid: string,
@@ -24,11 +25,11 @@ class EObj {
   }
 
   getInternal(key: string) {
-    return this.scope.get(`${internalPrefix}:${key}`);
+    return this.scope.get(internalKey(key));
   }
 
   subInternal(key: string) {
-    return this.scope.sub(`${internalPrefix}:${key}`);
+    return this.scope.sub(internalKey(key));
   }
 
   set(key: string, val: any, immutable: boolean = false) {
@@ -36,13 +37,74 @@ class EObj {
   }
 
   setInternal(key: string, val: any, immutable: boolean = false) {
-    this.scope.set(`${internalPrefix}:${key}`, val, { immutable });
+    this.scope.set(internalKey(key), val, { immutable });
   }
 }
 
-export class Player extends EObj {}
+interface proxyTarget {
+  intersec: Stage | Round | Game;
+  type: "stage" | "round" | "game";
+  player: Player;
+}
+
+const getSetProxyHandler = {
+  get: function (target: proxyTarget, prop: string, receiver: any) {
+    if (prop === "get") {
+      return (key: string) => {
+        const k = `${target.type}-${target.intersec.id}:${key}`;
+        return target.player.get(k);
+      };
+    }
+
+    if (prop === "set") {
+      return (key: string, val: JsonValue) => {
+        const k = `${target.type}-${target.intersec.id}:${key}`;
+        return target.player.set(k, val);
+      };
+    }
+  },
+};
+
+export class Player extends EObj {
+  get stage() {
+    const stage = this.participant._game?.currentStage;
+    if (!stage) {
+      return;
+    }
+
+    return new Proxy(
+      { intersec: stage, type: "stage", player: this },
+      getSetProxyHandler
+    );
+  }
+
+  get round() {
+    const round = this.participant._game?.currentStage?.round;
+    if (!round) {
+      return;
+    }
+
+    return new Proxy(
+      { intersec: round, type: "round", player: this },
+      getSetProxyHandler
+    );
+  }
+}
 
 export class Round extends EObj {
+  get game(): Game | undefined {
+    const game: Game | undefined = <Game | undefined>Object.values(
+      this.participant._objs
+    ).find((o) => {
+      const rdIds = o.getInternal("roundIDs");
+      if (rdIds && rdIds.includes(this.id)) {
+        return o;
+      }
+    });
+
+    return game;
+  }
+
   get stages(): Stage[] {
     const stageIDs = this.getInternal("stageIDs");
     const stages = [];
@@ -170,7 +232,7 @@ export class Game extends EObj {
 
 export class Participant {
   private emitter: EventEmitter;
-  private _game: Game | null = null;
+  _game: Game | null = null;
   private _gameW: Writable<Game | null> = writable(null);
   _stages: Stage[] = [];
   _players: { [key: string]: Player } = {};
@@ -211,7 +273,7 @@ export class Participant {
               this._gameW.set(this._game);
               break;
             case "player":
-              obj = this.updatePlayer(id);
+              obj = this.updatePlayer(id, change.id);
               break;
             case "round":
               obj = new Round(change.id, id, change.name, this);
@@ -232,7 +294,8 @@ export class Participant {
 
           break;
         case "ParticipantChange":
-          this.updatePlayer(change.id);
+          // TODO capture who is actually participating rn
+          // this.updatePlayer(id, change.id);
           break;
         case "StepChange":
           let stage: Stage | undefined;
@@ -327,9 +390,9 @@ export class Participant {
     return this._players[this.taj.id];
   }
 
-  private updatePlayer(id: string) {
+  private updatePlayer(id: string, scpid: string) {
     if (!this._players[id]) {
-      this._players[id] = new Player(id, id, `player:${id}`, this);
+      this._players[id] = new Player(scpid, id, `player:${id}`, this);
     }
 
     return this._players[id];

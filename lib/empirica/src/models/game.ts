@@ -12,21 +12,22 @@ export class Game extends Base {
   _rounds: { [key: string]: Round } = {};
   _players: { [key: string]: Player } = {};
   group?: Group;
+  children = [
+    {
+      key: "roundIDs",
+      type: "round",
+      field: "_rounds",
+    },
+    {
+      key: "playerIDs",
+      type: "player",
+      field: "_players",
+    },
+  ];
 
   constructor(pool: ObjectPool, scope: Scope, id: string) {
     super(pool, scope, id);
-    this.children = [
-      {
-        key: "roundIDs",
-        type: "round",
-        field: "_rounds",
-      },
-      {
-        key: "playerIDs",
-        type: "player",
-        field: "_players",
-      },
-    ];
+    this.init();
   }
 
   get batch(): Batch | undefined {
@@ -44,6 +45,17 @@ export class Game extends Base {
     const gc = <GameC>this.ctx;
     gc._state.from = state;
     gc._state.to = state;
+  }
+
+  get currentStage(): Stage | undefined {
+    const stgID = this.getInternal("currentStageID");
+    if (!stgID) {
+      return;
+    }
+
+    const stg = <Stage>this.pool.obj(stgID);
+
+    return stg;
   }
 
   firstStage() {
@@ -145,6 +157,7 @@ export class GameC extends BaseC {
   addRound() {
     const round = new RoundC();
     this.rounds.push(round);
+    this.queueChange();
     return round;
   }
 
@@ -155,6 +168,7 @@ export class GameC extends BaseC {
       }
     }
     this.players.push(player);
+    this.queueChange();
   }
 
   start() {
@@ -168,6 +182,7 @@ export class GameC extends BaseC {
     }
 
     this._state.to = State.Running;
+    this.queueChange();
   }
 
   cancel() {
@@ -180,6 +195,7 @@ export class GameC extends BaseC {
     }
 
     this._state.to = State.Terminated;
+    this.queueChange();
   }
 
   pause() {
@@ -189,5 +205,6 @@ export class GameC extends BaseC {
     }
 
     this._state.to = State.Paused;
+    this.queueChange();
   }
 }

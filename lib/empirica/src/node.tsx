@@ -5,6 +5,7 @@ import Loading from "./components/Loading";
 import Logo from "./components/Logo";
 import PlayerID from "./components/PlayerID";
 import Steps from "./components/Steps";
+import { EmpiricaContext } from "./context";
 import { Empirica } from "./empirica";
 import { Json } from "./models/json";
 
@@ -57,7 +58,7 @@ export const EmpiricaParticipant: React.FC<EmpiricaParticipantProps> = (
     console.time("startup" + ns);
     token = window.localStorage.getItem(tokenKey) || undefined;
     const participantStr = window.localStorage.getItem(partKey) || undefined;
-    const e = new Empirica("http://localhost:4737/query", token);
+    const e = new Empirica("http://localhost:8882/query", token);
     setEmp(e);
 
     (async () => {
@@ -84,7 +85,11 @@ export const EmpiricaParticipant: React.FC<EmpiricaParticipantProps> = (
   }
 
   if (participant) {
-    return <Part participant={participant}>{props.children}</Part>;
+    return (
+      <EmpiricaContext.Provider value={participant}>
+        <Part participant={participant}>{props.children}</Part>
+      </EmpiricaContext.Provider>
+    );
   }
 
   if (consented || props.consent === null) {

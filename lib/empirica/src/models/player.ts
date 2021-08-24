@@ -1,13 +1,57 @@
 import { Scope } from "../scope";
 import { Base, BaseC } from "./base";
+import { Game, GameC } from "./game";
 import { JsonValue } from "./json";
 import { ObjectPool } from "./pool";
 import { RoundC } from "./round";
-import { StageC } from "./stage";
+import { Stage, StageC } from "./stage";
 
 export class Player extends Base {
+  private bootstraped: boolean = false;
+
   constructor(pool: ObjectPool, scope: Scope, id: string) {
     super(pool, scope, id);
+  }
+
+  bootstrap() {
+    if (this.bootstraped) {
+      return;
+    }
+    this.bootstraped = true;
+
+    const gameID = this.getInternal("gameID");
+    if (!gameID) {
+      return;
+    }
+
+    const game = <Game>this.pool.obj(gameID);
+    if (!game) {
+      return;
+    }
+
+    const stageID = game.getInternal("currentStageID");
+    if (!stageID) {
+      (<PlayerC>this.ctx).setContext(<GameC>game.ctx);
+      return;
+    }
+
+    const stage = <Stage>this.pool.obj(stageID);
+    if (!stage) {
+      (<PlayerC>this.ctx).setContext(<GameC>game.ctx);
+      return;
+    }
+
+    const round = stage.round;
+    if (!round) {
+      (<PlayerC>this.ctx).setContext(<GameC>game.ctx);
+      return;
+    }
+
+    (<PlayerC>this.ctx).setContext(
+      <GameC>game.ctx,
+      <RoundC>round.ctx,
+      <StageC>stage.ctx
+    );
   }
 
   createCtx(): PlayerC {
@@ -31,11 +75,18 @@ class PrefixedAttributes {
   }
 }
 
+class PlayerGame extends PrefixedAttributes {
+  constructor(readonly id: string, bc: BaseC) {
+    super(`game-${id}`, bc);
+  }
+}
+
 class PlayerRound extends PrefixedAttributes {
   constructor(readonly id: string, bc: BaseC) {
     super(`round-${id}`, bc);
   }
 }
+
 class PlayerStage extends PrefixedAttributes {
   constructor(readonly id: string, bc: BaseC) {
     super(`stage-${id}`, bc);
@@ -43,26 +94,36 @@ class PlayerStage extends PrefixedAttributes {
 }
 
 export class PlayerC extends BaseC {
+  private _game?: PlayerGame;
   private _round?: PlayerRound;
-  private _stage?: PlayerRound;
+  private _stage?: PlayerStage;
 
-  constructor(base?: Base, round?: RoundC, stage?: StageC) {
+  constructor(base?: Base, game?: GameC, round?: RoundC, stage?: StageC) {
     super(base);
+
+    this.setContext(game, round, stage);
+  }
+
+  setContext(game?: GameC, round?: RoundC, stage?: StageC) {
+    if (game) {
+      this._game = new PlayerGame(game.id, this);
+    } else {
+      this._game = undefined;
+    }
     if (round) {
       this._round = new PlayerRound(round.id, this);
+    } else {
+      this._round = undefined;
     }
     if (stage) {
       this._stage = new PlayerStage(stage.id, this);
+    } else {
+      this._stage = undefined;
     }
   }
 
   get game() {
-    const gameID = this.base?.getInternal("gameID");
-    if (gameID) {
-      return this.base?.pool.obj(gameID) || gameID;
-    }
-
-    return null;
+    return this._game;
   }
 
   get round() {
