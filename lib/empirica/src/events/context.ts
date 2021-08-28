@@ -26,6 +26,13 @@ export class Context {
   }
 
   get allPlayers() {
-    return this.pool.objectsOfType("player");
+    return this.pool.objectsOfType("player").map((p) => p.ctx);
+  }
+
+  get unassignedPlayers() {
+    return this.pool
+      .objectsOfType("player")
+      .filter((p) => !p.getInternal("gameID"))
+      .map((p) => p.ctx);
   }
 }

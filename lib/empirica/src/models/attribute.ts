@@ -59,14 +59,17 @@ export class Attribute {
       }
 
       if (attr.id === this.attr.id) {
+        // TODO Why this happens?!
         // console.debug("attr: id has not changed");
-        return;
+        return false;
       }
     }
 
     this.val = attr.val ? JSON.parse(attr.val) : null;
     this.rval.set(this.val);
     this.attr = attr;
+
+    return true;
   }
 
   get value() {

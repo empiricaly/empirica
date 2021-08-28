@@ -175,14 +175,16 @@ export class Scope {
 
   updateAttr(at: Attr, isNew: boolean) {
     let a = this.attrs[at.key];
+    let didUpdate = false;
     if (a) {
-      a.update(at);
+      didUpdate = a.update(at);
     } else {
+      didUpdate = true;
       a = new Attribute(this.taj, at);
       this.attrs[at.key] = a;
     }
 
-    this.onChange && this.onChange(a, isNew, !this.initialized);
+    didUpdate && this.onChange && this.onChange(a, isNew, !this.initialized);
   }
 
   get keys() {

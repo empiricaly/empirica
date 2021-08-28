@@ -57,6 +57,10 @@ export abstract class ObjectPool {
   }
 
   queueChange(baseC: BaseC) {
+    if (this.changeQueue.includes(baseC)) {
+      return;
+    }
+
     this.changeQueue.push(baseC);
   }
 
@@ -105,6 +109,10 @@ export abstract class ObjectPool {
 
     this.objs[id] = o;
     this.objsByScopeID[scope.id] = o;
+    if (!this.objsByType[t]) {
+      this.objsByType[t] = [];
+    }
+    this.objsByType[t].push(o);
 
     this.emitter.emit("added", o);
 

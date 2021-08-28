@@ -5,7 +5,7 @@ import Game from "./components/Game";
 export default function App() {
   // const conf = { cells: 1, rows: 1, cols: 1 };
   const conf = { cells: 2, rows: 1, cols: 2 };
-  // const conf = { cells: 4, rows: 1, cols: 4 };
+  // const conf = { cells: 4, rows: 2, cols: 2 };
 
   return (
     <div className="bg-gray-50 h-screen">

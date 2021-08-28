@@ -1053,6 +1053,11 @@ react-refresh@^0.9.0:
   resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.9.0.tgz#71863337adc3e5c2f8a6bfddd12ae3bfe32aafbf"
   integrity sha512-Gvzk7OZpiqKSkxsQvO/mbTN1poglhmAV7gR/DdIrRrSMXraRQQlfikRJOr3Nb9GTMPC5kof948Zy6jJZIFtDvQ==
 
+react-simple-snake@^0.2.2:
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/react-simple-snake/-/react-simple-snake-0.2.2.tgz#171f39c3003c1c86c2e2a2f46c5f2c4007da185e"
+  integrity sha512-MP5s3IDs6+9S0GrxBYi0oGjvm2/vFMq7GmYhVbjEhRjJUlH3kAxoyOBLTfFpGq3+Fkx2OUSFBbR3l8n1iG5qkg==
+
 react@17.0.2:
   version "17.0.2"
   resolved "https://registry.yarnpkg.com/react/-/react-17.0.2.tgz#d0b5cc516d29eb3eee383f75b62864cfb6800037"

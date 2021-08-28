@@ -24,7 +24,7 @@ process.on("SIGINT", function () {
 });
 
 const playerCount = 2;
-const stageDuration = 90;
+const stageDuration = 30000;
 
 async function main() {
   try {
@@ -34,65 +34,71 @@ async function main() {
       "0123456789123456"
     );
 
+    const players = [];
+    const batches = [];
+
     admin.onNewPlayer(({ player }) => {
-      console.log("new player", player.id);
+      console.log("new player", player);
     });
-    admin.onPlayerConnected(function ({ player }) {
-      console.log("player connected", player.id);
+    admin.onPlayerConnected(({ player }) => {
+      console.log("player connected", player);
+      if (player.game) {
+        return;
+      }
 
-      console.trace("players", this.unassignedPlayers);
-
-      if (this.unassignedPlayers.length >= playerCount) {
+      players.push(player);
+      if (players.filter((p) => !p.game).length === playerCount) {
         admin.createBatch();
       }
     });
     admin.onPlayerDisconnected(({ player }) => {
-      console.log("player disconnected", player.id);
+      console.log("player disconnected", player);
     });
-    admin.onNewBatch(function ({ batch }) {
+    admin.onNewBatch(({ batch }) => {
       console.log("new batch");
+      batches.push(batch);
 
-      if (this.unassignedPlayers.length < playerCount) {
+      if (players.length === 0 || batches.length === 0) {
         return;
       }
 
       const game = batch.addGame({ playerCount: 1 });
-
       const round = game.addRound();
       round.set("name", "Round 1");
       round.addStage("hello", stageDuration);
       round.addStage("hello2", stageDuration);
-
       const round2 = game.addRound();
       round2.set("name", "Round 2");
       round2.addStage("hola3", stageDuration);
       round2.addStage("hola4", stageDuration);
-
-      for (const player of this.unassignedPlayers.slice(0, playerCount)) {
+      for (const player of players.filter((p) => !p.game)) {
         console.log("assign player");
         game.assignPlayer(player);
       }
-
       game.start();
     });
     admin.onGameInit(({ game }) => {
       console.log("game init");
-
       for (const player of game.players) {
         player.set("score", 0);
       }
-
-      console.log("game init done");
     });
     admin.onRoundStart(({ round }) => {
       console.log("round start");
     });
     admin.onStageStart(({ stage }) => {
-      console.log("stage start");
+      console.log("stage start", stage.id);
       stage.set("hello", 1);
     });
     admin.onStageEnd(({ stage }) => {
-      console.log("stage end");
+      console.log(
+        "stage end",
+        stage.id,
+        stage.round
+        // stage.round.game.id,
+        // stage.round.game.players.map((p) => p.id),
+        // stage.round.game.batch.id
+      );
     });
     admin.onRoundEnd(({ round }) => {
       console.log("round end");
@@ -109,10 +115,8 @@ async function main() {
       ({ attr, isNew, player, stage }) => {
         const players = stage.round?.game?.players;
         if (!players) {
-          console.warn("no players");
           return;
         }
-
         const submitted = players.every((p) => p.stage.get("submit"));
         if (submitted) {
           stage.end();
