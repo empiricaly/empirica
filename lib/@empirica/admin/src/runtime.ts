@@ -194,7 +194,7 @@ export class Runtime {
     }
 
     for (const step of steps.edges) {
-      this.store.addStep(<Step>step.node);
+      this.store.addStep(<Step>(<unknown>step.node));
     }
 
     const hasMore = steps.pageInfo.hasNextPage;
@@ -321,8 +321,8 @@ export class Runtime {
 
   async createBatch(attr: Object) {}
 
-  stop() {
-    // should stop conns
+  async stop() {
+    await this.taj.stop();
   }
 
   private async processEvent(
@@ -433,7 +433,7 @@ export class Runtime {
             const stage = <Stage>change.scope;
             const step = await this.taj.addStep({ duration: stage.duration });
             stage.set("stepID", step.id, { protected: true });
-            this.store.addStep(<Step>step);
+            this.store.addStep(<Step>(<unknown>step));
             // stage.step = new EStep(this.store, <Step>step);
             break;
           default:

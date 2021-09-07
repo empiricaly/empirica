@@ -224,6 +224,30 @@ export class Player extends EScope {
   constructor(public store: Store, public participant: Participant) {
     super(store);
   }
+
+  get game() {
+    if (!this.currentGame) {
+      throw new Error("player.game outside of game context");
+    }
+
+    return scopedScope(this, "game", this.currentGame.id);
+  }
+
+  get round() {
+    if (!this.currentGame || !this.currentGame.currentStage) {
+      throw new Error("player.round outside of round context");
+    }
+
+    return scopedScope(this, "round", this.currentGame.currentStage.round.id);
+  }
+
+  get stage() {
+    if (!this.currentGame || !this.currentGame.currentStage) {
+      throw new Error("player.stage outside of stage context");
+    }
+
+    return scopedScope(this, "stage", this.currentGame.currentStage.id);
+  }
 }
 
 export class Root extends EScope {
@@ -279,6 +303,7 @@ export class Batch extends EScope {
     const batchIDs: string[] = this.root.get("batchIDs") as string[] | [];
     batchIDs.push(this.id);
     this.root.set("batchIDs", batchIDs, { protected: true });
+    this.set("rootID", this.root.id);
   }
 }
 
@@ -365,6 +390,7 @@ export class Game extends EScope {
     const gameIDs: string[] = this.batch.get("gameIDs") as string[] | [];
     gameIDs.push(this.id);
     this.batch.set("gameIDs", gameIDs, { protected: true });
+    this.set("batchID", this.batch.id);
   }
 }
 
@@ -411,6 +437,7 @@ export class Round extends EScope {
     const roundIDs: string[] = this.game.get("roundIDs") as string[] | [];
     roundIDs.push(this.id);
     this.game.set("roundIDs", roundIDs, { protected: true });
+    this.set("gameID", this.game.id);
   }
 }
 
@@ -436,6 +463,7 @@ export class Stage extends EScope {
     const stageIDs: string[] = this.round.get("stageIDs") as string[] | [];
     stageIDs.push(this.id);
     this.round.set("stageIDs", stageIDs, { protected: true });
+    this.set("roundID", this.round.id);
   }
 }
 
