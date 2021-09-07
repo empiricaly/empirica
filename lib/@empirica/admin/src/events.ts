@@ -1,16 +1,11 @@
-import { EventType } from "tajriba";
-import { Attribute } from "../models/attribute";
-import { BatchC } from "../models/batch";
-import { GameC } from "../models/game";
-import { PlayerC } from "../models/player";
-import { RoundC } from "../models/round";
-import { StageC } from "../models/stage";
+import { Batch, EAttribute, Game, Player, Round, Stage } from "./store";
 
 export enum EmpiricaEvent {
   NewPlayer = "NEW_PLAYER",
   PlayerConnected = "PLAYER_CONNECTED",
   PlayerDisonnected = "PLAYER_DISCONNECTED",
   NewBatch = "NEW_BATCH",
+  NewGame = "NEW_GAME",
   GameInit = "GAME_INIT",
   GameEnd = "GAME_END",
   RoundStart = "ROUND_START",
@@ -20,68 +15,47 @@ export enum EmpiricaEvent {
   AttributeChange = "ATTRIBUTE_CHANGE",
 }
 
-// STEP_ADD
-// SCOPE_ADD
-// GROUP_ADD
-// TRANSITION_ADD
-// PARTICIPANT_ADD
-// PARTICIPANT_CONNECT
-// PARTICIPANT_DISCONNECT
-// LINK_ADD
-// ATTRIBUTE_UPDATE
-
-export const eventMap: Partial<{ [key in EmpiricaEvent]: EventType[] }> = {
-  [EmpiricaEvent.NewPlayer]: [EventType.ParticipantAdd],
-  [EmpiricaEvent.PlayerConnected]: [
-    EventType.ParticipantConnect,
-    EventType.ParticipantConnected,
-  ],
-  [EmpiricaEvent.PlayerDisonnected]: [EventType.ParticipantDisconnect],
-  [EmpiricaEvent.NewBatch]: [EventType.ScopeAdd],
-
-  [EmpiricaEvent.GameEnd]: [EventType.TransitionAdd],
-  [EmpiricaEvent.RoundStart]: [EventType.TransitionAdd],
-  [EmpiricaEvent.RoundEnd]: [EventType.TransitionAdd],
-  [EmpiricaEvent.StageStart]: [EventType.TransitionAdd],
-  [EmpiricaEvent.StageEnd]: [EventType.TransitionAdd],
-
-  // [EmpiricaEvent.AttributeChange]: EventType.AttributeUpdate,
-};
+export type OnChangeTypeKeys = "player" | "batch" | "game" | "round" | "stage";
+export type OnChangeType =
+  | OnChangeTypeKeys
+  | "player-game"
+  | "player-round"
+  | "player-stage";
 
 export type EventCallback<T> = ({}: T) => void;
 
 export interface PlayerEventArgs {
-  player: PlayerC;
+  player: Player;
 }
 
 export interface BatchEventArgs {
-  batch: BatchC;
+  batch: Batch;
 }
 
 export interface GameEventArgs {
-  game: GameC;
+  game: Game;
 }
 
 export interface RoundEventArgs {
-  game: GameC;
-  round: RoundC;
+  game: Game;
+  round: Round;
 }
 
 export interface StageEventArgs {
-  game: GameC;
-  round: RoundC;
-  stage: StageC;
+  game: Game;
+  round: Round;
+  stage: Stage;
 }
 
 export interface AttrEventArgs {
-  attr: Attribute;
+  attr: EAttribute;
   isNew: boolean;
   isInit: boolean;
-  player?: PlayerC;
-  batch?: BatchC;
-  game?: GameC;
-  round?: RoundC;
-  stage?: StageC;
+  player?: Player;
+  batch?: Batch;
+  game?: Game;
+  round?: Round;
+  stage?: Stage;
 }
 
 export const EventCallbackArgs: {
@@ -91,6 +65,7 @@ export const EventCallbackArgs: {
   [EmpiricaEvent.PlayerConnected]: <EventCallback<PlayerEventArgs>>(() => {}),
   [EmpiricaEvent.PlayerDisonnected]: <EventCallback<PlayerEventArgs>>(() => {}),
   [EmpiricaEvent.NewBatch]: <EventCallback<BatchEventArgs>>(() => {}),
+  [EmpiricaEvent.NewGame]: <EventCallback<GameEventArgs>>(() => {}),
   [EmpiricaEvent.GameInit]: <EventCallback<GameEventArgs>>(() => {}),
   [EmpiricaEvent.GameEnd]: <EventCallback<GameEventArgs>>(() => {}),
   [EmpiricaEvent.RoundStart]: <EventCallback<RoundEventArgs>>(() => {}),

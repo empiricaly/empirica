@@ -1,5 +1,5 @@
 <script>
-  import { Tajriba } from "tajriba";
+  import { Tajriba } from "@empirica/tajriba";
 
   const url = "http://localhost:4737/query";
   const taj = new Tajriba(url);
