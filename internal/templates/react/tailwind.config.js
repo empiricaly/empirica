@@ -53,7 +53,7 @@ module.exports = {
   purge: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
-    "./node_modules/empirica/dist-src/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/@empirica/player/dist-src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {

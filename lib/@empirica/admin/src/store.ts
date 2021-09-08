@@ -127,10 +127,25 @@ export class EAttribute {
 
 export class EStep {
   public transitions: Transition[] = [];
-  public scope?: EScope;
+  private _scope?: EScope;
   public state?: State;
 
   constructor(public store: Store, public step: Step) {}
+
+  get scope() {
+    if (!this._scope) {
+      for (const id in this.store.scopes) {
+        const scope = this.store.scopes[id];
+        const stepID = scope.get("stepID");
+        if (stepID === this.step.id) {
+          this._scope = scope;
+          break;
+        }
+      }
+    }
+
+    return this._scope;
+  }
 
   addTransition(t: Transition) {
     this.transitions.push(t);
@@ -174,10 +189,6 @@ export class EScope {
   }
 
   get type() {
-    if (!this.scope) {
-      throw "scope not created yet";
-    }
-
     return this.constructor.name.toLowerCase();
   }
 
@@ -214,6 +225,9 @@ export class EScope {
   }
 
   postProcess() {}
+  creationAttributes(): Attribute[] {
+    return [];
+  }
 }
 
 export class Player extends EScope {
@@ -223,6 +237,10 @@ export class Player extends EScope {
 
   constructor(public store: Store, public participant: Participant) {
     super(store);
+  }
+
+  get id() {
+    return this.participant.id;
   }
 
   get game() {
@@ -300,10 +318,19 @@ export class Batch extends EScope {
   }
 
   postProcess() {
-    const batchIDs: string[] = this.root.get("batchIDs") as string[] | [];
+    const batchIDs: string[] = (this.root.get("batchIDs") as string[]) || [];
     batchIDs.push(this.id);
     this.root.set("batchIDs", batchIDs, { protected: true });
-    this.set("rootID", this.root.id);
+  }
+
+  creationAttributes() {
+    return [
+      <Attribute>{
+        key: "rootID",
+        val: JSON.stringify(this.root.id),
+        immutable: true,
+      },
+    ];
   }
 }
 
@@ -387,10 +414,19 @@ export class Game extends EScope {
   }
 
   postProcess() {
-    const gameIDs: string[] = this.batch.get("gameIDs") as string[] | [];
+    const gameIDs: string[] = (this.batch.get("gameIDs") as string[]) || [];
     gameIDs.push(this.id);
     this.batch.set("gameIDs", gameIDs, { protected: true });
-    this.set("batchID", this.batch.id);
+  }
+
+  creationAttributes() {
+    return [
+      <Attribute>{
+        key: "batchID",
+        val: JSON.stringify(this.batch.id),
+        immutable: true,
+      },
+    ];
   }
 }
 
@@ -402,6 +438,7 @@ export class Round extends EScope {
   }
 
   addStage(attrs: Json): Stage {
+    console.log("attrs", attrs);
     const duration = attrs["duration"];
     if (!duration) {
       throw new Error("stage: addStage requires duration option");
@@ -434,22 +471,33 @@ export class Round extends EScope {
   }
 
   postProcess() {
-    const roundIDs: string[] = this.game.get("roundIDs") as string[] | [];
+    const roundIDs: string[] = (this.game.get("roundIDs") as string[]) || [];
     roundIDs.push(this.id);
     this.game.set("roundIDs", roundIDs, { protected: true });
-    this.set("gameID", this.game.id);
+  }
+
+  creationAttributes() {
+    return [
+      <Attribute>{
+        key: "gameID",
+        val: JSON.stringify(this.game.id),
+        immutable: true,
+      },
+    ];
   }
 }
 
 export class Stage extends EScope {
-  public step?: EStep;
-
   constructor(public store: Store, public round: Round) {
     super(store);
   }
 
   get duration(): number {
     return this.get("duration") as number;
+  }
+
+  get step(): EStep | undefined {
+    return this.store.steps[this.get("stepID") as string];
   }
 
   end() {
@@ -460,10 +508,19 @@ export class Stage extends EScope {
   }
 
   postProcess() {
-    const stageIDs: string[] = this.round.get("stageIDs") as string[] | [];
+    const stageIDs: string[] = (this.round.get("stageIDs") as string[]) || [];
     stageIDs.push(this.id);
     this.round.set("stageIDs", stageIDs, { protected: true });
-    this.set("roundID", this.round.id);
+  }
+
+  creationAttributes() {
+    return [
+      <Attribute>{
+        key: "roundID",
+        val: JSON.stringify(this.round.id),
+        immutable: true,
+      },
+    ];
   }
 }
 
@@ -492,16 +549,8 @@ export class Store {
   addStep(s: Step) {
     let step = this.steps[s.id];
     if (!step) {
-      step = new EStep(this, step);
+      step = new EStep(this, s);
       this.steps[s.id] = step;
-      for (const id in this.stages) {
-        const stage = this.stages[id];
-        const stepID = stage.get("stepID");
-        if (stepID === s.id) {
-          stage.step = step;
-          break;
-        }
-      }
 
       for (const transition of s.transitions!.edges) {
         step.addTransition(transition.node);
@@ -512,6 +561,8 @@ export class Store {
   }
 
   addTransition(t: Transition) {
+    console.log("addTransition", t);
+    console.log("this.steps", this.steps);
     let step = this.steps[t.node.id];
     if (!step) {
       console.warn("steps: got transition without step");
@@ -526,18 +577,24 @@ export class Store {
   addParticipant(p: Participant) {
     let player = this.players[p.id];
     if (!player) {
-      player = new Player(this, player);
+      player = new Player(this, p);
       this.players[p.id] = player;
-      for (const id in this.games) {
-        const game = this.games[id];
-        const playerIDs = (game.get("playerIDs") as string[]) || [];
-        if (playerIDs.includes(p.id)) {
-          game.players.push(player);
-        }
-      }
+      this.addPlayerToGame(player);
+    } else if (!player.participant.identifier) {
+      player.participant = p;
     }
 
     return player;
+  }
+
+  private addPlayerToGame(player: Player) {
+    for (const id in this.games) {
+      const game = this.games[id];
+      const playerIDs = (game.get("playerIDs") as string[]) || [];
+      if (playerIDs.includes(player.id)) {
+        game.players.push(player);
+      }
+    }
   }
 
   playerStatus(p: Player, online: boolean) {
@@ -573,8 +630,28 @@ export class Store {
         }
 
         const root = new Root(this);
-        root.scope = scope;
         this.root = root;
+        scope = root;
+        break;
+      case "player": {
+        if (!s.name) {
+          console.log("scopes: player scope without name");
+          return;
+        }
+        const player = this.players[s.name];
+        if (player) {
+          player.scope = s;
+          scope = player;
+        } else {
+          const player = new Player(this, <Participant>{ id: s.name });
+          player.scope = s;
+          this.players[s.name] = player;
+          this.addPlayerToGame(player);
+          scope = player;
+        }
+
+        break;
+      }
       case "batch": {
         const batch = new Batch(this, this.root);
         this.batches[s.id] = batch;

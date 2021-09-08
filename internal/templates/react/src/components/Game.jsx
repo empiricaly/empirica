@@ -1,29 +1,23 @@
-import React, { useEffect, useState } from "react";
-import Snake from "react-simple-snake";
+// import React from "react";
 
-export default function Game({ children, participant, game, player }) {
+// export default function Game() {
+//   return <h1>Hello</h1>;
+// }
+
+import {
+  useGame,
+  usePlayer,
+  usePlayers,
+  useStageTimer,
+} from "@empirica/player";
+import React from "react";
+
+export default function Game() {
+  const player = usePlayer();
+  const game = useGame();
+  const players = usePlayers();
+  const remaining = useStageTimer();
   const score = player.get("score") || 0;
-  const [seconds, setSeconds] = useState(0);
-
-  useEffect(() => {
-    const int = setInterval(() => {
-      const prevScore = player.get("score") || 0;
-      const newScore = localStorage.getItem("snakeHighScore") || 0;
-      if (newScore > prevScore) {
-        player.set("score", Number(newScore));
-      }
-    }, 1000);
-    return () => {
-      clearInterval(int);
-      localStorage.setItem("snakeHighScore", 0);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (game.currentStage) {
-      return game.currentStage.remaining.subscribe((n) => setSeconds(n));
-    }
-  }, [game.currentStage]);
 
   function handleClick() {
     player.stage.set("submit", true);
@@ -95,7 +89,7 @@ export default function Game({ children, participant, game, player }) {
         </div>
 
         <div className="mt-8 flex flex-col items-center">
-          <h1 className="font-monotext-lg font-bold">{seconds}</h1>
+          <h1 className="font-monotext-lg font-bold">{remaining}</h1>
           seconds
         </div>
 
@@ -106,7 +100,7 @@ export default function Game({ children, participant, game, player }) {
 
         <div className="mt-12 flex flex-col items-center">
           <h1 className="text-lg font-bold">Others</h1>
-          {game.players
+          {players
             .filter((p) => p.id !== player.id)
             .map((p) => (
               <div key={p.id} className="flex">
@@ -130,15 +124,13 @@ export default function Game({ children, participant, game, player }) {
         </div>
       ) : (
         <div className=" flex w-full flex-col items-center justify-center">
-          <div className="w-3/4">
-            <Snake percentageWidth={75} />
-          </div>
+          <div className="w-3/4">{/* <Snake percentageWidth={75} /> */}</div>
 
           <div className="mt-20">
             <button
               onClick={handleCheat}
               type="button"
-              className="inline-flex inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
             >
               Cheat
             </button>

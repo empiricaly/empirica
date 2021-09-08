@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Empirica } from "../empirica";
+import { useGame, usePlayer } from "../hooks";
 import { Player } from "../player";
-import Consent from "./Consent";
+import { Consent } from "./Consent";
 import { EmpiricaContext } from "./Context";
-import Loading from "./Loading";
-import PlayerID from "./PlayerID";
+import { Loading } from "./Loading";
+import { PlayerID } from "./PlayerID";
 
 interface EmpiricaPlayerProps {
   url?: string;
@@ -28,6 +29,16 @@ export const clear = () => {
   }
 
   window.location.href = window.location.href;
+};
+
+const WaitLoad: React.FC = (props) => {
+  const player = usePlayer();
+  const game = useGame();
+  if (!player || !game) {
+    return <Loading></Loading>;
+  }
+
+  return <>{props.children}</>;
 };
 
 export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
@@ -60,14 +71,19 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
         (async () => {
           try {
             sharedPlayer = await Empirica.sessionLogin(url, token, participant);
+            console.log(sharedPlayer);
             setPlayer(sharedPlayer);
           } catch (e) {
+            console.warn("Failed to reconnect", e);
           } finally {
             console.timeEnd("startup" + ns);
             setLoaded(true);
           }
         })();
       }
+    } else {
+      console.timeEnd("startup" + ns);
+      setLoaded(true);
     }
 
     return () => {
@@ -84,7 +100,7 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
   if (player) {
     return (
       <EmpiricaContext.Provider value={player}>
-        {props.children}
+        <WaitLoad>{props.children}</WaitLoad>
       </EmpiricaContext.Provider>
     );
   }

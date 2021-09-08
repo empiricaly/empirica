@@ -3,7 +3,6 @@ import {
   ParticipantChange,
   ScopeChange,
   State,
-  TajribaParticipant,
 } from "@empirica/tajriba";
 import { Writable, writable } from "svelte/store";
 import { JsonValue } from "./json";
@@ -153,10 +152,6 @@ export class EScope {
   }
 
   get kind() {
-    if (!this.scope) {
-      throw "scope not created yet";
-    }
-
     return this.constructor.name.toLowerCase();
   }
 
@@ -200,9 +195,14 @@ export class Player extends EScope {
   public games: Game[] = [];
   public currentGame?: Game;
   public online: boolean = false;
+  public participant?: ParticipantChange;
 
-  constructor(public store: Store, public participant: ParticipantChange) {
+  constructor(public store: Store) {
     super(store);
+  }
+
+  get id() {
+    return this.participant?.id || this.scope?.id || "";
   }
 
   get game() {
@@ -319,7 +319,8 @@ export class Round extends EScope {
 }
 
 export class Stage extends EScope {
-  remaining: Writable<number | null> = writable(null);
+  remaining: number | null = null;
+  remainingW: Writable<number | null> = writable(null);
   timeoutID?: ReturnType<typeof setTimeout>;
   ended: boolean = false;
   public state?: State;
@@ -339,7 +340,8 @@ export class Stage extends EScope {
 
   clearTimer() {
     this.clearTimout();
-    this.remaining.set(0);
+    this.remainingW.set(0);
+    this.remaining = 0;
     this.ended = true;
   }
 
@@ -351,6 +353,11 @@ export class Stage extends EScope {
   }
 
   setTimer(from: Date, remaining: number) {
+    this.updateTime(from, remaining);
+    this.nextTimer(from, remaining);
+  }
+
+  nextTimer(from: Date, remaining: number) {
     this.clearTimout();
 
     const ellapsed = new Date().valueOf() - from.valueOf();
@@ -371,22 +378,27 @@ export class Stage extends EScope {
       wait = remmod;
     }
 
-    rem -= wait;
+    // rem -= wait;
 
     // console.log("rem2", rem);
     // console.log("wait", wait);
 
     this.timeoutID = setTimeout(() => {
-      this.setTimer(from, remaining);
-      const ellapsed = new Date().valueOf() - from.valueOf();
-      let rem = remaining * 1000 - ellapsed;
-      const val = Math.round(rem / 1000);
-      if (val < 0) {
-        return;
-      }
-      const r = Math.abs(val);
-      this.remaining.set(r);
+      this.nextTimer(from, remaining);
+      this.updateTime(from, remaining);
     }, wait);
+  }
+
+  private updateTime(from: Date, remaining: number) {
+    const ellapsed = new Date().valueOf() - from.valueOf();
+    let rem = remaining * 1000 - ellapsed;
+    const val = Math.round(rem / 1000);
+    if (val < 0) {
+      return;
+    }
+    const r = Math.abs(val);
+    this.remainingW.set(r);
+    this.remaining = r;
   }
 }
 
@@ -417,9 +429,10 @@ export class Store {
 
     let player = this.players[p.id];
     if (!player) {
-      player = new Player(this, p);
+      player = new Player(this);
       this.players[p.id] = player;
     }
+    player.participant = p;
 
     return player;
   }
@@ -440,9 +453,11 @@ export class Store {
 
   updateScope(s: ScopeChange, removed: boolean) {
     if (removed) {
-      delete this.scopes[s.id];
-
       switch (s.kind) {
+        case "player":
+          const player = this.scopes[s.id];
+          delete this.players[player.id];
+          break;
         case "batch":
           delete this.batches[s.id];
           break;
@@ -458,6 +473,8 @@ export class Store {
         default:
           break;
       }
+
+      delete this.scopes[s.id];
 
       return;
     }
@@ -477,6 +494,18 @@ export class Store {
         const root = new Root(this);
         root.scope = scope;
         this.root = root;
+      case "player": {
+        const p = this.players[s.name!];
+        if (p) {
+          p.scope = s;
+        } else {
+          const player = new Player(this);
+          this.players[s.name!] = player;
+          scope = player;
+        }
+
+        break;
+      }
       case "batch": {
         const batch = new Batch(this);
         this.batches[s.id] = batch;
@@ -506,7 +535,7 @@ export class Store {
         break;
       }
       default: {
-        console.warn("scopes: unknown scope kind", s.kind);
+        console.warn("scopes: unknown scope kind", s);
 
         return;
       }

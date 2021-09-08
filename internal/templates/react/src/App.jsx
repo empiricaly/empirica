@@ -1,4 +1,4 @@
-import { clear, EmpiricaParticipant, Logo } from "empirica";
+import { clear, EmpiricaPlayer, Logo } from "@empirica/player";
 import React from "react";
 import Game from "./components/Game";
 
@@ -6,6 +6,7 @@ export default function App() {
   // const conf = { cells: 1, rows: 1, cols: 1 };
   const conf = { cells: 2, rows: 1, cols: 2 };
   // const conf = { cells: 4, rows: 2, cols: 2 };
+  console.info(conf);
 
   return (
     <div className="bg-gray-50 h-screen">
@@ -19,11 +20,9 @@ export default function App() {
         } ${conf.rows === 1 ? "grid-rows-1" : "grid-rows-2"} gap-1 h-full`}
       >
         {Array.from(Array(conf.cells)).map((_, i) => (
-          <EmpiricaParticipant key={i} ns={`${i}`}>
-            <Game>
-              <h1>Hohoho</h1>
-            </Game>
-          </EmpiricaParticipant>
+          <EmpiricaPlayer key={i} ns={`${i}`}>
+            <Game />
+          </EmpiricaPlayer>
         ))}
       </div>
       <div onClick={clear}>

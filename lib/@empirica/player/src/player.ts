@@ -177,7 +177,7 @@ export class Player {
               return;
             }
 
-            stage.setTimer(new Date(change.since), change.remaining);
+            stage.nextTimer(new Date(change.since), change.remaining);
           } else {
             stage.clearTimer();
           }
@@ -185,7 +185,7 @@ export class Player {
           this.scopeUpdates.add("stage");
 
           break;
-        case "AttributeChange":
+        case "AttributeChange": {
           const attr = this.store.updateAttribute(change, removed);
           if (change.key === "currentStageID") {
             if (attr && typeof attr.value === "string") {
@@ -199,7 +199,8 @@ export class Player {
             }
           }
 
-          if (this.store.players[change.nodeID]) {
+          const scope = this.store.scopes[change.nodeID];
+          if (scope && scope.kind === "player") {
             this.scopeUpdates.add("players");
             if (change.nodeID === this.taj.id) {
               this.scopeUpdates.add("player");
@@ -207,6 +208,7 @@ export class Player {
           }
 
           break;
+        }
         default:
           console.warn("unknown change", change);
           break;

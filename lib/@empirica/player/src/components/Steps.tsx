@@ -5,7 +5,7 @@ import { EScope } from "../store";
 
 export type StepsFunc = (treatment: Json) => React.ElementType[] | undefined;
 
-interface StepsProps {
+export interface StepsProps {
   steps: React.ElementType[] | StepsFunc;
   progressKey: string;
   doneKey: string;
@@ -21,7 +21,7 @@ interface StepsProps {
 */
 }
 
-const Steps: React.FC<StepsProps> = ({
+export const Steps: React.FC<StepsProps> = ({
   steps,
   progressKey,
   doneKey,
@@ -79,5 +79,3 @@ const Steps: React.FC<StepsProps> = ({
 
   return <Step next={next}></Step>;
 };
-
-export default Steps;

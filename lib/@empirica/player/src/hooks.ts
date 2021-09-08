@@ -89,8 +89,39 @@ export function useStage() {
   return stage;
 }
 
+export function useStageTimer() {
+  const stage = useStage();
+  const [remaining, setRemaining] = useState<number | null>(
+    (stage && stage.remaining) || null
+  );
+
+  let unsub: (() => void) | null = null;
+  useEffect(() => {
+    if (!stage) {
+      setRemaining(null);
+
+      if (unsub) {
+        unsub();
+        unsub = null;
+      }
+
+      return;
+    }
+
+    unsub = stage.remainingW.subscribe((stage) => {
+      setRemaining(stage);
+    });
+
+    return unsub;
+  }, [stage]);
+
+  return remaining;
+}
+
 export function usePlayer() {
   const playerCtx = useContext(EmpiricaContext);
+
+  console.log(playerCtx, playerCtx?.player);
   const [player, setPlayer] = useState<Player | null>(
     playerCtx ? playerCtx.player : null
   );

@@ -1,10 +1,10 @@
 import React, { FormEvent, useState } from "react";
 
-interface PlayerIDProps {
+export interface PlayerIDProps {
   onPlayerID: (playerID: string) => void;
 }
 
-const PlayerID: React.FC<PlayerIDProps> = ({ onPlayerID }) => {
+export const PlayerID: React.FC<PlayerIDProps> = ({ onPlayerID }) => {
   const [playerID, setPlayerID] = useState("");
 
   const handleSubmit = (evt: FormEvent) => {
@@ -74,5 +74,3 @@ const PlayerID: React.FC<PlayerIDProps> = ({ onPlayerID }) => {
     </div>
   );
 };
-
-export default PlayerID;

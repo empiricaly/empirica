@@ -1,3 +1,4 @@
+import { Json } from "./json";
 import { Runtime } from "./runtime";
 
 export class Admin {
@@ -7,7 +8,7 @@ export class Admin {
     this.runtime.stop();
   }
 
-  async createBatch(attr: Object) {
+  async createBatch(attr: Json) {
     return await this.runtime.createBatch(attr);
   }
 }

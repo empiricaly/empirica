@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Loading() {
+export function Loading() {
   // <!-- By Sam Herbert (@sherb), for everyone. More @ http://goo.gl/7AJzbL -->
   return (
     <div className="h-full w-full flex items-center justify-center">

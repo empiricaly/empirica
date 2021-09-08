@@ -1,11 +1,11 @@
 import React from "react";
 
-interface ConsentProps {
+export interface ConsentProps {
   onConsent: () => void;
   onRefuse: () => void;
 }
 
-const Consent: React.FC<ConsentProps> = ({ onConsent, onRefuse }) => {
+export const Consent: React.FC<ConsentProps> = ({ onConsent, onRefuse }) => {
   return (
     <div
       className="relative h-full z-10 overflow-y-auto"
@@ -75,5 +75,3 @@ const Consent: React.FC<ConsentProps> = ({ onConsent, onRefuse }) => {
     </div>
   );
 };
-
-export default Consent;
