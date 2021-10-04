@@ -562,7 +562,6 @@ export class Store {
 
   addTransition(t: Transition) {
     console.log("addTransition", t);
-    console.log("this.steps", this.steps);
     let step = this.steps[t.node.id];
     if (!step) {
       console.warn("steps: got transition without step");
@@ -682,6 +681,7 @@ export class Store {
         const game = new Game(this, batch);
         this.games[s.id] = game;
         scope = game;
+        batch.games.push(game);
 
         break;
       }
@@ -708,6 +708,7 @@ export class Store {
         const round = new Round(this, game);
         this.rounds[s.id] = round;
         scope = round;
+        game.rounds.push(round);
 
         break;
       }
@@ -734,6 +735,7 @@ export class Store {
         const stage = new Stage(this, round);
         this.stages[s.id] = stage;
         scope = stage;
+        round.stages.push(stage);
 
         break;
       }

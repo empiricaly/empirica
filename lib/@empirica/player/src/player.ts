@@ -1,5 +1,5 @@
 import { TajribaParticipant } from "@empirica/tajriba";
-import { EAttribute, Game, Stage, Store } from "./store";
+import { EAttribute, Game, Player as Plyr, Round, Stage, Store } from "./store";
 
 export class Player {
   private siap = false;
@@ -34,11 +34,11 @@ export class Player {
   }
 
   get round() {
-    return this._currentStage?.round;
+    return this.stage?.round;
   }
 
   get stage() {
-    return this._currentStage;
+    return this.game?.currentStage;
   }
 
   get playerSub() {
@@ -58,7 +58,9 @@ export class Player {
   }
 
   get stageSub() {
-    return this.createSub("stage", () => this.stage);
+    return this.createSub("stage", () => {
+      return this._currentGame?.currentStage;
+    });
   }
 
   private createSub(key: string, getVal: () => any) {
@@ -94,15 +96,18 @@ export class Player {
       val: JSON.stringify(attribute.value),
     });
 
-    const subKey = this.subMap[attribute.scope.id];
-    if (subKey) {
-      const subs = this.subscriptions[subKey];
-      if (subs) {
-        for (const sub of subs) {
-          sub();
-        }
-      }
-    }
+    this.trackScopeUpdates(attribute.scope.id);
+    this.applyUpdates();
+
+    // const subKey = this.subMap[attribute.scope.id];
+    // if (subKey) {
+    //   const subs = this.subscriptions[subKey];
+    //   if (subs) {
+    //     for (const sub of subs) {
+    //       sub();
+    //     }
+    //   }
+    // }
   }
 
   stop() {
@@ -147,14 +152,21 @@ export class Player {
             }
           }
 
+          if (change.kind === "player") {
+            this.scopeUpdates.add("players");
+            if (scope?.scope?.name === this.taj.id) {
+              this.scopeUpdates.add("player");
+            }
+          }
+
           break;
         case "ParticipantChange":
           this.store.updateParticipant(change, removed);
 
           break;
         case "StepChange":
-          const stage = Object.values(this.store.stages).find((s) =>
-            s.get("stepID")
+          const stage = Object.values(this.store.stages).find(
+            (s) => s.get("stepID") === change.id
           );
 
           if (!stage) {
@@ -188,23 +200,24 @@ export class Player {
         case "AttributeChange": {
           const attr = this.store.updateAttribute(change, removed);
           if (change.key === "currentStageID") {
+            // console.log("NEW currentStageID", change.val);
             if (attr && typeof attr.value === "string") {
-              this._currentStage = this.store.stages[attr.value];
-              this.scopeUpdates.add("stage");
+              this.scopeUpdates.add("game");
               this.scopeUpdates.add("round");
+              this.scopeUpdates.add("stage");
             } else if (removed) {
-              delete this._currentStage;
-              this.scopeUpdates.add("stage");
+              this.scopeUpdates.add("game");
               this.scopeUpdates.add("round");
+              this.scopeUpdates.add("stage");
             }
           }
 
-          const scope = this.store.scopes[change.nodeID];
-          if (scope && scope.kind === "player") {
-            this.scopeUpdates.add("players");
-            if (change.nodeID === this.taj.id) {
-              this.scopeUpdates.add("player");
-            }
+          if (attr) {
+            // const scope = this.store.scopes[change.nodeID];
+            // if (scope) {
+            //   console.log("attr", scope.constructor.name, attr.key, attr.value);
+            // }
+            this.trackScopeUpdates(change.nodeID);
           }
 
           break;
@@ -224,17 +237,43 @@ export class Player {
           this.siap = true;
         }
 
-        for (const key of this.scopeUpdates.keys()) {
-          const subs = this.subscriptions[key];
-          if (subs) {
-            for (const sub of subs) {
-              sub();
-            }
-          }
-        }
-
-        this.scopeUpdates.clear();
+        this.applyUpdates();
       }
     });
+  }
+
+  private applyUpdates() {
+    // console.log(this.scopeUpdates.keys());
+    for (const key of this.scopeUpdates.keys()) {
+      const subs = this.subscriptions[key];
+      if (subs) {
+        for (const sub of subs) {
+          sub();
+        }
+      }
+    }
+
+    this.scopeUpdates.clear();
+  }
+
+  private trackScopeUpdates(nodeID: string) {
+    const scope = this.store.scopes[nodeID];
+
+    if (!scope) {
+      return;
+    }
+
+    if (scope instanceof Plyr) {
+      this.scopeUpdates.add("players");
+      if (scope.scope?.name === this.taj.id) {
+        this.scopeUpdates.add("player");
+      }
+    } else if (scope instanceof Game) {
+      this.scopeUpdates.add("game");
+    } else if (scope instanceof Round) {
+      this.scopeUpdates.add("round");
+    } else if (scope instanceof Stage) {
+      this.scopeUpdates.add("stage");
+    }
   }
 }

@@ -4,14 +4,14 @@ import { Game, Player, Round, Stage } from "./store";
 
 export function useGame() {
   const playerCtx = useContext(EmpiricaContext);
-  const [game, setGame] = useState<Game | null>(
-    (playerCtx && playerCtx.game) || null
-  );
+  const [game, setGame] = useState<{ game: Game | null }>({
+    game: playerCtx?.game || null,
+  });
 
   let gameUnsub: (() => void) | null = null;
   useEffect(() => {
     if (!playerCtx) {
-      setGame(null);
+      setGame({ game: null });
 
       if (gameUnsub) {
         gameUnsub();
@@ -22,25 +22,25 @@ export function useGame() {
     }
 
     gameUnsub = playerCtx?.gameSub.subscribe((game) => {
-      setGame(game);
+      setGame({ game });
     });
 
     return gameUnsub;
   }, [playerCtx]);
 
-  return game;
+  return game.game;
 }
 
 export function useRound() {
   const playerCtx = useContext(EmpiricaContext);
-  const [round, setRound] = useState<Round | null>(
-    (playerCtx && playerCtx.round) || null
-  );
+  const [round, setRound] = useState<{ round: Round | null }>({
+    round: playerCtx?.round || null,
+  });
 
   let roundUnsub: (() => void) | null = null;
   useEffect(() => {
     if (!playerCtx) {
-      setRound(null);
+      setRound({ round: null });
 
       if (roundUnsub) {
         roundUnsub();
@@ -51,25 +51,26 @@ export function useRound() {
     }
 
     roundUnsub = playerCtx?.roundSub.subscribe((round) => {
-      setRound(round);
+      setRound({ round });
     });
 
     return roundUnsub;
   }, [playerCtx]);
 
-  return round;
+  return round.round;
 }
 
 export function useStage() {
   const playerCtx = useContext(EmpiricaContext);
-  const [stage, setStage] = useState<Stage | null>(
-    (playerCtx && playerCtx.stage) || null
-  );
+  const [stage, setStage] = useState<{ stage: Stage | null }>({
+    stage: playerCtx?.stage || null,
+  });
 
   let stageUnsub: (() => void) | null = null;
   useEffect(() => {
+    // console.log("useStage", playerCtx?.stage?.hash);
     if (!playerCtx) {
-      setStage(null);
+      setStage({ stage: null });
 
       if (stageUnsub) {
         stageUnsub();
@@ -80,25 +81,26 @@ export function useStage() {
     }
 
     stageUnsub = playerCtx?.stageSub.subscribe((stage) => {
-      setStage(stage);
+      // console.log("useStage update", stage?.id);
+      setStage({ stage });
     });
 
     return stageUnsub;
   }, [playerCtx]);
 
-  return stage;
+  return stage.stage;
 }
 
 export function useStageTimer() {
   const stage = useStage();
-  const [remaining, setRemaining] = useState<number | null>(
-    (stage && stage.remaining) || null
-  );
+  const [remaining, setRemaining] = useState<{ remaining: number | null }>({
+    remaining: stage?.remaining || null,
+  });
 
   let unsub: (() => void) | null = null;
   useEffect(() => {
     if (!stage) {
-      setRemaining(null);
+      setRemaining({ remaining: null });
 
       if (unsub) {
         unsub();
@@ -108,28 +110,26 @@ export function useStageTimer() {
       return;
     }
 
-    unsub = stage.remainingW.subscribe((stage) => {
-      setRemaining(stage);
+    unsub = stage.remainingW.subscribe((remaining) => {
+      setRemaining({ remaining });
     });
 
     return unsub;
   }, [stage]);
 
-  return remaining;
+  return remaining.remaining;
 }
 
 export function usePlayer() {
   const playerCtx = useContext(EmpiricaContext);
-
-  console.log(playerCtx, playerCtx?.player);
-  const [player, setPlayer] = useState<Player | null>(
-    playerCtx ? playerCtx.player : null
-  );
+  const [player, setPlayer] = useState<{ player: Player | null }>({
+    player: playerCtx?.player || null,
+  });
 
   let playerUnsub: (() => void) | null = null;
   useEffect(() => {
     if (!playerCtx) {
-      setPlayer(null);
+      setPlayer({ player: null });
 
       if (playerUnsub) {
         playerUnsub();
@@ -140,25 +140,25 @@ export function usePlayer() {
     }
 
     playerUnsub = playerCtx?.playerSub.subscribe((player) => {
-      setPlayer(player);
+      setPlayer({ player });
     });
 
     return playerUnsub;
   }, [playerCtx]);
 
-  return player;
+  return player.player;
 }
 
 export function usePlayers() {
   const playerCtx = useContext(EmpiricaContext);
-  const [players, setPlayers] = useState<Player[] | null>(
-    playerCtx ? playerCtx.players : null
-  );
+  const [players, setPlayers] = useState<{ players: Player[] | null }>({
+    players: playerCtx?.players || null,
+  });
 
   let playersUnsub: (() => void) | null = null;
   useEffect(() => {
     if (!playerCtx) {
-      setPlayers(null);
+      setPlayers({ players: null });
 
       if (playersUnsub) {
         playersUnsub();
@@ -169,11 +169,11 @@ export function usePlayers() {
     }
 
     playersUnsub = playerCtx?.playersSub.subscribe((players) => {
-      setPlayers(players);
+      setPlayers({ players });
     });
 
     return playersUnsub;
   }, [playerCtx]);
 
-  return players;
+  return players.players;
 }

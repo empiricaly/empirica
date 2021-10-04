@@ -13,6 +13,19 @@ import {
 export class Hooks {
   readonly hooks: { [key: string]: ((...args: any) => void)[] } = {};
 
+  /**
+   * Merge 'other' Hooks into this Hooks.
+   */
+  merge(other: Hooks) {
+    for (const event in other.hooks) {
+      const cb = other.hooks[event];
+      if (!this.hooks[event]) {
+        this.hooks[event] = [];
+      }
+      this.hooks[event].push(...cb);
+    }
+  }
+
   onNewPlayer(cb: EventCallback<PlayerEventArgs>) {
     if (!this.hooks[EmpiricaEvent.NewPlayer]) {
       this.hooks[EmpiricaEvent.NewPlayer] = [];

@@ -7,6 +7,13 @@ import {
 import { Writable, writable } from "svelte/store";
 import { JsonValue } from "./json";
 
+export const hash = (s: string | undefined) =>
+  s &&
+  s.split("").reduce((a, b) => {
+    a = (a << 5) - a + b.charCodeAt(0);
+    return a & a;
+  }, 0);
+
 export interface AttributeOptions {
   /**
    * Private indicates the attribute will not be visible to other Participants.
@@ -143,6 +150,10 @@ export class EScope {
 
   constructor(public store: Store) {}
 
+  get hash() {
+    return hash(this.id);
+  }
+
   get id() {
     if (!this.scope) {
       throw "scope not created yet";
@@ -193,7 +204,6 @@ export class EScope {
 
 export class Player extends EScope {
   public games: Game[] = [];
-  public currentGame?: Game;
   public online: boolean = false;
   public participant?: ParticipantChange;
 
@@ -203,6 +213,10 @@ export class Player extends EScope {
 
   get id() {
     return this.participant?.id || this.scope?.id || "";
+  }
+
+  private get currentGame() {
+    return this.store.games[this.get("gameID") as string];
   }
 
   get game() {
@@ -267,6 +281,7 @@ export class Game extends EScope {
 
   get currentStage(): Stage | undefined {
     const currentStageID = this.get("currentStageID") as string | undefined;
+    // console.log("currentStage getter", hash(currentStageID));
     if (currentStageID) {
       return this.store.stages[currentStageID];
     }
@@ -494,10 +509,12 @@ export class Store {
         const root = new Root(this);
         root.scope = scope;
         this.root = root;
+        break;
       case "player": {
         const p = this.players[s.name!];
         if (p) {
           p.scope = s;
+          scope = p;
         } else {
           const player = new Player(this);
           this.players[s.name!] = player;

@@ -170,7 +170,7 @@ export class Runtime {
     try {
       rootScope = <Scope>await this.taj.addScope(arg);
     } catch (err) {
-      if (!err.message.includes("already exists")) {
+      if (!(<Error>err).message.includes("already exists")) {
         console.error("unknown fetch scope error", err);
 
         throw err;
@@ -221,7 +221,10 @@ export class Runtime {
       const player = this.store.players[id];
       if (!player.get(EE.NewPlayer)) {
         if (!player.scope) {
-          await this.taj.addScope({ kind: "player", name: player.id });
+          const scope = <Scope>(
+            await this.taj.addScope({ kind: "player", name: player.id })
+          );
+          this.store.addScope(scope);
         }
         await this.emitter.emit(EE.NewPlayer, this.defaultContext, player, {
           player,
@@ -248,6 +251,16 @@ export class Runtime {
         console.warn("games: stage step missing");
         continue;
       }
+
+      // const playerIDs = (game.get("playerIDs") as string[]) || [];
+      // for (const playerID of playerIDs) {
+      //   const player = this.store.players[playerID];
+      //   if (!player) {
+      //     console.warn("player for game not found");
+      //     continue;
+      //   }
+      //   game.players.push(player);
+      // }
 
       // switch (stage.step.state) {
       //   case State.Created:
@@ -430,7 +443,7 @@ export class Runtime {
       return;
     }
 
-    console.trace("processEvent", payload.eventType, payload);
+    console.trace("processEvent", payload.eventType);
 
     switch (payload.eventType) {
       case EventType.ParticipantAdd: {
@@ -467,7 +480,11 @@ export class Runtime {
       case EventType.ParticipantConnected: {
         const player = this.store.addParticipant(<Participant>payload.node);
         if (!player.scope) {
-          await this.taj.addScope({ kind: "player", name: player.id });
+          const scope = await this.taj.addScope({
+            kind: "player",
+            name: player.id,
+          });
+          player.scope = <Scope>scope;
         }
         this.store.playerStatus(player, true);
         await this.emitter.emit(EE.PlayerConnected, this.defaultContext, null, {
@@ -566,9 +583,7 @@ export class Runtime {
             const stage = <Stage>change.scope;
             const step = await this.taj.addStep({ duration: stage.duration });
             stage.set("stepID", step.id, { immutable: true });
-            console.log("STEP HERE", step);
             const s = this.store.addStep(<Step>(<unknown>step));
-            console.log("STEP THERE", s);
             // stage.step = new EStep(this.store, <Step>step);
             break;
           default:
@@ -594,6 +609,7 @@ export class Runtime {
         const playerIDs = (game.get("playerIDs") as string[]) || [];
         playerIDs.push(change.player.participant.id);
         game.set("playerIDs", playerIDs, { protected: true });
+        change.player.set("gameID", game.id, { protected: true });
 
         break;
       }
@@ -669,7 +685,36 @@ export class Runtime {
       case "end": {
         console.trace("end");
 
-        console.warn("TODO implement end game/stage");
+        if (change.scope instanceof Stage) {
+          const stage = <Stage>change.scope;
+          if (stage.id !== stage.round.game.get("currentStageID")) {
+            console.warn("stage ending not current");
+            return;
+          }
+
+          if (!stage.step) {
+            console.warn("stage without a step");
+            return;
+          }
+
+          console.log({
+            from: State.Running,
+            to: State.Ended,
+            nodeID: stage.step.step.id,
+          });
+
+          try {
+            await this.taj.transition({
+              from: State.Running,
+              to: State.Ended,
+              nodeID: stage.step.step.id,
+            });
+          } catch (error) {
+            console.log("failed transition", error);
+          }
+        } else {
+          console.warn("TODO implement end game");
+        }
 
         break;
       }
@@ -698,6 +743,7 @@ export class Runtime {
       event = `change-${event}`;
     }
 
+    console.log("ARGS", arg);
     await this.emitter.emit(event, this.defaultContext, getSet, arg);
   }
 
@@ -712,7 +758,7 @@ export class Runtime {
         // TODO mark game paused and all
         return;
       case State.Ended:
-        // await this.endOfStage(stage);
+        await this.endOfStage(stage);
         // TODO End stage, maybe end game and all
         return;
       case (State.Terminated, State.Failed):
@@ -727,6 +773,7 @@ export class Runtime {
     await this.emitter.emit(EE.StageEnd, this.defaultContext, stage, { stage });
 
     const [nextRound, nextStage] = roundStageAfter(stage.round.game, stage.id);
+    console.log("STAGE / NEXT STAGE", stage.id, nextStage?.id);
 
     if (!nextRound || nextRound.id !== stage.round.id) {
       await this.emitter.emit(EE.RoundEnd, this.defaultContext, stage.round, {
@@ -762,11 +809,6 @@ export class Runtime {
       nodeIDs.push(player.scope!.id);
     }
 
-    console.log("LINK", {
-      participantIDs: playerIDs,
-      nodeIDs: nodeIDs,
-    });
-
     await this.taj.link({
       participantIDs: playerIDs,
       nodeIDs: nodeIDs,
@@ -777,9 +819,12 @@ export class Runtime {
     if (stage) {
       await this.startStage(stage);
       game.set("state", "started", { protected: true });
+      await this.processChanges();
     } else {
       await this.gameEnd(game);
     }
+
+    console.log("START GAME", game.id, game.players);
   }
 
   async startStage(stage: Stage) {
@@ -801,6 +846,7 @@ export class Runtime {
     });
 
     stage.round.game.set("currentStageID", stage.id, { protected: true });
+    await this.processChanges();
 
     await this.taj.transition({
       from: stage.step?.state || State.Created,
@@ -812,6 +858,7 @@ export class Runtime {
   async gameEnd(game: Game) {
     this.emitter.emit(EE.GameEnd, this.defaultContext, game, { game });
     game.set("state", "ended", { protected: true });
+    await this.processChanges();
   }
 
   //

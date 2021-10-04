@@ -4,11 +4,19 @@ import { Runtime } from "./runtime";
 export class Admin {
   constructor(private runtime: Runtime) {}
 
-  stop() {
-    this.runtime.stop();
-  }
-
   async createBatch(attr: Json) {
     return await this.runtime.createBatch(attr);
   }
+
+  stop() {
+    this.runtime.stop();
+  }
+}
+
+export function sleep(dur: number) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve(null);
+    }, dur);
+  });
 }

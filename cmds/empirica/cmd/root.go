@@ -47,7 +47,7 @@ func root(_ *cobra.Command, _ []string, usingConfigFile bool) {
 
 	t, err := empirica.Start(ctx, conf, usingConfigFile)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed starting empirica")
+		log.Fatal().Err(err).Msg("empirica: failed to start")
 	}
 
 	log.Info().Msg("empirica: started")
@@ -69,6 +69,9 @@ func defineRoot() (*cobra.Command, *bool, error) {
 		Use:   "empirica",
 		Short: "empirica is an engine for multiplayer interactive experiments",
 		// Long: ``,
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		Args:          cobra.NoArgs,
 		Run: func(cmd *cobra.Command, args []string) {
 			root(cmd, args, usingConfigFile)
 		},
@@ -101,6 +104,8 @@ func Execute() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to start")
 	}
+
+	addCreateCommand(rootCmd)
 
 	cobra.OnInitialize(initConfig(rootCmd, usingConfigFile))
 

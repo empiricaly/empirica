@@ -34,6 +34,7 @@ export const clear = () => {
 const WaitLoad: React.FC = (props) => {
   const player = usePlayer();
   const game = useGame();
+
   if (!player || !game) {
     return <Loading></Loading>;
   }
