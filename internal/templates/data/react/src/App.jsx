@@ -10,7 +10,7 @@ export default function App() {
 
   return (
     <div className="bg-gray-50 h-screen">
-      <div className="z-50 absolute bottom-0 right-0 h-20 w-20">
+      <div className="z-50 absolute bottom-2 right-3 h-10 w-10">
         <div onClick={clear}>
           <Logo />
         </div>

@@ -11,6 +11,8 @@ Empirica.onNewPlayer(function ({ player }) {
 Empirica.onPlayerConnected(function ({ player }) {
   console.log("player connected", player.id);
 
+  console.log("this.unassignedPlayers.length", this.unassignedPlayers.length);
+
   if (this.unassignedPlayers.length >= playerCount) {
     this.createBatch({
       config: {
@@ -49,13 +51,9 @@ Empirica.onNewBatch(function ({ batch }) {
   game.start();
 });
 
-Empirica.onChange(
-  "player",
-  "readyForAssigment",
-  function ({ attr, isNew, player }) {
-    console.log("player readyForAssigment", attr.val, isNew, player);
-  }
-);
+Empirica.onChange("player", "introDone", function ({ attr, isNew, player }) {
+  console.log("player readyForAssigment", attr.val, isNew, player);
+});
 
 Empirica.onNew("player-stage", "submit", function ({ player, stage }) {
   const players = player.currentGame.players;

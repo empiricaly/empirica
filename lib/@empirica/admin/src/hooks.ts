@@ -24,6 +24,8 @@ export class Hooks {
       }
       this.hooks[event].push(...cb);
     }
+
+    return this;
   }
 
   onNewPlayer(cb: EventCallback<PlayerEventArgs>) {

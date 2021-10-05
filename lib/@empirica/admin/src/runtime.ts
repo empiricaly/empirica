@@ -590,6 +590,16 @@ export class Runtime {
             break;
         }
 
+        this.processEvent(
+          <OnEventPayload>{
+            __typename: "OnEventPayload",
+            node: scope,
+            eventID: "1890",
+            eventType: EventType.ScopeAdd,
+          },
+          undefined
+        );
+
         break;
       }
       case "newAssignment": {
@@ -614,7 +624,7 @@ export class Runtime {
         break;
       }
       case "updateAttribute": {
-        console.trace("updateAttribute", change.attr?.key);
+        console.trace("updateAttribute", change.attr?.key, change.attr?.value);
 
         if (!change.attr?.scope.scope?.id) {
           console.warn("updateAttribute change.attr/scope missing", change);
@@ -688,7 +698,12 @@ export class Runtime {
         if (change.scope instanceof Stage) {
           const stage = <Stage>change.scope;
           if (stage.id !== stage.round.game.get("currentStageID")) {
-            console.warn("stage ending not current");
+            console.warn(
+              "stage ending not current",
+              stage.id,
+              stage.round.game.get("currentStageID"),
+              stage.round.game
+            );
             return;
           }
 
