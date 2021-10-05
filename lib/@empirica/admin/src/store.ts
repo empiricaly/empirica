@@ -194,6 +194,7 @@ export class EScope {
 
   get(key: string) {
     const a = this.attributes[key];
+    console.log("GET", this.type, key, a?.value);
     if (!a) {
       return null;
     }
@@ -210,6 +211,7 @@ export class EScope {
       type: "updateAttribute",
       attr: a,
     });
+    console.log("SET", this.type, key, a?.value);
   }
 
   updateAttribute(attribute: Attribute) {
@@ -350,6 +352,7 @@ export class Game extends EScope {
 
   addRound(attrs?: Json): Round {
     const round = new Round(this.store, this);
+    console.log("addRound", round, this.rounds);
     this.rounds.push(round);
     this.store.pushChange({
       type: "newScope",
@@ -576,10 +579,12 @@ export class Store {
   addParticipant(p: Participant) {
     let player = this.players[p.id];
     if (!player) {
+      console.log("creating player addParticipant");
       player = new Player(this, p);
       this.players[p.id] = player;
       this.addPlayerToGame(player);
     } else if (!player.participant.identifier) {
+      console.log("not creating player");
       player.participant = p;
     }
 
@@ -597,6 +602,7 @@ export class Store {
   }
 
   playerStatus(p: Player, online: boolean) {
+    console.log("playerStatus ", p.id, online);
     let player = this.players[p.id];
     if (!player) {
       throw "players: player status change missing";
@@ -608,14 +614,14 @@ export class Store {
   updateAttribute(a: Attribute) {
     const scope = this.scopes[a.node.id];
     if (!scope) {
-      console.warn("scopes: got attribute without scope");
+      console.warn("scopes: got attribute without scope", a.node.id);
       return;
     }
 
     return scope.updateAttribute(a);
   }
 
-  addScope(s: Scope) {
+  createEScope(s: Scope): EScope {
     let scope = this.scopes[s.id];
     if (scope) {
       return scope;
@@ -623,136 +629,177 @@ export class Store {
 
     switch (s.kind) {
       case "root":
-        if (this.root.scope) {
-          console.error("scopes: second root created");
-          return;
-        }
-
         const root = new Root(this);
-        this.root = root;
-        scope = root;
-        break;
+        root.scope = s;
+        return root;
       case "player": {
         if (!s.name) {
-          console.log("scopes: player scope without name");
-          return;
-        }
-        const player = this.players[s.name];
-        if (player) {
-          player.scope = s;
-          scope = player;
-        } else {
-          const player = new Player(this, <Participant>{ id: s.name });
-          player.scope = s;
-          this.players[s.name] = player;
-          this.addPlayerToGame(player);
-          scope = player;
+          throw new Error("scopes: player scope without name");
         }
 
-        break;
+        console.log("creating player addScope");
+        const player = new Player(this, <Participant>{ id: s.name });
+        player.scope = s;
+
+        return player;
       }
       case "batch": {
         const batch = new Batch(this, this.root);
-        this.batches[s.id] = batch;
-        scope = batch;
-
-        break;
+        batch.scope = s;
+        return batch;
       }
       case "game": {
         const batchAttr = s.attributes?.edges?.find(
           (a) => a?.node?.key === "batchID"
         );
         if (!batchAttr) {
-          console.error("scopes: game is missing batchID");
-          return;
+          throw new Error("scopes: game is missing batchID");
         }
         if (!batchAttr.node?.val) {
-          console.error("scopes: game attr is missing batchID");
-          return;
+          throw new Error("scopes: game attr is missing batchID");
         }
 
         const batchID = JSON.parse(batchAttr.node!.val);
         const batch = this.batches[batchID];
         if (!batch) {
-          console.error("scopes: game is missing batch");
-          return;
+          throw new Error("scopes: game is missing batch");
         }
 
         const game = new Game(this, batch);
-        this.games[s.id] = game;
-        scope = game;
+        game.scope = s;
         batch.games.push(game);
 
-        break;
+        return game;
       }
       case "round": {
         const gameAttr = s.attributes?.edges?.find(
           (a) => a?.node?.key === "gameID"
         );
         if (!gameAttr) {
-          console.error("scopes: game is missing gameID");
-          return;
+          throw new Error("scopes: game is missing gameID");
         }
         if (!gameAttr.node?.val) {
-          console.error("scopes: game attr is missing gameID");
-          return;
+          throw new Error("scopes: game attr is missing gameID");
         }
 
         const gameID = JSON.parse(gameAttr.node!.val);
         const game = this.games[gameID];
         if (!game) {
-          console.error("scopes: game is missing game");
-          return;
+          throw new Error("scopes: game is missing game");
         }
 
         const round = new Round(this, game);
-        this.rounds[s.id] = round;
-        scope = round;
+        round.scope = s;
+        console.log("store.rounds", round, game.rounds);
         game.rounds.push(round);
 
-        break;
+        return round;
       }
       case "stage": {
         const roundAttr = s.attributes.edges.find(
           (a) => a.node.key === "roundID"
         );
         if (!roundAttr) {
-          console.error("scopes: round is missing roundID");
-          return;
+          throw new Error("scopes: round is missing roundID");
         }
         if (!roundAttr.node.val) {
-          console.error("scopes: round attr is missing roundID");
-          return;
+          throw new Error("scopes: round attr is missing roundID");
         }
 
         const roundID = JSON.parse(roundAttr.node.val);
         const round = this.rounds[roundID];
         if (!round) {
-          console.error("scopes: round is missing round");
-          return;
+          throw new Error("scopes: round is missing round");
         }
 
         const stage = new Stage(this, round);
-        this.stages[s.id] = stage;
-        scope = stage;
+        stage.scope = s;
         round.stages.push(stage);
+
+        return stage;
+      }
+      default: {
+        throw new Error(`scopes: unknown scope kind ${s.kind}`);
+      }
+    }
+  }
+
+  addScope(s: Scope) {
+    const sc = this.createEScope(s);
+    this.saveEScope(sc);
+    this.addAttributeEdges(s, sc);
+
+    return sc;
+  }
+
+  saveEScope(s: EScope) {
+    if (!s.scope) {
+      throw new Error("cannot add scopeless escope");
+    }
+
+    let scope = this.scopes[s.scope.id];
+    if (scope) {
+      return scope;
+    }
+
+    switch (s.scope.kind) {
+      case "root":
+        if (this.root.scope) {
+          throw new Error("scopes: second root created");
+        }
+
+        this.root = <Root>s;
+        break;
+      case "player": {
+        if (!s.scope.name) {
+          throw new Error("scopes: player scope without name");
+        }
+
+        const player = this.players[s.scope.name];
+        if (player) {
+          player.scope = s.scope;
+        } else {
+          this.players[s.scope.name] = <Player>s;
+          this.players[s.scope.id] = <Player>s;
+          this.scopes[s.scope.name] = <Player>s;
+          this.addPlayerToGame(<Player>s);
+        }
+
+        break;
+      }
+      case "batch": {
+        this.batches[s.id] = <Batch>s;
+
+        break;
+      }
+      case "game": {
+        this.games[s.id] = <Game>s;
+
+        break;
+      }
+      case "round": {
+        this.rounds[s.id] = <Round>s;
+
+        break;
+      }
+      case "stage": {
+        this.stages[s.id] = <Stage>s;
 
         break;
       }
       default: {
-        console.warn("scopes: unknown scope kind", s.kind);
-
-        return;
+        throw new Error(`scopes: unknown scope kind: ${s.scope.kind}`);
       }
     }
 
-    scope.scope = s;
-    this.scopes[s.id] = scope;
+    this.scopes[s.scope.id] = s;
 
+    return scope;
+  }
+
+  addAttributeEdges(s: Scope, scope: EScope) {
     for (const edge of s.attributes.edges) {
       scope.updateAttribute(edge.node);
     }
-
-    return scope;
   }
 }

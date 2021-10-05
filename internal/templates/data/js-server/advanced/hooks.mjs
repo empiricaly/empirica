@@ -37,7 +37,10 @@ Empirica.onPlayerDisconnected(function ({ player }) {
 Empirica.onNewBatch(function ({ batch }) {
   console.log("new batch");
 
+  console.log("this.unassignedPlayers.length", this.unassignedPlayers.length);
+
   if (this.unassignedPlayers.length < playerCount) {
+    console.log("not enough players");
     return;
   }
 

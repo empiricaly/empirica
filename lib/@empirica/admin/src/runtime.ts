@@ -19,6 +19,7 @@ import {
   EAttribute,
   Game,
   getSetter,
+  Player,
   Round,
   scopedScope,
   Stage,
@@ -29,6 +30,14 @@ class Context {
   constructor(private runtime: Runtime, private store: Store) {}
 
   get unassignedPlayers() {
+    console.log(
+      "onlines",
+      Object.values(this.store.players).map((p) => p.online)
+    );
+    console.log(
+      "gameIDS",
+      Object.values(this.store.players).map((p) => p.get("gameID"))
+    );
     return Object.values(this.store.players).filter(
       (p) => p.online && !p.get("gameID")
     );
@@ -210,22 +219,22 @@ export class Runtime {
 
     for (const id in this.store.games) {
       const game = this.store.games[id];
-      if (!game.get(EE.NewGame)) {
-        await this.emitter.emit(EE.NewGame, this.defaultContext, game, {
-          game,
-        });
-      }
+      await this.emitter.emit(EE.NewGame, this.defaultContext, game, {
+        game,
+      });
     }
 
     for (const id in this.store.players) {
       const player = this.store.players[id];
       if (!player.get(EE.NewPlayer)) {
+        console.log(`before`);
         if (!player.scope) {
           const scope = <Scope>(
             await this.taj.addScope({ kind: "player", name: player.id })
           );
           this.store.addScope(scope);
         }
+        console.log(`after`);
         await this.emitter.emit(EE.NewPlayer, this.defaultContext, player, {
           player,
         });
@@ -434,6 +443,14 @@ export class Runtime {
     );
   }
 
+  private async addPlayer(player: Player) {
+    const scope = <Scope>await this.taj.addScope({
+      kind: "player",
+      name: player.id,
+    });
+    player.scope = scope;
+    this.store.saveEScope(player);
+  }
   private async processEventLocked(
     payload: OnEventPayload,
     error: Error | undefined
@@ -449,11 +466,8 @@ export class Runtime {
       case EventType.ParticipantAdd: {
         const player = this.store.addParticipant(<Participant>payload.node);
         if (!player.scope) {
-          const scope = await this.taj.addScope({
-            kind: "player",
-            name: player.id,
-          });
-          player.scope = <Scope>scope;
+          console.log("ParticipantAdd");
+          await this.addPlayer(player);
         }
         await this.emitter.emit(EE.NewPlayer, this.defaultContext, player, {
           player,
@@ -464,11 +478,8 @@ export class Runtime {
       case EventType.ParticipantConnect: {
         const player = this.store.addParticipant(<Participant>payload.node);
         if (!player.scope) {
-          const scope = await this.taj.addScope({
-            kind: "player",
-            name: player.id,
-          });
-          player.scope = <Scope>scope;
+          console.log("ParticipantConnect");
+          await this.addPlayer(player);
         }
         this.store.playerStatus(player, true);
         await this.emitter.emit(EE.PlayerConnected, this.defaultContext, null, {
@@ -480,11 +491,8 @@ export class Runtime {
       case EventType.ParticipantConnected: {
         const player = this.store.addParticipant(<Participant>payload.node);
         if (!player.scope) {
-          const scope = await this.taj.addScope({
-            kind: "player",
-            name: player.id,
-          });
-          player.scope = <Scope>scope;
+          console.log("ParticipantConnected");
+          await this.addPlayer(player);
         }
         this.store.playerStatus(player, true);
         await this.emitter.emit(EE.PlayerConnected, this.defaultContext, null, {
@@ -565,12 +573,16 @@ export class Runtime {
         }
 
         const kind = change.scope.type;
+        console.log("new sope");
         const scope = <Scope>await this.taj.addScope({
           kind,
           attributes: change.scope.creationAttributes(),
         });
         change.scope.scope = scope;
+        this.store.saveEScope(change.scope);
         change.scope.postProcess();
+
+        console.log("KIND", kind);
 
         switch (kind) {
           case "game":
@@ -583,8 +595,7 @@ export class Runtime {
             const stage = <Stage>change.scope;
             const step = await this.taj.addStep({ duration: stage.duration });
             stage.set("stepID", step.id, { immutable: true });
-            const s = this.store.addStep(<Step>(<unknown>step));
-            // stage.step = new EStep(this.store, <Step>step);
+            this.store.addStep(<Step>(<unknown>step));
             break;
           default:
             break;
@@ -719,13 +730,21 @@ export class Runtime {
           });
 
           try {
-            await this.taj.transition({
+            const transition = await this.taj.transition({
               from: State.Running,
               to: State.Ended,
               nodeID: stage.step.step.id,
             });
+
+            const step = this.store.addTransition(<Transition>transition);
+            if (!step?.scope) {
+              console.error("steps: received transition without step");
+              return;
+            }
+
+            await this.handleTransition(<Stage>step.scope);
           } catch (error) {
-            console.log("failed transition", error);
+            console.warn("failed transition", error);
           }
         } else {
           console.warn("TODO implement end game");
@@ -758,7 +777,7 @@ export class Runtime {
       event = `change-${event}`;
     }
 
-    console.log("ARGS", arg);
+    console.log(event, "ARGS", arg);
     await this.emitter.emit(event, this.defaultContext, getSet, arg);
   }
 
@@ -823,6 +842,8 @@ export class Runtime {
     for (const player of game.players) {
       nodeIDs.push(player.scope!.id);
     }
+
+    console.log("nodeIDs", nodeIDs);
 
     await this.taj.link({
       participantIDs: playerIDs,
@@ -899,8 +920,10 @@ function roundStageAfter(
   stageID: string
 ): [Round | null, Stage | null] {
   for (let i = 0; i < game.rounds.length; i++) {
+    console.log(`game.rounds`, game.rounds);
     const r = game.rounds[i];
     for (let j = 0; j < r.stages.length; j++) {
+      console.log(`r.stages ${r.stages}`);
       const s = r.stages[j];
       if (stageID == s.id) {
         if (r.stages[j + 1]) {
