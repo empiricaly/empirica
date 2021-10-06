@@ -136,6 +136,7 @@ func initConfig(rootCmd *cobra.Command, usingConfigFile *bool) func() {
 			// Search config in home directory with name ".empirica" (without extension).
 			viper.AddConfigPath(".")
 			viper.AddConfigPath("./empirica")
+			viper.AddConfigPath("./.empirica")
 			viper.AddConfigPath(home)
 			viper.SetConfigName("empirica")
 		}

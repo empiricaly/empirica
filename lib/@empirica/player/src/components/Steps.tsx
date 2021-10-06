@@ -70,7 +70,7 @@ export const Steps: React.FC<StepsProps> = ({
   const Step = actualSteps[index];
 
   const next = () => {
-    if (index + 1 >= actualSteps.length - 1) {
+    if (index + 1 >= actualSteps.length) {
       obj.set(doneKey, true);
     } else {
       obj.set(progressKey, index + 1);

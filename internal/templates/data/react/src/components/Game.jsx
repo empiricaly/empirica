@@ -1,5 +1,6 @@
-import { Loading, useGame, useStage } from "@empirica/player";
+import { Loading, useGame, useStage, Steps } from "@empirica/player";
 import React from "react";
+import { ExitSurvey } from "./ExitSurvey";
 import { Profile } from "./Profile";
 import { Stage } from "./Stage";
 
@@ -13,9 +14,12 @@ export function Game() {
 
   if (game.state == "ended") {
     return (
-      <div className="bg-empirica-50 flex flex-col items-center justify-center">
-        <div>Game Over</div>
-      </div>
+      <Steps progressKey="exitStep" doneKey="exitStepDone" steps={[ExitSurvey]}>
+        <div className="bg-empirica-50 flex flex-col items-center justify-center">
+          <h2>Finished</h2>
+          <p>Thank you for participating</p>
+        </div>
+      </Steps>
     );
   }
 

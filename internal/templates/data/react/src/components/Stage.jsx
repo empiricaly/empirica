@@ -1,6 +1,7 @@
 import { usePlayer } from "@empirica/player";
 import React from "react";
 import { Button } from "./Button";
+import { Slider } from "./Slider";
 
 export function Stage() {
   const player = usePlayer();
@@ -10,23 +11,31 @@ export function Stage() {
     player.stage.set("submit", true);
   }
 
+  function handleChange(e) {
+    player.set("score", e.target.value);
+  }
+
   function handleCheat() {
     player.set("score", score + 1);
   }
 
   return (
-    <div className=" flex w-full flex-col items-center justify-center">
+    <div className=" flex w-full flex-col p-20">
       {player.stage?.get("submit") ? (
-        "I gave up"
+        <p className="text-center">Please wait for other player(s).</p>
       ) : (
         <>
           <div className="w-3/4">{/* <Snake percentageWidth={75} /> */}</div>
 
-          <div className="mt-20">
-            <Button handleClick={handleCheat}>Cheat</Button>
-            <Button handleClick={handleClick} primary className="ml-2">
-              I give up
+          <p className="mb-5">Welcome to Empirica! try changing the slider.</p>
+
+          <Slider value={score} onChange={handleChange} />
+
+          <div className="mt-10">
+            <Button handleClick={handleClick} primary>
+              Submit
             </Button>
+            {/* <Button handleClick={handleCheat}>Cheat</Button> */}
           </div>
         </>
       )}
