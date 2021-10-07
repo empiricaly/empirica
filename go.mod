@@ -11,6 +11,7 @@ require (
 	github.com/empiricaly/tajriba v0.0.0-20210815035032-ba606cd1b686 // indirect
 	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/jpillora/backoff v1.0.0 // indirect
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/mattn/go-isatty v0.0.13

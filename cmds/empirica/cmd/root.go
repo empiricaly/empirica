@@ -16,6 +16,43 @@ import (
 	"github.com/spf13/viper"
 )
 
+func defineRoot() (*cobra.Command, *bool, error) {
+	// usingConfigFile tracks if the config comes from a file.
+	usingConfigFile := false
+
+	// rootCmd represents the base command when called without any subcommands.
+	rootCmd := &cobra.Command{
+		Use:   "empirica",
+		Short: "empirica is an engine for multiplayer interactive experiments",
+		// Long: ``,
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		Args:          cobra.NoArgs,
+		Run: func(cmd *cobra.Command, args []string) {
+			root(cmd, args, usingConfigFile)
+		},
+	}
+
+	err := empirica.ConfigFlags(rootCmd)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "define flags")
+	}
+
+	rootCmd.PersistentFlags().String("config", "", "config file (default is $HOME/.empirica.yaml)")
+
+	err = viper.BindPFlags(rootCmd.Flags())
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "bind root flags")
+	}
+
+	err = viper.BindPFlags(rootCmd.PersistentFlags())
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "bind root persistent flags")
+	}
+
+	return rootCmd, &usingConfigFile, nil
+}
+
 const closeMaxCuration = time.Second * 5
 
 func root(_ *cobra.Command, _ []string, usingConfigFile bool) {
@@ -47,7 +84,7 @@ func root(_ *cobra.Command, _ []string, usingConfigFile bool) {
 
 	t, err := empirica.Start(ctx, conf, usingConfigFile)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed starting empirica")
+		log.Fatal().Err(err).Msg("empirica: failed to start")
 	}
 
 	log.Info().Msg("empirica: started")
@@ -60,40 +97,6 @@ func root(_ *cobra.Command, _ []string, usingConfigFile bool) {
 	t.Close(ctx)
 }
 
-func defineRoot() (*cobra.Command, *bool, error) {
-	// usingConfigFile tracks if the config comes from a file.
-	usingConfigFile := false
-
-	// rootCmd represents the base command when called without any subcommands.
-	rootCmd := &cobra.Command{
-		Use:   "empirica",
-		Short: "empirica is an engine for multiplayer interactive experiments",
-		// Long: ``,
-		Run: func(cmd *cobra.Command, args []string) {
-			root(cmd, args, usingConfigFile)
-		},
-	}
-
-	err := empirica.ConfigFlags(rootCmd)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "define flags")
-	}
-
-	rootCmd.PersistentFlags().String("config", "", "config file (default is $HOME/.empirica.yaml)")
-
-	err = viper.BindPFlags(rootCmd.Flags())
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "bind root flags")
-	}
-
-	err = viper.BindPFlags(rootCmd.PersistentFlags())
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "bind root persistent flags")
-	}
-
-	return rootCmd, &usingConfigFile, nil
-}
-
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
@@ -101,6 +104,8 @@ func Execute() {
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to start")
 	}
+
+	addCreateCommand(rootCmd)
 
 	cobra.OnInitialize(initConfig(rootCmd, usingConfigFile))
 
@@ -130,8 +135,10 @@ func initConfig(rootCmd *cobra.Command, usingConfigFile *bool) func() {
 
 			// Search config in home directory with name ".empirica" (without extension).
 			viper.AddConfigPath(".")
+			viper.AddConfigPath("./empirica")
+			viper.AddConfigPath("./.empirica")
 			viper.AddConfigPath(home)
-			viper.SetConfigName(".empirica")
+			viper.SetConfigName("empirica")
 		}
 
 		viper.AutomaticEnv() // read in environment variables that match

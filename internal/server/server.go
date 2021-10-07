@@ -51,12 +51,15 @@ func Start(
 
 	s.wg.Add(1)
 
+	ctx2, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
+	defer cancel()
+
 	go func() {
-		log.Debug().Str("addr", config.Addr).Msg("Started Tajriba server")
+		log.Debug().Str("addr", config.Addr).Msg("server: starting")
 
 		<-ctx.Done()
 
-		log.Debug().Msg("Stopping Tajriba server")
+		log.Debug().Msg("server: stopping")
 		s.wg.Add(1)
 
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownGracePeriod)
@@ -64,25 +67,33 @@ func Start(
 
 		err := srv.Shutdown(shutdownCtx)
 		if err != nil {
-			log.Error().Err(err).Msg("Tajriba server shutdown failed")
+			log.Error().Err(err).Msg("server: shutdown failed")
 
 			os.Exit(1)
 
 			return
 		}
 
-		log.Debug().Msg("Tajriba server gracefully shutdown")
+		log.Debug().Msg("server: gracefully shutdown")
 		s.wg.Done()
 	}()
 
 	go func() {
-		err := srv.ListenAndServe()
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Error().Err(err).Msg("Failed start Tajriba server")
+		lerr := srv.ListenAndServe()
+		if lerr != nil && !errors.Is(lerr, http.ErrServerClosed) {
+			err = lerr
+
+			cancel()
 		}
 
 		s.wg.Done()
 	}()
+
+	<-ctx2.Done()
+
+	if err != nil {
+		return nil, errors.Wrap(err, "start server")
+	}
 
 	return s, nil
 }

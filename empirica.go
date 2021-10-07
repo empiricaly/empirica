@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
+	"github.com/empiricaly/empirica/internal/callbacks"
+	"github.com/empiricaly/empirica/internal/player"
 	"github.com/empiricaly/empirica/internal/server"
 	logger "github.com/empiricaly/empirica/internal/utils/log"
 	"github.com/empiricaly/tajriba"
@@ -14,8 +16,10 @@ import (
 
 // Runner manages Empirica's running state.
 type Runner struct {
-	server *server.Server
-	taj    *tajriba.Runner
+	server    *server.Server
+	player    *player.Player
+	callbacks *callbacks.Callbacks
+	taj       *tajriba.Runner
 }
 
 // Close waits for empirica to be done.
@@ -54,6 +58,16 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 	r.server, err = server.Start(ctx, config.Server)
 	if err != nil {
 		return nil, errors.Wrap(err, "init server")
+	}
+
+	r.player, err = player.Start(ctx, config.Player)
+	if err != nil {
+		return nil, errors.Wrap(err, "init player")
+	}
+
+	r.callbacks, err = callbacks.Start(ctx, config.Callbacks)
+	if err != nil {
+		return nil, errors.Wrap(err, "init callbacks")
 	}
 
 	err = tajriba.Init(ctx, config.Tajriba, schema, r.server.Router)
