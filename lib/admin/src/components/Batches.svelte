@@ -2,7 +2,7 @@
   import BatchLine from "./BatchLine.svelte";
   import SlideOver from "./overlays/SlideOver.svelte";
 
-  let newBatch = true;
+  let newBatch = false;
 
   function createBatch() {
     newBatch = false;

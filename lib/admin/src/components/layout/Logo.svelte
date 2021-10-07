@@ -1,9 +1,13 @@
+<script>
+  export let classString = "h-8 w-auto fill-current";
+</script>
+
 <svg
   aria-hidden="true"
   role="img"
   viewBox="0 0 168 137"
   xmlns="http://www.w3.org/2000/svg"
-  class="h-8 w-auto fill-current"
+  class={classString}
   preserveAspectRatio="xMidYMid meet"
 >
   <g clip-path="url(#clip0)">

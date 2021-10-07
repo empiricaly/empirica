@@ -1,6 +1,13 @@
 <script>
+  import { DEFAULT_TOKEN_KEY } from "../../constants";
+
   import Logo from "./Logo.svelte";
   import SidebarButton from "./SidebarButton.svelte";
+
+  function handleSignOut() {
+    window.localStorage.removeItem(DEFAULT_TOKEN_KEY);
+    window.location.href = window.location.href;
+  }
 </script>
 
 <div class="flex flex-col h-full bg-gray-800">
@@ -72,11 +79,12 @@
         </div>
         <div class="ml-3">
           <p class="text-sm font-medium text-white">Tom Cook</p>
-          <p
+          <button
+            on:click={handleSignOut}
             class="text-xs font-medium text-gray-300 group-hover:text-gray-200"
           >
-            View profile
-          </p>
+            Sign Out
+          </button>
         </div>
       </div>
     </a>
