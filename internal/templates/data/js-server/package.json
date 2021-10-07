@@ -1,7 +1,9 @@
 {
   "name": "empirica-server-demo",
-  "license": "MIT",
+  "private": true,
   "author": "Nicolas Paton",
-  "dependencies": {},
+  "dependencies": {
+    "minimist": "1.2.5"
+  },
   "devDependencies": {}
 }

@@ -1,11 +1,11 @@
 Arguments: 
-  /Users/npaton/.nvm/versions/node/v14.13.1/bin/node /usr/local/Cellar/yarn/1.22.10/libexec/bin/yarn.js add @headlessui/react @heroicons/react/outline
+  /Users/npaton/.nvm/versions/node/v14.13.1/bin/node /usr/local/Cellar/yarn/1.22.15/libexec/bin/yarn.js install
 
 PATH: 
-  /Users/npaton/.nvm/versions/node/v14.13.1/bin:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin:/Users/npaton/.asdf/shims:/usr/local/opt/asdf/bin:/usr/local/bin:/Users/npaton/.rbenv/shims:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/sbin:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin:/usr/local/bin:/Users/npaton/.rbenv/shims:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/VMware Fusion.app/Contents/Public:/Library/Apple/usr/bin:/Applications/Wireshark.app/Contents/MacOS:/Users/npaton/.cargo/bin:/usr/local/opt/go/libexec/bin:/Users/npaton/go/bin:/Users/npaton/projects/vendor/flutter/bin:/Users/npaton/.krew/bin:/usr/local/opt/fzf/bin:/usr/local/opt/go/libexec/bin:/Users/npaton/go/bin:/Users/npaton/projects/vendor/flutter/bin:/Users/npaton/.krew/bin
+  /Users/npaton/.nvm/versions/node/v14.13.1/bin:/usr/local/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/bin:/Users/npaton/.asdf/shims:/usr/local/opt/asdf/libexec/bin:/usr/local/bin:/Users/npaton/.rbenv/shims:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/Applications/VMware Fusion.app/Contents/Public:/Library/Apple/usr/bin:/Applications/Wireshark.app/Contents/MacOS:/Users/npaton/.cargo/bin:/usr/local/opt/go/libexec/bin:/Users/npaton/go/bin:/Users/npaton/projects/vendor/flutter/bin:/Users/npaton/.krew/bin:/usr/local/opt/fzf/bin
 
 Yarn version: 
-  1.22.10
+  1.22.15
 
 Node version: 
   14.13.1
@@ -14,30 +14,25 @@ Platform:
   darwin x64
 
 Trace: 
-  Error: https://registry.yarnpkg.com/@heroicons%2freact/outline: Request "https://registry.yarnpkg.com/@heroicons%2freact/outline" returned a 405
-      at Request.params.callback [as _callback] (/usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:66997:18)
-      at Request.self.callback (/usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:140749:22)
-      at Request.emit (events.js:314:20)
-      at Request.<anonymous> (/usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:141721:10)
-      at Request.emit (events.js:314:20)
-      at IncomingMessage.<anonymous> (/usr/local/Cellar/yarn/1.22.10/libexec/lib/cli.js:141643:12)
-      at Object.onceWrapper (events.js:420:28)
-      at IncomingMessage.emit (events.js:326:22)
-      at endReadableNT (_stream_readable.js:1252:12)
-      at processTicksAndRejections (internal/process/task_queues.js:80:21)
+  Error: ENOENT: no such file or directory, stat '/Users/npaton/projects/empirica/projects/v2/empirica/internal/templates/data/react/node_modules/tajriba'
 
 npm manifest: 
   {
     "name": "react",
     "version": "0.0.0",
+    "private": true,
     "scripts": {
       "dev": "vite",
       "build": "vite build",
       "serve": "vite preview"
     },
     "dependencies": {
+      "@headlessui/react": "^1.4.0",
+      "@heroicons/react": "^1.0.3",
+      "@tailwindcss/forms": "^0.3.3",
       "react": "17.0.2",
-      "react-dom": "17.0.2"
+      "react-dom": "17.0.2",
+      "react-simple-snake": "^0.2.2"
     },
     "devDependencies": {
       "@types/react": "17.0.18",
@@ -276,6 +271,16 @@ Lockfile:
       "@babel/helper-validator-identifier" "^7.14.9"
       to-fast-properties "^2.0.0"
   
+  "@headlessui/react@^1.4.0":
+    version "1.4.0"
+    resolved "https://registry.yarnpkg.com/@headlessui/react/-/react-1.4.0.tgz#c6d424d8ab10ac925e4423d7f3cbab02c30d736a"
+    integrity sha512-C+FmBVF6YGvqcEI5fa2dfVbEaXr2RGR6Kw1E5HXIISIZEfsrH/yuCgsjWw5nlRF9vbCxmQ/EKs64GAdKeb8gCw==
+  
+  "@heroicons/react@^1.0.3":
+    version "1.0.3"
+    resolved "https://registry.yarnpkg.com/@heroicons/react/-/react-1.0.3.tgz#4dae106c6019e3250e36401b55b599ad41a68273"
+    integrity sha512-wdzWbDiFKzeL6xFJsgY2PqvDkx4hFmQDpEFRVj872EA71XOjr8g0DQj5rHWm0y7LwfGOFL0eQmEiMbTyGNOnTQ==
+  
   "@nodelib/fs.scandir@2.1.5":
     version "2.1.5"
     resolved "https://registry.yarnpkg.com/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"
@@ -296,6 +301,13 @@ Lockfile:
     dependencies:
       "@nodelib/fs.scandir" "2.1.5"
       fastq "^1.6.0"
+  
+  "@tailwindcss/forms@^0.3.3":
+    version "0.3.3"
+    resolved "https://registry.yarnpkg.com/@tailwindcss/forms/-/forms-0.3.3.tgz#a29d22668804f3dae293dcadbef1aa6315c45b64"
+    integrity sha512-U8Fi/gq4mSuaLyLtFISwuDYzPB73YzgozjxOIHsK6NXgg/IWD1FLaHbFlWmurAMyy98O+ao74ksdQefsquBV1Q==
+    dependencies:
+      mini-svg-data-uri "^1.2.3"
   
   "@types/parse-json@^4.0.0":
     version "4.0.0"
@@ -894,6 +906,11 @@ Lockfile:
       braces "^3.0.1"
       picomatch "^2.2.3"
   
+  mini-svg-data-uri@^1.2.3:
+    version "1.3.3"
+    resolved "https://registry.yarnpkg.com/mini-svg-data-uri/-/mini-svg-data-uri-1.3.3.tgz#91d2c09f45e056e5e1043340b8b37ba7b50f4fac"
+    integrity sha512-+fA2oRcR1dJI/7ITmeQJDrYWks0wodlOz0pAEhKYJ2IVc1z0AnwJUsKY2fzFmPAM3Jo9J0rBx8JAA9QQSJ5PuA==
+  
   minimatch@^3.0.4:
     version "3.0.4"
     resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-3.0.4.tgz#5166e286457f03306064be5497e8dbb0c3d32083"
@@ -1086,6 +1103,11 @@ Lockfile:
     version "0.9.0"
     resolved "https://registry.yarnpkg.com/react-refresh/-/react-refresh-0.9.0.tgz#71863337adc3e5c2f8a6bfddd12ae3bfe32aafbf"
     integrity sha512-Gvzk7OZpiqKSkxsQvO/mbTN1poglhmAV7gR/DdIrRrSMXraRQQlfikRJOr3Nb9GTMPC5kof948Zy6jJZIFtDvQ==
+  
+  react-simple-snake@^0.2.2:
+    version "0.2.2"
+    resolved "https://registry.yarnpkg.com/react-simple-snake/-/react-simple-snake-0.2.2.tgz#171f39c3003c1c86c2e2a2f46c5f2c4007da185e"
+    integrity sha512-MP5s3IDs6+9S0GrxBYi0oGjvm2/vFMq7GmYhVbjEhRjJUlH3kAxoyOBLTfFpGq3+Fkx2OUSFBbR3l8n1iG5qkg==
   
   react@17.0.2:
     version "17.0.2"
