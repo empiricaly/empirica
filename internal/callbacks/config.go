@@ -9,8 +9,11 @@ import (
 
 // Config is server configuration.
 type Config struct {
-	Path   string `mapstructure:"path"`
-	DevCmd string `mapstructure:"devcmd"`
+	Path             string `mapstructure:"path"`
+	DevCmd           string `mapstructure:"devcmd"`
+	Token            string `mapstructure:"token"`
+	SessionToken     string `mapstructure:"sessionTokenPath"`
+	SaveSessionToken bool   `mapstructure:"sessionToken"`
 }
 
 // Validate configuration is ok.
@@ -41,6 +44,21 @@ func ConfigFlags(cmd *cobra.Command, prefix string) error {
 	sval = defaultCommand
 	cmd.Flags().String(flag, sval, "Command to run client code in development")
 	viper.SetDefault(flag, sval)
+
+	flag = prefix + ".token"
+	sval = ""
+	cmd.Flags().String(flag, sval, "Service token (pulled from .empirica config file)")
+	viper.SetDefault(flag, sval)
+
+	flag = prefix + ".sessionTokenPath"
+	sval = ".empirica/local/callBackSessionToken"
+	cmd.Flags().String(flag, sval, "Path to session token file")
+	viper.SetDefault(flag, sval)
+
+	flag = prefix + ".sessionToken"
+	bval := true
+	cmd.Flags().Bool(flag, bval, "Save sessionToken")
+	viper.SetDefault(flag, bval)
 
 	return nil
 }

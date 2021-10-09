@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -14,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/empiricaly/empirica/internal/templates"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -88,17 +87,21 @@ func addCreateCommand(parent *cobra.Command) {
 				return errors.Wrap(err, "server")
 			}
 
-			empDir := path.Join(dir, ".empirica")
-			tomlFile := path.Join(empDir, "empirica.toml")
-
-			if err := createDir(empDir); err != nil {
-				return errors.Wrap(err, "empirica dir")
+			if err := settings.Init(dir); err != nil {
+				return errors.Wrap(err, "empirica")
 			}
 
-			content := []byte(fmt.Sprintf(empiricatoml, randSeq(16), randSeq(6)))
-			if err := ioutil.WriteFile(tomlFile, content, filePerm); err != nil {
-				return errors.Wrap(err, "write configuration file")
-			}
+			// empDir := path.Join(dir, ".empirica")
+			// tomlFile := path.Join(empDir, "empirica.toml")
+
+			// if err := createDir(empDir); err != nil {
+			// 	return errors.Wrap(err, "empirica dir")
+			// }
+
+			// content := []byte(fmt.Sprintf(empiricatoml, randSeq(16), randSeq(6)))
+			// if err := ioutil.WriteFile(tomlFile, content, filePerm); err != nil {
+			// 	return errors.Wrap(err, "write configuration file")
+			// }
 
 			return nil
 		},

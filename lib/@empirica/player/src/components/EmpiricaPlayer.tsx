@@ -72,7 +72,6 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
         (async () => {
           try {
             sharedPlayer = await Empirica.sessionLogin(url, token, participant);
-            console.log(sharedPlayer);
             setPlayer(sharedPlayer);
           } catch (e) {
             console.warn("Failed to reconnect", e);
@@ -146,7 +145,7 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
           setConsented(true);
         }}
         onRefuse={() => {
-          console.log("ciao");
+          console.info("Refused consent");
         }}
       />
     );

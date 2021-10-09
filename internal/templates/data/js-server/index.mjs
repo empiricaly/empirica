@@ -1,1 +1,5 @@
-import "./advanced/init.mjs";
+import { connect } from "./advanced/init.mjs";
+
+(async () => {
+  await connect();
+})();

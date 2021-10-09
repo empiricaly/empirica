@@ -1,13 +1,26 @@
 import { Empirica, setLogLevel } from "@empirica/admin";
+import fs from "fs";
 import minimist from "minimist";
-import advancedHooks from "./hooks.mjs";
 import hooks from "../hooks.mjs";
+import advancedHooks from "./hooks.mjs";
 
-var argv = minimist(process.argv.slice(2));
+var argv = minimist(process.argv.slice(2), { string: ["token"] });
 
 if (argv["loglevel"]) {
   setLogLevel(argv["loglevel"]);
 }
+
+if (!argv["token"]) {
+  console.error(
+    "callbacks: service token to connect to Tajriba is required (--token)"
+  );
+  process.exit(1);
+}
+
+const sessionTokenPath = argv["sessionTokenPath"];
+
+const token = argv["token"];
+const name = "callbacks";
 
 const url = "http://localhost:8882/query";
 
@@ -24,19 +37,55 @@ process.on("SIGINT", function () {
   quitResolve();
 });
 
-(async () => {
-  try {
-    const [admin, _] = await Empirica.registerService(
-      url,
-      "callbacks",
-      "0123456789123456",
-      hooks.merge(advancedHooks)
-    );
-  } catch (e) {
-    console.error(e);
+export async function connect() {
+  const h = hooks.merge(advancedHooks);
+  let connected = false;
+
+  if (sessionTokenPath) {
+    let sessionToken;
+    try {
+      sessionToken = fs.readFileSync(sessionTokenPath, "utf8");
+    } catch (err) {
+      console.debug("callbacks: sessionToken read failed");
+      console.debug(err);
+    }
+
+    if (sessionToken) {
+      console.debug("callbacks: found sessionToken, logging in with session");
+      try {
+        await Empirica.sessionLogin(url, sessionToken, h);
+        connected = true;
+        console.info("callbacks: started");
+      } catch (error) {
+        console.debug("callbacks: failed logging in with session");
+        console.debug(error);
+      }
+    }
+  }
+
+  if (!connected) {
+    try {
+      const [_, st] = await Empirica.registerService(url, name, token, h);
+
+      console.info("callbacks: started");
+
+      if (sessionTokenPath) {
+        try {
+          fs.writeFileSync(sessionTokenPath, st, { flag: "w+" });
+          console.info("callbacks: session token saved");
+        } catch (err) {
+          console.error("callbacks: failed to save sessionToken");
+          console.error(err);
+        }
+      }
+    } catch (e) {
+      console.error("callbacks: failed to start");
+      console.error(e);
+      process.exit(1);
+    }
   }
 
   await quit;
 
   process.exit(0);
-})();
+}
