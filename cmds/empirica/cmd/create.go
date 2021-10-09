@@ -71,7 +71,7 @@ func addCreateCommand(parent *cobra.Command) {
 			serverDir := path.Join(dir, "server")
 			clientDir := path.Join(dir, "client")
 
-			if err := templates.CopyDir(project, serverDir, "js-server"); err != nil {
+			if err := templates.CopyDir(project, serverDir, "callbacks"); err != nil {
 				return errors.Wrap(err, "server: copy directory")
 			}
 
