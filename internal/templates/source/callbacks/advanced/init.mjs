@@ -1,8 +1,8 @@
 import { Empirica, setLogLevel } from "@empirica/admin";
 import fs from "fs";
 import minimist from "minimist";
-import hooks from "../hooks.mjs";
-import advancedHooks from "./hooks.mjs";
+import callbacks from "../callbacks.mjs";
+import advancedCallbacks from "./callbacks.mjs";
 
 var argv = minimist(process.argv.slice(2), { string: ["token"] });
 
@@ -38,7 +38,7 @@ process.on("SIGINT", function () {
 });
 
 export async function connect() {
-  const h = hooks.merge(advancedHooks);
+  const h = callbacks.merge(advancedCallbacks);
   let connected = false;
 
   if (sessionTokenPath) {

@@ -20,6 +20,7 @@ export interface Change {
     | "end";
   attr?: EAttribute;
   scope?: EScope;
+  attrs?: Json;
   player?: Player;
 }
 
@@ -277,13 +278,8 @@ export class Root extends EScope {
     this.store.pushChange({
       type: "newScope",
       scope: batch,
+      attrs,
     });
-
-    if (attrs) {
-      for (const key in attrs) {
-        batch.set(key, attrs[key]);
-      }
-    }
 
     return batch;
   }
@@ -537,6 +533,10 @@ export class Store {
 
   pushChange(change: Change) {
     this.changes.push(change);
+  }
+
+  hasChanges(): boolean {
+    return this.changes.length > 0;
   }
 
   popChanges(): Change[] {

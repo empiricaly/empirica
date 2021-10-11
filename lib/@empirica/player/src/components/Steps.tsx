@@ -49,6 +49,11 @@ export const Steps: React.FC<StepsProps> = ({
   let actualSteps: React.ElementType[];
 
   if (typeof steps === "function") {
+    if (!game) {
+      console.warn("steps: cannot use steps function if game not assigned");
+      return <></>;
+    }
+
     const res = steps(game?.treatment || {});
     if (!res) {
       obj.set(doneKey, true);

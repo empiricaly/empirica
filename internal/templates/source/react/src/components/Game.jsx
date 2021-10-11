@@ -1,5 +1,5 @@
-import { Loading, useGame, useStage, Steps } from "@empirica/player";
 import React from "react";
+import { Loading, Steps, useGame, useStage } from "@empirica/player";
 import { ExitSurvey } from "./ExitSurvey";
 import { Profile } from "./Profile";
 import { Stage } from "./Stage";
@@ -7,6 +7,10 @@ import { Stage } from "./Stage";
 export function Game() {
   const game = useGame();
   const stage = useStage();
+
+  if (!game) {
+    return <div>Lobby here!</div>;
+  }
 
   if (!stage) {
     return <Loading />;

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Empirica } from "../empirica";
 import { useGame, usePlayer } from "../hooks";
+import { Empirica } from "../empirica";
 import { Player } from "../player";
 import { Consent } from "./Consent";
 import { EmpiricaContext } from "./Context";
@@ -35,7 +35,9 @@ const WaitLoad: React.FC = (props) => {
   const player = usePlayer();
   const game = useGame();
 
-  if (!player || !game) {
+  console.info("wait");
+
+  if (!player) {
     return <Loading></Loading>;
   }
 
@@ -92,6 +94,8 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
       }
     };
   }, []);
+
+  console.info("player", player);
 
   if (!loaded) {
     return <Loading />;

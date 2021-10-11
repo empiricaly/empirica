@@ -1,6 +1,6 @@
-import { Hooks } from "@empirica/admin";
+import { Callbacks } from "@empirica/admin";
 
-const Empirica = new Hooks();
+const Empirica = new Callbacks();
 
 const stageDuration = 20;
 

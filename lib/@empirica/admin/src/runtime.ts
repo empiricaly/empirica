@@ -10,8 +10,8 @@ import {
   TajribaAdmin,
   Transition,
 } from "@empirica/tajriba";
+import { Callbacks } from "./callbacks";
 import { EmpiricaEvent as EE, EventCallback } from "./events";
-import { Hooks } from "./hooks";
 import { Json } from "./json";
 import {
   Batch,
@@ -33,6 +33,10 @@ class Context {
     return Object.values(this.store.players).filter(
       (p) => p.online && !p.get("gameID")
     );
+  }
+
+  get batches() {
+    return Object.values(this.store.batches);
   }
 
   async createBatch(attr: Json) {
@@ -137,10 +141,10 @@ export class Runtime {
     this.defaultContext = new Context(this, store);
   }
 
-  async init(hooks?: Hooks) {
-    if (hooks) {
-      for (const event in hooks.hooks) {
-        for (const cb of hooks.hooks[event]) {
+  async init(callbacks?: Callbacks) {
+    if (callbacks) {
+      for (const event in callbacks.callbacks) {
+        for (const cb of callbacks.callbacks[event]) {
           this.on(event, cb);
         }
       }
@@ -200,8 +204,6 @@ export class Runtime {
     await this.getSteps();
     await this.getParticipants();
 
-    console.trace("STORE", this.store);
-
     for (const id in this.store.batches) {
       const batch = this.store.batches[id];
       await this.emitter.emit(EE.NewBatch, this.defaultContext, batch, {
@@ -224,6 +226,10 @@ export class Runtime {
             await this.taj.addScope({ kind: "player", name: player.id })
           );
           this.store.addScope(scope);
+          this.taj.link({
+            nodeIDs: [scope.id],
+            participantIDs: [id],
+          });
         }
         await this.emitter.emit(EE.NewPlayer, this.defaultContext, player, {
           player,
@@ -417,7 +423,7 @@ export class Runtime {
 
   async createBatch(attr?: Json) {
     this.store.root.addBatch(attr);
-    this.processChanges();
+    await this.processChanges();
   }
 
   async stop() {
@@ -440,6 +446,10 @@ export class Runtime {
     });
     player.scope = scope;
     this.store.saveEScope(player);
+    this.taj.link({
+      nodeIDs: [scope.id],
+      participantIDs: [player.id],
+    });
   }
   private async processEventLocked(
     payload: OnEventPayload,
@@ -544,6 +554,9 @@ export class Runtime {
 
     for (const change of changes) {
       await this.processChange(change);
+      if (this.store.hasChanges()) {
+        await this.processChanges();
+      }
     }
   }
 
@@ -557,10 +570,22 @@ export class Runtime {
           return;
         }
 
+        const attributes = change.scope.creationAttributes();
+
+        if (change.attrs) {
+          for (const key in change.attrs) {
+            attributes.push(<Attribute>{
+              key,
+              val: JSON.stringify(change.attrs[key]),
+              immutable: true,
+            });
+          }
+        }
+
         const kind = change.scope.type;
         const scope = <Scope>await this.taj.addScope({
           kind,
-          attributes: change.scope.creationAttributes(),
+          attributes,
         });
         change.scope.scope = scope;
         this.store.saveEScope(change.scope);
@@ -833,7 +858,7 @@ export class Runtime {
 
     if (stage) {
       await this.startStage(stage);
-      game.set("state", "started", { protected: true });
+      game.set("state", "running", { protected: true });
       await this.processChanges();
     } else {
       await this.gameEnd(game);
