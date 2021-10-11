@@ -44,7 +44,7 @@
     <div class="relative flex justify-end items-center">
       <button
         type="button"
-        class="w-8 h-8 bg-white inline-flex items-center justify-center text-gray-400 rounded-full hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+        class="w-8 h-8 bg-white inline-flex items-center justify-center text-gray-400 rounded-full hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
         id="project-options-menu-0-button"
         aria-expanded="false"
         aria-haspopup="true"

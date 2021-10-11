@@ -1,9 +1,7 @@
 <script>
-  import BatchLine from "./BatchLine.svelte";
-  import SlideOver from "./overlays/SlideOver.svelte";
   import { Empirica } from "@empirica/admin";
+  import { DEFAULT_TOKEN_KEY, URL } from "../constants";
   import Logo from "./layout/Logo.svelte";
-  import { DEFAULT_PART_KEY, DEFAULT_TOKEN_KEY, URL } from "../constants";
 
   export let loggedIn = false;
 
@@ -54,7 +52,7 @@
             type="username"
             bind:value={username}
             required
-            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-empirica-500 focus:border-empirica-500 focus:z-10 sm:text-sm"
             placeholder="username"
           />
         </div>
@@ -67,7 +65,7 @@
             bind:value={password}
             autocomplete="current-password"
             required
-            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+            class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-empirica-500 focus:border-empirica-500 focus:z-10 sm:text-sm"
             placeholder="Password"
           />
         </div>
@@ -76,12 +74,12 @@
       <div>
         <button
           type="submit"
-          class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-empirica-600 hover:bg-empirica-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
         >
           <span class="absolute left-0 inset-y-0 flex items-center pl-3">
             <!-- Heroicon name: solid/lock-closed -->
             <svg
-              class="h-5 w-5 text-indigo-500 group-hover:text-indigo-400"
+              class="h-5 w-5 text-empirica-500 group-hover:text-empirica-400"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"

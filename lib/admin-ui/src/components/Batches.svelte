@@ -7,6 +7,10 @@
   function createBatch() {
     newBatch = false;
   }
+
+  function init(el) {
+    el.focus();
+  }
 </script>
 
 <main class="flex-1 relative z-0 overflow-y-auto focus:outline-none">
@@ -22,7 +26,7 @@
     <div class="mt-4 flex sm:mt-0 sm:ml-4">
       <button
         type="button"
-        class="order-0 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 sm:order-1 sm:ml-3"
+        class="order-0 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-empirica-600 hover:bg-empirica-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500 sm:order-1 sm:ml-3"
         on:click={() => (newBatch = true)}
       >
         New Batch
@@ -140,20 +144,19 @@
           </div>
           <div class="sm:col-span-2">
             <textarea
-              autofocus
+              use:init
               id="batch-configuration"
               name="configuration"
               rows="10"
-              class="block w-full shadow-sm sm:text-sm focus:ring-indigo-500 focus:border-indigo-500 border border-gray-300 rounded-md"
+              class="block w-full px-3 py-2 shadow-sm sm:text-sm focus:outline-none focus:ring-2 focus:ring-empirica-500 focus:border-transparent border border-transaparent rounded-md"
             />
 
             <div
               class="flex flex-col space-between sm:flex-row sm:items-center sm:space-between mt-2"
             >
               <div>
-                <a
-                  href="#"
-                  class="group flex items-center text-sm text-gray-500 hover:text-gray-900 space-x-2.5"
+                <div
+                  class="group flex items-center text-sm text-gray-500 space-x-2.5"
                 >
                   <!-- Heroicon name: solid/question-mark-circle -->
                   <svg
@@ -172,7 +175,7 @@
                   <span>
                     Configuration as plain JSON. Better UI coming soon.
                   </span>
-                </a>
+                </div>
               </div>
             </div>
           </div>
@@ -185,14 +188,14 @@
       <div class="space-x-3 flex justify-end">
         <button
           type="button"
-          class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
           on:click={() => (newBatch = false)}
         >
           Cancel
         </button>
         <button
           type="submit"
-          class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-empirica-600 hover:bg-empirica-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
           on:click={createBatch}
         >
           Create

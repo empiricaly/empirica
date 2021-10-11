@@ -1,6 +1,5 @@
 <script>
   import { DEFAULT_TOKEN_KEY } from "../../constants";
-
   import Logo from "./Logo.svelte";
   import SidebarButton from "./SidebarButton.svelte";
 
@@ -16,9 +15,9 @@
       <div class="text-gray-300">
         <Logo />
       </div>
-      <div class="ml-3 mt-1 text-lg font-medium">
+      <div class="ml-2 mt-1 text-lg font-medium">
         Empirica
-        <div class="inline-block text-teal-500">Admin</div>
+        <div class="inline-block text-empirica-500">Admin</div>
       </div>
     </div>
     <nav class="mt-5 flex-1 px-2 bg-gray-800 space-y-1" aria-label="Sidebar">
@@ -68,7 +67,7 @@
     </nav>
   </div>
   <div class="flex-shrink-0 flex bg-gray-700 p-4">
-    <a href="#" class="flex-shrink-0 w-full group block">
+    <a href="/" class="flex-shrink-0 w-full group block">
       <div class="flex items-center">
         <div>
           <img

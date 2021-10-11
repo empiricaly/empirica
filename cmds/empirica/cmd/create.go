@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"math/rand"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -10,7 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/empiricaly/empirica/internal/templates"
@@ -91,62 +89,17 @@ func addCreateCommand(parent *cobra.Command) {
 				return errors.Wrap(err, "empirica")
 			}
 
-			// empDir := path.Join(dir, ".empirica")
-			// tomlFile := path.Join(empDir, "empirica.toml")
-
-			// if err := createDir(empDir); err != nil {
-			// 	return errors.Wrap(err, "empirica dir")
-			// }
-
-			// content := []byte(fmt.Sprintf(empiricatoml, randSeq(16), randSeq(6)))
-			// if err := ioutil.WriteFile(tomlFile, content, filePerm); err != nil {
-			// 	return errors.Wrap(err, "write configuration file")
-			// }
-
 			return nil
 		},
 	})
 }
 
-const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-const (
-	letterIdxBits = 6                    // 6 bits to represent a letter index
-	letterIdxMask = 1<<letterIdxBits - 1 // All 1-bits, as many as letterIdxBits
-	letterIdxMax  = 63 / letterIdxBits   // # of letter indices fitting in 63 bits
-)
-
-func randSeq(n int) string {
-	src := rand.NewSource(time.Now().UnixNano())
-	sb := strings.Builder{}
-	sb.Grow(n)
-	// A src.Int63() generates 63 random bits, enough for letterIdxMax characters!
-	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
-		if remain == 0 {
-			cache, remain = src.Int63(), letterIdxMax
-		}
-
-		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
-			sb.WriteByte(letterBytes[idx])
-			i--
-		}
-
-		cache >>= letterIdxBits
-
-		remain--
-	}
-
-	return sb.String()
-}
-
-const (
-	dirPerm  = 0777
-	filePerm = 0600
-)
+const dirPerm = 0777
 
 func createDir(dir string) error {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		if err := os.MkdirAll(dir, dirPerm); err != nil {
-			return errors.Wrap(err, "create directory")
+			return errors.Wrapf(err, "create directory '%s'", dir)
 		}
 	}
 
