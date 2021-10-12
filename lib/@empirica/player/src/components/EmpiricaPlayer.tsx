@@ -31,11 +31,13 @@ export const clear = () => {
   window.location.href = window.location.href;
 };
 
+export const createNewPlayer = () => {
+  const date: Date = new Date();
+  window.open(`http://localhost:8844/?playerID=${date.getTime()}`, "_blank")?.focus();
+};
+
 const WaitLoad: React.FC = (props) => {
   const player = usePlayer();
-  const game = useGame();
-
-  console.info("wait");
 
   if (!player) {
     return <Loading></Loading>;
@@ -94,8 +96,6 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
       }
     };
   }, []);
-
-  console.info("player", player);
 
   if (!loaded) {
     return <Loading />;
