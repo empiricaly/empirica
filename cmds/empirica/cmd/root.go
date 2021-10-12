@@ -12,7 +12,6 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
 
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
@@ -38,7 +37,7 @@ func defineRoot() (*cobra.Command, *bool, error) {
 		return nil, nil, errors.Wrap(err, "define flags")
 	}
 
-	rootCmd.PersistentFlags().String("config", "", "config file (default is $HOME/.empirica.yaml)")
+	rootCmd.PersistentFlags().String("config", "", "config file (default is .empirica/empirica.toml)")
 
 	err = viper.BindPFlags(rootCmd.Flags())
 	if err != nil {
@@ -127,17 +126,17 @@ func initConfig(rootCmd *cobra.Command, usingConfigFile *bool) func() {
 			viper.SetConfigFile(cfgFile)
 		} else {
 			// Find home directory.
-			home, err := homedir.Dir()
-			if err != nil {
-				log.Error().Err(err).Msg("Getting $HOME dir")
-				os.Exit(1)
-			}
+			// home, err := homedir.Dir()
+			// if err != nil {
+			// 	log.Error().Err(err).Msg("Getting $HOME dir")
+			// 	os.Exit(1)
+			// }
 
 			// Search config in home directory with name ".empirica" (without extension).
-			viper.AddConfigPath(".")
-			viper.AddConfigPath("./empirica")
+			// viper.AddConfigPath(".")
+			// viper.AddConfigPath("./empirica")
 			viper.AddConfigPath("./.empirica")
-			viper.AddConfigPath(home)
+			// viper.AddConfigPath(home)
 			viper.SetConfigName("empirica")
 		}
 
