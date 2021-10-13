@@ -17,7 +17,10 @@
     if (token) {
       (async () => {
         try {
-          let adminSessionLoggedIn = await Empirica.sessionLogin(URL, token);
+          let adminSessionLoggedIn = await Empirica.sessionLogin(
+            `${URL}/query`,
+            token
+          );
           loggedIn =
             adminSessionLoggedIn !== undefined || adminSessionLoggedIn !== null;
         } catch (e) {

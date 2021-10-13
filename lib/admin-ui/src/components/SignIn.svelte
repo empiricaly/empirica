@@ -13,7 +13,11 @@
     e.preventDefault();
     try {
       loading = true;
-      const [admin, token] = await Empirica.loginAdmin(URL, username, password);
+      const [admin, token] = await Empirica.loginAdmin(
+        `${URL}/query`,
+        username,
+        password
+      );
       window.localStorage.setItem(DEFAULT_TOKEN_KEY, token.toString());
       loggedIn = true;
     } catch (error) {
