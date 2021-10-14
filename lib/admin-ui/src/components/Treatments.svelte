@@ -7,11 +7,12 @@
   import Alert from "./layout/Alert.svelte";
   import SlideOver from "./overlays/SlideOver.svelte";
 
-  let newTreatment = true;
+  let newTreatment = false;
   let tempTreatments;
 
   let selectedTreatment = DEFAULT_TREATMENT;
   let alertModal = false;
+  let editedIndex;
   let deleteIconIndex = -1;
 
   // Get treatments from file
@@ -55,12 +56,14 @@
       msg = "Name cannot be empty";
     }
 
-    const treatment = treatments.treatments.filter(
-      (t) => t.name === selectedTreatment.name
-    );
+    if (!editedIndex) {
+      const treatment = treatments.treatments.filter(
+        (t) => t.name === selectedTreatment.name
+      );
 
-    if (treatment.length > 0) {
-      msg = "Treatment name already exist";
+      if (treatment.length > 0) {
+        msg = "Treatment name already exist";
+      }
     }
 
     if (!selectedTreatment.factors || selectedTreatment.factors.length === 0) {
@@ -121,6 +124,13 @@
     }
 
     checkNewFactors(treatment.factors);
+
+    if (editedIndex) {
+      treatments.treatments = treatments.treatments.filter(
+        (_, i) => i !== editedIndex
+      );
+    }
+
     treatments.treatments.push(treatment);
     writeTreatmentsToFile();
     newTreatment = false;
@@ -172,13 +182,22 @@
   }
 
   let treatments;
-  function showTreatmentEditor(t) {
+  function showTreatmentEditor(_, t, index) {
     newTreatment = true;
 
-    // if (!t) {
-    //   selectedTreatment = DEFAULT_TREATMENT;
-    //   return;
-    // }
+    editedIndex = index || null;
+
+    if (!t) {
+      selectedTreatment = {
+        name: "",
+        desc: "",
+        factors: treatments.factors.map((f) => {
+          return { key: f.name, value: "" };
+        }),
+      };
+
+      return;
+    }
 
     selectedTreatment = { name: t.name, desc: t.desc, factors: [] };
     for (const key in t.factors) {
@@ -254,68 +273,80 @@
   // $: console.info("treatments ", treatments);
 </script>
 
-<div class="bg-gray-100">
-  <div class="w-full mx-auto py-4 px-8 lg:flex lg:justify-between">
-    <div class="w-full">
-      <h2 class="text-lg text-gray-900 sm:tracking-tight">Treatments</h2>
-      <p class="mt-2 text-sm text-gray-400">
-        Treatments are a set of variables used to configure a game.
-      </p>
-    </div>
-    <div class="mt-5 w-full max-w-xs">
-      <Button on:click={showTreatmentEditor}>New Treatment</Button>
-    </div>
+<div
+  class="pb-5 border-b border-gray-200 sm:flex sm:items-center sm:justify-between mb-6"
+>
+  <div>
+    <h3 class="text-lg leading-6 font-medium text-gray-900">Treatments</h3>
+    <p class="max-w-4xl text-sm text-gray-500">
+      Treatments are a set of variables used to configure a game.
+    </p>
+  </div>
+
+  <div class="mt-3 sm:mt-0 sm:ml-4">
+    <Button on:click={showTreatmentEditor}>New Treatment</Button>
   </div>
 </div>
 
-<div class="bg-white mx-8 shadow overflow-hidden sm:rounded-md">
+<div class="bg-white shadow overflow-hidden sm:rounded-md">
   <ul role="list" class="divide-y divide-gray-200">
     {#if treatments && treatments.treatments}
       {#each treatments.treatments as t, i (t)}
         <li>
-          <div class="px-4 py-4 flex items-center sm:px-8">
-            <div
-              class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between"
-            >
-              <div class="truncate">
-                <div class="flex text-sm">
-                  <p class="font-medium text-indigo-600 truncate">
-                    {t.name}
-                  </p>
-                </div>
-                <div class="mt-2 flex">
-                  <div class="flex items-center text-sm text-gray-500">
-                    <p>
-                      {formatFactorsToString(t.factors)}
+          <button
+            on:click={() => showTreatmentEditor(null, t, i)}
+            class="w-full hover:bg-gray-50"
+            ><div class="px-4 py-4 flex items-center sm:px-8">
+              <div
+                class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between"
+              >
+                <div class="truncate">
+                  <div class="flex text-sm">
+                    <p class="font-medium text-indigo-600 truncate">
+                      {t.name}
                     </p>
+                  </div>
+                  {#if t.desc}
+                    <div class="flex text-sm">
+                      <p class="font-medium truncate">
+                        {t.desc}
+                      </p>
+                    </div>
+                  {/if}
+                  <div class="flex">
+                    <div class="flex items-center text-sm text-gray-500">
+                      <p>
+                        {formatFactorsToString(t.factors)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="mt-4">
+                  <div class="grid grid-cols-2 gap-6">
+                    <button on:click={() => showTreatmentEditor(null, t)}
+                      ><div class="h-4 w-4"><Duplicate /></div></button
+                    >
+                    <button
+                      on:click={() => {
+                        alertModal = true;
+                      }}><div class="h-5 w-5"><Trash /></div></button
+                    >
+                    {#if alertModal}
+                      <Alert
+                        title="Delete Treatment"
+                        onCancel={() => {
+                          alertModal = false;
+                        }}
+                        desc="Are you sure want to delete this treatment?"
+                        confirmText="Delete"
+                        onConfirm={() => handleDeleteTreatment(t)}
+                      />
+                    {/if}
                   </div>
                 </div>
               </div>
-              <div class="mt-4">
-                <div class="grid grid-cols-2 gap-6">
-                  <button on:click={() => showTreatmentEditor(t)}
-                    ><div class="h-4 w-4"><Duplicate /></div></button
-                  >
-                  <button
-                    on:click={() => {
-                      alertModal = true;
-                    }}><div class="h-5 w-5"><Trash /></div></button
-                  >
-                  {#if alertModal}
-                    <Alert
-                      title="Delete Treatment"
-                      onCancel={() => {
-                        alertModal = false;
-                      }}
-                      desc="Are you sure want to delete this treatment?"
-                      confirmText="Delete"
-                      onConfirm={() => handleDeleteTreatment(t)}
-                    />
-                  {/if}
-                </div>
-              </div>
-            </div>
-          </div>
+            </div></button
+          >
         </li>
       {/each}
     {:else}

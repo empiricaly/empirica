@@ -8,10 +8,11 @@
 
   let newFactor = false;
 
-  $: selectedFactor = DEFAULT_FACTOR;
+  let selectedFactor = DEFAULT_FACTOR;
   let tempTreatments;
   let deleteIconIndex = -1;
   let alertModal = false;
+  let editedIndex;
 
   // Get treatments from file
   $: {
@@ -47,6 +48,11 @@
       return;
     }
 
+    if (editedIndex) {
+      treatments.factors = treatments.factors.filter(
+        (_, i) => i !== editedIndex
+      );
+    }
     treatments.factors.push(selectedFactor);
 
     treatments = treatments;
@@ -65,11 +71,13 @@
       msg = "Values cannot be empty";
     }
 
-    const factor = treatments.factors.filter(
-      (f) => f.name === selectedFactor.name
-    );
-    if (factor.length > 0) {
-      msg = "Factor name alrady exist";
+    if (!editedIndex) {
+      const factor = treatments.factors.filter(
+        (f) => f.name === selectedFactor.name
+      );
+      if (factor.length > 0) {
+        msg = "Factor name already exist";
+      }
     }
 
     selectedFactor.values = selectedFactor.values.filter(
@@ -96,8 +104,14 @@
   }
 
   let treatments;
-  function showFactorEditor() {
+  function showFactorEditor(f, index) {
+    editedIndex = index || null;
     newFactor = true;
+
+    if (f) {
+      selectedFactor = f;
+    }
+
     // if (t) {
     //   selectedFactor = { name: t.name, desc: t.desc, factors: [] };
     //   for (const key in t.factors) {
@@ -152,73 +166,79 @@
   }
 </script>
 
-<div class="bg-gray-100">
-  <div class="w-full mx-auto py-4 px-8 lg:flex lg:justify-between">
-    <div class="w-full">
-      <h2 class="text-lg text-gray-900 sm:tracking-tight">Factors</h2>
-      <p class="mt-2 text-sm text-gray-400">
-        Factors are the variables that make up Treatments. Each Factor has
-        different Factor Values.
-      </p>
-    </div>
-    <div class="mt-5 w-full max-w-xs">
-      <Button on:click={showFactorEditor}>New Factor</Button>
-    </div>
+<div
+  class="pb-5 border-b border-gray-200 sm:flex sm:items-center sm:justify-between mb-6"
+>
+  <div>
+    <h3 class="text-lg leading-6 font-medium text-gray-900">Factors</h3>
+    <p class="max-w-4xl text-sm text-gray-500">
+      Factors are the variables that make up Treatments. Each Factor has
+      different Factor Values.
+    </p>
+  </div>
+
+  <div class="mt-3 sm:mt-0 sm:ml-4">
+    <Button on:click={showFactorEditor}>New Factor</Button>
   </div>
 </div>
 
-<div class="bg-white mx-8 shadow overflow-hidden sm:rounded-md">
+<div class="bg-white shadow overflow-hidden sm:rounded-md">
   <ul role="list" class="divide-y divide-gray-200">
     {#if treatments && treatments.factors}
       {#each treatments.factors as f, i (f)}
         <li>
-          <div class="px-4 py-4 flex items-center sm:px-8">
-            <div
-              class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between"
-            >
-              <div class="truncate">
-                <div class="flex text-sm">
-                  <p class="font-medium text-indigo-600 truncate">
-                    {f.name}
-                  </p>
-                </div>
-                {#if f.desc}
+          <button
+            on:click={() => showFactorEditor(f, i)}
+            class="w-full hover:bg-gray-50"
+          >
+            <div class="px-4 py-4 flex items-center sm:px-8">
+              <div
+                class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between"
+              >
+                <div class="truncate">
                   <div class="flex text-sm">
-                    <p class="font-medium truncate">
-                      {f.desc}
+                    <p class="font-medium text-indigo-600 truncate">
+                      {f.name}
                     </p>
                   </div>
-                {/if}
-                <div class="flex">
-                  <div class="flex items-center text-indigo-600 text-sm">
-                    <p>
-                      {formatFactorsToString(f.values)}
-                    </p>
+                  {#if f.desc}
+                    <div class="flex text-sm">
+                      <p class="font-medium truncate">
+                        {f.desc}
+                      </p>
+                    </div>
+                  {/if}
+                  <div class="flex">
+                    <div class="flex items-center text-indigo-600 text-sm">
+                      <p>
+                        {formatFactorsToString(f.values)}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div class="mt-4">
-                <div class="grid grid-cols-2 gap-6">
-                  <button
-                    on:click={() => {
-                      alertModal = true;
-                    }}><div class="h-5 w-5"><Trash /></div></button
-                  >
-                  {#if alertModal}
-                    <Alert
-                      title="Delete Factor"
-                      onCancel={() => {
-                        alertModal = false;
-                      }}
-                      desc="Are you sure want to delete this factor?"
-                      confirmText="Delete"
-                      onConfirm={() => handleDeleteFactor(i)}
-                    />
-                  {/if}
+                <div class="mt-4">
+                  <div class="grid grid-cols-2 gap-6">
+                    <button
+                      on:click={() => {
+                        alertModal = true;
+                      }}><div class="h-5 w-5"><Trash /></div></button
+                    >
+                    {#if alertModal}
+                      <Alert
+                        title="Delete Factor"
+                        onCancel={() => {
+                          alertModal = false;
+                        }}
+                        desc="Are you sure want to delete this factor?"
+                        confirmText="Delete"
+                        onConfirm={() => handleDeleteFactor(i)}
+                      />
+                    {/if}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </button>
         </li>
       {/each}
     {:else}
@@ -228,10 +248,7 @@
 </div>
 
 <SlideOver custom bind:open={newFactor}>
-  <form
-    class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll"
-    on:submit={saveFactor}
-  >
+  <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
     <div class="flex-1">
       <!-- Header -->
       <div class="px-4 py-6 bg-gray-50 sm:px-6">
@@ -333,6 +350,15 @@
                 class="space-y-1 sm:space-y-0 sm:grid sm:grid-cols-4 sm:gap-4 sm:py-1 sm:col-span-2"
               >
                 <input
+                  id={Date.now().toString()}
+                  name="value"
+                  on:keypress={(e) => {
+                    if (e.keyCode !== 13) {
+                      return;
+                    }
+
+                    addValue();
+                  }}
                   bind:value={v.value}
                   on:focus={() => {
                     deleteIconIndex = index;
@@ -343,7 +369,7 @@
                 {#if deleteIconIndex === index}
                   <button
                     on:click={(e) => {
-                      e.preventDefault;
+                      e.preventDefault();
                       selectedFactor.values = selectedFactor.values.filter(
                         (_, i) => i !== index
                       );
@@ -372,7 +398,7 @@
             Cancel
           </button>
           <button
-            type="submit"
+            on:click={saveFactor}
             class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-empirica-600 hover:bg-empirica-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
           >
             Save
@@ -380,5 +406,5 @@
         </div>
       </div>
     </div>
-  </form>
+  </div>
 </SlideOver>
