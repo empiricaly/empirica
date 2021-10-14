@@ -4,12 +4,14 @@
   import Button from "./common/Button.svelte";
   import Trash from "./common/Trash.svelte";
   import SlideOver from "./overlays/SlideOver.svelte";
+  import Alert from "./layout/Alert.svelte";
 
   let newFactor = false;
 
   $: selectedFactor = DEFAULT_FACTOR;
   let tempTreatments;
   let deleteIconIndex = -1;
+  let alertModal = false;
 
   // Get treatments from file
   $: {
@@ -145,6 +147,7 @@
   function handleDeleteFactor(index) {
     tempTreatments = treatments;
     treatments.factors = treatments.factors.filter((_, i) => i !== index);
+    alertModal = false;
     writeFactorsToFile();
   }
 </script>
@@ -196,9 +199,22 @@
               </div>
               <div class="mt-4">
                 <div class="grid grid-cols-2 gap-6">
-                  <button on:click={() => handleDeleteFactor(i)}
-                    ><div class="h-5 w-5"><Trash /></div></button
+                  <button
+                    on:click={() => {
+                      alertModal = true;
+                    }}><div class="h-5 w-5"><Trash /></div></button
                   >
+                  {#if alertModal}
+                    <Alert
+                      title="Delete Factor"
+                      onCancel={() => {
+                        alertModal = false;
+                      }}
+                      desc="Are you sure want to delete this factor?"
+                      confirmText="Delete"
+                      onConfirm={() => handleDeleteFactor(i)}
+                    />
+                  {/if}
                 </div>
               </div>
             </div>

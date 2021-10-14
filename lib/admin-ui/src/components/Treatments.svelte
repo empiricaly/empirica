@@ -4,13 +4,14 @@
   import Button from "./common/Button.svelte";
   import Duplicate from "./common/duplicate.svelte";
   import Trash from "./common/Trash.svelte";
-  import Factors from "./Factors.svelte";
+  import Alert from "./layout/Alert.svelte";
   import SlideOver from "./overlays/SlideOver.svelte";
 
-  let newTreatment = false;
+  let newTreatment = true;
   let tempTreatments;
 
-  $: selectedTreatment = DEFAULT_TREATMENT;
+  let selectedTreatment = DEFAULT_TREATMENT;
+  let alertModal = false;
   let deleteIconIndex = -1;
 
   // Get treatments from file
@@ -38,9 +39,72 @@
     }
   }
 
+  function getFactors(factorName) {
+    if (!treatments) {
+      return [];
+    }
+
+    const factor = treatments.factors.find((f) => f.name === factorName);
+    return factor ? factor.values.map((f) => f.value) : [];
+  }
+
+  function validateTreatment() {
+    let msg;
+
+    if (!selectedTreatment.name) {
+      msg = "Name cannot be empty";
+    }
+
+    const treatment = treatments.treatments.filter(
+      (t) => t.name === selectedTreatment.name
+    );
+
+    if (treatment.length > 0) {
+      msg = "Treatment name already exist";
+    }
+
+    if (!selectedTreatment.factors || selectedTreatment.factors.length === 0) {
+      msg = "Factors cannot be empty";
+    }
+
+    selectedTreatment.factors = selectedTreatment.factors.filter(
+      (f) =>
+        f.key !== "" &&
+        f.key !== null &&
+        f.key !== undefined &&
+        f.value !== null &&
+        f.value !== undefined
+    );
+
+    for (let i = 0; i < selectedTreatment.factors.length; i++) {
+      for (let j = 0; j < selectedTreatment.factors.length; j++) {
+        if (i === j) {
+          continue;
+        }
+
+        let iVal = selectedTreatment.factors[i];
+        let jVal = selectedTreatment.factors[j];
+
+        if (iVal.key === jVal.key) {
+          msg = "All factors key must be unique";
+          break;
+        }
+      }
+    }
+
+    return msg;
+  }
+
   function saveTreatment(e) {
     e.preventDefault();
     tempTreatments = treatments;
+    let msg = validateTreatment();
+
+    if (msg) {
+      alert(msg);
+      return;
+    }
+
     let treatment = {
       name: selectedTreatment.name,
       desc: selectedTreatment.desc,
@@ -56,35 +120,84 @@
       treatment.factors[f.key] = f.value;
     }
 
+    checkNewFactors(treatment.factors);
     treatments.treatments.push(treatment);
     writeTreatmentsToFile();
     newTreatment = false;
     treatments = treatments;
   }
 
+  function checkNewFactors(factors) {
+    let currentFactors = treatments.factors;
+
+    //  Inital empty factors
+    if (!currentFactors || currentFactors.length === 0) {
+      treatments.factors = [];
+      for (const fKey in factors) {
+        treatments.factors.push({
+          name: fKey,
+          values: [{ value: factors[fKey] }],
+        });
+      }
+      return;
+    }
+
+    // Factors exist
+    for (const fKey in factors) {
+      let factor = currentFactors.find((f) => f.name === fKey);
+
+      // Add to new factors
+      if (!factor) {
+        treatments.factors.push({
+          name: fKey,
+          values: [{ value: factors[fKey] }],
+        });
+        continue;
+      }
+
+      let value = factor.values.find((v) => v.value === factors[fKey]);
+
+      if (value) {
+        continue;
+      }
+
+      // Add new value to existing factor
+      value = factors[fKey];
+      factor.values.push({ value });
+      treatments.factors = treatments.factors.filter(
+        (f) => f.name !== factor.name
+      );
+      treatments.factors.push(factor);
+    }
+  }
+
   let treatments;
   function showTreatmentEditor(t) {
     newTreatment = true;
-    if (t) {
-      selectedTreatment = { name: t.name, desc: t.desc, factors: [] };
-      for (const key in t.factors) {
-        let val = t.factors[key];
-        if (val === Object(val)) {
-          // Object
-          if (!val.length) {
-            let tempVal = [];
-            for (const k in val) {
-              tempVal.push(k + ": " + val[k]);
-            }
 
-            val = "{" + tempVal.join(", ") + "}";
-          } else {
-            // array object here
-            val = "[" + val.join(", ") + "]";
+    // if (!t) {
+    //   selectedTreatment = DEFAULT_TREATMENT;
+    //   return;
+    // }
+
+    selectedTreatment = { name: t.name, desc: t.desc, factors: [] };
+    for (const key in t.factors) {
+      let val = t.factors[key];
+      if (val === Object(val)) {
+        // Object
+        if (!val.length) {
+          let tempVal = [];
+          for (const k in val) {
+            tempVal.push(k + ": " + val[k]);
           }
+
+          val = "{" + tempVal.join(", ") + "}";
+        } else {
+          // array object here
+          val = "[" + val.join(", ") + "]";
         }
-        selectedTreatment.factors.push({ key: key, value: val });
       }
+      selectedTreatment.factors.push({ key: key, value: val });
     }
   }
 
@@ -134,6 +247,7 @@
     treatments.treatments = treatments.treatments.filter(
       (t) => treatment.name !== t.name
     );
+    alertModal = false;
     writeTreatmentsToFile();
   }
 
@@ -182,9 +296,22 @@
                   <button on:click={() => showTreatmentEditor(t)}
                     ><div class="h-4 w-4"><Duplicate /></div></button
                   >
-                  <button on:click={() => handleDeleteTreatment(t)}
-                    ><div class="h-5 w-5"><Trash /></div></button
+                  <button
+                    on:click={() => {
+                      alertModal = true;
+                    }}><div class="h-5 w-5"><Trash /></div></button
                   >
+                  {#if alertModal}
+                    <Alert
+                      title="Delete Treatment"
+                      onCancel={() => {
+                        alertModal = false;
+                      }}
+                      desc="Are you sure want to delete this treatment?"
+                      confirmText="Delete"
+                      onConfirm={() => handleDeleteTreatment(t)}
+                    />
+                  {/if}
                 </div>
               </div>
             </div>
@@ -289,13 +416,16 @@
           </div>
         </div>
 
+        <!-- Factor List -->
         <div
-          class="space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:px-6 sm:py-3"
+          class="space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 sm:py-3"
         >
           <p class="block text-sm font-medium text-gray-900 sm:mt-px sm:pt-2">
             Factor
           </p>
-          <p class="block text-sm font-medium text-gray-900 sm:mt-px sm:pt-2 ">
+          <p
+            class="block text-sm font-medium text-gray-900 sm:mt-px sm:pt-2 col-span-2 "
+          >
             Value
           </p>
           {#if selectedTreatment.factors}
@@ -329,10 +459,28 @@
                   type="text"
                   class="block w-full px-3 py-2 shadow-sm sm:text-sm focus:outline-none focus:ring-2 focus:ring-empirica-500 focus:border-transparent border border-transaparent rounded-md"
                 />
+                {#if getFactors(f.key).length > 0}
+                  <div>
+                    {#each getFactors(f.key) as v, i (v)}
+                      <button
+                        on:click={(e) => {
+                          e.preventDefault();
+                          f.value = v;
+                        }}
+                      >
+                        <span
+                          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mr-1"
+                        >
+                          {v}
+                        </span>
+                      </button>
+                    {/each}
+                  </div>
+                {/if}
                 {#if deleteIconIndex === index}
                   <button
                     on:click={(e) => {
-                      e.preventDefault;
+                      e.preventDefault();
                       selectedTreatment.factors =
                         selectedTreatment.factors.filter((_, i) => i !== index);
                     }}
