@@ -641,6 +641,33 @@ export class Runtime {
 
         break;
       }
+      case "newUnassignment": {
+        console.trace("newUnassignment");
+
+        if (!change.player) {
+          console.warn("newUnassignment change.player missing", change);
+          return;
+        }
+
+        if (!change.player.currentGame) {
+          console.warn(
+            "newUnassignment player.currentGame not assigned",
+            change
+          );
+          return;
+        }
+
+        const game = change.player.currentGame;
+        let playerIDs = (game.get("playerIDs") as string[]) || [];
+        playerIDs = playerIDs.filter(
+          (p) => p !== change.player!.participant.id
+        );
+        game.set("playerIDs", playerIDs, { protected: true });
+        change.player.set("gameID", null, { protected: true });
+        change.player.currentGame = undefined;
+
+        break;
+      }
       case "updateAttribute": {
         console.trace("updateAttribute", change.attr?.key, change.attr?.value);
 
@@ -710,6 +737,8 @@ export class Runtime {
 
         break;
       }
+      case "terminate":
+      case "fail":
       case "end": {
         console.trace("end");
 
@@ -730,18 +759,25 @@ export class Runtime {
             return;
           }
 
-          console.trace("transition", {
+          let to = State.Ended;
+          if (change.type == "terminate") {
+            to = State.Terminated;
+          } else if (change.type === "fail") {
+            to = State.Failed;
+          } else {
+            throw new Error("unknown transition to");
+          }
+
+          const trs = {
             from: State.Running,
-            to: State.Ended,
+            to,
             nodeID: stage.step.step.id,
-          });
+            cause: change.cause,
+          };
+          console.trace("transition", trs);
 
           try {
-            const transition = await this.taj.transition({
-              from: State.Running,
-              to: State.Ended,
-              nodeID: stage.step.step.id,
-            });
+            const transition = await this.taj.transition(trs);
 
             const step = this.store.addTransition(<Transition>transition);
             if (!step?.scope) {
@@ -769,7 +805,7 @@ export class Runtime {
     }
 
     let event = `${attribute.scope.type}-${attribute.key}`;
-    const arg = { [attribute.scope.type]: attribute.scope };
+    const arg = { [attribute.scope.type]: attribute.scope, isNew };
     let getSet: getSetter = attribute.scope;
     if (attribute.isCompound) {
       const { cType, cKey, subType, subID } = attribute.compoundElements!;
@@ -778,11 +814,9 @@ export class Runtime {
       getSet = scopedScope(attribute.scope, subType, subID);
     }
 
-    if (isNew) {
-      event = `new-${event}`;
-    } else {
-      event = `change-${event}`;
-    }
+    console.log("argargargarg", arg);
+
+    event = `change-${event}`;
 
     await this.emitter.emit(event, this.defaultContext, getSet, arg);
   }
@@ -837,22 +871,45 @@ export class Runtime {
     const nodeIDs = [];
 
     nodeIDs.push(game.id);
+    console.log("gameID", game.id);
     nodeIDs.push(game.get("groupID") as string);
+    console.log("groupID", game.get("groupID"));
     for (const round of game.rounds) {
       nodeIDs.push(round.id);
+      console.log("roundID", round.id);
       for (const stage of round.stages) {
         nodeIDs.push(stage.id);
         nodeIDs.push(stage.get("stepID") as string);
+        console.log("stageID", stage.id);
+        console.log("stepID", stage.get("stepID"));
       }
     }
-    for (const player of game.players) {
-      nodeIDs.push(player.scope!.id);
-    }
+    // for (const player of game.players) {
+    //   console.log("playerID", player.scope!.id);
+    //   nodeIDs.push(player.scope!.id);
+    // }
+
+    console.log("LINK", playerIDs, nodeIDs);
 
     await this.taj.link({
       participantIDs: playerIDs,
       nodeIDs: nodeIDs,
     });
+
+    if (game.players.length > 1) {
+      for (const player of game.players) {
+        const playerIDs = [];
+        for (const player2 of game.players) {
+          if (player.id != player2.id) {
+            playerIDs.push(player2.scope!.id);
+          }
+        }
+        await this.taj.link({
+          participantIDs: [player.scope!.id],
+          nodeIDs: playerIDs,
+        });
+      }
+    }
 
     const stage = firstStage(game);
 

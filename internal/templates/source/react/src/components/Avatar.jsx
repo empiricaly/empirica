@@ -1,3 +1,5 @@
+import React from "react";
+
 export function Avatar({ player }) {
   return (
     <div className="mt-8 flex flex-col items-center">

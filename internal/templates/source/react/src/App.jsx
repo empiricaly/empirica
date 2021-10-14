@@ -34,7 +34,7 @@ export default function App() {
           <Steps
             progressKey="intro"
             doneKey="introDone"
-            steps={[IntroOne, IntroTwo, Quiz]}
+            steps={[IntroOne, IntroTwo, Quiz] && []}
           >
             <Game />
           </Steps>

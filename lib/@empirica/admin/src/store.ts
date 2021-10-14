@@ -13,11 +13,15 @@ export interface Change {
   type:
     | "newScope"
     | "newAssignment"
+    | "newUnassignment"
     | "updateAttribute"
     | "start"
     | "cancel"
     | "pause"
-    | "end";
+    | "end"
+    | "terminate"
+    | "fail";
+  cause?: string;
   attr?: EAttribute;
   scope?: EScope;
   attrs?: Json;
@@ -232,7 +236,6 @@ export class EScope {
 }
 
 export class Player extends EScope {
-  public games: Game[] = [];
   public currentGame?: Game;
   public online: boolean = false;
 
@@ -364,19 +367,30 @@ export class Game extends EScope {
   assign(player: Player) {
     if (player.currentGame) {
       if (player.currentGame !== this) {
-        throw "player already assigned";
+        throw new Error("player already assigned");
       } else {
         console.warn("reassigning player to same game");
         return;
       }
     }
 
-    player.games.push(this);
     player.currentGame = this;
 
     this.players.push(player);
     this.store.pushChange({
       type: "newAssignment",
+      player: player,
+    });
+  }
+
+  unassign(player: Player) {
+    if (!player.currentGame) {
+      throw new Error("player not assigned");
+    }
+
+    this.players = this.players.filter((p) => p !== player);
+    this.store.pushChange({
+      type: "newUnassignment",
       player: player,
     });
   }
@@ -402,10 +416,27 @@ export class Game extends EScope {
     });
   }
 
-  end() {
+  end(reason: string) {
     this.store.pushChange({
       type: "end",
       scope: this,
+      cause: reason,
+    });
+  }
+
+  terminate(reason: string) {
+    this.store.pushChange({
+      type: "terminate",
+      scope: this,
+      cause: reason,
+    });
+  }
+
+  fail(reason: string) {
+    this.store.pushChange({
+      type: "fail",
+      scope: this,
+      cause: reason,
     });
   }
 

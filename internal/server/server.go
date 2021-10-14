@@ -48,7 +48,7 @@ func Start(
 
 	srv := &http.Server{
 		Addr:        config.Addr,
-		Handler:     cors.Default().Handler(s.Router),
+		Handler:     cors.AllowAll().Handler(s.Router),
 		BaseContext: func(_ net.Listener) context.Context { return ctx },
 	}
 
