@@ -5,10 +5,26 @@
   export let title = null;
   export let open = false;
   export let custom = false;
+  export let disableBgCloseClick = false;
+  export let disableCloseButton = false;
+
+  console.info("what", disableCloseButton, title);
+
+  function backgroundClose() {
+    if (!disableBgCloseClick) {
+      open = false;
+    }
+  }
+
+  function buttonClose() {
+    if (!disableCloseButton) {
+      open = false;
+    }
+  }
 </script>
 
 {#if open}
-  <div class="fixed inset-0 overflow-hidden" on:click={() => (open = false)}>
+  <div class="fixed inset-0 overflow-hidden" on:click={backgroundClose}>
     <div class="absolute inset-0 overflow-hidden">
       <section class="absolute inset-y-0 right-0 pl-10 max-w-full flex">
         <div
@@ -38,28 +54,31 @@
                   {:else}
                     <div />
                   {/if}
-                  <div class="h-7 flex items-center">
-                    <button
-                      on:click={() => (open = false)}
-                      aria-label="Close panel"
-                      class="text-gray-400 hover:text-gray-500 transition
-                     ease-in-out duration-150"
-                    >
-                      <svg
-                        class="h-6 w-6"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
+                  how
+                  {#if !disableCloseButton}
+                    <div class="h-7 flex items-center">
+                      <button
+                        on:click={buttonClose}
+                        aria-label="Close panel"
+                        class="text-gray-400 hover:text-gray-500 transition
+                    ease-in-out duration-150"
                       >
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  </div>
+                        <svg
+                          class="h-6 w-6"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  {/if}
                 </div>
               </header>
               <div class="relative flex-1 px-4 sm:px-6">

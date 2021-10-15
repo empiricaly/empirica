@@ -354,7 +354,7 @@
   </ul>
 </div>
 
-<SlideOver custom bind:open={newTreatment}>
+<SlideOver custom disableBgCloseClick bind:open={newTreatment}>
   <form
     class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll"
     on:submit={saveTreatment}
@@ -380,13 +380,12 @@
             </p>
           </div>
           <div class="h-7 flex items-center">
-            <button
+            <!-- <button
               type="button"
               class="text-gray-400 hover:text-gray-500"
               on:click={() => (newTreatment = false)}
             >
               <span class="sr-only">Close panel</span>
-              <!-- Heroicon name: outline/x -->
               <svg
                 class="h-6 w-6"
                 xmlns="http://www.w3.org/2000/svg"
@@ -402,7 +401,7 @@
                   d="M6 18L18 6M6 6l12 12"
                 />
               </svg>
-            </button>
+            </button> -->
           </div>
         </div>
       </div>

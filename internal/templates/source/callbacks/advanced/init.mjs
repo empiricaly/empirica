@@ -14,14 +14,13 @@ if (!argv["token"]) {
   console.error(
     "callbacks: service token to connect to Tajriba is required (--token)"
   );
+
   process.exit(1);
 }
 
 const sessionTokenPath = argv["sessionTokenPath"];
-
 const token = argv["token"];
 const name = "callbacks";
-
 const url = "http://localhost:8882/query";
 
 process.on("SIGHUP", () => {
@@ -37,8 +36,9 @@ process.on("SIGINT", function () {
   quitResolve();
 });
 
+const h = callbacks.merge(advancedCallbacks);
+
 export async function connect() {
-  const h = callbacks.merge(advancedCallbacks);
   let connected = false;
 
   if (sessionTokenPath) {
@@ -56,9 +56,9 @@ export async function connect() {
         await Empirica.sessionLogin(url, sessionToken, h);
         connected = true;
         console.info("callbacks: started");
-      } catch (error) {
+      } catch (err) {
         console.debug("callbacks: failed logging in with session");
-        console.debug(error);
+        console.debug(err);
       }
     }
   }
@@ -72,15 +72,15 @@ export async function connect() {
       if (sessionTokenPath) {
         try {
           fs.writeFileSync(sessionTokenPath, st, { flag: "w+" });
-          console.info("callbacks: session token saved");
+          console.debug("callbacks: session token saved");
         } catch (err) {
           console.error("callbacks: failed to save sessionToken");
           console.error(err);
         }
       }
-    } catch (e) {
+    } catch (err) {
       console.error("callbacks: failed to start");
-      console.error(e);
+      console.error(err);
       process.exit(1);
     }
   }

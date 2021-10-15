@@ -5,7 +5,7 @@
   "version": "1.0.5",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --base=/admin/",
     "serve": "vite preview"
   },
   "author": "Nicolas Paton <nicolas.paton@gmail.com>",

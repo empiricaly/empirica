@@ -59,8 +59,8 @@ function logger(lvl: number, level: string) {
 }
 
 console.trace = logger(0, chalk.cyanBright("TRC"));
-console.log = logger(1, chalk.magentaBright("DBG"));
 console.debug = logger(1, chalk.magentaBright("DBG"));
+console.log = logger(2, chalk.magentaBright("DBG"));
 console.info = logger(2, chalk.greenBright("INF"));
 console.warn = logger(3, chalk.yellowBright("WRN"));
 console.error = logger(4, chalk.redBright("ERR"));

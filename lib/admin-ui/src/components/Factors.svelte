@@ -1,11 +1,10 @@
 <script>
   import { DEFAULT_FACTOR, URL } from "../constants";
-
+  import { castValue } from "../utils/typeValue";
   import Button from "./common/Button.svelte";
   import Trash from "./common/Trash.svelte";
-  import SlideOver from "./overlays/SlideOver.svelte";
   import Alert from "./layout/Alert.svelte";
-  import { castValue } from "../utils/typeValue";
+  import SlideOver from "./overlays/SlideOver.svelte";
 
   let newFactor = false;
 
@@ -110,37 +109,13 @@
   }
 
   let treatments;
-  function showFactorEditor(f, index = undefined) {
+  function showFactorEditor(
+    f = { name: "", desc: "", values: [{ value: "" }] },
+    index = undefined
+  ) {
     editedIndex = index;
     newFactor = true;
-
-    if (f) {
-      selectedFactor = f;
-    } else {
-      selectedFactor = { name: "", desc: "", values: [{ value: "" }] };
-    }
-
-    // if (t) {
-    //   selectedFactor = { name: t.name, desc: t.desc, factors: [] };
-    //   for (const key in t.factors) {
-    //     let val = t.factors[key];
-    //     if (val === Object(val)) {
-    //       // Object
-    //       if (!val.length) {
-    //         let tempVal = [];
-    //         for (const k in val) {
-    //           tempVal.push(k + ": " + val[k]);
-    //         }
-
-    //         val = "{" + tempVal.join(", ") + "}";
-    //       } else {
-    //         // array object here
-    //         val = "[" + val.join(", ") + "]";
-    //       }
-    //     }
-    //     selectedFactor.factors.push({ key: key, value: val });
-    //   }
-    // }
+    selectedFactor = f;
   }
 
   function init(el) {
@@ -186,7 +161,7 @@
   </div>
 
   <div class="mt-3 sm:mt-0 sm:ml-4">
-    <Button on:click={showFactorEditor}>New Factor</Button>
+    <Button on:click={() => showFactorEditor()}>New Factor</Button>
   </div>
 </div>
 
@@ -250,7 +225,7 @@
   </ul>
 </div>
 
-<SlideOver custom bind:open={newFactor}>
+<SlideOver custom disableBgCloseClick bind:open={newFactor}>
   <div class="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
     <div class="flex-1">
       <!-- Header -->
@@ -273,13 +248,12 @@
             </p>
           </div>
           <div class="h-7 flex items-center">
-            <button
+            <!-- <button
               type="button"
               class="text-gray-400 hover:text-gray-500"
               on:click={() => (newFactor = false)}
             >
               <span class="sr-only">Close panel</span>
-              <!-- Heroicon name: outline/x -->
               <svg
                 class="h-6 w-6"
                 xmlns="http://www.w3.org/2000/svg"
@@ -295,7 +269,7 @@
                   d="M6 18L18 6M6 6l12 12"
                 />
               </svg>
-            </button>
+            </button> -->
           </div>
         </div>
       </div>
@@ -356,6 +330,19 @@
             {#each selectedFactor.values as v, index}
               <div
                 class="values space-y-1 sm:space-y-0 sm:grid sm:gap-4 sm:py-1 sm:col-span-2"
+                on:focus={() => {
+                  deleteIconIndex = index;
+                }}
+                on:blur={() => {
+                  deleteIconIndex = undefined;
+                }}
+                on:mouseover={() => {
+                  deleteIconIndex = index;
+                }}
+                on:mouseout={() => {
+                  console.log("hah");
+                  deleteIconIndex = undefined;
+                }}
               >
                 <input
                   id={Date.now().toString()}
@@ -368,9 +355,6 @@
                     addValue();
                   }}
                   bind:value={v.value}
-                  on:focus={() => {
-                    deleteIconIndex = index;
-                  }}
                   type="text"
                   class="block w-full px-3 py-2 shadow-sm sm:text-sm focus:outline-none focus:ring-2 focus:ring-empirica-500 focus:border-transparent border border-transaparent rounded-md"
                 />
