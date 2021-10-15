@@ -5,6 +5,7 @@
   import Trash from "./common/Trash.svelte";
   import SlideOver from "./overlays/SlideOver.svelte";
   import Alert from "./layout/Alert.svelte";
+  import { castValue } from "../utils/typeValue";
 
   let newFactor = false;
 
@@ -53,6 +54,11 @@
         (_, i) => i !== editedIndex
       );
     }
+
+    selectedFactor.values.forEach((v, i) => {
+      selectedFactor.values[i].value = castValue(v.value);
+    });
+
     treatments.factors.push(selectedFactor);
 
     treatments = treatments;
@@ -110,6 +116,8 @@
 
     if (f) {
       selectedFactor = f;
+    } else {
+      selectedFactor = { name: "", desc: "", values: [{ value: "" }] };
     }
 
     // if (t) {
@@ -186,57 +194,54 @@
   <ul role="list" class="divide-y divide-gray-200">
     {#if treatments && treatments.factors}
       {#each treatments.factors as f, i (f)}
-        <li>
+        <li class="hover:bg-gray-50 px-4 py-4 flex items-center sm:px-8">
           <button
             on:click={() => showFactorEditor(f, i)}
-            class="w-full hover:bg-gray-50"
+            class="w-full focus:outline-none"
           >
-            <div class="px-4 py-4 flex items-center sm:px-8">
-              <div
-                class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between"
-              >
-                <div class="truncate">
+            <div
+              class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between"
+            >
+              <div class="truncate">
+                <div class="flex text-sm">
+                  <p class="font-medium text-empirica-600 truncate">
+                    {f.name}
+                  </p>
+                </div>
+                {#if f.desc}
                   <div class="flex text-sm">
-                    <p class="font-medium text-indigo-600 truncate">
-                      {f.name}
+                    <p class="font-normal text-gray-400 truncate">
+                      {f.desc}
                     </p>
                   </div>
-                  {#if f.desc}
-                    <div class="flex text-sm">
-                      <p class="font-medium truncate">
-                        {f.desc}
-                      </p>
-                    </div>
-                  {/if}
-                  <div class="flex">
-                    <div class="flex items-center text-indigo-600 text-sm">
-                      <p>
-                        {formatFactorsToString(f.values)}
-                      </p>
-                    </div>
+                {/if}
+                <div class="flex">
+                  <div class="flex items-center text-gray-500 text-sm pt-2">
+                    <p>
+                      {formatFactorsToString(f.values)}
+                    </p>
                   </div>
-                </div>
-                <div class="mt-4">
-                  <button
-                    on:click={() => {
-                      alertModal = true;
-                    }}><div class="h-5 w-5"><Trash /></div></button
-                  >
-                  {#if alertModal}
-                    <Alert
-                      title="Delete Factor"
-                      onCancel={() => {
-                        alertModal = false;
-                      }}
-                      desc="Are you sure want to delete this factor?"
-                      confirmText="Delete"
-                      onConfirm={() => handleDeleteFactor(i)}
-                    />
-                  {/if}
                 </div>
               </div>
             </div>
           </button>
+          <button
+            class="focus:outline-none"
+            on:click={() => {
+              alertModal = true;
+            }}><div class="h-5 w-5"><Trash /></div></button
+          >
+          {#if alertModal}
+            <Alert
+              title="Delete Factor"
+              onCancel={() => {
+                alertModal = false;
+              }}
+              desc="Are you sure want to delete this factor?"
+              confirmText="Delete"
+              onConfirm={() => handleDeleteFactor(i)}
+            />
+          {/if}
         </li>
       {/each}
     {:else}

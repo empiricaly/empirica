@@ -27,6 +27,10 @@
       loading = false;
     }
   }
+
+  function init(el) {
+    el.focus();
+  }
 </script>
 
 <div
@@ -51,6 +55,7 @@
         <div>
           <label for="username" class="sr-only">Username</label>
           <input
+            use:init
             id="username"
             name="username"
             type="username"
