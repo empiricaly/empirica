@@ -48,7 +48,7 @@
       return;
     }
 
-    if (editedIndex) {
+    if (editedIndex !== undefined) {
       treatments.factors = treatments.factors.filter(
         (_, i) => i !== editedIndex
       );
@@ -71,7 +71,7 @@
       msg = "Values cannot be empty";
     }
 
-    if (!editedIndex) {
+    if (editedIndex === undefined) {
       const factor = treatments.factors.filter(
         (f) => f.name === selectedFactor.name
       );
@@ -104,8 +104,8 @@
   }
 
   let treatments;
-  function showFactorEditor(f, index) {
-    editedIndex = index || null;
+  function showFactorEditor(f, index = undefined) {
+    editedIndex = index;
     newFactor = true;
 
     if (f) {
@@ -217,24 +217,22 @@
                   </div>
                 </div>
                 <div class="mt-4">
-                  <div class="grid grid-cols-2 gap-6">
-                    <button
-                      on:click={() => {
-                        alertModal = true;
-                      }}><div class="h-5 w-5"><Trash /></div></button
-                    >
-                    {#if alertModal}
-                      <Alert
-                        title="Delete Factor"
-                        onCancel={() => {
-                          alertModal = false;
-                        }}
-                        desc="Are you sure want to delete this factor?"
-                        confirmText="Delete"
-                        onConfirm={() => handleDeleteFactor(i)}
-                      />
-                    {/if}
-                  </div>
+                  <button
+                    on:click={() => {
+                      alertModal = true;
+                    }}><div class="h-5 w-5"><Trash /></div></button
+                  >
+                  {#if alertModal}
+                    <Alert
+                      title="Delete Factor"
+                      onCancel={() => {
+                        alertModal = false;
+                      }}
+                      desc="Are you sure want to delete this factor?"
+                      confirmText="Delete"
+                      onConfirm={() => handleDeleteFactor(i)}
+                    />
+                  {/if}
                 </div>
               </div>
             </div>
@@ -255,10 +253,17 @@
         <div class="flex items-start justify-between space-x-3">
           <div class="space-y-1">
             <h2 class="text-lg font-medium text-gray-900" id="slide-over-title">
-              New Factor
+              {#if editedIndex !== undefined}
+                Edit Factor
+              {:else}
+                New Factor
+              {/if}
             </h2>
             <p class="text-sm text-gray-500">
-              Get started by filling in the information below to create your new
+              Get started by filling in the information below to {editedIndex !==
+              undefined
+                ? "edit your"
+                : "create your new"}
               factor.
             </p>
           </div>
@@ -293,7 +298,7 @@
       <!-- Divider container -->
       <div class="py-4 space-y-6 sm:py-0 sm:space-y-0 sm:divide-gray-200">
         <div
-          class="space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:px-6 sm:py-3"
+          class="space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-2 sm:px-6 sm:py-3"
         >
           <div>
             <label
@@ -315,15 +320,13 @@
         </div>
 
         <div
-          class="space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:px-6 sm:py-3"
+          class="space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-2 sm:px-6 sm:py-3"
         >
-          <div>
-            <label
-              for="description"
-              class="block text-sm font-medium text-gray-900 sm:mt-px sm:pt-2"
+          <div class="flex justify-between col-span-2">
+            <label for="email" class="block text-sm font-medium text-gray-700"
+              >Description</label
             >
-              Description (Optional)
-            </label>
+            <span class="text-sm text-gray-500">Optional</span>
           </div>
           <div class="sm:col-span-2">
             <textarea
@@ -337,7 +340,7 @@
         </div>
 
         <div
-          class="space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:px-6 sm:py-3"
+          class="space-y-1 px-4 sm:space-y-0 sm:grid sm:gap-4 sm:px-6 sm:py-3"
         >
           <p
             class="block text-sm font-medium col-span-2 text-gray-900 sm:mt-px sm:pt-2"
@@ -347,7 +350,7 @@
           {#if selectedFactor.values}
             {#each selectedFactor.values as v, index}
               <div
-                class="space-y-1 sm:space-y-0 sm:grid sm:grid-cols-4 sm:gap-4 sm:py-1 sm:col-span-2"
+                class="values space-y-1 sm:space-y-0 sm:grid sm:gap-4 sm:py-1 sm:col-span-2"
               >
                 <input
                   id={Date.now().toString()}
@@ -368,6 +371,7 @@
                 />
                 {#if deleteIconIndex === index}
                   <button
+                    class="focus:outline-none"
                     on:click={(e) => {
                       e.preventDefault();
                       selectedFactor.values = selectedFactor.values.filter(
@@ -408,3 +412,9 @@
     </div>
   </div>
 </SlideOver>
+
+<style>
+  .values {
+    grid-template-columns: 1fr 30px;
+  }
+</style>

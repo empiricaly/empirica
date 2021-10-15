@@ -56,7 +56,7 @@
       msg = "Name cannot be empty";
     }
 
-    if (!editedIndex) {
+    if (editedIndex === undefined) {
       const treatment = treatments.treatments.filter(
         (t) => t.name === selectedTreatment.name
       );
@@ -125,7 +125,7 @@
 
     checkNewFactors(treatment.factors);
 
-    if (editedIndex) {
+    if (editedIndex !== undefined) {
       treatments.treatments = treatments.treatments.filter(
         (_, i) => i !== editedIndex
       );
@@ -182,10 +182,9 @@
   }
 
   let treatments;
-  function showTreatmentEditor(_, t, index) {
+  function showTreatmentEditor(_, t, index = undefined) {
     newTreatment = true;
-
-    editedIndex = index || null;
+    editedIndex = index;
 
     if (!t) {
       selectedTreatment = {
@@ -292,15 +291,15 @@
   <ul role="list" class="divide-y divide-gray-200">
     {#if treatments && treatments.treatments}
       {#each treatments.treatments as t, i (t)}
-        <li>
-          <button
-            on:click={() => showTreatmentEditor(null, t, i)}
-            class="w-full hover:bg-gray-50"
-            ><div class="px-4 py-4 flex items-center sm:px-8">
-              <div
-                class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between"
-              >
-                <div class="truncate">
+        <li class="hover:bg-gray-50">
+          <div class="px-4 py-4 flex items-center sm:px-8">
+            <div
+              class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between"
+            >
+              <button
+                on:click={() => showTreatmentEditor(null, t, i)}
+                class="w-full"
+                ><div class="truncate">
                   <div class="flex text-sm">
                     <p class="font-medium text-indigo-600 truncate">
                       {t.name}
@@ -320,33 +319,34 @@
                       </p>
                     </div>
                   </div>
-                </div>
-                <div class="mt-4">
-                  <div class="grid grid-cols-2 gap-6">
-                    <button on:click={() => showTreatmentEditor(null, t)}
-                      ><div class="h-4 w-4"><Duplicate /></div></button
-                    >
-                    <button
-                      on:click={() => {
-                        alertModal = true;
-                      }}><div class="h-5 w-5"><Trash /></div></button
-                    >
-                    {#if alertModal}
-                      <Alert
-                        title="Delete Treatment"
-                        onCancel={() => {
-                          alertModal = false;
-                        }}
-                        desc="Are you sure want to delete this treatment?"
-                        confirmText="Delete"
-                        onConfirm={() => handleDeleteTreatment(t)}
-                      />
-                    {/if}
-                  </div>
+                </div></button
+              >
+
+              <div class="mt-4">
+                <div class="grid grid-cols-2 gap-6">
+                  <button on:click={() => showTreatmentEditor(null, t)}
+                    ><div class="h-5 w-5"><Duplicate /></div></button
+                  >
+                  <button
+                    on:click={() => {
+                      alertModal = true;
+                    }}><div class="h-5 w-5"><Trash /></div></button
+                  >
+                  {#if alertModal}
+                    <Alert
+                      title="Delete Treatment"
+                      onCancel={() => {
+                        alertModal = false;
+                      }}
+                      desc="Are you sure want to delete this treatment?"
+                      confirmText="Delete"
+                      onConfirm={() => handleDeleteTreatment(t)}
+                    />
+                  {/if}
                 </div>
               </div>
-            </div></button
-          >
+            </div>
+          </div>
         </li>
       {/each}
     {:else}
@@ -366,10 +366,17 @@
         <div class="flex items-start justify-between space-x-3">
           <div class="space-y-1">
             <h2 class="text-lg font-medium text-gray-900" id="slide-over-title">
-              New Treatment
+              {#if editedIndex !== undefined}
+                Edit Treatment
+              {:else}
+                New Treatment
+              {/if}
             </h2>
             <p class="text-sm text-gray-500">
-              Get started by filling in the information below to create your new
+              Get started by filling in the information below to {editedIndex !==
+              undefined
+                ? "edit your"
+                : "create your new"}
               treatment.
             </p>
           </div>
@@ -404,7 +411,7 @@
       <!-- Divider container -->
       <div class="py-4 space-y-6 sm:py-0 sm:space-y-0 sm:divide-gray-200">
         <div
-          class="space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:px-6 sm:py-3"
+          class="space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-2 sm:px-6 sm:py-3"
         >
           <div>
             <label
@@ -426,15 +433,13 @@
         </div>
 
         <div
-          class="space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:px-6 sm:py-3"
+          class="space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-2 sm:px-6 sm:py-3"
         >
-          <div>
-            <label
-              for="description"
-              class="block text-sm font-medium text-gray-900 sm:mt-px sm:pt-2"
+          <div class="flex justify-between col-span-2">
+            <label for="email" class="block text-sm font-medium text-gray-700"
+              >Description</label
             >
-              Description (Optional)
-            </label>
+            <span class="text-sm text-gray-500">Optional</span>
           </div>
           <div class="sm:col-span-2">
             <textarea
@@ -449,25 +454,28 @@
 
         <!-- Factor List -->
         <div
-          class="space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 sm:py-3"
+          class="factors space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-5 sm:gap-2 sm:px-6 sm:py-3"
         >
-          <p class="block text-sm font-medium text-gray-900 sm:mt-px sm:pt-2">
+          <p
+            class="block text-sm font-medium text-gray-900 sm:mt-px sm:pt-2 col-span-2"
+          >
             Factor
           </p>
           <p
-            class="block text-sm font-medium text-gray-900 sm:mt-px sm:pt-2 col-span-2 "
+            class="block text-sm font-medium text-gray-900 sm:mt-px sm:pt-2 col-span-3"
           >
             Value
           </p>
+
           {#if selectedTreatment.factors}
             {#each selectedTreatment.factors as f, index (f)}
               <div
-                class="space-y-1 sm:space-y-0 sm:grid sm:grid-cols-4 sm:gap-4 sm:py-1 sm:col-span-2"
+                class="factors space-y-1 sm:space-y-0 sm:grid sm:grid-cols-5 sm:gap-2 sm:py-1 sm:col-span-5"
               >
                 <input
                   bind:value={f.key}
                   type="text"
-                  class="block w-full px-3 py-2 shadow-sm sm:text-sm focus:outline-none focus:ring-2 focus:ring-empirica-500 focus:border-transparent border border-transaparent rounded-md"
+                  class="block w-full h-9 px-3 py-2 shadow-sm sm:text-sm focus:outline-none focus:ring-2 focus:ring-empirica-500 focus:border-transparent border border-transaparent rounded-md"
                 />
                 <div class="h-4 w-4 pt-2">
                   <svg
@@ -488,8 +496,22 @@
                   }}
                   bind:value={f.value}
                   type="text"
-                  class="block w-full px-3 py-2 shadow-sm sm:text-sm focus:outline-none focus:ring-2 focus:ring-empirica-500 focus:border-transparent border border-transaparent rounded-md"
+                  class="block w-full h-9 px-3 py-2 shadow-sm sm:text-sm focus:outline-none focus:ring-2 focus:ring-empirica-500 focus:border-transparent border border-transaparent rounded-md"
                 />
+                {#if deleteIconIndex === index}
+                  <button
+                    on:click={(e) => {
+                      e.preventDefault();
+                      selectedTreatment.factors =
+                        selectedTreatment.factors.filter((_, i) => i !== index);
+                    }}
+                  >
+                    <div class="h-4 w-4"><Trash /></div>
+                  </button>
+                {:else}
+                  <div />
+                {/if}
+
                 {#if getFactors(f.key).length > 0}
                   <div>
                     {#each getFactors(f.key) as v, i (v)}
@@ -508,21 +530,11 @@
                     {/each}
                   </div>
                 {/if}
-                {#if deleteIconIndex === index}
-                  <button
-                    on:click={(e) => {
-                      e.preventDefault();
-                      selectedTreatment.factors =
-                        selectedTreatment.factors.filter((_, i) => i !== index);
-                    }}
-                  >
-                    <div class="h-4 w-4"><Trash /></div>
-                  </button>
-                {/if}
               </div>
             {/each}
           {/if}
-          <div class="sm:col-span-2">
+
+          <div class="sm:col-span-2 pt-4">
             <Button on:click={addProperty}>Add Property</Button>
           </div>
         </div>
@@ -549,3 +561,9 @@
     </div>
   </form>
 </SlideOver>
+
+<style>
+  .factors {
+    grid-template-columns: 1fr 15px 1fr 15px 1fr;
+  }
+</style>
