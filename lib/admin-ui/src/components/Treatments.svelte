@@ -1,4 +1,6 @@
 <script>
+  import { castValue } from "../utils/typeValue";
+
   import { DEFAULT_TREATMENT, URL } from "../constants";
 
   import Button from "./common/Button.svelte";
@@ -120,7 +122,7 @@
         continue;
       }
 
-      treatment.factors[f.key] = f.value;
+      treatment.factors[f.key] = castValue(f.value);
     }
 
     checkNewFactors(treatment.factors);
@@ -293,58 +295,55 @@
       {#each treatments.treatments as t, i (t)}
         <li class="hover:bg-gray-50">
           <div class="px-4 py-4 flex items-center sm:px-8">
-            <div
-              class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between"
+            <button
+              on:click={() => showTreatmentEditor(null, t, i)}
+              class="w-full min-w-0 flex-1 sm:flex sm:items-center sm:justify-between focus:outline-none"
             >
-              <button
-                on:click={() => showTreatmentEditor(null, t, i)}
-                class="w-full"
-                ><div class="truncate">
+              <div class="truncate">
+                <div class="flex text-sm">
+                  <p class="font-medium text-empirica-600 truncate">
+                    {t.name}
+                  </p>
+                </div>
+                {#if t.desc}
                   <div class="flex text-sm">
-                    <p class="font-medium text-indigo-600 truncate">
-                      {t.name}
+                    <p class="font-normal text-gray-400 truncate">
+                      {t.desc}
                     </p>
                   </div>
-                  {#if t.desc}
-                    <div class="flex text-sm">
-                      <p class="font-medium truncate">
-                        {t.desc}
-                      </p>
-                    </div>
-                  {/if}
-                  <div class="flex">
-                    <div class="flex items-center text-sm text-gray-500">
-                      <p>
-                        {formatFactorsToString(t.factors)}
-                      </p>
-                    </div>
-                  </div>
-                </div></button
-              >
-
-              <div class="mt-4">
-                <div class="grid grid-cols-2 gap-6">
-                  <button on:click={() => showTreatmentEditor(null, t)}
-                    ><div class="h-5 w-5"><Duplicate /></div></button
-                  >
-                  <button
-                    on:click={() => {
-                      alertModal = true;
-                    }}><div class="h-5 w-5"><Trash /></div></button
-                  >
-                  {#if alertModal}
-                    <Alert
-                      title="Delete Treatment"
-                      onCancel={() => {
-                        alertModal = false;
-                      }}
-                      desc="Are you sure want to delete this treatment?"
-                      confirmText="Delete"
-                      onConfirm={() => handleDeleteTreatment(t)}
-                    />
-                  {/if}
+                {/if}
+                <div class="text-sm text-gray-500 pt-1">
+                  {formatFactorsToString(t.factors)}
                 </div>
               </div>
+            </button>
+
+            <div class="grid grid-cols-2 gap-6">
+              <button
+                class="focus:outline-none"
+                on:click={() => showTreatmentEditor(null, t)}
+              >
+                <div class="h-5 w-5"><Duplicate /></div>
+              </button>
+              <button
+                class="focus:outline-none"
+                on:click={() => {
+                  alertModal = true;
+                }}
+              >
+                <div class="h-5 w-5"><Trash /></div>
+              </button>
+              {#if alertModal}
+                <Alert
+                  title="Delete Treatment"
+                  onCancel={() => {
+                    alertModal = false;
+                  }}
+                  desc="Are you sure want to delete this treatment?"
+                  confirmText="Delete"
+                  onConfirm={() => handleDeleteTreatment(t)}
+                />
+              {/if}
             </div>
           </div>
         </li>
@@ -470,6 +469,18 @@
           {#if selectedTreatment.factors}
             {#each selectedTreatment.factors as f, index (f)}
               <div
+                on:focus={() => {
+                  deleteIconIndex = index;
+                }}
+                on:blur={() => {
+                  deleteIconIndex = undefined;
+                }}
+                on:mouseover={() => {
+                  deleteIconIndex = index;
+                }}
+                on:mouseout={() => {
+                  deleteIconIndex = undefined;
+                }}
                 class="factors space-y-1 sm:space-y-0 sm:grid sm:grid-cols-5 sm:gap-2 sm:py-1 sm:col-span-5"
               >
                 <input
@@ -491,9 +502,6 @@
                   </svg>
                 </div>
                 <input
-                  on:focus={() => {
-                    deleteIconIndex = index;
-                  }}
                   bind:value={f.value}
                   type="text"
                   class="block w-full h-9 px-3 py-2 shadow-sm sm:text-sm focus:outline-none focus:ring-2 focus:ring-empirica-500 focus:border-transparent border border-transaparent rounded-md"
