@@ -1,6 +1,7 @@
 <script>
   import { Empirica } from "@empirica/admin";
   import { DEFAULT_TOKEN_KEY, URL } from "../constants";
+  import { setCurrentAdmin } from "../utils/auth";
   import Logo from "./layout/Logo.svelte";
 
   export let loggedIn = false;
@@ -20,6 +21,7 @@
       );
       window.localStorage.setItem(DEFAULT_TOKEN_KEY, token.toString());
       loggedIn = true;
+      setCurrentAdmin(admin);
     } catch (error) {
       console.error("admin sign in", error);
       alert("Failed to signin");

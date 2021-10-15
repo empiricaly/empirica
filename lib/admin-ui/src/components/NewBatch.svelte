@@ -11,8 +11,6 @@
   function init(el) {
     el.focus();
   }
-
-  console.info($currentAdmin.createBatch);
 </script>
 
 <SlideOver custom bind:open={newBatch}>
