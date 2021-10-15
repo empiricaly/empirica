@@ -4,8 +4,8 @@ var log = console.log;
 
 const levels = {
   trace: 0,
-  log: 1,
   debug: 1,
+  log: 2,
   info: 2,
   warn: 3,
   error: 4,
@@ -37,9 +37,7 @@ function logger(lvl: number, level: string) {
       var seconds = date.getSeconds();
       var milliseconds = date.getMilliseconds();
 
-      return (
-        level +
-        " [" +
+      const str =
         (hour < 10 ? "0" + hour : hour) +
         ":" +
         (minutes < 10 ? "0" + minutes : minutes) +
@@ -47,8 +45,10 @@ function logger(lvl: number, level: string) {
         (seconds < 10 ? "0" + seconds : seconds) +
         "." +
         ("00" + milliseconds).slice(-3) +
-        "] "
-      );
+        " " +
+        level;
+
+      return chalk.gray(str);
     }
 
     log.apply(
@@ -59,8 +59,8 @@ function logger(lvl: number, level: string) {
 }
 
 console.trace = logger(0, chalk.cyanBright("TRC"));
-console.log = logger(1, chalk.magentaBright("DBG"));
 console.debug = logger(1, chalk.magentaBright("DBG"));
+console.log = logger(2, chalk.magentaBright("DBG"));
 console.info = logger(2, chalk.greenBright("INF"));
 console.warn = logger(3, chalk.yellowBright("WRN"));
 console.error = logger(4, chalk.redBright("ERR"));

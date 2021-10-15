@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-//go:generate go-bindata -ignore=node_modules|trigger|yarn-error.log|.DS_Store -pkg templates -prefix data data/...
+//go:generate go-bindata -ignore=node_modules|trigger|yarn-error.log|.DS_Store -pkg templates -prefix source -debug source/...
 
 // CopyDir restores assets to the given directory recursively.
 func CopyDir(project, dir, root string) error {

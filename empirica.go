@@ -2,11 +2,13 @@ package empirica
 
 import (
 	"context"
+	"os"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/empiricaly/empirica/internal/callbacks"
 	"github.com/empiricaly/empirica/internal/player"
 	"github.com/empiricaly/empirica/internal/server"
+	"github.com/empiricaly/empirica/internal/settings"
 	logger "github.com/empiricaly/empirica/internal/utils/log"
 	"github.com/empiricaly/tajriba"
 	"github.com/pkg/errors"
@@ -46,6 +48,15 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 
 	log.Trace().Interface("config", config).Msg("Configuration")
 
+	dir, err := os.Getwd()
+	if err != nil {
+		return nil, errors.Wrap(err, "get current dir")
+	}
+
+	if err := settings.Init(dir); err != nil {
+		return nil, errors.Wrap(err, "empirica")
+	}
+
 	r := &Runner{}
 
 	var schema graphql.ExecutableSchema
@@ -64,6 +75,8 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 	if err != nil {
 		return nil, errors.Wrap(err, "init player")
 	}
+
+	config.Callbacks.Token = config.Tajriba.Auth.ServiceRegistrationToken
 
 	r.callbacks, err = callbacks.Start(ctx, config.Callbacks)
 	if err != nil {

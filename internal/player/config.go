@@ -36,7 +36,7 @@ func ConfigFlags(cmd *cobra.Command, prefix string) error {
 	viper.SetDefault(flag, sval)
 
 	flag = prefix + ".devcmd"
-	sval = "yarn run dev"
+	sval = "./node_modules/.bin/vite"
 	cmd.Flags().String(flag, sval, "Command to run client code in development")
 	viper.SetDefault(flag, sval)
 

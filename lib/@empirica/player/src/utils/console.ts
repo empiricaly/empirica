@@ -2,8 +2,32 @@ import chalk from "chalk";
 
 var log = console.log;
 
-function logger(level: string) {
+const levels = {
+  trace: 0,
+  debug: 1,
+  log: 2,
+  info: 2,
+  warn: 3,
+  error: 4,
+};
+
+let currentLevel = 2;
+
+export function setLogLevel(level: keyof typeof levels) {
+  const lvl = levels[level];
+  if (lvl === undefined) {
+    return;
+  }
+
+  currentLevel = lvl;
+}
+
+function logger(lvl: number, level: string) {
   return function () {
+    if (lvl < currentLevel) {
+      return;
+    }
+
     var first_parameter = arguments[0];
     var other_parameters = Array.prototype.slice.call(arguments, 1);
 
@@ -13,9 +37,7 @@ function logger(level: string) {
       var seconds = date.getSeconds();
       var milliseconds = date.getMilliseconds();
 
-      return (
-        level +
-        " [" +
+      const str =
         (hour < 10 ? "0" + hour : hour) +
         ":" +
         (minutes < 10 ? "0" + minutes : minutes) +
@@ -23,8 +45,10 @@ function logger(level: string) {
         (seconds < 10 ? "0" + seconds : seconds) +
         "." +
         ("00" + milliseconds).slice(-3) +
-        "] "
-      );
+        " " +
+        level;
+
+      return chalk.gray(str);
     }
 
     log.apply(
@@ -34,9 +58,9 @@ function logger(level: string) {
   };
 }
 
-console.trace = logger(chalk.cyanBright("TRC"));
-console.log = logger(chalk.magentaBright("DBG"));
-console.debug = logger(chalk.magentaBright("DBG"));
-console.info = logger(chalk.greenBright("INF"));
-console.warn = logger(chalk.yellowBright("WRN"));
-console.error = logger(chalk.redBright("ERR"));
+console.trace = logger(0, chalk.cyanBright("TRC"));
+console.debug = logger(1, chalk.magentaBright("DBG"));
+console.log = logger(2, chalk.magentaBright("DBG"));
+console.info = logger(2, chalk.greenBright("INF"));
+console.warn = logger(3, chalk.yellowBright("WRN"));
+console.error = logger(4, chalk.redBright("ERR"));

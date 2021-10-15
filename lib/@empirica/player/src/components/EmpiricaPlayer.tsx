@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Empirica } from "../empirica";
 import { useGame, usePlayer } from "../hooks";
+import { Empirica } from "../empirica";
 import { Player } from "../player";
 import { Consent } from "./Consent";
 import { EmpiricaContext } from "./Context";
@@ -31,11 +31,15 @@ export const clear = () => {
   window.location.href = window.location.href;
 };
 
+export const createNewPlayer = () => {
+  const date: Date = new Date();
+  window.open(`http://localhost:8844/?playerID=${date.getTime()}`, "_blank")?.focus();
+};
+
 const WaitLoad: React.FC = (props) => {
   const player = usePlayer();
-  const game = useGame();
 
-  if (!player || !game) {
+  if (!player) {
     return <Loading></Loading>;
   }
 
@@ -72,7 +76,6 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
         (async () => {
           try {
             sharedPlayer = await Empirica.sessionLogin(url, token, participant);
-            console.log(sharedPlayer);
             setPlayer(sharedPlayer);
           } catch (e) {
             console.warn("Failed to reconnect", e);
@@ -146,7 +149,7 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
           setConsented(true);
         }}
         onRefuse={() => {
-          console.log("ciao");
+          console.info("Refused consent");
         }}
       />
     );

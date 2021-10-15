@@ -13,13 +13,18 @@ export interface Change {
   type:
     | "newScope"
     | "newAssignment"
+    | "newUnassignment"
     | "updateAttribute"
     | "start"
     | "cancel"
     | "pause"
-    | "end";
+    | "end"
+    | "terminate"
+    | "fail";
+  cause?: string;
   attr?: EAttribute;
   scope?: EScope;
+  attrs?: Json;
   player?: Player;
 }
 
@@ -194,7 +199,6 @@ export class EScope {
 
   get(key: string) {
     const a = this.attributes[key];
-    console.log("GET", this.type, key, a?.value);
     if (!a) {
       return null;
     }
@@ -211,7 +215,6 @@ export class EScope {
       type: "updateAttribute",
       attr: a,
     });
-    console.log("SET", this.type, key, a?.value);
   }
 
   updateAttribute(attribute: Attribute) {
@@ -233,7 +236,6 @@ export class EScope {
 }
 
 export class Player extends EScope {
-  public games: Game[] = [];
   public currentGame?: Game;
   public online: boolean = false;
 
@@ -279,13 +281,8 @@ export class Root extends EScope {
     this.store.pushChange({
       type: "newScope",
       scope: batch,
+      attrs,
     });
-
-    if (attrs) {
-      for (const key in attrs) {
-        batch.set(key, attrs[key]);
-      }
-    }
 
     return batch;
   }
@@ -352,7 +349,6 @@ export class Game extends EScope {
 
   addRound(attrs?: Json): Round {
     const round = new Round(this.store, this);
-    console.log("addRound", round, this.rounds);
     this.rounds.push(round);
     this.store.pushChange({
       type: "newScope",
@@ -371,19 +367,30 @@ export class Game extends EScope {
   assign(player: Player) {
     if (player.currentGame) {
       if (player.currentGame !== this) {
-        throw "player already assigned";
+        throw new Error("player already assigned");
       } else {
         console.warn("reassigning player to same game");
         return;
       }
     }
 
-    player.games.push(this);
     player.currentGame = this;
 
     this.players.push(player);
     this.store.pushChange({
       type: "newAssignment",
+      player: player,
+    });
+  }
+
+  unassign(player: Player) {
+    if (!player.currentGame) {
+      throw new Error("player not assigned");
+    }
+
+    this.players = this.players.filter((p) => p !== player);
+    this.store.pushChange({
+      type: "newUnassignment",
       player: player,
     });
   }
@@ -409,10 +416,27 @@ export class Game extends EScope {
     });
   }
 
-  end() {
+  end(reason: string) {
     this.store.pushChange({
       type: "end",
       scope: this,
+      cause: reason,
+    });
+  }
+
+  terminate(reason: string) {
+    this.store.pushChange({
+      type: "terminate",
+      scope: this,
+      cause: reason,
+    });
+  }
+
+  fail(reason: string) {
+    this.store.pushChange({
+      type: "fail",
+      scope: this,
+      cause: reason,
     });
   }
 
@@ -441,7 +465,6 @@ export class Round extends EScope {
   }
 
   addStage(attrs: Json): Stage {
-    console.log("attrs", attrs);
     const duration = attrs["duration"];
     if (!duration) {
       throw new Error("stage: addStage requires duration option");
@@ -543,6 +566,10 @@ export class Store {
     this.changes.push(change);
   }
 
+  hasChanges(): boolean {
+    return this.changes.length > 0;
+  }
+
   popChanges(): Change[] {
     const changes = this.changes;
     this.changes = [];
@@ -564,7 +591,6 @@ export class Store {
   }
 
   addTransition(t: Transition) {
-    console.log("addTransition", t);
     let step = this.steps[t.node.id];
     if (!step) {
       console.warn("steps: got transition without step");
@@ -579,12 +605,10 @@ export class Store {
   addParticipant(p: Participant) {
     let player = this.players[p.id];
     if (!player) {
-      console.log("creating player addParticipant");
       player = new Player(this, p);
       this.players[p.id] = player;
       this.addPlayerToGame(player);
     } else if (!player.participant.identifier) {
-      console.log("not creating player");
       player.participant = p;
     }
 
@@ -602,7 +626,6 @@ export class Store {
   }
 
   playerStatus(p: Player, online: boolean) {
-    console.log("playerStatus ", p.id, online);
     let player = this.players[p.id];
     if (!player) {
       throw "players: player status change missing";
@@ -637,7 +660,6 @@ export class Store {
           throw new Error("scopes: player scope without name");
         }
 
-        console.log("creating player addScope");
         const player = new Player(this, <Participant>{ id: s.name });
         player.scope = s;
 
@@ -690,7 +712,6 @@ export class Store {
 
         const round = new Round(this, game);
         round.scope = s;
-        console.log("store.rounds", round, game.rounds);
         game.rounds.push(round);
 
         return round;

@@ -7,6 +7,7 @@ replace github.com/empiricaly/tajriba => /Users/npaton/projects/empirica/project
 require (
 	github.com/99designs/gqlgen v0.13.0
 	github.com/agnivade/levenshtein v1.1.0 // indirect
+	github.com/cortesi/moddwatch v0.0.0-20210323234936-df014e95c743 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/empiricaly/tajriba v0.0.0-20210815035032-ba606cd1b686 // indirect
 	github.com/gorilla/websocket v1.4.2

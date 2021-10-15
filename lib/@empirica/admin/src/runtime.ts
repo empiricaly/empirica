@@ -10,8 +10,8 @@ import {
   TajribaAdmin,
   Transition,
 } from "@empirica/tajriba";
+import { Callbacks } from "./callbacks";
 import { EmpiricaEvent as EE, EventCallback } from "./events";
-import { Hooks } from "./hooks";
 import { Json } from "./json";
 import {
   Batch,
@@ -30,17 +30,13 @@ class Context {
   constructor(private runtime: Runtime, private store: Store) {}
 
   get unassignedPlayers() {
-    console.log(
-      "onlines",
-      Object.values(this.store.players).map((p) => p.online)
-    );
-    console.log(
-      "gameIDS",
-      Object.values(this.store.players).map((p) => p.get("gameID"))
-    );
     return Object.values(this.store.players).filter(
       (p) => p.online && !p.get("gameID")
     );
+  }
+
+  get batches() {
+    return Object.values(this.store.batches);
   }
 
   async createBatch(attr: Json) {
@@ -145,10 +141,10 @@ export class Runtime {
     this.defaultContext = new Context(this, store);
   }
 
-  async init(hooks?: Hooks) {
-    if (hooks) {
-      for (const event in hooks.hooks) {
-        for (const cb of hooks.hooks[event]) {
+  async init(callbacks?: Callbacks) {
+    if (callbacks) {
+      for (const event in callbacks.callbacks) {
+        for (const cb of callbacks.callbacks[event]) {
           this.on(event, cb);
         }
       }
@@ -208,8 +204,6 @@ export class Runtime {
     await this.getSteps();
     await this.getParticipants();
 
-    console.log("STORE", this.store);
-
     for (const id in this.store.batches) {
       const batch = this.store.batches[id];
       await this.emitter.emit(EE.NewBatch, this.defaultContext, batch, {
@@ -227,14 +221,16 @@ export class Runtime {
     for (const id in this.store.players) {
       const player = this.store.players[id];
       if (!player.get(EE.NewPlayer)) {
-        console.log(`before`);
         if (!player.scope) {
           const scope = <Scope>(
             await this.taj.addScope({ kind: "player", name: player.id })
           );
           this.store.addScope(scope);
+          this.taj.link({
+            nodeIDs: [scope.id],
+            participantIDs: [id],
+          });
         }
-        console.log(`after`);
         await this.emitter.emit(EE.NewPlayer, this.defaultContext, player, {
           player,
         });
@@ -427,7 +423,7 @@ export class Runtime {
 
   async createBatch(attr?: Json) {
     this.store.root.addBatch(attr);
-    this.processChanges();
+    await this.processChanges();
   }
 
   async stop() {
@@ -450,6 +446,10 @@ export class Runtime {
     });
     player.scope = scope;
     this.store.saveEScope(player);
+    this.taj.link({
+      nodeIDs: [scope.id],
+      participantIDs: [player.id],
+    });
   }
   private async processEventLocked(
     payload: OnEventPayload,
@@ -466,7 +466,6 @@ export class Runtime {
       case EventType.ParticipantAdd: {
         const player = this.store.addParticipant(<Participant>payload.node);
         if (!player.scope) {
-          console.log("ParticipantAdd");
           await this.addPlayer(player);
         }
         await this.emitter.emit(EE.NewPlayer, this.defaultContext, player, {
@@ -478,7 +477,6 @@ export class Runtime {
       case EventType.ParticipantConnect: {
         const player = this.store.addParticipant(<Participant>payload.node);
         if (!player.scope) {
-          console.log("ParticipantConnect");
           await this.addPlayer(player);
         }
         this.store.playerStatus(player, true);
@@ -491,7 +489,6 @@ export class Runtime {
       case EventType.ParticipantConnected: {
         const player = this.store.addParticipant(<Participant>payload.node);
         if (!player.scope) {
-          console.log("ParticipantConnected");
           await this.addPlayer(player);
         }
         this.store.playerStatus(player, true);
@@ -550,8 +547,6 @@ export class Runtime {
         console.warn("Unhandled event", payload.eventType, payload.node);
         break;
     }
-
-    // console.log("STORE", this.store);
   }
 
   async processChanges() {
@@ -559,6 +554,9 @@ export class Runtime {
 
     for (const change of changes) {
       await this.processChange(change);
+      if (this.store.hasChanges()) {
+        await this.processChanges();
+      }
     }
   }
 
@@ -572,17 +570,26 @@ export class Runtime {
           return;
         }
 
+        const attributes = change.scope.creationAttributes();
+
+        if (change.attrs) {
+          for (const key in change.attrs) {
+            attributes.push(<Attribute>{
+              key,
+              val: JSON.stringify(change.attrs[key]),
+              immutable: true,
+            });
+          }
+        }
+
         const kind = change.scope.type;
-        console.log("new sope");
         const scope = <Scope>await this.taj.addScope({
           kind,
-          attributes: change.scope.creationAttributes(),
+          attributes,
         });
         change.scope.scope = scope;
         this.store.saveEScope(change.scope);
         change.scope.postProcess();
-
-        console.log("KIND", kind);
 
         switch (kind) {
           case "game":
@@ -631,6 +638,33 @@ export class Runtime {
         playerIDs.push(change.player.participant.id);
         game.set("playerIDs", playerIDs, { protected: true });
         change.player.set("gameID", game.id, { protected: true });
+
+        break;
+      }
+      case "newUnassignment": {
+        console.trace("newUnassignment");
+
+        if (!change.player) {
+          console.warn("newUnassignment change.player missing", change);
+          return;
+        }
+
+        if (!change.player.currentGame) {
+          console.warn(
+            "newUnassignment player.currentGame not assigned",
+            change
+          );
+          return;
+        }
+
+        const game = change.player.currentGame;
+        let playerIDs = (game.get("playerIDs") as string[]) || [];
+        playerIDs = playerIDs.filter(
+          (p) => p !== change.player!.participant.id
+        );
+        game.set("playerIDs", playerIDs, { protected: true });
+        change.player.set("gameID", null, { protected: true });
+        change.player.currentGame = undefined;
 
         break;
       }
@@ -703,6 +737,8 @@ export class Runtime {
 
         break;
       }
+      case "terminate":
+      case "fail":
       case "end": {
         console.trace("end");
 
@@ -723,18 +759,25 @@ export class Runtime {
             return;
           }
 
-          console.log({
+          let to = State.Ended;
+          if (change.type == "terminate") {
+            to = State.Terminated;
+          } else if (change.type === "fail") {
+            to = State.Failed;
+          } else {
+            throw new Error("unknown transition to");
+          }
+
+          const trs = {
             from: State.Running,
-            to: State.Ended,
+            to,
             nodeID: stage.step.step.id,
-          });
+            cause: change.cause,
+          };
+          console.trace("transition", trs);
 
           try {
-            const transition = await this.taj.transition({
-              from: State.Running,
-              to: State.Ended,
-              nodeID: stage.step.step.id,
-            });
+            const transition = await this.taj.transition(trs);
 
             const step = this.store.addTransition(<Transition>transition);
             if (!step?.scope) {
@@ -762,7 +805,7 @@ export class Runtime {
     }
 
     let event = `${attribute.scope.type}-${attribute.key}`;
-    const arg = { [attribute.scope.type]: attribute.scope };
+    const arg = { [attribute.scope.type]: attribute.scope, isNew };
     let getSet: getSetter = attribute.scope;
     if (attribute.isCompound) {
       const { cType, cKey, subType, subID } = attribute.compoundElements!;
@@ -771,13 +814,10 @@ export class Runtime {
       getSet = scopedScope(attribute.scope, subType, subID);
     }
 
-    if (isNew) {
-      event = `new-${event}`;
-    } else {
-      event = `change-${event}`;
-    }
+    console.log("argargargarg", arg);
 
-    console.log(event, "ARGS", arg);
+    event = `change-${event}`;
+
     await this.emitter.emit(event, this.defaultContext, getSet, arg);
   }
 
@@ -807,7 +847,7 @@ export class Runtime {
     await this.emitter.emit(EE.StageEnd, this.defaultContext, stage, { stage });
 
     const [nextRound, nextStage] = roundStageAfter(stage.round.game, stage.id);
-    console.log("STAGE / NEXT STAGE", stage.id, nextStage?.id);
+    console.trace("STAGE / NEXT STAGE", stage.id, nextStage?.id);
 
     if (!nextRound || nextRound.id !== stage.round.id) {
       await this.emitter.emit(EE.RoundEnd, this.defaultContext, stage.round, {
@@ -831,36 +871,57 @@ export class Runtime {
     const nodeIDs = [];
 
     nodeIDs.push(game.id);
+    console.log("gameID", game.id);
     nodeIDs.push(game.get("groupID") as string);
+    console.log("groupID", game.get("groupID"));
     for (const round of game.rounds) {
       nodeIDs.push(round.id);
+      console.log("roundID", round.id);
       for (const stage of round.stages) {
         nodeIDs.push(stage.id);
         nodeIDs.push(stage.get("stepID") as string);
+        console.log("stageID", stage.id);
+        console.log("stepID", stage.get("stepID"));
       }
     }
-    for (const player of game.players) {
-      nodeIDs.push(player.scope!.id);
-    }
+    // for (const player of game.players) {
+    //   console.log("playerID", player.scope!.id);
+    //   nodeIDs.push(player.scope!.id);
+    // }
 
-    console.log("nodeIDs", nodeIDs);
+    console.log("LINK", playerIDs, nodeIDs);
 
     await this.taj.link({
       participantIDs: playerIDs,
       nodeIDs: nodeIDs,
     });
 
+    if (game.players.length > 1) {
+      for (const player of game.players) {
+        const playerIDs = [];
+        for (const player2 of game.players) {
+          if (player.id != player2.id) {
+            playerIDs.push(player2.scope!.id);
+          }
+        }
+        await this.taj.link({
+          participantIDs: [player.scope!.id],
+          nodeIDs: playerIDs,
+        });
+      }
+    }
+
     const stage = firstStage(game);
 
     if (stage) {
       await this.startStage(stage);
-      game.set("state", "started", { protected: true });
+      game.set("state", "running", { protected: true });
       await this.processChanges();
     } else {
       await this.gameEnd(game);
     }
 
-    console.log("START GAME", game.id, game.players);
+    console.trace("Start game", game.id, game.players);
   }
 
   async startStage(stage: Stage) {
@@ -920,10 +981,8 @@ function roundStageAfter(
   stageID: string
 ): [Round | null, Stage | null] {
   for (let i = 0; i < game.rounds.length; i++) {
-    console.log(`game.rounds`, game.rounds);
     const r = game.rounds[i];
     for (let j = 0; j < r.stages.length; j++) {
-      console.log(`r.stages ${r.stages}`);
       const s = r.stages[j];
       if (stageID == s.id) {
         if (r.stages[j + 1]) {

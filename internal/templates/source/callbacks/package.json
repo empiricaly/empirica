@@ -1,0 +1,10 @@
+{
+  "name": "empirica-server-demo",
+  "private": true,
+  "author": "Nicolas Paton",
+  "dependencies": {
+    "minimist": "1.2.5",
+    "rand-seed": "1.0.1"
+  },
+  "devDependencies": {}
+}

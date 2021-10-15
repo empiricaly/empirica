@@ -3,16 +3,20 @@ package server
 
 import (
 	"context"
+	"encoding/json"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
 	"sync"
 	"time"
 
+	"github.com/empiricaly/empirica/internal/templates"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v3"
 )
 
 // Server holds the server state.
@@ -45,7 +49,7 @@ func Start(
 
 	srv := &http.Server{
 		Addr:        config.Addr,
-		Handler:     cors.Default().Handler(s.Router),
+		Handler:     cors.AllowAll().Handler(s.Router),
 		BaseContext: func(_ net.Listener) context.Context { return ctx },
 	}
 
@@ -103,13 +107,15 @@ func (s *Server) Close() {
 	s.wg.Wait()
 }
 
-// Enable adds Tajriba GraphQL endpoints to an HTTP router.
 func Enable(
 	ctx context.Context,
-	_ *Config,
+	config *Config,
 	router *httprouter.Router,
 ) error {
 	router.GET("/", index)
+	router.GET("/treatments", readTreatments(config.Treatments))
+	router.PUT("/treatments", writeTreatments(config.Treatments))
+	router.ServeFiles("/admin/*filepath", templates.HTTPFS("admin-ui"))
 
 	return nil
 }
@@ -118,5 +124,57 @@ func index(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 	_, err := w.Write([]byte("Hello!"))
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to send response for index")
+	}
+}
+
+func readTreatments(p string) httprouter.Handle {
+	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+		content, err := ioutil.ReadFile(p)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to open yaml")
+		}
+
+		c := make(map[string]interface{})
+
+		err = yaml.Unmarshal(content, &c)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed read yaml")
+		}
+
+		contentJSON, err := json.Marshal(c)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed write json")
+		}
+
+		_, err = w.Write(contentJSON)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send response for index")
+		}
+	}
+}
+
+func writeTreatments(p string) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed read json")
+		}
+		r.Body.Close()
+
+		c := make(map[string]interface{})
+		err = json.Unmarshal(b, &c)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed write json")
+		}
+
+		content, err := yaml.Marshal(c)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed write yaml")
+		}
+
+		err = ioutil.WriteFile(p, content, 0644)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to open yaml")
+		}
 	}
 }

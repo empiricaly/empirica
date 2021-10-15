@@ -1,9 +1,6 @@
 .DS_Store
 *.db
-empirica.yaml
-.empirica.yaml
-empirica.toml
-.empirica.toml
+.empirica
 tajriba.json
 internal/vendored/transport
 yarn-error.log
