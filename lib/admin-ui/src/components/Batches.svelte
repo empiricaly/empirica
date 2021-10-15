@@ -1,6 +1,7 @@
 <script>
   import { currentAdmin } from "../utils/auth";
   import BatchLine from "./BatchLine.svelte";
+  import Button from "./common/Button.svelte";
   import NewBatch from "./NewBatch.svelte";
 
   let newBatch = false;
@@ -9,23 +10,27 @@
 </script>
 
 <main class="flex-1 relative z-0 overflow-y-auto focus:outline-none">
-  <!-- Page title & actions -->
   <div
-    class="border-b border-gray-200 px-4 py-4 sm:flex sm:items-center sm:justify-between sm:px-6 lg:px-8"
+    class="md:flex md:items-center md:justify-between px-4 pt-4 sm:px-6 lg:px-8"
   >
     <div class="flex-1 min-w-0">
-      <h1 class="text-lg font-medium leading-6 text-gray-900 sm:truncate">
-        Batches
-      </h1>
-    </div>
-    <div class="mt-4 flex sm:mt-0 sm:ml-4">
-      <button
-        type="button"
-        class="order-0 inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-empirica-600 hover:bg-empirica-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500 sm:order-1 sm:ml-3"
-        on:click={() => (newBatch = true)}
+      <h2
+        class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate"
       >
-        New Batch
-      </button>
+        Batches
+      </h2>
+
+      <div class="py-4 sm:flex sm:items-center sm:justify-between">
+        <p class="text-sm font-small text-gray-500 pr-32">
+          Batches are groups of Games. You start Games through a Batch. Within a
+          Batch, Games can be assigned differently depending on you Assignement
+          Configuration. Start by creating a New Batch.
+        </p>
+
+        <div class="mt-4 flex sm:mt-0 sm:ml-4">
+          <Button on:click={() => (newBatch = true)}>New Batch</Button>
+        </div>
+      </div>
     </div>
   </div>
 

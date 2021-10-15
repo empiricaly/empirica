@@ -16,14 +16,14 @@
         Treatments and Factors
       </h2>
       <p class="text-sm font-small text-gray-500 sm:truncate">
-        Tou can edit your <code>.empirica/treatments.yaml</code> file. Updates are
+        You can edit your <code>.empirica/treatments.yaml</code> file. Updates are
         auto-saved.
       </p>
     </div>
   </div>
 
   <div class="max-w-7xl px-4 sm:px-6 lg:px-8">
-    <div class="mt-12"><Treatments /></div>
-    <div class="mt-16"><Factors /></div>
+    <div class="mt-10"><Treatments /></div>
+    <div class="mt-10"><Factors /></div>
   </div>
 </main>

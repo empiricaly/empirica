@@ -1,9 +1,8 @@
 <script>
-  import { currentAdmin } from "../utils/auth";
-  import SlideOver from "./overlays/SlideOver.svelte";
   import { link } from "svelte-spa-router";
   import { URL } from "../constants";
   import Trash from "./common/Trash.svelte";
+  import SlideOver from "./overlays/SlideOver.svelte";
 
   export let newBatch = false;
 
@@ -241,7 +240,7 @@
               Treatments
             </label>
             <!-- Treatment List -->
-            {#each treatments as t, i (t)}
+            {#each treatments as t, i}
               <select
                 bind:value={t.name}
                 class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-empirica-500 focus:border-empirica-500 sm:text-sm rounded-md col-span-{assignmentMethod ===
@@ -251,7 +250,7 @@
               >
                 <option value={t.name}>{t.name}</option>
                 {#if getRemainingTreatments().length > 0}
-                  {#each getRemainingTreatments() as ot, i (ot)}
+                  {#each getRemainingTreatments() as ot, i}
                     <option value={ot}>{ot}</option>
                   {/each}
                 {/if}
