@@ -65,17 +65,17 @@ Empirica.onNewBatch(function ({ batch }) {
 
   switch (config.kind) {
     case "simple":
-      for (const treatment of config.treatments) {
-        for (let i = 0; i < treatment.count; i++) {
-          batch.addGame({ treatment: treatment.treatment });
-        }
+      for (let i = 0; i < config.count; i++) {
+        const treatment = pickRandom(config.treatments);
+        batch.addGame({ treatment });
       }
 
       break;
     case "complete":
-      for (let i = 0; i < config.count; i++) {
-        const treatment = pickRandom(config.treatments);
-        batch.addGame({ treatment });
+      for (const treatment of config.treatments) {
+        for (let i = 0; i < treatment.count; i++) {
+          batch.addGame({ treatment: treatment.treatment });
+        }
       }
 
       break;
