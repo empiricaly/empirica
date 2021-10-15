@@ -1,38 +1,37 @@
 <script>
+  import { Empirica } from "@empirica/admin";
+  import { onMount } from "svelte";
   import Router from "svelte-spa-router";
   import Layout from "./components/layout/Layout.svelte";
   import SignIn from "./components/SignIn.svelte";
-  import { routes } from "./routes";
-  import { afterUpdate } from "svelte";
-  import { Empirica } from "@empirica/admin";
   import { DEFAULT_TOKEN_KEY, URL } from "./constants";
+  import { routes } from "./routes";
+  import { setCurrentAdmin } from "./utils/auth";
 
   let loggedIn = false;
   let loaded = false;
 
-  let tokenKey = DEFAULT_TOKEN_KEY;
+  const token = window.localStorage.getItem(DEFAULT_TOKEN_KEY);
 
-  afterUpdate(() => {
-    const token = window.localStorage.getItem(tokenKey) || undefined;
+  onMount(function () {
     if (token) {
-      (async () => {
-        try {
-          let adminSessionLoggedIn = await Empirica.sessionLogin(
-            `${URL}/query`,
-            token
-          );
-          loggedIn =
-            adminSessionLoggedIn !== undefined || adminSessionLoggedIn !== null;
-        } catch (e) {
-          console.warn("Failed to reconnect", e);
-        } finally {
-          loaded = true;
-        }
-      })();
+      sessionLogin();
     } else {
       loaded = true;
     }
   });
+
+  async function sessionLogin() {
+    try {
+      const admin = await Empirica.sessionLogin(`${URL}/query`, token);
+      setCurrentAdmin(admin);
+      loggedIn = true;
+    } catch (e) {
+      console.info("Failed to reconnect", e);
+    } finally {
+      loaded = true;
+    }
+  }
 </script>
 
 <main class="flex flex-col apply min-h-screen text-gray-600">

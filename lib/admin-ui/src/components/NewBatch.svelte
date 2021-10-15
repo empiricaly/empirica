@@ -1,4 +1,5 @@
 <script>
+  import { currentAdmin } from "../utils/auth";
   import SlideOver from "./overlays/SlideOver.svelte";
 
   export let newBatch = false;
@@ -10,6 +11,8 @@
   function init(el) {
     el.focus();
   }
+
+  console.info($currentAdmin.createBatch);
 </script>
 
 <SlideOver custom bind:open={newBatch}>

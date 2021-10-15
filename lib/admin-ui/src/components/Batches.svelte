@@ -1,8 +1,11 @@
 <script>
+  import { currentAdmin } from "../utils/auth";
   import BatchLine from "./BatchLine.svelte";
   import NewBatch from "./NewBatch.svelte";
 
   let newBatch = false;
+
+  console.info($currentAdmin);
 </script>
 
 <main class="flex-1 relative z-0 overflow-y-auto focus:outline-none">
