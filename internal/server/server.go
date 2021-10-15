@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/empiricaly/empirica/internal/templates"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"github.com/rs/cors"
@@ -114,6 +115,7 @@ func Enable(
 	router.GET("/", index)
 	router.GET("/treatments", readTreatments(config.Treatments))
 	router.PUT("/treatments", writeTreatments(config.Treatments))
+	router.ServeFiles("/admin/*filepath", templates.HTTPFS("admin-ui"))
 
 	return nil
 }
