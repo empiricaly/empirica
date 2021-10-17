@@ -1,38 +1,25 @@
 <script>
-  import { currentAdmin } from "../utils/auth";
+  import Page from "../common/Page.svelte";
   import BatchLine from "./BatchLine.svelte";
-  import Button from "./common/Button.svelte";
+  import FetchTreatments from "./FetchTreatments.svelte";
   import NewBatch from "./NewBatch.svelte";
 
   let newBatch = false;
 
-  console.info($currentAdmin);
+  const actions = [
+    {
+      label: "New Batch",
+      onClick: () => (newBatch = true),
+    },
+  ];
 </script>
 
-<main class="flex-1 relative z-0 overflow-y-auto focus:outline-none">
-  <div
-    class="md:flex md:items-center md:justify-between px-4 pt-4 sm:px-6 lg:px-8"
-  >
-    <div class="flex-1 min-w-0">
-      <h2
-        class="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate"
-      >
-        Batches
-      </h2>
-
-      <div class="py-4 sm:flex sm:items-center sm:justify-between">
-        <p class="text-sm font-small text-gray-500 pr-32">
-          Batches are groups of Games. You start Games through a Batch. Within a
-          Batch, Games can be assigned differently depending on you Assignement
-          Configuration. Start by creating a New Batch.
-        </p>
-
-        <div class="mt-4 flex sm:mt-0 sm:ml-4">
-          <Button on:click={() => (newBatch = true)}>New Batch</Button>
-        </div>
-      </div>
-    </div>
-  </div>
+<Page title="Batches" {actions}>
+  <span slot="labels">
+    Batches are groups of Games. You start Games through a Batch. Within a
+    Batch, Games can be assigned differently depending on you Assignement
+    Configuration. Start by creating a New Batch.
+  </span>
 
   <!-- Projects table (small breakpoint and up) -->
   <div class="hidden sm:block">
@@ -75,12 +62,12 @@
           <BatchLine />
           <BatchLine />
           <BatchLine />
-
-          <!-- More projects... -->
         </tbody>
       </table>
     </div>
   </div>
-</main>
+</Page>
 
-<NewBatch bind:newBatch />
+<FetchTreatments let:treatments>
+  <NewBatch bind:newBatch {treatments} />
+</FetchTreatments>

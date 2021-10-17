@@ -45,9 +45,3 @@
     </Layout>
   {/if}
 </main>
-
-<style global lang="postcss">
-  :global(footer) {
-    @apply bg-teal-500;
-  }
-</style>
