@@ -18,7 +18,7 @@ We are working to lower requirements.
 
 # Installation
 
-Download the empirica binary from: https://github.com/empiricaly/empirica/releases/download/v2-pre-alpha/empirica
+Download the empirica binary from: https://github.com/empiricaly/empirica/releases/download/v0.1.0-alpha.0/empirica
 
 Place it in `/usr/local/bin`. Run:
 
