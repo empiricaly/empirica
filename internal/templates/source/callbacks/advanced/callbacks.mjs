@@ -51,28 +51,28 @@ Empirica.onPlayerDisconnected(function ({ player }) {
 Empirica.onNewBatch(function ({ batch }) {
   console.log("new batch", batch.attributes);
 
-  const config = batch.get("config");
+  const conf = batch.get("config");
 
-  if (!config) {
+  if (!conf) {
     console.warn("callbacks: batch created without a config");
     return;
   }
 
-  if (config !== Object(config)) {
+  if (conf !== Object(conf)) {
     console.warn("callbacks: batch config is not an object");
     return;
   }
 
-  switch (config.kind) {
+  switch (conf.kind) {
     case "simple":
-      for (let i = 0; i < config.count; i++) {
-        const treatment = pickRandom(config.treatments);
+      for (let i = 0; i < conf.config.count; i++) {
+        const treatment = pickRandom(conf.config.treatments);
         batch.addGame({ treatment });
       }
 
       break;
     case "complete":
-      for (const treatment of config.treatments) {
+      for (const treatment of conf.config.treatments) {
         for (let i = 0; i < treatment.count; i++) {
           batch.addGame({ treatment: treatment.treatment });
         }

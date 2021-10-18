@@ -17,12 +17,26 @@ func Init(dir string) error {
 }
 
 const (
-	EmpiricaDir  = ".empirica"
-	LocalDir     = "local"
+	EmpiricaDir = ".empirica"
+	LocalDir    = "local"
+	gitignore   = `local`
+	stokenLen   = 16
+	passLen     = 6
+
+	TreatmentsYAML = "treatments.yaml"
+	treatmentsyaml = `factors:
+  - desc: playerCount determines how many players are in a game.
+    name: playerCount
+    values:
+      - value: 1
+      - value: 2
+      - value: 3
+      - value: 5
+      - value: 8
+      - value: 13
+`
+
 	EmpiricaTOML = "empirica.toml"
-	gitignore    = `local`
-	stokenLen    = 16
-	passLen      = 6
 	empiricatoml = `[tajriba.auth]
 srtoken = "%s"
 
@@ -52,6 +66,12 @@ func CreateEmpiricaDir(dir string) error {
 	content := []byte(fmt.Sprintf(empiricatoml, randSeq(stokenLen), randSeq(passLen)))
 	if err := writeFile(tomlFile, content); err != nil {
 		return errors.Wrap(err, "write configuration file")
+	}
+
+	yamlFile := path.Join(empDir, TreatmentsYAML)
+
+	if err := writeFile(yamlFile, []byte(treatmentsyaml)); err != nil {
+		return errors.Wrap(err, "write treatments file")
 	}
 
 	if err := createDir(localDir); err != nil {

@@ -1,13 +1,13 @@
 <script>
-  import { castValue } from "../utils/typeValue";
-
-  import { DEFAULT_TREATMENT, URL } from "../constants";
-
-  import Button from "./common/Button.svelte";
-  import Duplicate from "./common/duplicate.svelte";
-  import Trash from "./common/Trash.svelte";
-  import Alert from "./layout/Alert.svelte";
-  import SlideOver from "./overlays/SlideOver.svelte";
+  import { DEFAULT_TREATMENT, URL } from "../../constants";
+  import { focus } from "../../utils/use";
+  import { castValue } from "../../utils/typeValue";
+  import Button from "../common/Button.svelte";
+  import Duplicate from "../common/duplicate.svelte";
+  import Trash from "../common/Trash.svelte";
+  import Alert from "../layout/Alert.svelte";
+  import SlideOver from "../overlays/SlideOver.svelte";
+  import FactorsString from "./FactorsString.svelte";
 
   let newTreatment = false;
   let tempTreatments;
@@ -47,7 +47,7 @@
       return [];
     }
 
-    const factor = treatments.factors.find((f) => f.name === factorName);
+    const factor = treatments?.factors?.find((f) => f.name === factorName);
     return factor ? factor.values.map((f) => f.value) : [];
   }
 
@@ -189,12 +189,18 @@
     editedIndex = index;
 
     if (!t) {
+      let factors = treatments?.factors?.map((f) => ({
+        key: f.name,
+        value: "",
+      }));
+      if (!factors) {
+        factors = [{ key: "", value: "" }];
+      }
+
       selectedTreatment = {
         name: "",
         desc: "",
-        factors: treatments.factors.map((f) => {
-          return { key: f.name, value: "" };
-        }),
+        factors,
       };
 
       return;
@@ -221,10 +227,6 @@
     }
   }
 
-  function init(el) {
-    el.focus();
-  }
-
   function addProperty() {
     if (!selectedTreatment.factors) {
       selectedTreatment.factors = [];
@@ -233,33 +235,6 @@
     // @ts-ignore
     selectedTreatment.factors.push({ key: "", value: "" });
     selectedTreatment = selectedTreatment;
-  }
-
-  function formatFactorsToString(factors) {
-    let factorArr = [];
-    for (const key in factors) {
-      let val = factors[key];
-
-      // check for object/array type data
-      if (val === Object(val)) {
-        // Object
-        if (!val.length) {
-          let tempVal = [];
-          for (const k in val) {
-            tempVal.push(k + ": " + val[k]);
-          }
-
-          val = "{" + tempVal.join(", ") + "}";
-        } else {
-          // array object here
-          val = "[" + val.join(", ") + "]";
-        }
-      }
-
-      factorArr.push(key + ": " + val);
-    }
-
-    return factorArr.join(" | ");
   }
 
   function handleDeleteTreatment(treatment) {
@@ -296,37 +271,34 @@
         <li class="hover:bg-gray-50">
           <div class="px-4 py-4 flex items-center sm:px-8">
             <button
+              type="button"
               on:click={() => showTreatmentEditor(null, t, i)}
-              class="w-full min-w-0 flex-1 sm:flex sm:items-center sm:justify-between focus:outline-none"
+              class="w-full min-w-0 text-sm focus:outline-none text-left"
             >
-              <div class="truncate">
-                <div class="flex text-sm">
-                  <p class="font-medium text-empirica-600 truncate">
-                    {t.name}
-                  </p>
-                </div>
-                {#if t.desc}
-                  <div class="flex text-sm">
-                    <p class="font-normal text-gray-400 truncate">
-                      {t.desc}
-                    </p>
-                  </div>
-                {/if}
-                <div class="text-sm text-gray-500 pt-1">
-                  {formatFactorsToString(t.factors)}
-                </div>
+              <p class="font-medium text-empirica-600 truncate">
+                {t.name}
+              </p>
+              {#if t.desc}
+                <p class="font-normal text-gray-400 truncate">
+                  {t.desc}
+                </p>
+              {/if}
+              <div class="text-gray-500 pt-1">
+                <FactorsString factors={t.factors} />
               </div>
             </button>
 
-            <div class="grid grid-cols-2 gap-6">
+            <div class="flex">
               <button
+                type="button"
                 class="focus:outline-none"
                 on:click={() => showTreatmentEditor(null, t)}
               >
                 <div class="h-5 w-5"><Duplicate /></div>
               </button>
               <button
-                class="focus:outline-none"
+                type="button"
+                class="ml-2 focus:outline-none"
                 on:click={() => {
                   alertModal = true;
                 }}
@@ -349,7 +321,16 @@
         </li>
       {/each}
     {:else}
-      <p>No Treatment</p>
+      <div class="px-4 py-4 sm:px-8">
+        No treatments yet.
+        <button
+          type="button"
+          class="text-empirica-500"
+          on:click={showTreatmentEditor}
+        >
+          Create a Treatment
+        </button>
+      </div>
     {/if}
   </ul>
 </div>
@@ -421,7 +402,7 @@
           </div>
           <div class="sm:col-span-2">
             <input
-              use:init
+              use:focus
               bind:value={selectedTreatment.name}
               id="name"
               name="name"
@@ -454,16 +435,18 @@
         <div
           class="factors space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-5 sm:gap-2 sm:px-6 sm:py-3"
         >
-          <p
-            class="block text-sm font-medium text-gray-900 sm:mt-px sm:pt-2 col-span-2"
-          >
-            Factor
-          </p>
-          <p
-            class="block text-sm font-medium text-gray-900 sm:mt-px sm:pt-2 col-span-3"
-          >
-            Value
-          </p>
+          {#if selectedTreatment?.factors?.length > 0}
+            <p
+              class="block text-sm font-medium text-gray-900 sm:mt-px sm:pt-2 col-span-2"
+            >
+              Factor
+            </p>
+            <p
+              class="block text-sm font-medium text-gray-900 sm:mt-px sm:pt-2 col-span-3"
+            >
+              Value
+            </p>
+          {/if}
 
           {#if selectedTreatment.factors}
             {#each selectedTreatment.factors as f, index (f)}
@@ -507,6 +490,7 @@
                 />
                 {#if deleteIconIndex === index}
                   <button
+                    type="button"
                     on:click={(e) => {
                       e.preventDefault();
                       selectedTreatment.factors =
@@ -523,6 +507,7 @@
                   <div>
                     {#each getFactors(f.key) as v, i (v)}
                       <button
+                        type="button"
                         on:click={(e) => {
                           e.preventDefault();
                           f.value = v;

@@ -79,6 +79,7 @@
         <div class="ml-3">
           <!-- <p class="text-sm font-medium text-white">Tom Cook</p> -->
           <button
+            type="button"
             on:click={handleSignOut}
             class="text-xs font-medium text-gray-300 group-hover:text-gray-200"
           >

@@ -1,10 +1,11 @@
 <script>
-  import { DEFAULT_FACTOR, URL } from "../constants";
-  import { castValue } from "../utils/typeValue";
-  import Button from "./common/Button.svelte";
-  import Trash from "./common/Trash.svelte";
-  import Alert from "./layout/Alert.svelte";
-  import SlideOver from "./overlays/SlideOver.svelte";
+  import { DEFAULT_FACTOR, URL } from "../../constants";
+  import { castValue } from "../../utils/typeValue";
+  import { focus } from "../../utils/use";
+  import Button from "../common/Button.svelte";
+  import Trash from "../common/Trash.svelte";
+  import Alert from "../layout/Alert.svelte";
+  import SlideOver from "../overlays/SlideOver.svelte";
 
   let newFactor = false;
 
@@ -118,10 +119,6 @@
     selectedFactor = f;
   }
 
-  function init(el) {
-    el.focus();
-  }
-
   function addValue() {
     if (!selectedFactor.values) {
       selectedFactor.values = [];
@@ -171,8 +168,9 @@
       {#each treatments.factors as f, i (f)}
         <li class="hover:bg-gray-50 px-4 py-4 flex items-center sm:px-8">
           <button
+            type="button"
             on:click={() => showFactorEditor(f, i)}
-            class="w-full focus:outline-none"
+            class="w-full focus:outline-none text-left"
           >
             <div
               class="min-w-0 flex-1 sm:flex sm:items-center sm:justify-between"
@@ -201,6 +199,7 @@
             </div>
           </button>
           <button
+            type="button"
             class="focus:outline-none"
             on:click={() => {
               alertModal = true;
@@ -220,7 +219,16 @@
         </li>
       {/each}
     {:else}
-      <p>No Factor</p>
+      <div class="px-4 py-4 sm:px-8">
+        No Factors yet.
+        <button
+          type="button"
+          class="text-empirica-500"
+          on:click={() => showFactorEditor()}
+        >
+          Create a Factor
+        </button>
+      </div>
     {/if}
   </ul>
 </div>
@@ -289,7 +297,7 @@
           </div>
           <div class="sm:col-span-2">
             <input
-              use:init
+              use:focus
               bind:value={selectedFactor.name}
               id="name"
               name="name"
@@ -360,6 +368,7 @@
                 />
                 {#if deleteIconIndex === index}
                   <button
+                    type="button"
                     class="focus:outline-none"
                     on:click={(e) => {
                       e.preventDefault();
@@ -391,6 +400,7 @@
             Cancel
           </button>
           <button
+            type="submit"
             on:click={saveFactor}
             class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-empirica-600 hover:bg-empirica-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
           >

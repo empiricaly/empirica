@@ -1,7 +1,7 @@
 <script>
   import { cubicInOut } from "svelte/easing";
   import { fly } from "svelte/transition";
-  import { clickOutside } from "../utils/clickoutside";
+  import { clickOutside } from "../../utils/clickoutside";
 
   let open = false;
 
@@ -84,6 +84,7 @@
           <div class="py-1" role="none">
             <!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->
             <button
+              type="button"
               class="text-gray-700 group flex items-center px-4 py-2 text-sm"
               role="menuitem"
               tabindex="-1"
@@ -109,6 +110,7 @@
               Edit
             </button>
             <button
+              type="button"
               class="text-gray-700 group flex items-center px-4 py-2 text-sm"
               role="menuitem"
               tabindex="-1"
@@ -130,6 +132,7 @@
               Duplicate
             </button>
             <button
+              type="button"
               class="text-gray-700 group flex items-center px-4 py-2 text-sm"
               role="menuitem"
               tabindex="-1"
@@ -152,6 +155,7 @@
           </div>
           <div class="py-1" role="none">
             <button
+              type="button"
               class="text-gray-700 group flex items-center px-4 py-2 text-sm"
               role="menuitem"
               tabindex="-1"

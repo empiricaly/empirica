@@ -3,6 +3,7 @@
   "private": true,
   "author": "Nicolas Paton",
   "dependencies": {
+    "@empirica/admin": "^0.0.0-alpha",
     "minimist": "1.2.5",
     "rand-seed": "1.0.1"
   },
