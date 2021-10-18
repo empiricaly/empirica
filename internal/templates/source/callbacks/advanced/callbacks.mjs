@@ -84,9 +84,6 @@ Empirica.onNewBatch(function ({ batch }) {
       return;
   }
 
-  // Hardcode to running
-  batch.set("state", "running");
-
   // TODO add opening of the doors
   // this.global.set("open", true);
 

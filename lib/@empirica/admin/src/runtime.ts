@@ -814,8 +814,6 @@ export class Runtime {
       getSet = scopedScope(attribute.scope, subType, subID);
     }
 
-    console.log("argargargarg", arg);
-
     event = `change-${event}`;
 
     await this.emitter.emit(event, this.defaultContext, getSet, arg);
@@ -871,25 +869,14 @@ export class Runtime {
     const nodeIDs = [];
 
     nodeIDs.push(game.id);
-    console.log("gameID", game.id);
     nodeIDs.push(game.get("groupID") as string);
-    console.log("groupID", game.get("groupID"));
     for (const round of game.rounds) {
       nodeIDs.push(round.id);
-      console.log("roundID", round.id);
       for (const stage of round.stages) {
         nodeIDs.push(stage.id);
         nodeIDs.push(stage.get("stepID") as string);
-        console.log("stageID", stage.id);
-        console.log("stepID", stage.get("stepID"));
       }
     }
-    // for (const player of game.players) {
-    //   console.log("playerID", player.scope!.id);
-    //   nodeIDs.push(player.scope!.id);
-    // }
-
-    console.log("LINK", playerIDs, nodeIDs);
 
     await this.taj.link({
       participantIDs: playerIDs,
