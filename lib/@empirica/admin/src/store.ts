@@ -215,6 +215,10 @@ export class EScope {
       type: "updateAttribute",
       attr: a,
     });
+
+    if (this instanceof Batch) {
+      this.store.subUpdates("batches");
+    }
   }
 
   updateAttribute(attribute: Attribute) {
@@ -550,6 +554,8 @@ export class Stage extends EScope {
   }
 }
 
+export type changeCallback = (change: any) => {};
+
 export class Store {
   public steps: { [key: string]: EStep } = {};
   public scopes: { [key: string]: EScope } = {};
@@ -559,8 +565,36 @@ export class Store {
   public stages: { [key: string]: Stage } = {};
   public players: { [key: string]: Player } = {};
   private changes: Change[] = [];
+  private subs: { [key: string]: changeCallback[] } = {};
 
   constructor(public root: Root) {}
+
+  sub(kind: string, cb: changeCallback) {
+    if (!this.subs[kind]) {
+      this.subs[kind] = [];
+    }
+    this.subs[kind].push(cb);
+
+    this.subUpdate(kind, cb);
+
+    return () => {
+      this.subs[kind] = this.subs[kind].filter((c) => c !== cb);
+    };
+  }
+
+  subUpdates(kind: string) {
+    for (const cb of this.subs[kind] || []) {
+      this.subUpdate(kind, cb);
+    }
+  }
+
+  private subUpdate(kind: string, cb: changeCallback) {
+    switch (kind) {
+      case "batches":
+        cb(Object.values(this.batches));
+        break;
+    }
+  }
 
   pushChange(change: Change) {
     this.changes.push(change);
@@ -641,7 +675,13 @@ export class Store {
       return;
     }
 
-    return scope.updateAttribute(a);
+    const attr = scope.updateAttribute(a);
+
+    if (scope instanceof Batch) {
+      this.subUpdates("batches");
+    }
+
+    return attr;
   }
 
   createEScope(s: Scope): EScope {
@@ -790,6 +830,7 @@ export class Store {
       }
       case "batch": {
         this.batches[s.id] = <Batch>s;
+        this.subUpdates("batches");
 
         break;
       }

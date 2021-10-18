@@ -15,6 +15,7 @@
 
 <script>
   import { push } from "svelte-spa-router";
+  import { currentAdmin } from "../../utils/auth";
   import { validateBatchConfig } from "../../utils/batches";
   import Alert from "../common/Alert.svelte";
   import ButtonGroup from "../common/ButtonGroup.svelte";
@@ -27,7 +28,7 @@
 
   export let newBatch = false;
 
-  let assignmentMethod = "simple";
+  let assignmentMethod = "complete";
 
   export let treatments = [];
   let complete = { kind: "complete", config: { treatments: [] } };
@@ -63,6 +64,8 @@
     error = null;
     try {
       validateBatchConfig(config);
+      $currentAdmin.createBatch({ config });
+      newBatch = false;
     } catch (err) {
       error = err.toString();
     }
@@ -70,14 +73,14 @@
 
   $: assigmentMethodOptions = [
     {
-      label: "Simple",
-      onClick: () => (assignmentMethod = "simple"),
-      selected: assignmentMethod === "simple",
-    },
-    {
       label: "Complete",
       onClick: () => (assignmentMethod = "complete"),
       selected: assignmentMethod === "complete",
+    },
+    {
+      label: "Simple",
+      onClick: () => (assignmentMethod = "simple"),
+      selected: assignmentMethod === "simple",
     },
     {
       label: "Custom",

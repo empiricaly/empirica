@@ -1,46 +1,151 @@
 <script>
   import { cubicInOut } from "svelte/easing";
   import { fly } from "svelte/transition";
+  import { currentAdmin } from "../../utils/auth";
   import { clickOutside } from "../../utils/clickoutside";
+  import Badge from "../common/Badge.svelte";
+  import Button from "../common/Button.svelte";
+  import PlayIcon from "../PlayIcon.svelte";
+  import StopIcon from "../StopIcon.svelte";
+  import FactorsString from "../treatments/FactorsString.svelte";
+
+  export let batch;
 
   let open = false;
 
   function clickOutsideHandler() {
     open = false;
   }
+
+  const config = batch.get("config");
+  console.log(config);
+  let gameCount = "unknown";
+
+  switch (config.kind) {
+    case "simple":
+      gameCount = config.config.count;
+      break;
+    case "complete":
+      gameCount = config.config.treatments.reduce((s, t) => s + t.count, 0);
+      break;
+  }
+
+  let statusColor = "gray";
+  let status = "Created";
+  $: {
+    switch (batch.get("state")) {
+      case "running":
+        status = "Running";
+        statusColor = "green";
+        break;
+      case "ended":
+        status = "Ended";
+        statusColor = "gray";
+        break;
+      case "terminated":
+        status = "Terminated";
+        statusColor = "red";
+        break;
+      case "failed":
+        status = "Failed";
+        statusColor = "yellow";
+        break;
+      default:
+        status = "Created";
+        statusColor = "blue";
+    }
+  }
+
+  function duplicate() {
+    $currentAdmin.createBatch({ config });
+  }
+
+  function start() {
+    if (status === "Created") {
+      batch.set("state", "running");
+      $currentAdmin.process();
+    }
+  }
+
+  function stop() {
+    if (status === "Running") {
+      batch.set("state", "ended");
+      $currentAdmin.process();
+    }
+  }
 </script>
 
-<tr>
-  <td class="px-6 py-3 text-sm font-medium text-gray-900">
-    <div class="flex items-center space-x-3 lg:pl-2">
-      <span
-        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
-      >
-        Running
-      </span>
+<tr class="truncate">
+  <td class="py-3 px-6 text-sm font-mediu align-top text-center">
+    <Badge color={statusColor}>
+      {status}
+    </Badge>
+  </td>
+  <td class="px-6 py-3 whitespace-nowrap text-sm  align-top">
+    <div class="flex items-start h-full">
+      {config.kind}
     </div>
   </td>
   <td
-    class="hidden md:table-cell px-6 py-3 whitespace-nowrap text-sm text-gray-500"
+    class="hidden md:table-cell px-6 py-3 whitespace-nowrap text-sm w-full align-top truncate"
   >
-    March 17, 2020
+    <div class="flex flex-col divide-transparent divide-y-2 w-full truncate">
+      {#if config.kind === "complete"}
+        {#each config.config.treatments as treatment}
+          <div class="flex items-center">
+            <Badge>
+              {treatment.count}
+              {treatment.count === 1 ? "game" : "games"}
+            </Badge>
+            <div class="ml-2 truncate overflow-ellipsis italic">
+              {treatment.treatment.name}
+            </div>
+            <div class="ml-2 truncate overflow-ellipsis opacity-60">
+              <FactorsString factors={treatment.treatment.factors} />
+            </div>
+          </div>
+        {/each}
+      {:else if config.kind === "simple"}
+        {#each config.config.treatments as treatment}
+          <div class="flex items-center">
+            <div class="ml-2 truncate overflow-ellipsis italic">
+              {treatment.name}
+            </div>
+            <div class="ml-2 truncate overflow-ellipsis opacity-60">
+              <FactorsString factors={treatment.factors} />
+            </div>
+          </div>
+        {/each}
+      {/if}
+    </div>
+  </td>
+
+  <td
+    class="max-w-0 w-full whitespace-nowrap md:table-cell px-6 py-3 text-sm text-center align-top"
+  >
+    {gameCount}
   </td>
   <td
-    class="hidden md:table-cell px-6 py-3 whitespace-nowrap text-sm text-gray-500"
+    class="max-w-0 w-full whitespace-nowrap md:table-cell px-6 py-2 text-sm text-center align-top"
   >
-    March 17, 2020
+    {#if status === "Created"}
+      <Button mini primary color="green" on:click={start}>
+        <div class="w-2 h-2 mr-2">
+          <PlayIcon />
+        </div>
+        Start
+      </Button>
+    {:else if status === "Running"}
+      <!-- else if content here -->
+      <Button mini primary color="red" on:click={stop}>
+        <div class="w-2 h-2 mr-2">
+          <StopIcon />
+        </div>
+        Stop
+      </Button>
+    {/if}
   </td>
-  <td
-    class="hidden  max-w-0 w-full whitespace-nowrap md:table-cell px-6 py-3 text-sm text-gray-500"
-  >
-    March 17, 2020
-  </td>
-  <td
-    class="hidden  max-w-0 w-full whitespace-nowrap md:table-cell px-6 py-3 text-sm text-gray-500 text-center"
-  >
-    10
-  </td>
-  <td class="pr-6">
+  <td class="pr-6 py-2 align-top">
     <div class="relative flex justify-end items-center">
       <button
         type="button"
@@ -83,14 +188,13 @@
         >
           <div class="py-1" role="none">
             <!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->
-            <button
+            <!-- <button
               type="button"
               class="text-gray-700 group flex items-center px-4 py-2 text-sm"
               role="menuitem"
               tabindex="-1"
               id="project-options-menu-0-item-0"
             >
-              <!-- Heroicon name: solid/pencil-alt -->
               <svg
                 class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
                 xmlns="http://www.w3.org/2000/svg"
@@ -108,13 +212,14 @@
                 />
               </svg>
               Edit
-            </button>
+            </button> -->
             <button
               type="button"
               class="text-gray-700 group flex items-center px-4 py-2 text-sm"
               role="menuitem"
               tabindex="-1"
               id="project-options-menu-0-item-1"
+              on:click={duplicate}
             >
               <!-- Heroicon name: solid/duplicate -->
               <svg
@@ -131,29 +236,8 @@
               </svg>
               Duplicate
             </button>
-            <button
-              type="button"
-              class="text-gray-700 group flex items-center px-4 py-2 text-sm"
-              role="menuitem"
-              tabindex="-1"
-              id="project-options-menu-0-item-2"
-            >
-              <!-- Heroicon name: solid/user-add -->
-              <svg
-                class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"
-                />
-              </svg>
-              Share
-            </button>
           </div>
-          <div class="py-1" role="none">
+          <!-- <div class="py-1" role="none">
             <button
               type="button"
               class="text-gray-700 group flex items-center px-4 py-2 text-sm"
@@ -161,7 +245,6 @@
               tabindex="-1"
               id="project-options-menu-0-item-3"
             >
-              <!-- Heroicon name: solid/trash -->
               <svg
                 class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
                 xmlns="http://www.w3.org/2000/svg"
@@ -177,7 +260,7 @@
               </svg>
               Delete
             </button>
-          </div>
+          </div> -->
         </div>
       {/if}
     </div>

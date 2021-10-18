@@ -11,7 +11,7 @@ export const Empirica = {
     const s = new Store(<Root>{});
     const r = new Runtime(t, s);
     await r.init(callbacks);
-    const a = new Admin(r);
+    const a = new Admin(r, s);
 
     return a;
   },
@@ -29,7 +29,7 @@ export const Empirica = {
     const s = new Store(<Root>{});
     const r = new Runtime(t, s);
     await r.init(callbacks);
-    const a = new Admin(r);
+    const a = new Admin(r, s);
 
     return [a, sessionToken];
   },
@@ -47,7 +47,7 @@ export const Empirica = {
     const s = new Store(<Root>{});
     const r = new Runtime(t, s);
     await r.init(callbacks);
-    const a = new Admin(r);
+    const a = new Admin(r, s);
 
     return [a, sessionToken];
   },
