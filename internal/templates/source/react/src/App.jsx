@@ -1,7 +1,7 @@
 import { EmpiricaPlayer, Steps } from "@empirica/player";
 import React from "react";
+import { Menu } from "./components/base/Menu";
 import { Game } from "./components/Game";
-import { Header } from "./components/Header";
 import { IntroOne } from "./components/intro/IntructionStepOne";
 import { IntroTwo } from "./components/intro/IntructionStepTwo";
 import { Quiz } from "./components/intro/Quiz";
@@ -19,8 +19,8 @@ export default function App() {
   }
 
   return (
-    <div className="bg-gray-50 h-screen">
-      <Header />
+    <div className="bg-gray-50 h-screen relative">
+      <Menu />
       <div
         className={`grid grid-flow-col ${
           conf.cols === 1
