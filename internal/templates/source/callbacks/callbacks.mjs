@@ -2,7 +2,8 @@ import { Callbacks } from "@empirica/admin";
 
 const Empirica = new Callbacks();
 
-const stageDuration = 20;
+// const stageDuration = 20;
+const stageDuration = 200000;
 
 Empirica.onGameInit(function ({ game }) {
   console.log("game init");
@@ -35,6 +36,12 @@ Empirica.onStageEnd(function ({ stage }) {
 
 Empirica.onRoundEnd(function ({ round }) {
   console.log("round end");
+  for (const player of round.game.players) {
+    player.set(
+      "score",
+      player.get("score") + parseInt(player.round.get("score"))
+    );
+  }
 });
 
 Empirica.onGameEnd(function ({ game }) {

@@ -1,4 +1,4 @@
-import { Tajriba, Participant as Ptpt } from "@empirica/tajriba";
+import { Participant as Ptpt, Tajriba } from "@empirica/tajriba";
 import { Player } from "./player";
 import { Store } from "./store";
 
@@ -29,4 +29,33 @@ export const Empirica = {
 
     return [a, sessionToken];
   },
+
+  globalAttributes(url: string) {
+    const taj = new Tajriba(url);
+
+    let subs: Sub[] = [];
+    const attrs = {};
+    taj.globalAttributes((payload, err) => {
+      if (err) {
+        console.error("golbal attributes error:");
+        console.error(err);
+        return;
+      }
+
+      console.log(payload);
+    });
+
+    return {
+      subscribe: (subscription: Sub) => {
+        subs.push(subscription);
+        subscription(attrs);
+
+        return () => {
+          subs = subs.filter((s) => s !== subscription);
+        };
+      },
+    };
+  },
 };
+
+type Sub = (value: Object) => void;

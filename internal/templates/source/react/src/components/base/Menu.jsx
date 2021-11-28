@@ -1,26 +1,55 @@
 import { clear, createNewPlayer, Logo } from "@empirica/player";
 import React from "react";
 
+const isDev = process.env.NODE_ENV === "development";
+
 export function Menu() {
   return (
-    <div className="group fixed top-full left-full -mt-20 -ml-20 rounded-md bg-white">
-      <div className="w-14 h-14 p-2  text-empirica-500">
+    <div className="group fixed top-full left-full -mt-20 -ml-20 rounded-md bg-white z-20">
+      <div className="w-14 h-14 p-2  text-empirica-500 shadow group-hover:shadow-none">
         <Logo />
       </div>
-      <div className="hidden group-hover:block absolute bottom-0 right-0">
-        <div className="text-gray-400 bg-white bg-opacity-80 rounded-md overflow-hidden">
-          <div className="">
-            <button
-              onClick={createNewPlayer}
-              className="whitespace-nowrap hover:text-empirica-600 hover:bg-gray-100 w-full py-2 pl-4 pr-6 text-left"
+      <div className="hidden group-hover:block absolute bottom-0 right-0 shadow">
+        <div className="text-gray-400 bg-gray-100 rounded-md overflow-hidden">
+          {isDev ? (
+            <div>
+              <button
+                onClick={createNewPlayer}
+                className="whitespace-nowrap hover:text-empirica-600 w-full py-2 pl-4 pr-6 text-left"
+              >
+                New Player
+              </button>
+              <button
+                onClick={clear}
+                className="whitespace-nowrap hover:text-empirica-600 w-full py-2 pl-4 pr-6 text-left"
+              >
+                Reset Current Session
+              </button>
+              <a
+                target="_blank"
+                href="https://docs.empirica.ly"
+                className="whitespace-nowrap block hover:text-empirica-600 w-full py-2 pl-4 pr-6 text-left"
+              >
+                Documentation
+              </a>
+            </div>
+          ) : (
+            <></>
+          )}
+
+          <div className="bg-white">
+            <a
+              target="_blank"
+              href="https://empirica.ly"
+              className="whitespace-nowrap block hover:text-empirica-600 w-full py-2 pl-4 pr-6 text-left"
             >
-              New Player
-            </button>
+              About Empirica
+            </a>
             <button
               onClick={clear}
-              className="whitespace-nowrap hover:text-empirica-600 hover:bg-gray-100 w-full py-2 pl-4 pr-6 text-left"
+              className="whitespace-nowrap hover:text-empirica-600 w-full py-2 pl-4 pr-6 text-left"
             >
-              Reset Current Session
+              About this Experiment
             </button>
           </div>
 

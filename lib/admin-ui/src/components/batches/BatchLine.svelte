@@ -75,7 +75,7 @@
   }
 </script>
 
-<tr class="truncate">
+<tr>
   <td class="py-3 px-6 text-sm font-mediu align-top text-center">
     <Badge color={statusColor}>
       {status}
@@ -87,9 +87,9 @@
     </div>
   </td>
   <td
-    class="hidden md:table-cell px-6 py-3 whitespace-nowrap text-sm w-full align-top truncate"
+    class="hidden md:table-cell px-6 py-3 whitespace-nowrap text-sm w-full align-top"
   >
-    <div class="flex flex-col divide-transparent divide-y-2 w-full truncate">
+    <div class="flex flex-col divide-transparent divide-y-2 w-full">
       {#if config.kind === "complete"}
         {#each config.config.treatments as treatment}
           <div class="flex items-center">

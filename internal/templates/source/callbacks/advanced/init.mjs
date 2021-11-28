@@ -4,6 +4,8 @@ import minimist from "minimist";
 import callbacks from "../callbacks.mjs";
 import advancedCallbacks from "./callbacks.mjs";
 
+Error.stackTraceLimit = Infinity;
+
 var argv = minimist(process.argv.slice(2), { string: ["token"] });
 
 if (argv["loglevel"]) {
@@ -21,7 +23,7 @@ if (!argv["token"]) {
 const sessionTokenPath = argv["sessionTokenPath"];
 const token = argv["token"];
 const name = "callbacks";
-const url = "http://localhost:8882/query";
+const url = "http://localhost:3000/query";
 
 process.on("SIGHUP", () => {
   process.exit(0);
@@ -47,7 +49,7 @@ export async function connect() {
       sessionToken = fs.readFileSync(sessionTokenPath, "utf8");
     } catch (err) {
       console.debug("callbacks: sessionToken read failed");
-      console.debug(err);
+      console.trace(err);
     }
 
     if (sessionToken) {
@@ -58,7 +60,7 @@ export async function connect() {
         console.info("callbacks: started");
       } catch (err) {
         console.debug("callbacks: failed logging in with session");
-        console.debug(err);
+        console.trace(err);
       }
     }
   }
@@ -75,7 +77,7 @@ export async function connect() {
           console.debug("callbacks: session token saved");
         } catch (err) {
           console.error("callbacks: failed to save sessionToken");
-          console.error(err);
+          console.trace(err);
         }
       }
     } catch (err) {

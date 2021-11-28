@@ -11,6 +11,7 @@ Empirica.onNewPlayer(function ({ player }) {
 Empirica.onPlayerConnected(function ({ player }) {
   console.log("player connected", player.id, this.batches);
   assignplayer(this.batches, player);
+  console.log(player.currentGame, this.batches);
 });
 
 function assignplayer(batches, player) {
@@ -87,13 +88,20 @@ Empirica.onNewBatch(function ({ batch }) {
   // TODO add opening of the doors
   // this.global.set("open", true);
 
-  // TODO assign players already registered and connected
+  // TODO Fix assign players already registered and connected
 });
 
 Empirica.onChange("batch", "state", function ({ isNew, batch }) {
   switch (batch.get("state")) {
     case "running":
       console.debug("callbacks: batch running");
+
+      console.log(this.players);
+      console.log(this.unassignedPlayers);
+      for (const player of this.unassignedPlayers) {
+        assignplayer(this.batches, player);
+      }
+
       break;
     case "ended":
       console.debug("callbacks: batch ended");
@@ -131,6 +139,8 @@ function checkBatchEnded(batch) {
     const state = g.get("state");
     return !state || state === "running";
   });
+
+  console.log(gamesStileRunning);
 
   if (!gamesStileRunning) {
     batch.set("state", "ended");
@@ -194,7 +204,7 @@ Empirica.onChange("player", "gameID", function ({ isNew, player }) {
     return;
   }
 
-  assignplayer(this.batches, plyr);
+  assignplayer(this.batches, player);
 });
 
 Empirica.onChange("player-stage", "submit", function ({ player, stage }) {

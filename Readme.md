@@ -11,8 +11,6 @@ The current requirements for v2 are:
 
 - macOS (working on builds for Windows and Linux)
 - Node.js (https://nodejs.org/en/download/)
-- Yarn 1 (https://classic.yarnpkg.com/lang/en/docs/install/#mac-stable, we will
-  move to v2 before .0 release)
 
 We are working to lower requirements.
 

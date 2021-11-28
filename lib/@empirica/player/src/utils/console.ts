@@ -1,6 +1,19 @@
-import chalk from "chalk";
-
 var log = console.log;
+
+enum Color {
+  Bold = 1,
+
+  Black = 30,
+  Red,
+  Green,
+  Yellow,
+  Blue,
+  Magenta,
+  Cyan,
+  White,
+
+  DarkGray = 90,
+}
 
 const levels = {
   trace: 0,
@@ -48,7 +61,7 @@ function logger(lvl: number, level: string) {
         " " +
         level;
 
-      return chalk.gray(str);
+      return colorize(str, Color.DarkGray);
     }
 
     log.apply(
@@ -58,9 +71,13 @@ function logger(lvl: number, level: string) {
   };
 }
 
-console.trace = logger(0, chalk.cyanBright("TRC"));
-console.debug = logger(1, chalk.magentaBright("DBG"));
-console.log = logger(2, chalk.magentaBright("DBG"));
-console.info = logger(2, chalk.greenBright("INF"));
-console.warn = logger(3, chalk.yellowBright("WRN"));
-console.error = logger(4, chalk.redBright("ERR"));
+function colorize(s: string, c: Color): string {
+  return `\x1b[${c}m${s}\x1b[0m`;
+}
+
+console.trace = logger(0, colorize("TRC", Color.Magenta));
+console.debug = logger(1, colorize("DBG", Color.Yellow));
+console.log = logger(2, colorize("DBG", Color.Yellow));
+console.info = logger(2, colorize("INF", Color.Green));
+console.warn = logger(3, colorize("WRN", Color.Red));
+console.error = logger(4, colorize(colorize("ERR", Color.Red), Color.Bold));

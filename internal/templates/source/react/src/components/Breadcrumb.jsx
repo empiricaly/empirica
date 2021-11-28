@@ -6,15 +6,12 @@ export function Breadcrumb() {
   const stage = useStage();
 
   return (
-    <div className="p-4">
-      <nav className="hidden sm:flex" aria-label="Breadcrumb">
-        <ol role="list" className="flex items-center space-x-4">
+    <div className="py-4">
+      <nav className="flex" aria-label="Breadcrumb">
+        <ol role="list" className="flex text-gray-400 items-center space-x-2">
           <li>
             <div className="flex">
-              <div
-                href="#"
-                className="text-sm font-medium text-gray-500 hover:text-gray-700"
-              >
+              <div href="#" className="text-sm font-medium">
                 {round ? round.get("name") : ""}
               </div>
             </div>
@@ -22,7 +19,7 @@ export function Breadcrumb() {
           <li>
             <div className="flex items-center">
               <svg
-                className="flex-shrink-0 h-5 w-5 text-gray-400"
+                className="flex-shrink-0 h-5 w-5 text-gray-300"
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 20 20"
                 fill="currentColor"
@@ -34,10 +31,7 @@ export function Breadcrumb() {
                   clipRule="evenodd"
                 />
               </svg>
-              <div
-                href="#"
-                className="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700"
-              >
+              <div href="#" className="ml-2 text-sm font-medium">
                 {stage ? stage.get("name") : stage}
               </div>
             </div>

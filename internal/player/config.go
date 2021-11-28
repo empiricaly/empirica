@@ -7,6 +7,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const defaultCommand = "unbuffer npm run --silent dev"
+
 // Config is server configuration.
 type Config struct {
 	Path   string `mapstructure:"path"`
@@ -36,7 +38,7 @@ func ConfigFlags(cmd *cobra.Command, prefix string) error {
 	viper.SetDefault(flag, sval)
 
 	flag = prefix + ".devcmd"
-	sval = "./node_modules/.bin/vite"
+	sval = defaultCommand
 	cmd.Flags().String(flag, sval, "Command to run client code in development")
 	viper.SetDefault(flag, sval)
 

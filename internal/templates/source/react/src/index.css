@@ -1,5 +1,50 @@
-@import "tailwindcss/base";
+@layer utilities {
+  /* Chrome, Safari, Edge, Opera */
+  input.number-arrows-none::-webkit-outer-spin-button,
+  input.number-arrows-none::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
 
-@import "tailwindcss/components";
+  /* Firefox */
+  input.number-arrows-none[type="number"] {
+    -moz-appearance: textfield;
+  }
 
-@import "tailwindcss/utilities";
+  .slider-thumb,
+  .slider-thumb-zero {
+    @apply cursor-pointer;
+  }
+
+  .slider-thumb::-webkit-slider-thumb {
+    @apply appearance-none w-6 h-6 rounded-full bg-empirica-500;
+  }
+
+  .slider-thumb:hover::-webkit-slider-thumb {
+    @apply bg-empirica-600;
+  }
+
+  .slider-thumb-zero::-webkit-slider-thumb {
+    @apply appearance-none w-6 h-6 rounded-full bg-transparent border-gray-400 border-dashed border;
+  }
+
+  .slider-thumb-zero:hover::-webkit-slider-thumb {
+    @apply bg-empirica-600 border-none;
+  }
+
+  .slider-thumb::-moz-range-thumb {
+    @apply appearance-none w-6 h-6 rounded-full bg-empirica-500;
+  }
+
+  .slider-thumb::-moz-range-thumb:hover {
+    @apply bg-empirica-600;
+  }
+
+  .slider-thumb-zero::-moz-range-thumb {
+    @apply appearance-none w-6 h-6 rounded-full bg-transparent border-gray-400 border-dashed border;
+  }
+
+  .slider-thumb-zero:hover::-moz-range-thumb {
+    @apply bg-empirica-600 border-none;
+  }
+}
