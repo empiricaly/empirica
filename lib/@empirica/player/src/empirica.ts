@@ -1,6 +1,9 @@
 import { Participant as Ptpt, Tajriba } from "@empirica/tajriba";
+import { JsonValue } from "./json";
 import { Player } from "./player";
 import { Store } from "./store";
+
+export const DefaultURL = "http://localhost:3000/query";
 
 export const Empirica = {
   async sessionLogin(url: string, sessionToken: string, participant: Ptpt) {
@@ -31,10 +34,11 @@ export const Empirica = {
   },
 
   globalAttributes(url: string) {
+    console.log("HEYO");
     const taj = new Tajriba(url);
 
     let subs: Sub[] = [];
-    const attrs = {};
+    const attrs: { [key: string]: JsonValue } = {};
     taj.globalAttributes((payload, err) => {
       if (err) {
         console.error("golbal attributes error:");
@@ -42,7 +46,21 @@ export const Empirica = {
         return;
       }
 
-      console.log(payload);
+      const { attribute, done } = payload;
+      if (attribute) {
+        let val = null;
+        if (attribute.val) {
+          val = JSON.parse(attribute.val);
+        }
+
+        attrs[attribute.key] = val;
+      }
+
+      if (done) {
+        for (const sub of subs) {
+          sub(attrs);
+        }
+      }
     });
 
     return {

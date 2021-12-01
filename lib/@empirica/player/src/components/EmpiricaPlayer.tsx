@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Empirica } from "../empirica";
+import { Empirica, DefaultURL } from "../empirica";
 import { usePlayer } from "../hooks";
 import { Player } from "../player";
 import { Consent } from "./Consent";
@@ -11,10 +11,6 @@ interface EmpiricaPlayerProps {
   url?: string;
   consent?: React.ElementType | null;
   playerID?: React.ElementType;
-  lobby?: React.ElementType;
-  // preAssignIntroSteps?: StepsFunc;
-  // introSteps?: StepsFunc;
-  // exitSteps?: StepsFunc;
   ns?: string;
 }
 
@@ -29,13 +25,6 @@ export const clear = () => {
   }
 
   window.location.href = window.location.href;
-};
-
-export const createNewPlayer = () => {
-  const date: Date = new Date();
-  window
-    .open(document.location.href + `?playerID=${date.getTime()}`, "_blank")
-    ?.focus();
 };
 
 const WaitLoad: React.FC = (props) => {
@@ -57,7 +46,7 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
   let tokenKey = defaultTokenKey;
   let partKey = defaultPartKey;
   const ns = props.ns || "";
-  const url = props.url || "http://localhost:3000/query";
+  const url = props.url || DefaultURL;
 
   if (ns) {
     tokenKey += `:${ns}`;
@@ -67,10 +56,6 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
   strkeys.push(tokenKey, partKey);
 
   // Attempt to login with existing token
-
-  useEffect(() => {
-    Empirica.globalAttributes(url);
-  });
 
   useEffect(() => {
     console.time("startup" + ns);

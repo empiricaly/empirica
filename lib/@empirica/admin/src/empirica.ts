@@ -1,4 +1,4 @@
-import { Tajriba } from "@empirica/tajriba";
+import { Tajriba, TajribaAdmin } from "@empirica/tajriba";
 import { Admin } from "./admin";
 import { Callbacks } from "./callbacks";
 import { Runtime } from "./runtime";
@@ -32,6 +32,18 @@ export const Empirica = {
     const a = new Admin(r, s);
 
     return [a, sessionToken];
+  },
+
+  async devLogin(url: string, callbacks?: Callbacks) {
+    const taj = new Tajriba(url, "123456789");
+    const t = new TajribaAdmin(taj);
+
+    const s = new Store(<Root>{});
+    const r = new Runtime(t, s);
+    await r.init(callbacks);
+    const a = new Admin(r, s);
+
+    return a;
   },
 
   async registerService(

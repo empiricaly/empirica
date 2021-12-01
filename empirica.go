@@ -66,6 +66,9 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 		log.Fatal().Err(err).Msg("failed to start tajriba")
 	}
 
+	// Pass down if production
+	config.Server.Production = config.Production
+
 	r.server, err = server.Start(ctx, config.Server)
 	if err != nil {
 		return nil, errors.Wrap(err, "init server")
@@ -77,6 +80,7 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 	}
 
 	config.Callbacks.Token = config.Tajriba.Auth.ServiceRegistrationToken
+	config.Tajriba.Server.Production = config.Production
 
 	r.callbacks, err = callbacks.Start(ctx, config.Callbacks)
 	if err != nil {

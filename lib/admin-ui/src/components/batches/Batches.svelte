@@ -35,7 +35,9 @@
     </div>
   {:else}
     <!-- Projects table (small breakpoint and up) -->
-    <table class="w-full max-w-full table-auto">
+    <table
+      class="w-full max-w-full table-auto bg-white shadow overflow-hidden sm:rounded-md"
+    >
       <thead>
         <tr class="">
           <th

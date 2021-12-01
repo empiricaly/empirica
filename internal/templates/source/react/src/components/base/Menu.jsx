@@ -1,7 +1,5 @@
-import { clear, createNewPlayer, Logo } from "@empirica/player";
 import React from "react";
-
-const isDev = process.env.NODE_ENV === "development";
+import { clear, createNewPlayer, Logo, isDevelopment } from "@empirica/player";
 
 export function Menu() {
   return (
@@ -11,7 +9,7 @@ export function Menu() {
       </div>
       <div className="hidden group-hover:block absolute bottom-0 right-0 shadow">
         <div className="text-gray-400 bg-gray-100 rounded-md overflow-hidden">
-          {isDev ? (
+          {isDevelopment ? (
             <div>
               <button
                 onClick={createNewPlayer}

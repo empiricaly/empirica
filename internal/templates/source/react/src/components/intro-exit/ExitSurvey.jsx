@@ -1,7 +1,7 @@
 import { usePlayer } from "@empirica/player";
 import React, { useState } from "react";
-import { Alert } from "./base/Alert";
-import { Radio } from "./Radio";
+import { Alert } from "../base/Alert";
+import { Button } from "../base/Button";
 
 export function ExitSurvey({ next }) {
   const labelClassName = "block text-sm font-medium text-gray-700 my-2";
@@ -46,20 +46,20 @@ export function ExitSurvey({ next }) {
       </Alert>
 
       <form
-        class="mt-12 space-y-8 divide-y divide-gray-200"
+        className="mt-12 space-y-8 divide-y divide-gray-200"
         onSubmit={handleSubmit}
       >
-        <div class="space-y-8 divide-y divide-gray-200">
+        <div className="space-y-8 divide-y divide-gray-200">
           <div>
-            <di>
-              <h3 class="text-lg leading-6 font-medium text-gray-900">
+            <div>
+              <h3 className="text-lg leading-6 font-medium text-gray-900">
                 Exit Survey
               </h3>
-              <p class="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500">
                 Please answer the following short survey. You do not have to
                 provide any information you feel uncomfortable with.
               </p>
-            </di>
+            </div>
 
             <div className="space-y-8 mt-6">
               <div className="flex flex-row">
@@ -150,7 +150,7 @@ export function ExitSurvey({ next }) {
                   dir="auto"
                   id="strength"
                   name="strength"
-                  rows="4"
+                  rows={4}
                   value={strength}
                   onChange={(e) => setStrength(e.target.value)}
                 />
@@ -160,7 +160,7 @@ export function ExitSurvey({ next }) {
                   dir="auto"
                   id="fair"
                   name="fair"
-                  rows="4"
+                  rows={4}
                   value={fair}
                   onChange={(e) => setFair(e.target.value)}
                 />
@@ -170,24 +170,35 @@ export function ExitSurvey({ next }) {
                   dir="auto"
                   id="feedback"
                   name="feedback"
-                  rows="4"
+                  rows={4}
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
                 />
               </div>
 
               <div className="mb-12">
-                <button
-                  type="submit"
-                  className="justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-empirica-600 hover:bg-empirica-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
-                >
-                  Submit
-                </button>
+                <Button type="submit">Submit</Button>
               </div>
             </div>
           </div>
         </div>
       </form>
     </div>
+  );
+}
+
+export function Radio({ selected, name, value, label, onChange }) {
+  return (
+    <label className="text-sm font-medium text-gray-700">
+      <input
+        className="mr-2 shadow-sm sm:text-sm"
+        type="radio"
+        name={name}
+        value={value}
+        checked={selected === value}
+        onChange={onChange}
+      />
+      {label}
+    </label>
   );
 }

@@ -11,6 +11,8 @@ import (
 type Config struct {
 	Addr       string `mapstructure:"addr"`
 	Treatments string `mapstructure:"treatments"`
+
+	Production bool `mapstructure:"-"`
 }
 
 // Validate configuration is ok.

@@ -9,14 +9,15 @@ const sec =
 
 export function Button({
   children,
-  handleClick,
+  handleClick = null,
   className = "",
   primary = false,
+  type = "button",
 }) {
   let cn = `${base} ${primary ? prim : sec} ${className}`;
 
   return (
-    <button onClick={handleClick} type="button" className={cn}>
+    <button type={type} onClick={handleClick} className={cn}>
       {children}
     </button>
   );

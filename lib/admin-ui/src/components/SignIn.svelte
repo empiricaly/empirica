@@ -2,18 +2,19 @@
   import { Empirica } from "@empirica/admin";
   import { DEFAULT_TOKEN_KEY, URL } from "../constants";
   import { setCurrentAdmin } from "../utils/auth";
+  import { focus } from "../utils/use";
   import Logo from "./layout/Logo.svelte";
 
   export let loggedIn = false;
 
-  let loading = false;
   let username = "";
   let password = "";
 
+  let signingIn = false;
   async function handleSubmit(e) {
     e.preventDefault();
     try {
-      loading = true;
+      signingIn = true;
       const [admin, token] = await Empirica.loginAdmin(
         `${URL}/query`,
         username,
@@ -26,12 +27,9 @@
       console.error("admin sign in", error);
       alert("Failed to signin");
     } finally {
-      loading = false;
+      signingIn = false;
+      console.log("yup");
     }
-  }
-
-  function init(el) {
-    el.focus();
   }
 </script>
 
@@ -57,7 +55,7 @@
         <div>
           <label for="username" class="sr-only">Username</label>
           <input
-            use:init
+            use:focus
             id="username"
             name="username"
             type="username"
@@ -86,6 +84,7 @@
         <button
           type="submit"
           class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-empirica-600 hover:bg-empirica-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
+          disabled={signingIn}
         >
           <span class="absolute left-0 inset-y-0 flex items-center pl-3">
             <!-- Heroicon name: solid/lock-closed -->

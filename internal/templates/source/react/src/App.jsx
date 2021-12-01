@@ -1,34 +1,26 @@
-import { EmpiricaPlayer, Steps } from "@empirica/player";
 import React from "react";
+import { EmpiricaPlayer, useGlobal } from "@empirica/player";
 import "virtual:windi.css";
 import { Menu } from "./components/base/Menu";
 import { Game } from "./components/Game";
-import { IntroOne } from "./components/intro/IntructionStepOne";
-import { IntroTwo } from "./components/intro/IntructionStepTwo";
-import { Quiz } from "./components/intro/Quiz";
+import { Affix } from "./components/Affix";
 
 export default function App() {
-  function getPlayerID() {
-    const queryString = window.location.search;
-    const urlParams = new URLSearchParams(queryString);
-    const playerID = urlParams.get("playerID");
-    return playerID || "";
-  }
+  const glob = useGlobal();
+  console.log("glob", glob);
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const playerKey = urlParams.get("playerKey") || "";
 
   return (
     <div className="h-screen relative">
       <Menu />
-      {/* <div className="grid grid-flow-col grid-cols-1 grid-rows-1 gap-1 h-full"> */}
       <div className="h-full overflow-auto">
-        <EmpiricaPlayer ns={`${getPlayerID()}`}>
+        <EmpiricaPlayer ns={playerKey}>
           <div className="h-full flex justify-center">
-            <Steps
-              progressKey="intro"
-              doneKey="introDone"
-              steps={[IntroOne, IntroTwo, Quiz]}
-            >
+            <Affix>
               <Game />
-            </Steps>
+            </Affix>
           </div>
         </EmpiricaPlayer>
       </div>

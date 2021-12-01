@@ -5,8 +5,8 @@ export function Timer() {
   let remaining = useStageTimer();
 
   return (
-    <div className="mt-8 flex flex-col items-center">
-      <h1 className="font-mono text-2xl font-bold">{humanTimer(remaining)}</h1>
+    <div className="flex flex-col items-center">
+      <h1 className="font-mono text-3xl font-bold">{humanTimer(remaining)}</h1>
     </div>
   );
 }

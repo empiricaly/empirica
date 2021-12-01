@@ -124,6 +124,7 @@ func Enable(
 	}
 	router.NotFound = prox
 
+	router.GET("/dev", dev(config.Production))
 	router.GET("/treatments", readTreatments(config.Treatments))
 	router.PUT("/treatments", writeTreatments(config.Treatments))
 	router.ServeFiles("/admin/*filepath", templates.HTTPFS("admin-ui"))
@@ -194,6 +195,22 @@ func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	if _, err := io.Copy(w, res.Body); err != nil {
 		log.Error().Err(err).Msg("server: send response for index failed")
+	}
+}
+
+const (
+	devUser  = "dev"
+	devPass  = "password"
+	devCreds = `{"u": "` + devUser + `", "p": "` + devPass + `"}`
+)
+
+func dev(isProd bool) httprouter.Handle {
+	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+		if isProd {
+			w.WriteHeader(400)
+		} else {
+			w.WriteHeader(200)
+		}
 	}
 }
 

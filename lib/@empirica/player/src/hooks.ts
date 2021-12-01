@@ -1,6 +1,35 @@
 import { useContext, useEffect, useState } from "react";
-import { EmpiricaContext } from "./components/Context";
+import { EmpiricaContext, GlobalContext, Store } from "./components/Context";
 import { Game, Player, Round, Stage } from "./store";
+
+export function useGlobal() {
+  const globalCtx = useContext(GlobalContext);
+  const [glob, setGlobal] = useState<{ store: Store | null }>({
+    store: null,
+  });
+
+  let globalUnsub: (() => void) | null = null;
+  useEffect(() => {
+    if (!globalCtx) {
+      setGlobal({ store: null });
+
+      if (globalUnsub) {
+        globalUnsub();
+        globalUnsub = null;
+      }
+
+      return;
+    }
+
+    globalUnsub = globalCtx?.subscribe((store) => {
+      setGlobal({ store });
+    });
+
+    return globalUnsub;
+  }, [globalCtx]);
+
+  return glob.store;
+}
 
 export function useGame() {
   const playerCtx = useContext(EmpiricaContext);

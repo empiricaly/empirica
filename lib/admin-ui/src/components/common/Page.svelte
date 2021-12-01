@@ -6,7 +6,12 @@
   export let actions = [];
 </script>
 
-<div class="h-full w-full overflow-hidden overflow-y-scroll">
+<!-- <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="max-w-3xl mx-auto">
+  </div>
+</div> -->
+
+<div class="max-w-10xl h-full w-full overflow-hidden overflow-y-scroll">
   <div
     class="pt-4 px-4 sm:px-6 lg:px-8 lg:flex lg:items-center lg:justify-between"
   >

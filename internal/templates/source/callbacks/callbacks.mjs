@@ -35,12 +35,10 @@ Empirica.onStageEnd(function ({ stage }) {
 });
 
 Empirica.onRoundEnd(function ({ round }) {
-  console.log("round end");
   for (const player of round.game.players) {
-    player.set(
-      "score",
-      player.get("score") + parseInt(player.round.get("score"))
-    );
+    const prevScore = player.get("score");
+    const roundScore = player.round.get("score") || 0;
+    player.set("score", prevScore + roundScore);
   }
 });
 
