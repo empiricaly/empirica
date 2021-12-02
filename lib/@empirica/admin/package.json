@@ -1,6 +1,6 @@
 {
   "name": "@empirica/admin",
-  "version": "0.1.0-alpha.0",
+  "version": "1.0.0-alpha.1",
   "description": "Empirica Admin",
   "main": "src/index.ts",
   "repository": {
@@ -35,7 +35,8 @@
   },
   "scripts": {
     "build": "pika build",
-    "publish": "np"
+    "publish:next": "np --tag next --contents pkg/",
+    "publish": "np --tag latest --contents pkg/"
   },
   "@pika/pack": {
     "pipeline": [

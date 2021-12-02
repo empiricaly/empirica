@@ -7,7 +7,7 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "@empirica/player": "^0.0.0-alpha",
+    "@empirica/player": "^1.0.0-alpha.0",
     "@headlessui/react": "^1.4.0",
     "@heroicons/react": "^1.0.3",
     "react": "17.0.2",
