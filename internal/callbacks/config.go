@@ -21,7 +21,7 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-const defaultCommand = "unbuffer node --trace-warnings --enable-source-maps index.mjs"
+const defaultCommand = "unbuffer node --trace-warnings --enable-source-maps index.js"
 
 // ConfigFlags helps configure cobra and viper flags.
 func ConfigFlags(cmd *cobra.Command, prefix string) error {

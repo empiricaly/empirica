@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Button } from "../Button";
+import { Button } from "../base/Button";
 
 export function Quiz({ next }) {
   const labelClassName = "block text-sm font-medium text-gray-700 mb-2";
@@ -20,9 +20,9 @@ export function Quiz({ next }) {
   }
 
   return (
-    <div className="mt-3 sm:mt-5">
-      <h3 className="text-lg leading-6 font-medium text-gray-900">Quiz</h3>
-      <form onSubmit={handleSubmit}>
+    <div className="mt-6 sm:mt-24">
+      <h3 className="text-2xl font-semi-bold text-gray-900">Quiz</h3>
+      <form className="mt-4" onSubmit={handleSubmit}>
         <p className="mb-5">
           <label className={labelClassName}>What is 2+2?</label>
           <input
@@ -35,6 +35,7 @@ export function Quiz({ next }) {
             value={sum}
             onChange={(e) => setSum(e.target.value)}
             autoComplete="off"
+            autoFocus
             required
           />
         </p>
@@ -56,12 +57,7 @@ export function Quiz({ next }) {
           />
         </p>
 
-        <button
-          className="justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-empirica-600 hover:bg-empirica-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
-          type="submit"
-        >
-          Submit
-        </button>
+        <Button type="submit">Submit</Button>
       </form>
     </div>
   );

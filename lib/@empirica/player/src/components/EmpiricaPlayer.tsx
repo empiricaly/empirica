@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useGame, usePlayer } from "../hooks";
-import { Empirica } from "../empirica";
+import { Empirica, DefaultURL } from "../empirica";
+import { usePlayer } from "../hooks";
 import { Player } from "../player";
 import { Consent } from "./Consent";
 import { EmpiricaContext } from "./Context";
@@ -11,10 +11,6 @@ interface EmpiricaPlayerProps {
   url?: string;
   consent?: React.ElementType | null;
   playerID?: React.ElementType;
-  lobby?: React.ElementType;
-  // preAssignIntroSteps?: StepsFunc;
-  // introSteps?: StepsFunc;
-  // exitSteps?: StepsFunc;
   ns?: string;
 }
 
@@ -29,11 +25,6 @@ export const clear = () => {
   }
 
   window.location.href = window.location.href;
-};
-
-export const createNewPlayer = () => {
-  const date: Date = new Date();
-  window.open(`http://localhost:8844/?playerID=${date.getTime()}`, "_blank")?.focus();
 };
 
 const WaitLoad: React.FC = (props) => {
@@ -55,7 +46,7 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
   let tokenKey = defaultTokenKey;
   let partKey = defaultPartKey;
   const ns = props.ns || "";
-  const url = props.url || "http://localhost:8882/query";
+  const url = props.url || DefaultURL;
 
   if (ns) {
     tokenKey += `:${ns}`;
@@ -159,9 +150,6 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
     <Consent
       onConsent={() => {
         setConsented(true);
-      }}
-      onRefuse={() => {
-        console.log("ciao");
       }}
     />
   );

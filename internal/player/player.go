@@ -39,7 +39,7 @@ func (p *Player) run(ctx context.Context) {
 	}
 
 	for {
-		c, err := p.runYarn(ctx)
+		c, err := p.runDevCmd(ctx)
 
 		if err == nil {
 			log.Info().Msg("player: started")
@@ -70,7 +70,7 @@ func (p *Player) run(ctx context.Context) {
 		log.Error().
 			Err(err).
 			Str("waiting", d.String()).
-			Msg("player: yarn run failed, restarting")
+			Msg("player: run failed, restarting")
 
 		select {
 		case <-time.After(d):
@@ -81,16 +81,25 @@ func (p *Player) run(ctx context.Context) {
 	}
 }
 
-func (p *Player) runYarn(ctx context.Context) (*exec.Cmd, error) {
+func (p *Player) runDevCmd(ctx context.Context) (*exec.Cmd, error) {
 	parts := strings.Split(p.config.DevCmd, " ")
 	if len(parts) == 0 {
 		return nil, errors.New("empty player devcmd")
 	}
 
+	shell := "/bin/sh"
+	if sh := os.Getenv("SHELL"); sh != "" {
+		shell = sh
+	}
+
+	parts = append([]string{shell, "-c"}, strings.Join(parts, " "))
+
 	var args []string
 	if len(parts) > 1 {
 		args = parts[1:]
 	}
+
+	log.Trace().Str("cmd", strings.Join(parts, " ")).Msg("player: run command")
 
 	c := exec.CommandContext(ctx, parts[0], args...)
 

@@ -70,7 +70,7 @@ func (cb *Callbacks) watch(ctx context.Context) error {
 	modchan := make(chan *moddwatch.Mod, watchChBuf)
 
 	var (
-		includePaths = []string{"**/**.mjs"}
+		includePaths = []string{"**/**.mjs", "**/**.js"}
 		excludePaths = []string{"node_modules"}
 	)
 
@@ -215,7 +215,7 @@ func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 	c.Dir = cb.config.Path
 
 	if err := c.Start(); err != nil {
-		return nil, errors.Wrap(err, "unbuffer run yarn dev")
+		return nil, errors.Wrap(err, "unbuffer npm run dev")
 	}
 
 	return c, nil

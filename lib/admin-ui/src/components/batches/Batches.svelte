@@ -35,7 +35,9 @@
     </div>
   {:else}
     <!-- Projects table (small breakpoint and up) -->
-    <table class="w-full max-w-full table-auto truncate">
+    <table
+      class="w-full max-w-full table-auto bg-white shadow overflow-hidden sm:rounded-md"
+    >
       <thead>
         <tr class="">
           <th
@@ -69,7 +71,7 @@
           />
         </tr>
       </thead>
-      <tbody class="bg-white divide-y divide-gray-100 truncate">
+      <tbody class="bg-white divide-y divide-gray-100">
         {#each $batches as batch}
           <BatchLine {batch} />
         {/each}

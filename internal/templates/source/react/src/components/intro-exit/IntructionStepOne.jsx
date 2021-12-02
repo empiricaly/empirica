@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "../Button";
+import { Button } from "../base/Button";
 
 export function IntroOne({ next }) {
   return (
@@ -14,7 +14,7 @@ export function IntroOne({ next }) {
           sapiente aliquam accusamus facere veritatis.
         </p>
       </div>
-      <Button handleClick={next}>
+      <Button handleClick={next} autoFocus>
         <p>Next</p>
       </Button>
     </div>

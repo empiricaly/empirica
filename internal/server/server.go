@@ -4,11 +4,15 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"os"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/empiricaly/empirica/internal/templates"
@@ -113,6 +117,14 @@ func Enable(
 	router *httprouter.Router,
 ) error {
 	router.GET("/", index)
+	u, _ := url.Parse("http://localhost:8844")
+	prox := httputil.NewSingleHostReverseProxy(u)
+	prox.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
+		rw.WriteHeader(http.StatusBadGateway)
+	}
+	router.NotFound = prox
+
+	router.GET("/dev", dev(config.Production))
 	router.GET("/treatments", readTreatments(config.Treatments))
 	router.PUT("/treatments", writeTreatments(config.Treatments))
 	router.ServeFiles("/admin/*filepath", templates.HTTPFS("admin-ui"))
@@ -120,10 +132,85 @@ func Enable(
 	return nil
 }
 
-func index(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
-	_, err := w.Write([]byte("Hello!"))
+func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	u, err := url.Parse(r.URL.String())
 	if err != nil {
-		log.Error().Err(err).Msg("Failed to send response for index")
+		log.Error().Err(err).Msg("server: send response for index failed")
+
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	u.Host = "localhost:8844"
+	u.Scheme = "http"
+
+	req := &http.Request{
+		Method: r.Method,
+		URL:    u,
+		Header: r.Header,
+		Body:   r.Body,
+	}
+
+	defer r.Body.Close()
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		var errType string
+
+		switch t := err.(type) {
+		case *net.OpError:
+			if t.Op == "dial" {
+				errType = "unknown host"
+			} else if t.Op == "read" {
+				errType = "connection refused"
+			}
+		case syscall.Errno:
+			if t == syscall.ECONNREFUSED {
+				errType = "connection refused"
+			}
+		case net.Error:
+			if t.Timeout() {
+				errType = "timeout"
+			} else {
+				errType = "net error"
+			}
+		}
+
+		log.Error().Err(err).Str("type", errType).Msg("server: send response for index failed")
+		w.WriteHeader(http.StatusInternalServerError)
+
+		return
+	}
+
+	defer res.Body.Close()
+
+	for k, vs := range res.Header {
+		for _, v := range vs {
+			w.Header().Add(k, v)
+		}
+	}
+
+	w.WriteHeader(res.StatusCode)
+
+	if _, err := io.Copy(w, res.Body); err != nil {
+		log.Error().Err(err).Msg("server: send response for index failed")
+	}
+}
+
+const (
+	devUser  = "dev"
+	devPass  = "password"
+	devCreds = `{"u": "` + devUser + `", "p": "` + devPass + `"}`
+)
+
+func dev(isProd bool) httprouter.Handle {
+	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+		if isProd {
+			w.WriteHeader(400)
+		} else {
+			w.WriteHeader(200)
+		}
 	}
 }
 

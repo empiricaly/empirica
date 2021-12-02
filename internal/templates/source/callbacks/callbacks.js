@@ -2,22 +2,24 @@ import { Callbacks } from "@empirica/admin";
 
 const Empirica = new Callbacks();
 
-const stageDuration = 20;
-
-Empirica.onGameInit(function ({ game }) {
-  console.log("game init");
+Empirica.onGameStart(function ({ game }) {
+  console.log("game start");
 
   for (let i = 0; i < 2; i++) {
     const round = game.addRound({ name: `Round ${i + 1}` });
-    round.addStage({ name: "Test", duration: stageDuration });
-    round.addStage({ name: "Result", duration: stageDuration });
+    round.addStage({ name: "Test", duration: 20_0000 });
+    round.addStage({ name: "Result", duration: 10_0000 });
+
+    if (game.players.length > 1) {
+      round.addStage({ name: "Neighbors", duration: 20_0000 });
+    }
   }
 
   for (const player of game.players) {
     player.set("score", 0);
   }
 
-  console.log("game init done");
+  console.log("game start done");
 });
 
 Empirica.onRoundStart(function ({ round }) {
@@ -26,7 +28,6 @@ Empirica.onRoundStart(function ({ round }) {
 
 Empirica.onStageStart(function ({ stage }) {
   console.log("stage start");
-  stage.set("hello", 1);
 });
 
 Empirica.onStageEnd(function ({ stage }) {
@@ -34,7 +35,11 @@ Empirica.onStageEnd(function ({ stage }) {
 });
 
 Empirica.onRoundEnd(function ({ round }) {
-  console.log("round end");
+  for (const player of round.game.players) {
+    const prevScore = player.get("score");
+    const roundScore = player.round.get("value") || 0;
+    player.set("score", prevScore + roundScore);
+  }
 });
 
 Empirica.onGameEnd(function ({ game }) {

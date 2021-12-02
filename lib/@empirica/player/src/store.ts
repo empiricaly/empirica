@@ -124,7 +124,7 @@ export class EAttribute {
 }
 
 export interface getSetter {
-  get: (key: string) => void;
+  get: (key: string) => JsonValue;
   set: (key: string, val: JsonValue, ao?: Partial<AttributeOptions>) => void;
 }
 

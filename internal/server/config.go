@@ -11,6 +11,8 @@ import (
 type Config struct {
 	Addr       string `mapstructure:"addr"`
 	Treatments string `mapstructure:"treatments"`
+
+	Production bool `mapstructure:"-"`
 }
 
 // Validate configuration is ok.
@@ -31,7 +33,7 @@ func ConfigFlags(cmd *cobra.Command, prefix string) error {
 	viper.SetDefault(prefix, &Config{})
 
 	flag := prefix + ".addr"
-	sval := ":8882"
+	sval := ":3000"
 	cmd.Flags().StringP(flag, "s", sval, "Address if the server")
 	viper.SetDefault(flag, sval)
 

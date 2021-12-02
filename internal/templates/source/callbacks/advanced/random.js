@@ -1,5 +1,5 @@
 import r from "rand-seed";
-import { shuffle } from "./utils.mjs";
+import { shuffle } from "./utils.js";
 
 // Node moduel support...
 const Rand = r.default;
@@ -15,9 +15,5 @@ export function pickRandom(arr) {
 }
 
 export function selectRandom(arr, num) {
-  console.info(num, arr.slice());
-  console.info(shuffle(arr.slice()));
-  console.info(shuffle(arr.slice()).slice(0, num));
-
   return shuffle(arr.slice()).slice(0, num);
 }

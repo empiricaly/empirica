@@ -29,6 +29,10 @@ import {
 class Context {
   constructor(private runtime: Runtime, private store: Store) {}
 
+  get players() {
+    return Object.values(this.store.players);
+  }
+
   get unassignedPlayers() {
     return Object.values(this.store.players).filter(
       (p) => p.online && !p.get("gameID")
@@ -72,25 +76,40 @@ class EventEmitter {
     scope: getSetter | null,
     ...args: any[]
   ) {
+    await this.emitFull(event, context, scope, null, ...args);
+  }
+
+  async emitFull(
+    event: string,
+    context: Context,
+    scope: getSetter | null,
+    id: string | null,
+    ...args: any[]
+  ) {
     if (!this.listeners[event]) {
       return;
     }
 
-    if (scope && scope.get(event)) {
+    let key = event;
+    if (id) {
+      key += "-" + id;
+    }
+
+    if (scope && scope.get(key)) {
       return;
     }
 
     for (const listener of this.listeners[event]) {
       try {
         listener.bind(context)(...args);
+        await this.processChanges();
       } catch (err) {
         console.error(`Error in '${event}' hook:\n`, err);
       }
-      await this.processChanges();
     }
 
     if (scope) {
-      scope.set(event, true, { immutable: true });
+      scope.set(key, true, { immutable: true });
       await this.processChanges();
     }
   }
@@ -226,7 +245,7 @@ export class Runtime {
             await this.taj.addScope({ kind: "player", name: player.id })
           );
           this.store.addScope(scope);
-          this.taj.link({
+          await this.taj.link({
             nodeIDs: [scope.id],
             participantIDs: [id],
           });
@@ -257,15 +276,16 @@ export class Runtime {
         continue;
       }
 
-      // const playerIDs = (game.get("playerIDs") as string[]) || [];
-      // for (const playerID of playerIDs) {
-      //   const player = this.store.players[playerID];
-      //   if (!player) {
-      //     console.warn("player for game not found");
-      //     continue;
-      //   }
-      //   game.players.push(player);
-      // }
+      const playerIDs = (game.get("playerIDs") as string[]) || [];
+      for (const playerID of playerIDs) {
+        const player = this.store.players[playerID];
+        if (!player) {
+          console.warn("player for game not found");
+          continue;
+        }
+        game.players.push(player);
+        player.currentGame = game;
+      }
 
       // switch (stage.step.state) {
       //   case State.Created:
@@ -440,16 +460,20 @@ export class Runtime {
   }
 
   private async addPlayer(player: Player) {
-    const scope = <Scope>await this.taj.addScope({
-      kind: "player",
-      name: player.id,
-    });
-    player.scope = scope;
-    this.store.saveEScope(player);
-    this.taj.link({
-      nodeIDs: [scope.id],
-      participantIDs: [player.id],
-    });
+    try {
+      const scope = <Scope>await this.taj.addScope({
+        kind: "player",
+        name: player.id,
+      });
+      player.scope = scope;
+      this.store.saveEScope(player);
+      await this.taj.link({
+        nodeIDs: [scope.id],
+        participantIDs: [player.id],
+      });
+    } catch (err) {
+      console.error("known issue: double participant scope", err);
+    }
   }
   private async processEventLocked(
     payload: OnEventPayload,
@@ -642,7 +666,7 @@ export class Runtime {
         break;
       }
       case "newUnassignment": {
-        console.trace("newUnassignment");
+        console.debug("newUnassignment");
 
         if (!change.player) {
           console.warn("newUnassignment change.player missing", change);
@@ -696,6 +720,8 @@ export class Runtime {
 
         change.attr.attribute = attr;
 
+        await this.handleAttribute(change.attr, change.isNew || false);
+
         break;
       }
       case "start": {
@@ -716,7 +742,7 @@ export class Runtime {
           game = game.round.game;
         }
 
-        await this.emitter.emit(EE.GameInit, this.defaultContext, null, {
+        await this.emitter.emit(EE.GameStart, this.defaultContext, null, {
           game,
         });
         await this.startGame(<Game>game);
@@ -764,8 +790,8 @@ export class Runtime {
             to = State.Terminated;
           } else if (change.type === "fail") {
             to = State.Failed;
-          } else {
-            throw new Error("unknown transition to");
+          } else if (change.type !== "end") {
+            throw new Error(`unknown transition to (${change.type})`);
           }
 
           const trs = {
@@ -816,7 +842,13 @@ export class Runtime {
 
     event = `change-${event}`;
 
-    await this.emitter.emit(event, this.defaultContext, getSet, arg);
+    await this.emitter.emitFull(
+      event,
+      this.defaultContext,
+      getSet,
+      attribute.attribute.id,
+      arg
+    );
   }
 
   async handleTransition(stage: Stage) {
@@ -878,6 +910,11 @@ export class Runtime {
       }
     }
 
+    console.debug("link game", {
+      participantIDs: playerIDs,
+      nodeIDs: nodeIDs,
+    });
+
     await this.taj.link({
       participantIDs: playerIDs,
       nodeIDs: nodeIDs,
@@ -892,7 +929,7 @@ export class Runtime {
           }
         }
         await this.taj.link({
-          participantIDs: [player.scope!.id],
+          participantIDs: [player.id],
           nodeIDs: playerIDs,
         });
       }

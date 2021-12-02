@@ -23,6 +23,7 @@ export interface Change {
     | "fail";
   cause?: string;
   attr?: EAttribute;
+  isNew?: boolean;
   scope?: EScope;
   attrs?: Json;
   player?: Player;
@@ -210,10 +211,12 @@ export class EScope {
     const a = new EAttribute(this, key);
     a.value = val;
     a.ao = ao;
+    const isNew = !Boolean(this.attributes[key]);
     this.attributes[key] = a;
     this.store.pushChange({
       type: "updateAttribute",
       attr: a,
+      isNew,
     });
 
     if (this instanceof Batch) {
@@ -251,6 +254,10 @@ export class Player extends EScope {
     return this.participant.id;
   }
 
+  get type() {
+    return "player";
+  }
+
   get game() {
     if (!this.currentGame) {
       throw new Error("player.game outside of game context");
@@ -279,6 +286,10 @@ export class Player extends EScope {
 export class Root extends EScope {
   public batches: Batch[] = [];
 
+  get type() {
+    return "root";
+  }
+
   addBatch(attrs?: Json): Batch {
     const batch = new Batch(this.store, this);
     this.batches.push(batch);
@@ -297,6 +308,10 @@ export class Batch extends EScope {
 
   constructor(public store: Store, public root: Root) {
     super(store);
+  }
+
+  get type() {
+    return "batch";
   }
 
   get config(): { [key: string]: any } {
@@ -345,6 +360,10 @@ export class Game extends EScope {
 
   constructor(public store: Store, public batch: Batch) {
     super(store);
+  }
+
+  get type() {
+    return "game";
   }
 
   get treatment(): { [key: string]: any } {
@@ -468,6 +487,10 @@ export class Round extends EScope {
     super(store);
   }
 
+  get type() {
+    return "round";
+  }
+
   addStage(attrs: Json): Stage {
     const duration = attrs["duration"];
     if (!duration) {
@@ -520,6 +543,10 @@ export class Round extends EScope {
 export class Stage extends EScope {
   constructor(public store: Store, public round: Round) {
     super(store);
+  }
+
+  get type() {
+    return "stage";
   }
 
   get duration(): number {

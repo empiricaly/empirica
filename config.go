@@ -8,15 +8,17 @@ import (
 	"github.com/empiricaly/tajriba"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // Config is server configuration.
 type Config struct {
-	Server    *server.Config    `mapstructure:"server"`
-	Player    *player.Config    `mapstructure:"player"`
-	Callbacks *callbacks.Config `mapstructure:"callbacks"`
-	Tajriba   *tajriba.Config   `mapstructure:"tajriba"`
-	Log       *logger.Config    `mapstructure:"log"`
+	Server     *server.Config    `mapstructure:"server"`
+	Player     *player.Config    `mapstructure:"player"`
+	Callbacks  *callbacks.Config `mapstructure:"callbacks"`
+	Tajriba    *tajriba.Config   `mapstructure:"tajriba"`
+	Log        *logger.Config    `mapstructure:"log"`
+	Production bool              `mapstructure:"production"`
 }
 
 // Validate configuration is ok.
@@ -69,6 +71,11 @@ func ConfigFlags(cmd *cobra.Command) error {
 	if err := logger.ConfigFlags(cmd, "log", "info"); err != nil {
 		return errors.Wrap(err, "set logger configuration flags")
 	}
+
+	flag := "production"
+	bval := false
+	cmd.Flags().Bool(flag, bval, "Run in production mode")
+	viper.SetDefault(flag, bval)
 
 	return nil
 }
