@@ -52,11 +52,11 @@ export class Callbacks {
     }
     this.callbacks[EmpiricaEvent.NewBatch].push(cb);
   }
-  onGameInit(cb: EventCallback<GameEventArgs>) {
-    if (!this.callbacks[EmpiricaEvent.GameInit]) {
-      this.callbacks[EmpiricaEvent.GameInit] = [];
+  onGameStart(cb: EventCallback<GameEventArgs>) {
+    if (!this.callbacks[EmpiricaEvent.GameStart]) {
+      this.callbacks[EmpiricaEvent.GameStart] = [];
     }
-    this.callbacks[EmpiricaEvent.GameInit].push(cb);
+    this.callbacks[EmpiricaEvent.GameStart].push(cb);
   }
   onRoundStart(cb: EventCallback<StageEventArgs>) {
     if (!this.callbacks[EmpiricaEvent.RoundStart]) {

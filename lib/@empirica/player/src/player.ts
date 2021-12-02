@@ -1,4 +1,4 @@
-import { TajribaParticipant } from "@empirica/tajriba";
+import { ParticipantChange, TajribaParticipant } from "@empirica/tajriba";
 import { EAttribute, Game, Player as Plyr, Round, Stage, Store } from "./store";
 
 export class Player {
@@ -11,7 +11,12 @@ export class Player {
   private _currentStage?: Stage;
   private _currentGame?: Game;
 
-  constructor(private taj: TajribaParticipant, readonly store: Store) {}
+  constructor(private taj: TajribaParticipant, readonly store: Store) {
+    store.updateParticipant(
+      <ParticipantChange>{ id: taj.participant.id },
+      false
+    );
+  }
 
   get id() {
     return this.taj.id;

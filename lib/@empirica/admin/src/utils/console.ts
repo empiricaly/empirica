@@ -112,7 +112,7 @@ function colorize(s: string, ...cc: Color[]): string[] {
 
 console.trace = logger(0, colorize("TRC", Color.Magenta));
 console.debug = logger(1, colorize("DBG", Color.Yellow));
-console.log = logger(2, colorize("DBG", Color.Yellow));
+console.log = logger(2, colorize("LOG", Color.Yellow));
 console.info = logger(2, colorize("INF", Color.Green));
 console.warn = logger(3, colorize("WRN", Color.Red));
 console.error = logger(4, colorize("ERR", Color.Red, Color.Bold));

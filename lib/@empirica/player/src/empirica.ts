@@ -34,7 +34,6 @@ export const Empirica = {
   },
 
   globalAttributes(url: string) {
-    console.log("HEYO");
     const taj = new Tajriba(url);
 
     let subs: Sub[] = [];

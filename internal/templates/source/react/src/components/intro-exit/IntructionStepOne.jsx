@@ -14,7 +14,7 @@ export function IntroOne({ next }) {
           sapiente aliquam accusamus facere veritatis.
         </p>
       </div>
-      <Button handleClick={next}>
+      <Button handleClick={next} autoFocus>
         <p>Next</p>
       </Button>
     </div>

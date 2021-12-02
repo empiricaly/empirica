@@ -26,11 +26,11 @@ export function Alert({ children, title, kind = "normal" }) {
   }
 
   return (
-    <div class={`rounded-md p-4 ${bg}`}>
-      <div class="flex">
-        <div class="flex-shrink-0">
+    <div className={`rounded-md p-4 ${bg}`}>
+      <div className="flex">
+        <div className="flex-shrink-0">
           <svg
-            class={`h-5 w-5 ${icn}`}
+            className={`h-5 w-5 ${icn}`}
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 20 20"
             fill="currentColor"
@@ -43,9 +43,11 @@ export function Alert({ children, title, kind = "normal" }) {
             />
           </svg>
         </div>
-        <div class="ml-3">
-          <h3 class={`text-sm font-medium ${ttl}`}>{title}</h3>
-          <div class={`mt-2 text-sm text-yellow-700 ${chld}`}>{children}</div>
+        <div className="ml-3">
+          <h3 className={`text-sm font-medium ${ttl}`}>{title}</h3>
+          <div className={`mt-2 text-sm text-yellow-700 ${chld}`}>
+            {children}
+          </div>
         </div>
       </div>
     </div>

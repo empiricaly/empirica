@@ -742,7 +742,7 @@ export class Runtime {
           game = game.round.game;
         }
 
-        await this.emitter.emit(EE.GameInit, this.defaultContext, null, {
+        await this.emitter.emit(EE.GameStart, this.defaultContext, null, {
           game,
         });
         await this.startGame(<Game>game);
@@ -929,7 +929,7 @@ export class Runtime {
           }
         }
         await this.taj.link({
-          participantIDs: [player.scope!.id],
+          participantIDs: [player.id],
           nodeIDs: playerIDs,
         });
       }

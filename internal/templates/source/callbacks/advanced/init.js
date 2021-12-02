@@ -1,8 +1,8 @@
 import { Empirica, setLogLevel } from "@empirica/admin";
 import fs from "fs";
 import minimist from "minimist";
-import callbacks from "../callbacks.mjs";
-import advancedCallbacks from "./callbacks.mjs";
+import callbacks from "../callbacks.js";
+import advancedCallbacks from "./callbacks.js";
 
 Error.stackTraceLimit = Infinity;
 

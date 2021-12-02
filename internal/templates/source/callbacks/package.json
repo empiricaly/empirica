@@ -1,7 +1,7 @@
 {
   "name": "empirica-server-demo",
   "private": true,
-  "author": "Nicolas Paton",
+  "type": "module",
   "dependencies": {
     "@empirica/admin": "^0.1.0-alpha.0",
     "minimist": "1.2.5",

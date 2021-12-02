@@ -70,7 +70,7 @@ func (cb *Callbacks) watch(ctx context.Context) error {
 	modchan := make(chan *moddwatch.Mod, watchChBuf)
 
 	var (
-		includePaths = []string{"**/**.mjs"}
+		includePaths = []string{"**/**.mjs", "**/**.js"}
 		excludePaths = []string{"node_modules"}
 	)
 

@@ -1,6 +1,6 @@
 import { Callbacks } from "@empirica/admin";
-import { pickRandom, selectRandom } from "./random.mjs";
-import { deepEqual } from "./utils.mjs";
+import { pickRandom, selectRandom } from "./random.js";
+import { deepEqual } from "./utils.js";
 
 const Empirica = new Callbacks();
 
@@ -9,9 +9,8 @@ Empirica.onNewPlayer(function ({ player }) {
 });
 
 Empirica.onPlayerConnected(function ({ player }) {
-  console.log("player connected", player.id, this.batches);
+  console.log("player connected", player.id);
   assignplayer(this.batches, player);
-  console.log(player.currentGame, this.batches);
 });
 
 function assignplayer(batches, player) {
@@ -23,6 +22,7 @@ function assignplayer(batches, player) {
     if (batch.get("state") !== "running") {
       continue;
     }
+
     let availableGames = batch.games.filter(
       (g) => !g.get("state") && !g.get("starting")
     );
@@ -50,14 +50,14 @@ Empirica.onPlayerDisconnected(function ({ player }) {
 });
 
 Empirica.onNewBatch(function ({ batch }) {
-  console.log("new batch", batch.attributes);
-
   const conf = batch.get("config");
 
   if (!conf) {
     console.warn("callbacks: batch created without a config");
     return;
   }
+
+  console.log("new batch", conf);
 
   if (conf !== Object(conf)) {
     console.warn("callbacks: batch config is not an object");
@@ -67,15 +67,15 @@ Empirica.onNewBatch(function ({ batch }) {
   switch (conf.kind) {
     case "simple":
       for (let i = 0; i < conf.config.count; i++) {
-        const treatment = pickRandom(conf.config.treatments);
+        const treatment = pickRandom(conf.config.treatments).factors;
         batch.addGame({ treatment });
       }
 
       break;
     case "complete":
-      for (const treatment of conf.config.treatments) {
-        for (let i = 0; i < treatment.count; i++) {
-          batch.addGame({ treatment: treatment.treatment });
+      for (const t of conf.config.treatments) {
+        for (let i = 0; i < t.count; i++) {
+          batch.addGame({ treatment: t.treatment.factors });
         }
       }
 
@@ -84,11 +84,6 @@ Empirica.onNewBatch(function ({ batch }) {
       console.warn("callbacks: batch created without a config");
       return;
   }
-
-  // TODO add opening of the doors
-  // this.global.set("open", true);
-
-  // TODO Fix assign players already registered and connected
 });
 
 Empirica.onChange("batch", "state", function ({ isNew, batch }) {
@@ -96,8 +91,6 @@ Empirica.onChange("batch", "state", function ({ isNew, batch }) {
     case "running":
       console.debug("callbacks: batch running");
 
-      console.log(this.players);
-      console.log(this.unassignedPlayers);
       for (const player of this.unassignedPlayers) {
         assignplayer(this.batches, player);
       }
@@ -105,6 +98,13 @@ Empirica.onChange("batch", "state", function ({ isNew, batch }) {
       break;
     case "ended":
       console.debug("callbacks: batch ended");
+      for (const game of batch.games) {
+        const state = game.get("state");
+        if (state !== "failed" && state !== "ended" && state !== "terminated") {
+          game.end("batch ended");
+        }
+      }
+
       break;
     case "failed":
       console.debug("callbacks: batch failed");
@@ -112,7 +112,7 @@ Empirica.onChange("batch", "state", function ({ isNew, batch }) {
       for (const game of batch.games) {
         const state = game.get("state");
         if (state !== "failed" && state !== "ended" && state !== "terminated") {
-          game.fail("batch terminated");
+          game.fail("batch failed");
         }
       }
 
@@ -139,8 +139,6 @@ function checkBatchEnded(batch) {
     const state = g.get("state");
     return !state || state === "running";
   });
-
-  console.log(gamesStileRunning);
 
   if (!gamesStileRunning) {
     batch.set("state", "ended");
@@ -171,14 +169,12 @@ Empirica.onChange("game", "state", function ({ isNew, game }) {
 });
 
 Empirica.onChange("player", "introDone", function ({ isNew, player }) {
-  console.info("player introDone", isNew, player);
   if (!player.currentGame) {
     console.warn("callbacks: introDone without game");
     return;
   }
 
   const game = player.currentGame;
-  console.log("treatment", game.get("treatment"));
   const { playerCount } = game.get("treatment");
   const readyPlayers = game.players.filter((p) => p.get("introDone"));
 
@@ -208,17 +204,11 @@ Empirica.onChange("player", "gameID", function ({ isNew, player }) {
 });
 
 Empirica.onChange("player-stage", "submit", function ({ player, stage }) {
-  console.log("players", player);
-  console.log("players", player.currentGame);
-  console.log("players", player.currentGame.players);
-
   const players = player.currentGame.players;
   if (!players || players.length === 0) {
     console.warn("callbacks: no players onSubmit");
     return;
   }
-
-  console.log("players", players);
 
   if (players.every((p) => p.stage.get("submit"))) {
     stage.end();

@@ -35,6 +35,7 @@ export function Quiz({ next }) {
             value={sum}
             onChange={(e) => setSum(e.target.value)}
             autoComplete="off"
+            autoFocus
             required
           />
         </p>

@@ -2,11 +2,10 @@ import React from "react";
 
 export function Slider({ value, onChange }) {
   const val = value || 50;
+  const cls = value === null ? "slider-thumb-zero" : "slider-thumb";
   return (
     <input
-      className={`rounded-lg appearance-none bg-gray-200 h-3 w-full ${
-        value === null ? "slider-thumb-zero" : "slider-thumb"
-      }`}
+      className={`rounded-lg appearance-none bg-gray-200 h-3 w-full ${cls}`}
       type="range"
       min="0"
       max="100"

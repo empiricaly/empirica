@@ -13,11 +13,17 @@ export function Button({
   className = "",
   primary = false,
   type = "button",
+  autoFocus = false,
 }) {
   let cn = `${base} ${primary ? prim : sec} ${className}`;
 
   return (
-    <button type={type} onClick={handleClick} className={cn}>
+    <button
+      type={type}
+      onClick={handleClick}
+      className={cn}
+      autoFocus={autoFocus}
+    >
       {children}
     </button>
   );
