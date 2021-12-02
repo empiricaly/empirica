@@ -37,7 +37,7 @@
     "build": "pika build",
     "release:next": "np --tag next --contents pkg/",
     "release": "np --tag latest --contents pkg/",
-    "postversion": "cd pkg && yarn version --new-version $npm_package_version"
+    "postversion": "cd pkg && yarn version --new-version $npm_package_version --no-git-tag-version --no-commit-hooks"
   },
   "@pika/pack": {
     "pipeline": [
