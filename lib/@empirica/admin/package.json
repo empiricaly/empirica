@@ -36,7 +36,8 @@
   "scripts": {
     "build": "pika build",
     "publish:next": "np --tag next --contents pkg/",
-    "publish": "np --tag latest --contents pkg/"
+    "publish": "np --tag latest --contents pkg/",
+    "postversion": "cd pkg && yarn version --new-version $npm_package_version"
   },
   "@pika/pack": {
     "pipeline": [
