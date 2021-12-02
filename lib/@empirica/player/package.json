@@ -1,6 +1,6 @@
 {
   "name": "@empirica/player",
-  "version": "0.1.0-alpha.1",
+  "version": "1.0.0-alpha.0",
   "description": "Empirica Player",
   "main": "src/index.ts",
   "repository": {
@@ -35,7 +35,8 @@
   },
   "scripts": {
     "build": "pika build",
-    "publish": "np"
+    "publish:next": "np --tag next --contents pkg/",
+    "publish": "np --tag latest --contents pkg/"
   },
   "@pika/pack": {
     "pipeline": [
@@ -57,6 +58,7 @@
     ]
   },
   "devDependencies": {
+    "@empirica/tajriba": "1.0.0-alpha.1",
     "@pika/cli": "0.2.0",
     "@pika/pack": "0.5.0",
     "@pika/plugin-build-deno": "0.9.2",

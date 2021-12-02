@@ -57,6 +57,7 @@
     ]
   },
   "devDependencies": {
+    "@empirica/tajriba": "1.0.0-alpha.1",
     "@pika/cli": "0.2.0",
     "@pika/pack": "0.5.0",
     "@pika/plugin-build-deno": "0.9.2",

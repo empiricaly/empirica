@@ -21,7 +21,7 @@ const (
 	LocalDir    = "local"
 	gitignore   = `local`
 	stokenLen   = 16
-	passLen     = 6
+	passLen     = 8
 
 	TreatmentsYAML = "treatments.yaml"
 	treatmentsyaml = `factors:
