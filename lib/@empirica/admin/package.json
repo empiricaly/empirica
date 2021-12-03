@@ -1,6 +1,6 @@
 {
   "name": "@empirica/admin",
-  "version": "1.0.0-alpha.4",
+  "version": "1.0.0-alpha.5",
   "description": "Empirica Admin",
   "main": "src/index.ts",
   "repository": {
