@@ -212,7 +212,7 @@ export class Player extends EScope {
   }
 
   get id() {
-    return this.participant?.id || this.scope?.id || "";
+    return this.scope?.id || "";
   }
 
   private get currentGame() {
@@ -470,7 +470,7 @@ export class Store {
     if (removed) {
       switch (s.kind) {
         case "player":
-          const player = this.scopes[s.id];
+          const player = this.scopes[s.name!];
           delete this.players[player.id];
           break;
         case "batch":

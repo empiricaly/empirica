@@ -64,7 +64,7 @@ func ConfigFlags(cmd *cobra.Command) error {
 		return errors.Wrap(err, "set callbacks configuration flags")
 	}
 
-	if err := tajriba.ConfigFlags(cmd, "tajriba"); err != nil {
+	if err := tajriba.ConfigFlags(cmd, "tajriba", ".empirica/local/tajriba.json"); err != nil {
 		return errors.Wrap(err, "set tajriba configuration flags")
 	}
 

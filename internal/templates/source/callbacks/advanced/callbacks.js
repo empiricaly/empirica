@@ -188,6 +188,10 @@ Empirica.onChange("player", "introDone", function ({ isNew, player }) {
   const players = selectRandom(readyPlayers, playerCount);
   for (const plyr of game.players) {
     if (!players.some((p) => p.id === plyr.id)) {
+      console.log(
+        players.map((p) => p.id),
+        plyr.id
+      );
       game.unassign(plyr);
     }
   }

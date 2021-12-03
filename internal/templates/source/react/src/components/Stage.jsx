@@ -3,6 +3,7 @@ import { usePlayer, useStage } from "@empirica/player";
 import { Button } from "./base/Button";
 import { Slider } from "./Slider";
 import { Neighbors } from "./Neighbors";
+import { Sweeper } from "./examples/Sweeper";
 
 export function Stage() {
   const player = usePlayer();
@@ -24,19 +25,22 @@ export function Stage() {
     player.stage.set("submit", true);
   }
 
-  const isNeighbors = stage.get("name") === "Neighbors";
+  let task;
+  if (stage.get("name") === "Neighbors") {
+    task = <Neighbors />;
+  } else {
+    task = <Sweeper />;
+    // task = (
+    //   <>
+    //     <p>Welcome to Empirica! Try changing the slider.</p>
+    //     <Slider value={player.round.get("value")} onChange={handleChange} />
+    //   </>
+    // );
+  }
 
   return (
     <div className="md:min-w-96 lg:min-w-128 xl:min-w-192 flex flex-col items-center space-y-10">
-      {isNeighbors ? (
-        <Neighbors />
-      ) : (
-        <>
-          <p>Welcome to Empirica! Try changing the slider.</p>
-
-          <Slider value={player.round.get("value")} onChange={handleChange} />
-        </>
-      )}
+      {task}
 
       <Button handleClick={handleSubmit} primary>
         Submit

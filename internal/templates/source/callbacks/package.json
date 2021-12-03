@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@empirica/admin": "^1.0.0-alpha.0",
+    "@empirica/admin": "^1.0.0-alpha.4",
     "minimist": "1.2.5",
     "rand-seed": "1.0.1"
   },

@@ -136,6 +136,7 @@ func (cb *Callbacks) run(ctx context.Context) {
 			if err != nil {
 				errs := err.Error()
 				if errors.Is(err, context.Canceled) ||
+					strings.Contains(errs, "signal: interrupt") ||
 					strings.Contains(errs, "signal: killed") ||
 					strings.Contains(errs, "signal: hangup") {
 					log.Debug().Msg("callback: quit")
@@ -215,7 +216,7 @@ func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 	c.Dir = cb.config.Path
 
 	if err := c.Start(); err != nil {
-		return nil, errors.Wrap(err, "unbuffer npm run dev")
+		return nil, errors.Wrap(err, "run command")
 	}
 
 	return c, nil

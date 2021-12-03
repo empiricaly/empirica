@@ -16,16 +16,14 @@
   let editedIndex;
 
   // Get treatments from file
-  $: {
-    fetch(URL + "/treatments")
-      .then((response) => response.json())
-      .then((data) => {
-        treatments = data;
-      })
-      .catch((error) => {
-        console.info(error);
-      });
-  }
+  fetch(URL + "/treatments")
+    .then((response) => response.json())
+    .then((data) => {
+      treatments = data;
+    })
+    .catch((error) => {
+      console.info(error);
+    });
 
   async function writeFactorsToFile() {
     try {
@@ -49,7 +47,7 @@
       return;
     }
 
-    if (editedIndex !== undefined) {
+    if (editedIndex !== undefined && treatments?.factors) {
       treatments.factors = treatments.factors.filter(
         (_, i) => i !== editedIndex
       );
@@ -59,6 +57,12 @@
       selectedFactor.values[i].value = castValue(v.value);
     });
 
+    if (!treatments) {
+      treatments = {};
+    }
+    if (!treatments.factors) {
+      treatments.factors = [];
+    }
     treatments.factors.push(selectedFactor);
 
     treatments = treatments;
@@ -77,7 +81,7 @@
       msg = "Values cannot be empty";
     }
 
-    if (editedIndex === undefined) {
+    if (editedIndex === undefined && treatments?.factors) {
       const factor = treatments.factors.filter(
         (f) => f.name === selectedFactor.name
       );

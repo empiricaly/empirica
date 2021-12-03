@@ -49,6 +49,7 @@ func (p *Player) run(ctx context.Context) {
 			if err != nil {
 				errs := err.Error()
 				if errors.Is(err, context.Canceled) ||
+					strings.Contains(errs, "signal: interrupt") ||
 					strings.Contains(errs, "signal: killed") ||
 					strings.Contains(errs, "signal: hangup") {
 					return
@@ -70,7 +71,7 @@ func (p *Player) run(ctx context.Context) {
 		log.Error().
 			Err(err).
 			Str("waiting", d.String()).
-			Msg("player: run failed, restarting")
+			Msg("player: command failed, restarting")
 
 		select {
 		case <-time.After(d):

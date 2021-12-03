@@ -6,8 +6,7 @@ import { Game } from "./components/Game";
 import { Affix } from "./components/Affix";
 
 export default function App() {
-  const glob = useGlobal();
-  console.log("glob", glob);
+  const _ = useGlobal();
 
   const urlParams = new URLSearchParams(window.location.search);
   const playerKey = urlParams.get("playerKey") || "";

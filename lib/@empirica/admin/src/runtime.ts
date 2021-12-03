@@ -816,7 +816,9 @@ export class Runtime {
             console.warn("failed transition", error);
           }
         } else {
-          console.warn("TODO implement end game");
+          const game = <Game>change.scope;
+          game.set("state", "ended", { protected: true });
+          // console.warn("TODO implement end game");
         }
 
         break;

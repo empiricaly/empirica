@@ -1,7 +1,7 @@
 <script>
   import { DEFAULT_TREATMENT, URL } from "../../constants";
-  import { focus } from "../../utils/use";
   import { castValue } from "../../utils/typeValue";
+  import { focus } from "../../utils/use";
   import Button from "../common/Button.svelte";
   import Duplicate from "../common/duplicate.svelte";
   import Trash from "../common/Trash.svelte";
@@ -11,6 +11,7 @@
 
   let newTreatment = false;
   let tempTreatments;
+  let treatments;
 
   let selectedTreatment = DEFAULT_TREATMENT;
   let alertModal = false;
@@ -18,16 +19,14 @@
   let deleteIconIndex = -1;
 
   // Get treatments from file
-  $: {
-    fetch(URL + "/treatments")
-      .then((response) => response.json())
-      .then((data) => {
-        treatments = data;
-      })
-      .catch((error) => {
-        console.info(error);
-      });
-  }
+  fetch(URL + "/treatments")
+    .then((response) => response.json())
+    .then((data) => {
+      treatments = data;
+    })
+    .catch((error) => {
+      console.info(error);
+    });
 
   async function writeTreatmentsToFile() {
     try {
@@ -58,7 +57,7 @@
       msg = "Name cannot be empty";
     }
 
-    if (editedIndex === undefined) {
+    if (editedIndex === undefined && treatments?.treatments) {
       const treatment = treatments.treatments.filter(
         (t) => t.name === selectedTreatment.name
       );
@@ -133,6 +132,13 @@
       );
     }
 
+    if (!treatments) {
+      treatments = {};
+    }
+    if (!treatments.treatments) {
+      treatments.treatments = [];
+    }
+
     treatments.treatments.push(treatment);
     writeTreatmentsToFile();
     newTreatment = false;
@@ -183,7 +189,6 @@
     }
   }
 
-  let treatments;
   function showTreatmentEditor(_, t, index = undefined) {
     newTreatment = true;
     editedIndex = index;
@@ -470,18 +475,21 @@
                   type="text"
                   class="block w-full h-9 px-3 py-2 shadow-sm sm:text-sm focus:outline-none focus:ring-2 focus:ring-empirica-500 focus:border-transparent border border-transaparent rounded-md"
                 />
-                <div class="h-4 w-4 pt-2">
-                  <svg
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 28 33"
-                  >
-                    <defs />
-                    <path
-                      d="M2.51554.661453L17.9083 16.0469c.3427.3427.3427.8968 0 1.2396L2.51554 32.6719c-.3427.3427-.89687.3427-1.23958 0l-.517708-.5177c-.342708-.3427-.342708-.8969 0-1.2396L15.0135 16.6667.765544 2.41145c-.342709-.3427-.342709-.89687 0-1.23958L1.28325.654162c.33542-.335417.88959-.335417 1.23229.007291zm8.09376 0l-.5177.517707c-.34272.34271-.34272.89688 0 1.23959L24.3468 16.6667 10.0989 30.9219c-.34273.3427-.34273.8968 0 1.2396l.5177.5177c.3427.3427.8969.3427 1.2396 0l15.3927-15.3855c.3427-.3427.3427-.8968 0-1.2395L11.8562.668745c-.35-.35-.9042-.35-1.2469-.007292z"
-                      fill="#D1D5DB"
-                    />
-                  </svg>
+                <div class="h-full w-4 flex items-center justify-center">
+                  <div class="h-3 w-3">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 448 512"
+                      class="mx-auto h-full w-full text-gray-300"
+                      stroke="none"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M416 304H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h384c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32zm0-192H32c-17.67 0-32 14.33-32 32v32c0 17.67 14.33 32 32 32h384c17.67 0 32-14.33 32-32v-32c0-17.67-14.33-32-32-32z"
+                      />
+                    </svg>
+                  </div>
                 </div>
                 <input
                   bind:value={f.value}
