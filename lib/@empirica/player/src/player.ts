@@ -92,16 +92,25 @@ export class Player {
   }
 
   pushAttributeChange(attribute: EAttribute) {
+    const nodeID = attribute.scope.scopeID;
+
+    if (!nodeID) {
+      console.warn("undefined scope id on attribute change");
+      console.warn(attribute);
+      // TODO wait for full load before rendering on client to avoid this issue
+      return;
+    }
+
     this.taj.setAttribute({
       key: attribute.key,
       append: attribute.ao?.append,
       vector: attribute.ao?.vector,
       index: attribute.ao?.index,
-      nodeID: attribute.scope.id,
+      nodeID,
       val: JSON.stringify(attribute.value),
     });
 
-    this.trackScopeUpdates(attribute.scope.id);
+    this.trackScopeUpdates(nodeID);
     this.applyUpdates();
 
     // const subKey = this.subMap[attribute.scope.id];

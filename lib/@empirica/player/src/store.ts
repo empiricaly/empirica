@@ -162,6 +162,10 @@ export class EScope {
     return this.scope.id;
   }
 
+  get scopeID(): string | undefined {
+    return this.id;
+  }
+
   get kind() {
     return this.constructor.name.toLowerCase();
   }
@@ -212,7 +216,11 @@ export class Player extends EScope {
   }
 
   get id() {
-    return this.scope?.id || "";
+    return this.participant?.id || "";
+  }
+
+  get scopeID() {
+    return this.scope?.id;
   }
 
   private get currentGame() {

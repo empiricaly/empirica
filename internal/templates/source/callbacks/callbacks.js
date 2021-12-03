@@ -5,13 +5,13 @@ const Empirica = new Callbacks();
 Empirica.onGameStart(function ({ game }) {
   console.log("game start");
 
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 3; i++) {
     const round = game.addRound({ name: `Round ${i + 1}` });
-    round.addStage({ name: "Test", duration: 20_0000 });
-    round.addStage({ name: "Result", duration: 10_0000 });
+    round.addStage({ name: "Response", duration: 20 });
+    round.addStage({ name: "Result", duration: 10 });
 
     if (game.players.length > 1) {
-      round.addStage({ name: "Neighbors", duration: 20_0000 });
+      round.addStage({ name: "Neighbors", duration: 20 });
     }
   }
 
