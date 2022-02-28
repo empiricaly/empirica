@@ -917,10 +917,10 @@ export class Runtime {
       }
     }
 
-    console.debug("link game", {
-      participantIDs: playerIDs,
-      nodeIDs: nodeIDs,
-    });
+    // console.debug("link game", {
+    //   participantIDs: playerIDs,
+    //   nodeIDs: nodeIDs,
+    // });
 
     await this.taj.link({
       participantIDs: playerIDs,
