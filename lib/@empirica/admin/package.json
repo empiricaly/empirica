@@ -22,6 +22,11 @@
   "bugs": {
     "url": "https://github.com/empiricaly/empirica/issues"
   },
+  "volta": {
+    "node": "16.4.1",
+    "yarn": "1.22.10",
+    "npm": "7.19.1"
+  },
   "homepage": "https://github.com/empiricaly/empirica#readme",
   "files": [
     "*"

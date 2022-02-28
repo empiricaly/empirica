@@ -15,13 +15,11 @@ export function Button({
   type = "button",
   autoFocus = false,
 }) {
-  let cn = `${base} ${primary ? prim : sec} ${className}`;
-
   return (
     <button
       type={type}
       onClick={handleClick}
-      className={cn}
+      className={`${base} ${primary ? prim : sec} ${className}`}
       autoFocus={autoFocus}
     >
       {children}

@@ -27,6 +27,11 @@
   "bugs": {
     "url": "https://github.com/empiricaly/empirica/issues"
   },
+  "volta": {
+    "node": "16.4.1",
+    "yarn": "1.22.10",
+    "npm": "7.19.1"
+  },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "1.0.0-next.26",
     "path": "0.12.7",

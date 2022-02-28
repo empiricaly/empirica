@@ -1,19 +1,53 @@
+import {
+  Consent,
+  isDevelopment,
+  Loading,
+  PlayerID,
+  Steps,
+  useConsent,
+  useGame,
+  useGlobal,
+  usePlayer,
+  usePlayerID,
+  useStage,
+} from "@empirica/player";
 import React from "react";
-import { Loading, Steps, useGame, useStage } from "@empirica/player";
+import { Lobby } from "./base/Lobby";
+import { ExitSurvey } from "./intro-exit/ExitSurvey";
 import { IntroOne } from "./intro-exit/IntructionStepOne";
 import { IntroTwo } from "./intro-exit/IntructionStepTwo";
 import { Quiz } from "./intro-exit/Quiz";
-import { Lobby } from "./base/Lobby";
-import { ExitSurvey } from "./intro-exit/ExitSurvey";
 
 export function Affix({ children }) {
+  const { experimentOpen } = useGlobal();
+  const player = usePlayer();
+  const game = useGame();
+  const [hasPlayer, onPlayerID] = usePlayerID();
+  const [consented, onConsent] = useConsent();
+
+  if (!game && !experimentOpen) {
+    return <NoGames />;
+  }
+
+  if (!consented) {
+    return <Consent onConsent={onConsent} />;
+  }
+
+  if (!hasPlayer) {
+    return <PlayerID onPlayerID={onPlayerID} />;
+  }
+
+  if (!player) {
+    return <Loading />;
+  }
+
   return (
     <Steps
       progressKey="intro"
       doneKey="introDone"
       steps={[IntroOne, IntroTwo, Quiz]}
     >
-      <PostIntro children={children} />
+      <PostIntro>{children}</PostIntro>
     </Steps>
   );
 }
@@ -42,4 +76,33 @@ function PostIntro({ children }) {
   }
 
   return children;
+}
+
+function NoGames() {
+  return (
+    <div className="h-screen flex items-center justify-center">
+      <div className="w-92 flex flex-col items-center">
+        <h2 className="text-gray-700 text-2xl">No experiments available</h2>
+        <p className="text-gray-500 mt-4 text-justify">
+          There are currently no available experiments. Please wait until an
+          experiment becomes available or come back at a later date.
+        </p>
+        {isDevelopment ? (
+          <p className="pt-4 text-gray-700">
+            Go to{" "}
+            <a
+              href="/admin"
+              target="empirica-admin"
+              className="text-empirica-500"
+            >
+              Admin
+            </a>{" "}
+            to get started
+          </p>
+        ) : (
+          ""
+        )}
+      </div>
+    </div>
+  );
 }

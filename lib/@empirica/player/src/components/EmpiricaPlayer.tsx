@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Empirica, DefaultURL } from "../empirica";
+import { DefaultURL, Empirica } from "../empirica";
 import { usePlayer } from "../hooks";
 import { Player } from "../player";
-import { Consent } from "./Consent";
-import { EmpiricaContext } from "./Context";
+import {
+  EmpiricaContext,
+  NSContext,
+  URLContext,
+  OnPlayerIDContext,
+} from "./Context";
 import { Loading } from "./Loading";
-import { PlayerID } from "./PlayerID";
 
 interface EmpiricaPlayerProps {
   url?: string;
@@ -39,7 +42,6 @@ const WaitLoad: React.FC = (props) => {
 
 export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
   const [loaded, setLoaded] = useState(false);
-  const [consented, setConsented] = useState(false);
   const [player, setPlayer] = useState<Player | null>(null);
   let sharedPlayer: Player | undefined;
 
@@ -70,6 +72,8 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
             setPlayer(sharedPlayer);
           } catch (e) {
             console.warn("Failed to reconnect", e);
+            window.localStorage.removeItem(tokenKey);
+            window.localStorage.removeItem(partKey);
           } finally {
             console.timeEnd("startup" + ns);
             setLoaded(true);
@@ -92,24 +96,26 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
     return <Loading />;
   }
 
-  if (player) {
-    return (
-      <EmpiricaContext.Provider value={player}>
-        <WaitLoad>{props.children}</WaitLoad>
-      </EmpiricaContext.Provider>
-    );
-  }
+  let onPlayerID = null;
 
-  if (consented || props.consent === null) {
-    const onPlayerID = async (playerID: string) => {
+  if (!player) {
+    onPlayerID = async (playerID: string) => {
       try {
         const [player, token] = await Empirica.registerPlayer(url, playerID);
         if (!token) {
           console.warn("empirica: logged in but no token");
         }
 
-        sharedPlayer = player;
+        let tokenKey = defaultTokenKey;
+        let partKey = defaultPartKey;
+
+        if (ns) {
+          tokenKey += `:${ns}`;
+          partKey += `:${ns}`;
+        }
+
         setPlayer(player);
+        sharedPlayer = player;
 
         window.localStorage.setItem(tokenKey, token);
         window.localStorage.setItem(
@@ -123,34 +129,17 @@ export const EmpiricaPlayer: React.FC<EmpiricaPlayerProps> = (props) => {
         console.error(error);
       }
     };
-
-    if (props.playerID) {
-      const PlyrID = props.playerID;
-      return <PlyrID onPlayerID={onPlayerID} />;
-    }
-
-    return <PlayerID onPlayerID={onPlayerID} />;
-  }
-
-  if (props.consent) {
-    const Csnt = props.consent;
-    return (
-      <Csnt
-        onConsent={() => {
-          setConsented(true);
-        }}
-        onRefuse={() => {
-          console.info("Refused consent");
-        }}
-      />
-    );
   }
 
   return (
-    <Consent
-      onConsent={() => {
-        setConsented(true);
-      }}
-    />
+    <OnPlayerIDContext.Provider value={onPlayerID}>
+      <URLContext.Provider value={url}>
+        <NSContext.Provider value={ns}>
+          <EmpiricaContext.Provider value={player}>
+            {props.children}
+          </EmpiricaContext.Provider>
+        </NSContext.Provider>
+      </URLContext.Provider>
+    </OnPlayerIDContext.Provider>
   );
 };

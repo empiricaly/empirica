@@ -160,7 +160,7 @@ export class EStep {
 }
 
 export interface getSetter {
-  get: (key: string) => void;
+  get: (key: string) => JsonValue;
   set: (key: string, val: JsonValue, ao?: Partial<AttributeOptions>) => void;
 }
 
@@ -280,6 +280,12 @@ export class Player extends EScope {
     }
 
     return scopedScope(this, "stage", this.currentGame.currentStage.id);
+  }
+}
+
+export class Global extends EScope {
+  get type() {
+    return "global";
   }
 }
 
@@ -584,6 +590,8 @@ export class Stage extends EScope {
 export type changeCallback = (change: any) => {};
 
 export class Store {
+  public root: Root = <Root>{};
+  public global: Global = <Global>{};
   public steps: { [key: string]: EStep } = {};
   public scopes: { [key: string]: EScope } = {};
   public batches: { [key: string]: Batch } = {};
@@ -593,8 +601,6 @@ export class Store {
   public players: { [key: string]: Player } = {};
   private changes: Change[] = [];
   private subs: { [key: string]: changeCallback[] } = {};
-
-  constructor(public root: Root) {}
 
   sub(kind: string, cb: changeCallback) {
     if (!this.subs[kind]) {
@@ -698,7 +704,7 @@ export class Store {
   updateAttribute(a: Attribute) {
     const scope = this.scopes[a.node.id];
     if (!scope) {
-      console.warn("scopes: got attribute without scope", a.node.id);
+      console.warn("scopes: got attribute without scope", a.node.id, a.key);
       return;
     }
 
@@ -718,6 +724,10 @@ export class Store {
     }
 
     switch (s.kind) {
+      case "global":
+        const global = new Global(this);
+        global.scope = s;
+        return global;
       case "root":
         const root = new Root(this);
         root.scope = s;
@@ -831,6 +841,13 @@ export class Store {
     }
 
     switch (s.scope.kind) {
+      case "global":
+        if (this.global.scope) {
+          throw new Error("scopes: second global created");
+        }
+
+        this.global = <Global>s;
+        break;
       case "root":
         if (this.root.scope) {
           throw new Error("scopes: second root created");

@@ -1,5 +1,5 @@
 import { Participant as Ptpt, Tajriba } from "@empirica/tajriba";
-import { JsonValue } from "./json";
+import { Json } from "./json";
 import { Player } from "./player";
 import { Store } from "./store";
 
@@ -37,7 +37,7 @@ export const Empirica = {
     const taj = new Tajriba(url);
 
     let subs: Sub[] = [];
-    const attrs: { [key: string]: JsonValue } = {};
+    const attrs: Json = {};
     taj.globalAttributes((payload, err) => {
       if (err) {
         console.error("golbal attributes error:");
@@ -75,4 +75,4 @@ export const Empirica = {
   },
 };
 
-type Sub = (value: Object) => void;
+export type Sub = (value: Json) => void;

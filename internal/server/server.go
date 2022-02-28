@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/empiricaly/empirica/internal/templates"
+	"github.com/jpillora/backoff"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"github.com/rs/cors"
@@ -142,9 +143,20 @@ func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		return
 	}
 
+	connRetry := &backoff.Backoff{
+		Min:    50 * time.Millisecond,
+		Max:    2 * time.Second,
+		Factor: 1.1,
+		Jitter: true,
+	}
+
 	u.Host = "localhost:8844"
 	u.Scheme = "http"
 
+	forwardIndexReq(u, connRetry, w, r)
+}
+
+func forwardIndexReq(u *url.URL, connRetry *backoff.Backoff, w http.ResponseWriter, r *http.Request) {
 	req := &http.Request{
 		Method: r.Method,
 		URL:    u,
@@ -156,29 +168,7 @@ func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		var errType string
-
-		switch t := err.(type) {
-		case *net.OpError:
-			if t.Op == "dial" {
-				errType = "unknown host"
-			} else if t.Op == "read" {
-				errType = "connection refused"
-			}
-		case syscall.Errno:
-			if t == syscall.ECONNREFUSED {
-				errType = "connection refused"
-			}
-		case net.Error:
-			if t.Timeout() {
-				errType = "timeout"
-			} else {
-				errType = "net error"
-			}
-		}
-
-		log.Error().Err(err).Str("type", errType).Msg("server: send response for index failed")
-		w.WriteHeader(http.StatusInternalServerError)
+		handleIndexErr(err, u, connRetry, w, r)
 
 		return
 	}
@@ -198,18 +188,47 @@ func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	}
 }
 
-const (
-	devUser  = "dev"
-	devPass  = "password"
-	devCreds = `{"u": "` + devUser + `", "p": "` + devPass + `"}`
-)
+func handleIndexErr(err error, u *url.URL, connRetry *backoff.Backoff, w http.ResponseWriter, r *http.Request) {
+	var errType string
+
+	switch t := err.(type) {
+	case *net.OpError:
+		if t.Op == "dial" {
+			errType = "unknown host"
+		} else if t.Op == "read" {
+			errType = "connection refused"
+		}
+	case syscall.Errno:
+		if t == syscall.ECONNREFUSED {
+			errType = "connection refused"
+		}
+	case net.Error:
+		if t.Timeout() {
+			errType = "timeout"
+		} else {
+			// In case of net error, the vite server is not ready yet, retry.
+			// errType = "net error"
+
+			select {
+			case <-time.After(connRetry.Duration()):
+				forwardIndexReq(u, connRetry, w, r)
+			case <-r.Context().Done():
+			}
+
+			return
+		}
+	}
+
+	log.Error().Err(err).Str("type", errType).Msg("server: send response for index failed")
+	w.WriteHeader(http.StatusInternalServerError)
+}
 
 func dev(isProd bool) httprouter.Handle {
 	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 		if isProd {
-			w.WriteHeader(400)
+			w.WriteHeader(http.StatusBadRequest)
 		} else {
-			w.WriteHeader(200)
+			w.WriteHeader(http.StatusOK)
 		}
 	}
 }

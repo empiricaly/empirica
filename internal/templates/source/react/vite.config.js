@@ -30,7 +30,10 @@ export default defineConfig({
   logLevel: "warn",
   plugins: [
     restart({
-      restart: ["./windi.config.cjs"],
+      restart: [
+        "./windi.config.cjs",
+        "./node_modules/@empirica/player/dist-src/**/*.{js,ts,jsx,tsx}",
+      ],
     }),
     windi(),
     reactRefresh(),

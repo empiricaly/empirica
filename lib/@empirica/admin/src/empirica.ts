@@ -8,7 +8,7 @@ export const Empirica = {
   async sessionLogin(url: string, sessionToken: string, callbacks?: Callbacks) {
     const t = await Tajriba.sessionAdmin(url, sessionToken);
 
-    const s = new Store(<Root>{});
+    const s = new Store();
     const r = new Runtime(t, s);
     await r.init(callbacks);
     const a = new Admin(r, s);
@@ -26,7 +26,7 @@ export const Empirica = {
     const [t, sessionToken] = await taj.login(username, password);
     taj.stop();
 
-    const s = new Store(<Root>{});
+    const s = new Store();
     const r = new Runtime(t, s);
     await r.init(callbacks);
     const a = new Admin(r, s);
@@ -38,7 +38,7 @@ export const Empirica = {
     const taj = new Tajriba(url, "123456789");
     const t = new TajribaAdmin(taj);
 
-    const s = new Store(<Root>{});
+    const s = new Store();
     const r = new Runtime(t, s);
     await r.init(callbacks);
     const a = new Admin(r, s);
@@ -56,7 +56,7 @@ export const Empirica = {
     const [t, sessionToken] = await taj.registerService(name, serviceToken);
     taj.stop();
 
-    const s = new Store(<Root>{});
+    const s = new Store();
     const r = new Runtime(t, s);
     await r.init(callbacks);
     const a = new Admin(r, s);

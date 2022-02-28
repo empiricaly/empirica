@@ -33,6 +33,10 @@ class Context {
     return Object.values(this.store.players);
   }
 
+  get global() {
+    return this.store.global;
+  }
+
   get unassignedPlayers() {
     return Object.values(this.store.players).filter(
       (p) => p.online && !p.get("gameID")
@@ -215,6 +219,7 @@ export class Runtime {
     }
 
     this.store.addScope(rootScope);
+    await this.getScopesOfKind("global");
     await this.getScopesOfKind("player");
     await this.getScopesOfKind("batch");
     await this.getScopesOfKind("game");

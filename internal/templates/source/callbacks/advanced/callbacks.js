@@ -64,11 +64,14 @@ Empirica.onNewBatch(function ({ batch }) {
     return;
   }
 
+  let gameAdded = false;
+
   switch (conf.kind) {
     case "simple":
       for (let i = 0; i < conf.config.count; i++) {
         const treatment = pickRandom(conf.config.treatments).factors;
         batch.addGame({ treatment });
+        gameAdded = true;
       }
 
       break;
@@ -76,6 +79,7 @@ Empirica.onNewBatch(function ({ batch }) {
       for (const t of conf.config.treatments) {
         for (let i = 0; i < t.count; i++) {
           batch.addGame({ treatment: t.treatment.factors });
+          gameAdded = true;
         }
       }
 
@@ -83,6 +87,10 @@ Empirica.onNewBatch(function ({ batch }) {
     default:
       console.warn("callbacks: batch created without a config");
       return;
+  }
+
+  if (gameAdded) {
+    this.global.set("experimentOpen", gameAdded);
   }
 });
 
@@ -145,10 +153,25 @@ function checkBatchEnded(batch) {
   }
 }
 
+function gamesAvailable(batches) {
+  for (const batch of batches) {
+    if (batch.get("state") !== "running") {
+      continue;
+    }
+
+    if (batch.games.find((g) => !g.get("state") && !g.get("starting"))) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 Empirica.onChange("game", "state", function ({ isNew, game }) {
   switch (game.get("state")) {
     case "running":
       console.debug("callbacks: game running");
+      this.global.set("experimentOpen", gamesAvailable(this.batches));
       break;
     case "ended":
       console.debug("callbacks: game ended");

@@ -7,8 +7,8 @@ Empirica.onGameStart(function ({ game }) {
 
   for (let i = 0; i < 3; i++) {
     const round = game.addRound({ name: `Round ${i + 1}` });
-    round.addStage({ name: "Response", duration: 20 });
-    round.addStage({ name: "Result", duration: 10 });
+    round.addStage({ name: "Response", duration: 20_00000 });
+    round.addStage({ name: "Result", duration: 10_00000 });
 
     if (game.players.length > 1) {
       round.addStage({ name: "Neighbors", duration: 20 });

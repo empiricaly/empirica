@@ -6,6 +6,11 @@
     "build": "vite build",
     "serve": "vite preview"
   },
+  "volta": {
+    "node": "16.4.1",
+    "yarn": "1.22.10",
+    "npm": "7.19.1"
+  },
   "dependencies": {
     "@empirica/player": "^1.0.0-alpha.4",
     "@react-hook/mouse-position": "4.1.3",

@@ -2,6 +2,11 @@
   "name": "empirica-server-demo",
   "private": true,
   "type": "module",
+  "volta": {
+    "node": "16.4.1",
+    "yarn": "1.22.10",
+    "npm": "7.19.1"
+  },
   "dependencies": {
     "@empirica/admin": "^1.0.0-alpha.5",
     "minimist": "1.2.5",

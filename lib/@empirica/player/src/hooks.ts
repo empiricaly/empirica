@@ -1,17 +1,21 @@
 import { useContext, useEffect, useState } from "react";
-import { EmpiricaContext, GlobalContext, Store } from "./components/Context";
+import {
+  EmpiricaContext,
+  GlobalContext,
+  NSContext,
+  OnPlayerIDContext,
+} from "./components/Context";
+import { Json } from "./json";
 import { Game, Player, Round, Stage } from "./store";
 
 export function useGlobal() {
   const globalCtx = useContext(GlobalContext);
-  const [glob, setGlobal] = useState<{ store: Store | null }>({
-    store: null,
-  });
+  const [glob, setGlobal] = useState<{ data: Json }>({ data: {} });
 
   let globalUnsub: (() => void) | null = null;
   useEffect(() => {
     if (!globalCtx) {
-      setGlobal({ store: null });
+      setGlobal({ data: {} });
 
       if (globalUnsub) {
         globalUnsub();
@@ -21,14 +25,50 @@ export function useGlobal() {
       return;
     }
 
-    globalUnsub = globalCtx?.subscribe((store) => {
-      setGlobal({ store });
+    globalUnsub = globalCtx?.subscribe((vals) => {
+      setGlobal({ data: vals || {} });
     });
 
     return globalUnsub;
   }, [globalCtx]);
 
-  return glob.store;
+  return glob.data;
+}
+
+const defaultConsentKey = "emp:part:consent";
+
+function consentKey(ns: string | null) {
+  return `${defaultConsentKey}${ns ? `:${ns}` : ""}`;
+}
+
+function getConsented(ns: string | null) {
+  return Boolean(window.localStorage[consentKey(ns)]);
+}
+
+export function useConsent(): [boolean, () => void] {
+  const nsCtx = useContext(NSContext);
+  const [consented, setConsented] = useState(getConsented(nsCtx));
+
+  useEffect(() => {
+    setConsented(getConsented(nsCtx));
+  }, [nsCtx]);
+
+  function onConsent() {
+    window.localStorage[consentKey(nsCtx)] = true;
+    setConsented(true);
+  }
+
+  return [consented, onConsent];
+}
+
+export function usePlayerID(): [boolean, ((playerID: string) => void) | null] {
+  const opiCtx = useContext(OnPlayerIDContext);
+  const playerCtx = useContext(EmpiricaContext);
+  const [hasPlayer, setPlayer] = useState<boolean>(Boolean(playerCtx));
+
+  useEffect(() => setPlayer(Boolean(playerCtx)), [playerCtx]);
+
+  return [hasPlayer, opiCtx];
 }
 
 export function useGame() {
@@ -97,7 +137,6 @@ export function useStage() {
 
   let stageUnsub: (() => void) | null = null;
   useEffect(() => {
-    // console.log("useStage", playerCtx?.stage?.hash);
     if (!playerCtx) {
       setStage({ stage: null });
 
@@ -110,7 +149,6 @@ export function useStage() {
     }
 
     stageUnsub = playerCtx?.stageSub.subscribe((stage) => {
-      // console.log("useStage update", stage?.id);
       setStage({ stage });
     });
 
