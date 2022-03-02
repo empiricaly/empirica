@@ -132,6 +132,8 @@ github.com/empiricaly/tajriba v1.0.0-alpha.1 h1:A0lagt1/uvn8B7+3KPmVB51GaZYB4xpG
 github.com/empiricaly/tajriba v1.0.0-alpha.1/go.mod h1:l44pD6LFIJGmLSJRaXNEj9zYWcaGA+fwD2OI69yp1ew=
 github.com/empiricaly/tajriba v1.0.0-alpha.1.0.20220228082022-99c485cb1ec8 h1:5FoX31yFV0vmqSkAcgfmdP2s9jMFDaKO8wksocapG/g=
 github.com/empiricaly/tajriba v1.0.0-alpha.1.0.20220228082022-99c485cb1ec8/go.mod h1:l44pD6LFIJGmLSJRaXNEj9zYWcaGA+fwD2OI69yp1ew=
+github.com/empiricaly/tajriba v1.0.0-alpha.1.0.20220302143250-e4fc5b9c1963 h1:+TB9o1rrm87E+IcAYjr3Ihj3yxN5h/Eqz9Axf7L2ACE=
+github.com/empiricaly/tajriba v1.0.0-alpha.1.0.20220302143250-e4fc5b9c1963/go.mod h1:l44pD6LFIJGmLSJRaXNEj9zYWcaGA+fwD2OI69yp1ew=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
