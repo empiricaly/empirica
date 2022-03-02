@@ -6,3 +6,4 @@ internal/vendored/transport
 yarn-error.log
 node_modules
 empirica
+go.work

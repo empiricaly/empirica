@@ -3,7 +3,7 @@
   import { castValue } from "../../utils/typeValue";
   import { focus } from "../../utils/use";
   import Button from "../common/Button.svelte";
-  import Duplicate from "../common/duplicate.svelte";
+  import Duplicate from "../common/Duplicate.svelte";
   import Trash from "../common/Trash.svelte";
   import Alert from "../layout/Alert.svelte";
   import SlideOver from "../overlays/SlideOver.svelte";

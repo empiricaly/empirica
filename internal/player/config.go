@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const defaultCommand = "unbuffer npm run --silent dev"
+const defaultCommand = "npm run --silent dev"
 
 // Config is server configuration.
 type Config struct {

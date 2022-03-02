@@ -1,0 +1,33 @@
+name: Build tawonctl
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  tawonctl:
+    name: Build and upload cli
+    runs-on: ubuntu-latest
+    if: ${{ github.repository == 'empiricaly/empirica' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build
+        run: docker build -t empirica-tmp -f ./build/Dockerfile --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') --build-arg BUILD_SHA=$(git rev-list -1 HEAD) --build-arg BUILD_NUM=$GITHUB_RUN_NUMBER --build-arg VERSION=v0.0.0 .
+      - name: Copy binaries from image
+        run: docker run --rm empirica tar -cC /out . | tar -xC $(pwd)/build/public
+      - name: Smoke test
+        run: ./build/public/empirica-linux-amd64 --help
+      - name: Copy download.sh
+        run: cp build/download.sh build/public/index.html
+      - name: Upload to Firebase Hosting
+        uses: w9jds/firebase-action@master
+        with:
+          args: deploy --only hosting
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          PROJECT_PATH: ./build

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -52,6 +53,21 @@ func addCreateCommand(parent *cobra.Command) {
 				<-s
 				log.Fatal().Msg("Force quit")
 			}()
+
+			if !commandExists("node") || (!commandExists("npm") && !commandExists("yarn")) {
+				fmt.Print("We could not detect any Node.js installation. May we install it for you? (y)es or (n)o: ")
+				if !askForConfirmation() {
+					return errors.New("Could not create project, node/npm is missing")
+				}
+
+				if err := runCmd(ctx, "", "bash", "-c", "curl https://get.volta.sh | bash -s - --skip-setup"); err != nil {
+					return errors.Wrap(err, "install volta")
+				}
+
+				if err := runCmd(ctx, "", "volta", "install", "node"); err != nil {
+					return errors.Wrap(err, "install node")
+				}
+			}
 
 			// current, err := os.Getwd()
 			// if err != nil {
@@ -118,4 +134,30 @@ func runCmd(ctx context.Context, dir, command string, args ...string) error {
 	}
 
 	return nil
+}
+
+func commandExists(cmd string) bool {
+	_, err := exec.LookPath(cmd)
+	return err == nil
+}
+
+func askForConfirmation() bool {
+	var response string
+
+	_, err := fmt.Scanln(&response)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to read input")
+
+		return false
+	}
+
+	switch strings.ToLower(response) {
+	case "y", "yes":
+		return true
+	case "n", "no":
+		return false
+	default:
+		fmt.Println("I'm sorry but I didn't get what you meant, please type (y)es or (n)o and then press enter:")
+		return askForConfirmation()
+	}
 }

@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/empiricaly/empirica"
+	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
-
 	"github.com/spf13/viper"
 )
 
@@ -99,6 +99,8 @@ func root(_ *cobra.Command, _ []string, usingConfigFile bool) {
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	settings.InitShared()
+
 	rootCmd, usingConfigFile, err := defineRoot()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to start")
