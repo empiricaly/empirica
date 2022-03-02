@@ -24,7 +24,7 @@ ENV PATH $VOLTA_HOME/bin:$PATH
 RUN curl https://get.volta.sh | bash
 RUN volta install node
 
-RUN go get -u github.com/go-bindata/go-bindata/...
+RUN go install github.com/go-bindata/go-bindata/go-bindata@latest
 
 RUN mkdir -p /build
 WORKDIR /build
