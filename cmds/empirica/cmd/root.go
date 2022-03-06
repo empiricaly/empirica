@@ -86,7 +86,6 @@ func root(_ *cobra.Command, _ []string, usingConfigFile bool) {
 		log.Fatal().Err(err).Msg("empirica: failed to start")
 	}
 
-	log.Info().Msg("empirica: started")
 	<-ctx.Done()
 
 	// Give the closing a few seconds to cleanup

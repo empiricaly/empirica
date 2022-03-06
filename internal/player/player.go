@@ -1,19 +1,25 @@
 package player
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"os"
 	"os/exec"
 	"strings"
 	"time"
 
+	"github.com/empiricaly/empirica/internal/term"
 	"github.com/jpillora/backoff"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
 type Player struct {
-	config *Config
+	config       *Config
+	stdout       io.Writer
+	comp         *term.Component
+	isDefaultCmd bool
 }
 
 // Start creates and starts the GraphQL HTTP server.
@@ -21,8 +27,17 @@ func Start(
 	ctx context.Context,
 	config *Config,
 ) (*Player, error) {
+	os.Setenv("FORCE_COLOR", "3")
+
+	termui := term.ForContext(ctx)
+	comp := termui.Add("player")
+	isDefaultCmd := config.DevCmd == defaultCommand
+
 	p := &Player{
-		config: config,
+		config:       config,
+		comp:         comp,
+		stdout:       &playerWriter{w: os.Stdout, comp: comp, isDefaultCmd: isDefaultCmd},
+		isDefaultCmd: isDefaultCmd,
 	}
 
 	go p.run(ctx)
@@ -42,7 +57,10 @@ func (p *Player) run(ctx context.Context) {
 		c, err := p.runDevCmd(ctx)
 
 		if err == nil {
-			log.Info().Msg("player: started")
+			// log.Info().Msg("player: started")
+			if !p.isDefaultCmd {
+				p.comp.Ready()
+			}
 
 			err = c.Wait()
 
@@ -105,7 +123,7 @@ func (p *Player) runDevCmd(ctx context.Context) (*exec.Cmd, error) {
 	c := exec.CommandContext(ctx, parts[0], args...)
 
 	c.Stderr = os.Stderr
-	c.Stdout = os.Stdout
+	c.Stdout = p.stdout
 	c.Dir = p.config.Path
 
 	if err := c.Start(); err != nil {
@@ -113,4 +131,36 @@ func (p *Player) runDevCmd(ctx context.Context) (*exec.Cmd, error) {
 	}
 
 	return c, nil
+}
+
+// ready in 726ms.
+
+type playerWriter struct {
+	w            io.Writer
+	comp         *term.Component
+	isDefaultCmd bool
+}
+
+func (c *playerWriter) Write(p []byte) (n int, err error) {
+	var ready bool
+	if c.isDefaultCmd {
+		// trimmed := bytes.TrimSpace(stripansi.Strip(p))
+
+		// fmt.Println(string(trimmed))
+
+		if bytes.Contains(p, []byte("ready in ")) {
+			// if bytes.HasSuffix(trimmed, []byte("ms.")) {
+			ready = true
+			// }
+		}
+	}
+
+	c.comp.Log(string(p))
+
+	if ready {
+		c.comp.Ready()
+	}
+
+	return len(p), nil
+	// return c.w.Write(p)
 }

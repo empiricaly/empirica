@@ -1,7 +1,9 @@
 package callbacks
 
 import (
+	"bytes"
 	"context"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -10,6 +12,7 @@ import (
 	"time"
 
 	"github.com/cortesi/moddwatch"
+	"github.com/empiricaly/empirica/internal/term"
 	"github.com/jpillora/backoff"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog"
@@ -21,7 +24,10 @@ type Callbacks struct {
 	ctx    context.Context
 	config *Config
 
-	c *exec.Cmd
+	c            *exec.Cmd
+	stdout       *callbacksWriter
+	comp         *term.Component
+	isDefaultCmd bool
 
 	deadlock.Mutex
 }
@@ -31,9 +37,16 @@ func Start(
 	ctx context.Context,
 	config *Config,
 ) (*Callbacks, error) {
+	termui := term.ForContext(ctx)
+	comp := termui.Add("callbacks")
+	isDefaultCmd := config.DevCmd == defaultCommand
+
 	p := &Callbacks{
-		config: config,
-		ctx:    ctx,
+		config:       config,
+		ctx:          ctx,
+		comp:         comp,
+		isDefaultCmd: isDefaultCmd,
+		stdout:       &callbacksWriter{w: os.Stdout, comp: comp, isDefaultCmd: isDefaultCmd},
 	}
 
 	if err := p.start(ctx); err != nil {
@@ -127,6 +140,10 @@ func (cb *Callbacks) run(ctx context.Context) {
 		c, err := cb.runOnce(ctx)
 
 		if err == nil {
+			if !cb.isDefaultCmd {
+				cb.comp.Ready()
+			}
+
 			cb.Lock()
 			cb.c = c
 			cb.Unlock()
@@ -212,7 +229,7 @@ func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 	c := exec.CommandContext(ctx, parts[0], args...)
 
 	c.Stderr = os.Stderr
-	c.Stdout = os.Stdout
+	c.Stdout = cb.stdout
 	c.Dir = cb.config.Path
 
 	if err := c.Start(); err != nil {
@@ -220,4 +237,29 @@ func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 	}
 
 	return c, nil
+}
+
+type callbacksWriter struct {
+	w            io.Writer
+	comp         *term.Component
+	isDefaultCmd bool
+}
+
+func (c *callbacksWriter) Write(p []byte) (n int, err error) {
+	var ready bool
+	if c.isDefaultCmd {
+		if bytes.Contains(p, []byte("callbacks: started")) {
+			ready = true
+		}
+	}
+
+	c.comp.Log(string(p))
+
+	if ready {
+		c.comp.Ready()
+	}
+
+	return len(p), nil
+
+	// return c.w.Write(p)
 }

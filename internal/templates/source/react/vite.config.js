@@ -27,7 +27,7 @@ export default defineConfig({
       $assets: resolve("src/assets"),
     },
   },
-  logLevel: "warn",
+  // logLevel: "warn",
   plugins: [
     restart({
       restart: [

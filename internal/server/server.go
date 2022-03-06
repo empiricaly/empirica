@@ -28,6 +28,7 @@ import (
 type Server struct {
 	wg     *sync.WaitGroup
 	Router *httprouter.Router
+	config *Config
 }
 
 // shutdownGracePeriod is the time to wait for the server to close gracefully.
@@ -38,22 +39,26 @@ func Start(
 	ctx context.Context,
 	config *Config,
 ) (*Server, error) {
-	s := &Server{
-		wg:     &sync.WaitGroup{},
-		Router: httprouter.New(),
+	s, err := Prepare(config)
+	if err != nil {
+		return nil, errors.Wrap(err, "prepare server")
 	}
 
-	s.Router.RedirectTrailingSlash = true
-	s.Router.RedirectFixedPath = true
-	s.Router.HandleMethodNotAllowed = true
-
-	err := Enable(ctx, config, s.Router)
-	if err != nil {
+	if err := Enable(ctx, config, s.Router); err != nil {
 		return nil, errors.Wrap(err, "enable server")
 	}
 
+	if err := s.Start(ctx); err != nil {
+		return nil, errors.Wrap(err, "start server")
+	}
+
+	return s, nil
+}
+
+// Start creates and starts the GraphQL HTTP server.
+func (s *Server) Start(ctx context.Context) (err error) {
 	srv := &http.Server{
-		Addr:        config.Addr,
+		Addr:        s.config.Addr,
 		Handler:     cors.AllowAll().Handler(s.Router),
 		BaseContext: func(_ net.Listener) context.Context { return ctx },
 	}
@@ -64,7 +69,7 @@ func Start(
 	defer cancel()
 
 	go func() {
-		log.Debug().Str("addr", config.Addr).Msg("server: starting")
+		log.Debug().Str("addr", s.config.Addr).Msg("server: starting")
 
 		<-ctx.Done()
 
@@ -101,8 +106,23 @@ func Start(
 	<-ctx2.Done()
 
 	if err != nil {
-		return nil, errors.Wrap(err, "start server")
+		return errors.Wrap(err, "start server")
 	}
+
+	return nil
+}
+
+// Prepare prepares the HTTP server.
+func Prepare(config *Config) (*Server, error) {
+	s := &Server{
+		wg:     &sync.WaitGroup{},
+		Router: httprouter.New(),
+		config: config,
+	}
+
+	s.Router.RedirectTrailingSlash = true
+	s.Router.RedirectFixedPath = true
+	s.Router.HandleMethodNotAllowed = true
 
 	return s, nil
 }
@@ -278,7 +298,7 @@ func writeTreatments(p string) httprouter.Handle {
 			log.Error().Err(err).Msg("Failed write yaml")
 		}
 
-		err = ioutil.WriteFile(p, content, 0644)
+		err = ioutil.WriteFile(p, content, 0o644)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed to open yaml")
 		}

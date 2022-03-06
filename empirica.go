@@ -9,6 +9,7 @@ import (
 	"github.com/empiricaly/empirica/internal/player"
 	"github.com/empiricaly/empirica/internal/server"
 	"github.com/empiricaly/empirica/internal/settings"
+	"github.com/empiricaly/empirica/internal/term"
 	logger "github.com/empiricaly/empirica/internal/utils/log"
 	"github.com/empiricaly/tajriba"
 	"github.com/pkg/errors"
@@ -61,6 +62,10 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 
 	var schema graphql.ExecutableSchema
 
+	termui := term.New()
+	ctx = term.SetContext(ctx, termui)
+	comp := termui.Add("tajriba")
+
 	ctx, r.taj, schema, err = tajriba.Setup(ctx, config.Tajriba, usingConfigFile)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start tajriba")
@@ -69,15 +74,20 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 	// Pass down if production
 	config.Server.Production = config.Production
 
-	r.server, err = server.Start(ctx, config.Server)
-	if err != nil {
-		return nil, errors.Wrap(err, "init server")
+	if r.server, err = server.Prepare(config.Server); err != nil {
+		return nil, errors.Wrap(err, "prepare server")
+	}
+
+	if err := server.Enable(ctx, config.Server, r.server.Router); err != nil {
+		return nil, errors.Wrap(err, "enable server")
 	}
 
 	r.player, err = player.Start(ctx, config.Player)
 	if err != nil {
 		return nil, errors.Wrap(err, "init player")
 	}
+
+	termui.Start()
 
 	config.Callbacks.Token = config.Tajriba.Auth.ServiceRegistrationToken
 	config.Tajriba.Server.Production = config.Production
@@ -91,6 +101,12 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start tajriba")
 	}
+
+	if err := r.server.Start(ctx); err != nil {
+		return nil, errors.Wrap(err, "start server")
+	}
+
+	comp.Ready()
 
 	return r, nil
 }
