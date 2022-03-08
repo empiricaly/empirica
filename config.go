@@ -13,6 +13,7 @@ import (
 
 // Config is server configuration.
 type Config struct {
+	Name       string            `mapstructure:"name"`
 	Server     *server.Config    `mapstructure:"server"`
 	Player     *player.Config    `mapstructure:"player"`
 	Callbacks  *callbacks.Config `mapstructure:"callbacks"`
@@ -76,6 +77,14 @@ func ConfigFlags(cmd *cobra.Command) error {
 	bval := false
 	cmd.Flags().Bool(flag, bval, "Run in production mode")
 	viper.SetDefault(flag, bval)
+
+	flag = "name"
+	sval := ""
+	cmd.Flags().String(flag, sval, "Name of project")
+	viper.SetDefault(flag, sval)
+	if err := cmd.Flags().MarkHidden(flag); err != nil {
+		return errors.Wrap(err, "mark name hidden")
+	}
 
 	return nil
 }

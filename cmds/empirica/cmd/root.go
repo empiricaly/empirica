@@ -9,6 +9,7 @@ import (
 
 	"github.com/empiricaly/empirica"
 	"github.com/empiricaly/empirica/internal/settings"
+	logger "github.com/empiricaly/empirica/internal/utils/log"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -17,7 +18,8 @@ import (
 
 func defineRoot() (*cobra.Command, *bool, error) {
 	// usingConfigFile tracks if the config comes from a file.
-	usingConfigFile := false
+	isUsingConfigFile := false
+	usingConfigFile := &isUsingConfigFile
 
 	// rootCmd represents the base command when called without any subcommands.
 	rootCmd := &cobra.Command{
@@ -49,25 +51,23 @@ func defineRoot() (*cobra.Command, *bool, error) {
 		return nil, nil, errors.Wrap(err, "bind root persistent flags")
 	}
 
-	return rootCmd, &usingConfigFile, nil
+	return rootCmd, usingConfigFile, nil
 }
 
 const closeMaxCuration = time.Second * 5
 
-func root(_ *cobra.Command, _ []string, usingConfigFile bool) {
+func root(_ *cobra.Command, _ []string, usingConfigFile *bool) {
+	ctx, cancel := context.WithCancel(context.Background())
+
 	conf := new(empirica.Config)
 
-	err := viper.Unmarshal(conf)
-	if err != nil {
+	if err := viper.Unmarshal(conf); err != nil {
 		log.Fatal().Err(err).Msg("could not parse configuration")
 	}
 
-	err = conf.Validate()
-	if err != nil {
-		log.Fatal().Err(err).Msg("invalid config")
+	if err := conf.Validate(); err != nil {
+		log.Fatal().Err(err).Msg("empirica: invalid config")
 	}
-
-	ctx, cancel := context.WithCancel(context.Background())
 
 	go func() {
 		s := make(chan os.Signal, 1)
@@ -81,7 +81,7 @@ func root(_ *cobra.Command, _ []string, usingConfigFile bool) {
 		log.Fatal().Msg("Force quit")
 	}()
 
-	t, err := empirica.Start(ctx, conf, usingConfigFile)
+	t, err := empirica.Start(ctx, conf, *usingConfigFile)
 	if err != nil {
 		log.Fatal().Err(err).Msg("empirica: failed to start")
 	}
@@ -95,6 +95,10 @@ func root(_ *cobra.Command, _ []string, usingConfigFile bool) {
 	t.Close(ctx)
 }
 
+func failedStart(err error) {
+	log.Fatal().Err(err).Msg("empirica: failed to start")
+}
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
@@ -102,15 +106,21 @@ func Execute() {
 
 	rootCmd, usingConfigFile, err := defineRoot()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to start")
+		failedStart(err)
 	}
 
-	addCreateCommand(rootCmd)
+	if err := addCreateCommand(rootCmd); err != nil {
+		failedStart(err)
+	}
+
+	if err := addBundleCommand(rootCmd); err != nil {
+		failedStart(err)
+	}
 
 	cobra.OnInitialize(initConfig(rootCmd, usingConfigFile))
 
 	if err := rootCmd.Execute(); err != nil {
-		log.Fatal().Err(err).Msg("Failed to start")
+		failedStart(err)
 	}
 }
 
@@ -119,7 +129,7 @@ func initConfig(rootCmd *cobra.Command, usingConfigFile *bool) func() {
 	return func() {
 		cfgFile, err := rootCmd.PersistentFlags().GetString("config")
 		if err != nil {
-			log.Fatal().Err(err).Msg("Failed to parse config file flag")
+			log.Fatal().Err(err).Msg("empirica: failed to parse config file flag")
 		}
 
 		if cfgFile != "" {
@@ -146,6 +156,20 @@ func initConfig(rootCmd *cobra.Command, usingConfigFile *bool) func() {
 		// If a config file is found, read it in.
 		if err := viper.ReadInConfig(); err == nil {
 			*usingConfigFile = true
+		}
+
+		conf := new(empirica.Config)
+
+		if err := viper.Unmarshal(conf); err != nil {
+			log.Fatal().Err(err).Msg("could not parse configuration")
+		}
+
+		if err := conf.Validate(); err != nil {
+			log.Fatal().Err(err).Msg("empirica: invalid config")
+		}
+
+		if err := logger.Init(conf.Log); err != nil {
+			log.Fatal().Err(err).Msg("empirica: failed to init logging")
 		}
 	}
 }

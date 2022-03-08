@@ -54,7 +54,7 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 		return nil, errors.Wrap(err, "get current dir")
 	}
 
-	if err := settings.Init(dir); err != nil {
+	if err := settings.Init(config.Name, dir); err != nil {
 		return nil, errors.Wrap(err, "empirica")
 	}
 
@@ -78,10 +78,6 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 		return nil, errors.Wrap(err, "prepare server")
 	}
 
-	if err := server.Enable(ctx, config.Server, r.server.Router); err != nil {
-		return nil, errors.Wrap(err, "enable server")
-	}
-
 	r.player, err = player.Start(ctx, config.Player)
 	if err != nil {
 		return nil, errors.Wrap(err, "init player")
@@ -95,6 +91,10 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 	r.callbacks, err = callbacks.Start(ctx, config.Callbacks)
 	if err != nil {
 		return nil, errors.Wrap(err, "init callbacks")
+	}
+
+	if err := server.Enable(ctx, config.Server, r.server.Router); err != nil {
+		return nil, errors.Wrap(err, "enable server")
 	}
 
 	err = tajriba.Init(ctx, config.Tajriba, schema, r.server.Router)

@@ -18,16 +18,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const empiricatoml = `[tajriba.auth]
-srtoken = "%s"
-
-[[tajriba.auth.users]]
-name = "Admin"
-username = "admin"
-password = "%s"
-`
-
-func addCreateCommand(parent *cobra.Command) {
+func addCreateCommand(parent *cobra.Command) error {
 	parent.AddCommand(&cobra.Command{
 		Use:   "create",
 		Short: "Create a new Empirica project",
@@ -54,19 +45,8 @@ func addCreateCommand(parent *cobra.Command) {
 				log.Fatal().Msg("Force quit")
 			}()
 
-			if !commandExists("node") || (!commandExists("npm") && !commandExists("yarn")) {
-				fmt.Print("We could not detect any Node.js installation. May we install it for you? (y)es or (n)o: ")
-				if !askForConfirmation() {
-					return errors.New("Could not create project, node/npm is missing")
-				}
-
-				if err := runCmd(ctx, "", "bash", "-c", "curl https://get.volta.sh | bash -s - --skip-setup"); err != nil {
-					return errors.Wrap(err, "install volta")
-				}
-
-				if err := runCmd(ctx, "", "volta", "install", "node"); err != nil {
-					return errors.Wrap(err, "install node")
-				}
+			if err := installNodeIfNeeded(ctx); err != nil {
+				return errors.Wrap(err, "check node")
 			}
 
 			// current, err := os.Getwd()
@@ -101,16 +81,18 @@ func addCreateCommand(parent *cobra.Command) {
 				return errors.Wrap(err, "server")
 			}
 
-			if err := settings.Init(dir); err != nil {
+			if err := settings.Init(project, dir); err != nil {
 				return errors.Wrap(err, "empirica")
 			}
 
 			return nil
 		},
 	})
+
+	return nil
 }
 
-const dirPerm = 0777
+const dirPerm = 0o777
 
 func createDir(dir string) error {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
@@ -160,4 +142,23 @@ func askForConfirmation() bool {
 		fmt.Println("I'm sorry but I didn't get what you meant, please type (y)es or (n)o and then press enter:")
 		return askForConfirmation()
 	}
+}
+
+func installNodeIfNeeded(ctx context.Context) error {
+	if !commandExists("node") || (!commandExists("npm") && !commandExists("yarn")) {
+		fmt.Print("We could not detect any Node.js installation. May we install it for you? (y)es or (n)o: ")
+		if !askForConfirmation() {
+			return errors.New("Could not create project, node/npm is missing")
+		}
+
+		if err := runCmd(ctx, "", "bash", "-c", "curl https://get.volta.sh | bash -s - --skip-setup"); err != nil {
+			return errors.Wrap(err, "install volta")
+		}
+
+		if err := runCmd(ctx, "", "volta", "install", "node"); err != nil {
+			return errors.Wrap(err, "install node")
+		}
+	}
+
+	return nil
 }

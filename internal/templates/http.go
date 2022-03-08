@@ -112,7 +112,7 @@ func (f *httpFile) Stat() (os.FileInfo, error) {
 
 // dirFileInfo return default dir file info.
 func dirFileInfo(name string) os.FileInfo {
-	return &fileStat{
+	return &dirStat{
 		name:    name,
 		size:    0,
 		mode:    os.FileMode(2147484068), // equal os.FileMode(0644)|os.ModeDir
@@ -120,17 +120,17 @@ func dirFileInfo(name string) os.FileInfo {
 	}
 }
 
-// A fileStat is the implementation of FileInfo returned by Stat and Lstat.
-type fileStat struct {
+// A dirStat is the implementation of FileInfo returned by Stat and Lstat.
+type dirStat struct {
 	name    string
 	size    int64
 	mode    os.FileMode
 	modTime time.Time
 }
 
-func (fs *fileStat) Name() string       { return fs.name }
-func (fs *fileStat) Size() int64        { return fs.size }
-func (fs *fileStat) Mode() os.FileMode  { return fs.mode }
-func (fs *fileStat) ModTime() time.Time { return fs.modTime }
-func (fs *fileStat) Sys() interface{}   { return nil }
-func (fs *fileStat) IsDir() bool        { return false }
+func (fs *dirStat) Name() string       { return fs.name }
+func (fs *dirStat) Size() int64        { return fs.size }
+func (fs *dirStat) Mode() os.FileMode  { return fs.mode }
+func (fs *dirStat) ModTime() time.Time { return fs.modTime }
+func (fs *dirStat) Sys() interface{}   { return nil }
+func (fs *dirStat) IsDir() bool        { return true }

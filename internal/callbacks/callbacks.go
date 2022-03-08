@@ -32,6 +32,37 @@ type Callbacks struct {
 	deadlock.Mutex
 }
 
+func Build(ctx context.Context, config *Config) error {
+	cmd := config.BuildCmd
+
+	parts := strings.Split(cmd, " ")
+	if len(parts) == 0 {
+		return errors.New("empty callbacks buildcmd")
+	}
+
+	var args []string
+	if len(parts) > 1 {
+		args = parts[1:]
+	}
+
+	c := exec.CommandContext(ctx, parts[0], args...)
+
+	c.Stderr = os.Stderr
+	c.Stdout = os.Stdout
+	c.Dir = config.Path
+
+	if err := c.Run(); err != nil {
+		return errors.Wrap(err, "run callbacks build command")
+	}
+
+	return nil
+}
+
+// BuildDir returns the build dir.
+func BuildDir(config *Config) string {
+	return path.Join(config.Path, config.BuildDir)
+}
+
 // Start creates and starts the GraphQL HTTP server.
 func Start(
 	ctx context.Context,
@@ -39,7 +70,7 @@ func Start(
 ) (*Callbacks, error) {
 	termui := term.ForContext(ctx)
 	comp := termui.Add("callbacks")
-	isDefaultCmd := config.DevCmd == defaultCommand
+	isDefaultCmd := config.DevCmd == defaultDevCommand
 
 	p := &Callbacks{
 		config:       config,
@@ -196,7 +227,7 @@ func (cb *Callbacks) run(ctx context.Context) {
 func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 	cmd := cb.config.DevCmd
 
-	if cmd == defaultCommand {
+	if cmd == defaultDevCommand {
 		lvl := zerolog.GlobalLevel()
 		cmd = cmd + " --loglevel " + lvl.String()
 
@@ -233,7 +264,7 @@ func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 	c.Dir = cb.config.Path
 
 	if err := c.Start(); err != nil {
-		return nil, errors.Wrap(err, "run command")
+		return nil, errors.Wrap(err, "run callbacks dev command")
 	}
 
 	return c, nil

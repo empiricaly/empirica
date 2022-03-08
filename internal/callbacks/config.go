@@ -11,6 +11,9 @@ import (
 type Config struct {
 	Path             string `mapstructure:"path"`
 	DevCmd           string `mapstructure:"devcmd"`
+	BuildCmd         string `mapstructure:"buildcmd"`
+	ServeCmd         string `mapstructure:"servecmd"`
+	BuildDir         string `mapstructure:"builddir"`
 	Token            string `mapstructure:"token"`
 	SessionToken     string `mapstructure:"sessionTokenPath"`
 	SaveSessionToken bool   `mapstructure:"sessionToken"`
@@ -21,7 +24,12 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-const defaultCommand = "node --trace-warnings --enable-source-maps index.js"
+const (
+	defaultDevCommand   = "yarn run --silent dev"
+	defaultBuildCommand = "yarn run --silent build"
+	defaultServeCommand = "yarn run --silent serve"
+	defaultBuildDir     = "dist"
+)
 
 // ConfigFlags helps configure cobra and viper flags.
 func ConfigFlags(cmd *cobra.Command, prefix string) error {
@@ -37,12 +45,27 @@ func ConfigFlags(cmd *cobra.Command, prefix string) error {
 
 	flag := prefix + ".path"
 	sval := "server"
-	cmd.Flags().String(flag, sval, "Path to client code")
+	cmd.Flags().String(flag, sval, "Path to code")
 	viper.SetDefault(flag, sval)
 
 	flag = prefix + ".devcmd"
-	sval = defaultCommand
-	cmd.Flags().String(flag, sval, "Command to run client code in development")
+	sval = defaultDevCommand
+	cmd.Flags().String(flag, sval, "Command to run code in development")
+	viper.SetDefault(flag, sval)
+
+	flag = prefix + ".buildcmd"
+	sval = defaultBuildCommand
+	cmd.Flags().String(flag, sval, "Command to build code for production")
+	viper.SetDefault(flag, sval)
+
+	flag = prefix + ".servecmd"
+	sval = defaultServeCommand
+	cmd.Flags().String(flag, sval, "Command to run code in production")
+	viper.SetDefault(flag, sval)
+
+	flag = prefix + ".builddir"
+	sval = defaultBuildDir
+	cmd.Flags().String(flag, sval, "Build directory")
 	viper.SetDefault(flag, sval)
 
 	flag = prefix + ".token"

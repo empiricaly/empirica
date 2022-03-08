@@ -7,12 +7,20 @@ import (
 	"github.com/spf13/viper"
 )
 
-const defaultCommand = "npm run --silent dev"
+const (
+	defaultDevCommand   = "yarn run --silent dev"
+	defaultBuildCommand = "yarn run --silent build"
+	defaultServeCommand = "yarn run --silent serve"
+	defaultBuildDir     = "dist"
+)
 
 // Config is server configuration.
 type Config struct {
-	Path   string `mapstructure:"path"`
-	DevCmd string `mapstructure:"devcmd"`
+	Path     string `mapstructure:"path"`
+	DevCmd   string `mapstructure:"devcmd"`
+	BuildCmd string `mapstructure:"buildcmd"`
+	ServeCmd string `mapstructure:"servecmd"`
+	BuildDir string `mapstructure:"builddir"`
 }
 
 // Validate configuration is ok.
@@ -34,12 +42,27 @@ func ConfigFlags(cmd *cobra.Command, prefix string) error {
 
 	flag := prefix + ".path"
 	sval := "client"
-	cmd.Flags().String(flag, sval, "Path to client code")
+	cmd.Flags().String(flag, sval, "Path to code")
 	viper.SetDefault(flag, sval)
 
 	flag = prefix + ".devcmd"
-	sval = defaultCommand
-	cmd.Flags().String(flag, sval, "Command to run client code in development")
+	sval = defaultDevCommand
+	cmd.Flags().String(flag, sval, "Command to run code in development")
+	viper.SetDefault(flag, sval)
+
+	flag = prefix + ".buildcmd"
+	sval = defaultBuildCommand
+	cmd.Flags().String(flag, sval, "Command to build code for production")
+	viper.SetDefault(flag, sval)
+
+	flag = prefix + ".servecmd"
+	sval = defaultServeCommand
+	cmd.Flags().String(flag, sval, "Command to run code in production")
+	viper.SetDefault(flag, sval)
+
+	flag = prefix + ".builddir"
+	sval = defaultBuildDir
+	cmd.Flags().String(flag, sval, "Build directory")
 	viper.SetDefault(flag, sval)
 
 	return nil

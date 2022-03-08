@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
 
@@ -22,6 +23,37 @@ type Player struct {
 	isDefaultCmd bool
 }
 
+func Build(ctx context.Context, config *Config) error {
+	cmd := config.BuildCmd
+
+	parts := strings.Split(cmd, " ")
+	if len(parts) == 0 {
+		return errors.New("empty player buildcmd")
+	}
+
+	var args []string
+	if len(parts) > 1 {
+		args = parts[1:]
+	}
+
+	c := exec.CommandContext(ctx, parts[0], args...)
+
+	c.Stderr = os.Stderr
+	c.Stdout = os.Stdout
+	c.Dir = config.Path
+
+	if err := c.Run(); err != nil {
+		return errors.Wrap(err, "run player build command")
+	}
+
+	return nil
+}
+
+// BuildDir returns the build dir.
+func BuildDir(config *Config) string {
+	return path.Join(config.Path, config.BuildDir)
+}
+
 // Start creates and starts the GraphQL HTTP server.
 func Start(
 	ctx context.Context,
@@ -31,7 +63,7 @@ func Start(
 
 	termui := term.ForContext(ctx)
 	comp := termui.Add("player")
-	isDefaultCmd := config.DevCmd == defaultCommand
+	isDefaultCmd := config.DevCmd == defaultDevCommand
 
 	p := &Player{
 		config:       config,
@@ -118,7 +150,7 @@ func (p *Player) runDevCmd(ctx context.Context) (*exec.Cmd, error) {
 		args = parts[1:]
 	}
 
-	log.Trace().Str("cmd", strings.Join(parts, " ")).Msg("player: run command")
+	log.Trace().Str("cmd", strings.Join(parts, " ")).Msg("player: run player dev command")
 
 	c := exec.CommandContext(ctx, parts[0], args...)
 
@@ -127,7 +159,7 @@ func (p *Player) runDevCmd(ctx context.Context) (*exec.Cmd, error) {
 	c.Dir = p.config.Path
 
 	if err := c.Start(); err != nil {
-		return nil, errors.Wrap(err, "run command")
+		return nil, errors.Wrap(err, "run player dev command")
 	}
 
 	return c, nil

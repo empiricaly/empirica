@@ -12,14 +12,15 @@ import (
 	"github.com/pkg/errors"
 )
 
-func Init(dir string) error {
-	return errors.Wrap(CreateEmpiricaDir(dir), "setup .empirica")
+func Init(name, dir string) error {
+	return errors.Wrap(CreateEmpiricaDir(name, dir), "setup .empirica")
 }
 
 const (
 	EmpiricaDir = ".empirica"
 	LocalDir    = "local"
 	gitignore   = `local`
+	idLen       = 16
 	stokenLen   = 16
 	passLen     = 8
 
@@ -37,7 +38,9 @@ const (
 `
 
 	EmpiricaTOML = "empirica.toml"
-	empiricatoml = `[tajriba.auth]
+	empiricatoml = `name = "%s"
+
+[tajriba.auth]
 srtoken = "%s"
 
 [[tajriba.auth.users]]
@@ -47,7 +50,16 @@ password = "%s"
 `
 )
 
-func CreateEmpiricaDir(dir string) error {
+func ReadIDFile(dir string) (string, error) {
+	empDir := path.Join(dir, EmpiricaDir)
+	idfile := path.Join(empDir, "id")
+
+	b, err := ioutil.ReadFile(idfile)
+
+	return string(b), errors.Wrap(err, "read id file")
+}
+
+func CreateEmpiricaDir(name, dir string) error {
 	empDir := path.Join(dir, EmpiricaDir)
 	localDir := path.Join(empDir, LocalDir)
 
@@ -61,9 +73,15 @@ func CreateEmpiricaDir(dir string) error {
 		return errors.Wrap(err, "write .gitignore file")
 	}
 
+	idfile := path.Join(empDir, "id")
+
+	if err := writeFile(idfile, []byte(randSeq(idLen))); err != nil {
+		return errors.Wrap(err, "write id file")
+	}
+
 	tomlFile := path.Join(empDir, EmpiricaTOML)
 
-	content := []byte(fmt.Sprintf(empiricatoml, randSeq(stokenLen), randSeq(passLen)))
+	content := []byte(fmt.Sprintf(empiricatoml, name, randSeq(stokenLen), randSeq(passLen)))
 	if err := writeFile(tomlFile, content); err != nil {
 		return errors.Wrap(err, "write configuration file")
 	}
@@ -82,8 +100,8 @@ func CreateEmpiricaDir(dir string) error {
 }
 
 const (
-	dirPerm  = 0777
-	filePerm = 0600
+	dirPerm  = 0o777
+	filePerm = 0o600
 )
 
 func createDir(dir string) error {

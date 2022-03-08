@@ -2,6 +2,11 @@
   "name": "empirica-server-demo",
   "private": true,
   "type": "module",
+  "scripts": {
+    "dev": "node --trace-warnings --enable-source-maps src/index.js",
+    "build": "mkdir -p dist && cp -r src/ dist/",
+    "serve": "node --trace-warnings --enable-source-maps index.js"
+  },
   "volta": {
     "node": "16.4.1",
     "yarn": "1.22.10",
