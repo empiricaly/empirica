@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"os/signal"
 	"path"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/empiricaly/empirica/internal/templates"
@@ -31,19 +29,7 @@ func addCreateCommand(parent *cobra.Command) error {
 				return errors.New("missing project name")
 			}
 
-			ctx, cancel := context.WithCancel(context.Background())
-
-			go func() {
-				s := make(chan os.Signal, 1)
-				signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
-				<-s
-				cancel()
-
-				s = make(chan os.Signal, 1)
-				signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-				<-s
-				log.Fatal().Msg("Force quit")
-			}()
+			ctx := initContext()
 
 			if err := installNodeIfNeeded(ctx); err != nil {
 				return errors.Wrap(err, "check node")

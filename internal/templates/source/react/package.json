@@ -26,5 +26,6 @@
     "vite": "2.6.2",
     "vite-plugin-restart": "0.0.2",
     "vite-plugin-windicss": "1.4.9"
-  }
+  },
+  "version": "0.0.0"
 }

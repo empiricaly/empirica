@@ -57,29 +57,9 @@ func defineRoot() (*cobra.Command, *bool, error) {
 const closeMaxCuration = time.Second * 5
 
 func root(_ *cobra.Command, _ []string, usingConfigFile *bool) {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx := initContext()
 
-	conf := new(empirica.Config)
-
-	if err := viper.Unmarshal(conf); err != nil {
-		log.Fatal().Err(err).Msg("could not parse configuration")
-	}
-
-	if err := conf.Validate(); err != nil {
-		log.Fatal().Err(err).Msg("empirica: invalid config")
-	}
-
-	go func() {
-		s := make(chan os.Signal, 1)
-		signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
-		<-s
-		cancel()
-
-		s = make(chan os.Signal, 1)
-		signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-		<-s
-		log.Fatal().Msg("Force quit")
-	}()
+	conf := getConfig()
 
 	t, err := empirica.Start(ctx, conf, *usingConfigFile)
 	if err != nil {
@@ -89,7 +69,7 @@ func root(_ *cobra.Command, _ []string, usingConfigFile *bool) {
 	<-ctx.Done()
 
 	// Give the closing a few seconds to cleanup
-	ctx, cancel = context.WithTimeout(context.Background(), closeMaxCuration)
+	ctx, cancel := context.WithTimeout(context.Background(), closeMaxCuration)
 	defer cancel()
 
 	t.Close(ctx)
@@ -114,6 +94,10 @@ func Execute() {
 	}
 
 	if err := addBundleCommand(rootCmd); err != nil {
+		failedStart(err)
+	}
+
+	if err := addServeCommand(rootCmd); err != nil {
 		failedStart(err)
 	}
 
@@ -158,18 +142,42 @@ func initConfig(rootCmd *cobra.Command, usingConfigFile *bool) func() {
 			*usingConfigFile = true
 		}
 
-		conf := new(empirica.Config)
-
-		if err := viper.Unmarshal(conf); err != nil {
-			log.Fatal().Err(err).Msg("could not parse configuration")
-		}
-
-		if err := conf.Validate(); err != nil {
-			log.Fatal().Err(err).Msg("empirica: invalid config")
-		}
+		conf := getConfig()
 
 		if err := logger.Init(conf.Log); err != nil {
 			log.Fatal().Err(err).Msg("empirica: failed to init logging")
 		}
 	}
+}
+
+func getConfig() *empirica.Config {
+	conf := new(empirica.Config)
+
+	if err := viper.Unmarshal(conf); err != nil {
+		log.Fatal().Err(err).Msg("could not parse configuration")
+	}
+
+	if err := conf.Validate(); err != nil {
+		log.Fatal().Err(err).Msg("invalid config")
+	}
+
+	return conf
+}
+
+func initContext() context.Context {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func() {
+		s := make(chan os.Signal, 1)
+		signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
+		<-s
+		cancel()
+
+		s = make(chan os.Signal, 1)
+		signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+		<-s
+		log.Fatal().Msg("empirica: force quit")
+	}()
+
+	return ctx
 }
