@@ -127,8 +127,8 @@ func Prepare(config *Config) (*Server, error) {
 	return s, nil
 }
 
-// Close closes the server.
-func (s *Server) Close() {
+// Wait for the server to close.
+func (s *Server) Wait() {
 	s.wg.Wait()
 }
 
@@ -146,8 +146,8 @@ func Enable(
 	router.NotFound = prox
 
 	router.GET("/dev", dev(config.Production))
-	router.GET("/treatments", readTreatments(config.Treatments))
-	router.PUT("/treatments", writeTreatments(config.Treatments))
+	router.GET("/treatments", ReadTreatments(config.Treatments))
+	router.PUT("/treatments", WriteTreatments(config.Treatments))
 	router.ServeFiles("/admin/*filepath", templates.HTTPFS("admin-ui"))
 
 	return nil
@@ -253,7 +253,8 @@ func dev(isProd bool) httprouter.Handle {
 	}
 }
 
-func readTreatments(p string) httprouter.Handle {
+// TODO sercure these endpoints
+func ReadTreatments(p string) httprouter.Handle {
 	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 		content, err := ioutil.ReadFile(p)
 		if err != nil {
@@ -279,7 +280,7 @@ func readTreatments(p string) httprouter.Handle {
 	}
 }
 
-func writeTreatments(p string) httprouter.Handle {
+func WriteTreatments(p string) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		b, err := ioutil.ReadAll(r.Body)
 		if err != nil {

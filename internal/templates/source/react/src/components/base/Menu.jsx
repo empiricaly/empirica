@@ -1,5 +1,5 @@
+import { clear, createNewPlayer, isDevelopment, Logo } from "@empirica/player";
 import React from "react";
-import { clear, createNewPlayer, Logo, isDevelopment } from "@empirica/player";
 
 export function Menu() {
   return (
@@ -9,7 +9,7 @@ export function Menu() {
       </div>
       <div className="hidden group-hover:block absolute rounded-lg overflow-hidden bottom-0 right-0 shadow">
         <div className="text-gray-400 bg-gray-100  overflow-hidden">
-          {isDevelopment ? (
+          {isDevelopment || true ? (
             <div>
               <button
                 onClick={createNewPlayer}

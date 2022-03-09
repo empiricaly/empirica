@@ -28,7 +28,7 @@ type Runner struct {
 // Close waits for empirica to be done.
 func (r *Runner) Close(ctx context.Context) {
 	if r.server != nil {
-		r.server.Close()
+		r.server.Wait()
 	}
 
 	if r.taj != nil {

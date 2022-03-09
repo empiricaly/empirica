@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "node --trace-warnings --enable-source-maps src/index.js",
-    "build": "mkdir -p dist && cp -r src/ dist/",
+    "build": "rsync -aP --exclude=node_modules --exclude=*.js -m src/* dist/ && esbuild src/index.js --platform=node --bundle --minify --outfile=dist/index.js",
     "serve": "node --trace-warnings --enable-source-maps index.js"
   },
   "volta": {
@@ -13,8 +13,11 @@
     "npm": "7.19.1"
   },
   "dependencies": {
-    "@empirica/admin": "^1.0.0-alpha.5",
+    "@empirica/admin": "latest",
     "minimist": "1.2.5",
     "rand-seed": "1.0.1"
+  },
+  "devDependencies": {
+    "esbuild": "0.14.25"
   }
 }

@@ -20,6 +20,9 @@ export default defineConfig({
       ],
     },
   },
+  build: {
+    minify: false,
+  },
   clearScreen: false,
   resolve: {
     alias: {

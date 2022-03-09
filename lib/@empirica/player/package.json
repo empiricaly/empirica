@@ -55,6 +55,7 @@
         {
           "+volta": "^",
           "+author": "^",
+          "+peerDependencies": "^",
           "-devDependencies": {}
         }
       ],
@@ -86,12 +87,12 @@
     "prettier": "2.2.1",
     "typescript": "4.1.3"
   },
+  "peerDependencies": {
+    "react": "^17.0.2"
+  },
   "dependencies": {
-    "@empirica/tajriba": "^1.0.0-alpha.0",
+    "@empirica/tajriba": "latest",
     "events": "^3.3.0",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
-    "rxjs": "^7.2.0",
     "svelte": "^3.40.2"
   }
 }

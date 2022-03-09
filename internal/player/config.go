@@ -10,8 +10,8 @@ import (
 const (
 	defaultDevCommand   = "yarn run --silent dev"
 	defaultBuildCommand = "yarn run --silent build"
-	defaultServeCommand = "yarn run --silent serve"
-	defaultBuildDir     = "dist"
+	// defaultServeCommand = ""
+	defaultBuildDir = "dist"
 )
 
 // Config is server configuration.
@@ -19,7 +19,7 @@ type Config struct {
 	Path     string `mapstructure:"path"`
 	DevCmd   string `mapstructure:"devcmd"`
 	BuildCmd string `mapstructure:"buildcmd"`
-	ServeCmd string `mapstructure:"servecmd"`
+	// ServeCmd string `mapstructure:"servecmd"`
 	BuildDir string `mapstructure:"builddir"`
 }
 
@@ -55,10 +55,10 @@ func ConfigFlags(cmd *cobra.Command, prefix string) error {
 	cmd.Flags().String(flag, sval, "Command to build code for production")
 	viper.SetDefault(flag, sval)
 
-	flag = prefix + ".servecmd"
-	sval = defaultServeCommand
-	cmd.Flags().String(flag, sval, "Command to run code in production")
-	viper.SetDefault(flag, sval)
+	// flag = prefix + ".servecmd"
+	// sval = defaultServeCommand
+	// cmd.Flags().String(flag, sval, "Command to run code in production")
+	// viper.SetDefault(flag, sval)
 
 	flag = prefix + ".builddir"
 	sval = defaultBuildDir

@@ -54,6 +54,14 @@ func BuildDir(config *Config) string {
 	return path.Join(config.Path, config.BuildDir)
 }
 
+// CleanupBuildDir removes the build dir.
+func CleanupBuildDir(config *Config) {
+	log.Trace().
+		Str("path", BuildDir(config)).
+		Msg("player: cleanup build dir")
+	os.RemoveAll(BuildDir(config))
+}
+
 // Start creates and starts the GraphQL HTTP server.
 func Start(
 	ctx context.Context,

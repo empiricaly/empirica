@@ -95,23 +95,38 @@ func Bundle(ctx context.Context, conf *empirica.Config, out string, useGzip bool
 	if !path.IsAbs(callbackpath) {
 		callbackpath = fpath.Join(dir, callbackpath)
 	}
+
 	log.Debug().
 		Str("path", callbackpath).
 		Msg("bundle: bundling server")
-	tarDir(tarWriter, callbackpath, "callbacks", func(p string) bool {
+
+	if err := tarDir(tarWriter, callbackpath, "callbacks", func(p string) bool {
 		return strings.Contains(p, "node_modules")
-	})
+	}); err != nil {
+		return errors.Wrap(err, "bundle client")
+	}
+
+	if err := bundleFile(tarWriter, fpath.Join(conf.Callbacks.Path, "package.json"), fpath.Join("callbacks", "package.json")); err != nil {
+		return errors.Wrap(err, "bundle package.json")
+	}
 
 	playerpath := player.BuildDir(conf.Player)
 	if !path.IsAbs(playerpath) {
 		playerpath = fpath.Join(dir, playerpath)
 	}
+
 	log.Debug().
 		Str("path", playerpath).
 		Msg("bundle: bundling client")
-	tarDir(tarWriter, playerpath, "player", func(p string) bool {
+
+	if err := tarDir(tarWriter, playerpath, "player", func(p string) bool {
 		return strings.Contains(p, "node_modules") || strings.Contains(p, ".gitkeep")
-	})
+	}); err != nil {
+		return errors.Wrap(err, "bundle client")
+	}
+
+	player.CleanupBuildDir(conf.Player)
+	callbacks.CleanupBuildDir(conf.Callbacks)
 
 	return nil
 }
@@ -141,41 +156,49 @@ func tarDir(tw *tar.Writer, src, dest string, skip func(string) bool) error {
 			return nil
 		}
 
-		log.Trace().
-			Str("from", path).
-			Str("to", topath).
-			Msg("tar: adding path")
-
-		fi, err := os.Stat(path)
-		if err != nil {
-			return errors.Wrapf(err, "stat %s", topath)
-		}
-
-		header, err := tar.FileInfoHeader(fi, "")
-		if err != nil {
-			return err
-		}
-
-		// update the name to correctly reflect the desired destination when untaring
-		header.Name = topath
-
-		// write the header
-		if err := tw.WriteHeader(header); err != nil {
-			return err
-		}
-
-		// open files for taring
-		f, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		// copy file data into tar writer
-		if _, err := io.Copy(tw, f); err != nil {
-			return err
+		if err := bundleFile(tw, path, topath); err != nil {
+			return errors.Wrap(err, "bundle file")
 		}
 
 		return nil
 	})
+}
+
+func bundleFile(tw *tar.Writer, path, topath string) error {
+	log.Trace().
+		Str("from", path).
+		Str("to", topath).
+		Msg("tar: adding path")
+
+	fi, err := os.Stat(path)
+	if err != nil {
+		return errors.Wrapf(err, "stat %s", topath)
+	}
+
+	header, err := tar.FileInfoHeader(fi, "")
+	if err != nil {
+		return err
+	}
+
+	// update the name to correctly reflect the desired destination when untaring
+	header.Name = topath
+
+	// write the header
+	if err := tw.WriteHeader(header); err != nil {
+		return err
+	}
+
+	// open files for taring
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// copy file data into tar writer
+	if _, err := io.Copy(tw, f); err != nil {
+		return err
+	}
+
+	return nil
 }

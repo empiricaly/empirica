@@ -34,7 +34,7 @@ func ConfigFlags(cmd *cobra.Command, prefix string) error {
 
 	flag := prefix + ".addr"
 	sval := ":3000"
-	cmd.Flags().StringP(flag, "s", sval, "Address if the server")
+	cmd.Flags().StringP(flag, "s", sval, "Address of the server")
 	viper.SetDefault(flag, sval)
 
 	flag = prefix + ".treatments"
