@@ -1,46 +1,52 @@
-import { Empirica, setLogLevel } from "@empirica/admin";
 import fs from "fs";
 import minimist from "minimist";
-import callbacks from "../callbacks.js";
-import advancedCallbacks from "./callbacks.js";
+import process from "process";
+import { Callbacks } from "./callbacks";
+import { Empirica } from "./empirica";
+import { levels, setLogLevel } from "./utils/console";
 
 Error.stackTraceLimit = Infinity;
 
 var argv = minimist(process.argv.slice(2), { string: ["token"] });
 
-if (argv["loglevel"]) {
-  setLogLevel(argv["loglevel"]);
-}
+export async function connect({
+  url = "http://localhost:3000/query",
+  name = "callbacks",
+  token = argv["token"],
+  sessionTokenPath = argv["sessionTokenPath"],
+  logLevel = argv["loglevel"],
+  cbs,
+}: {
+  url?: string;
+  name?: string;
+  token?: string;
+  sessionTokenPath?: string;
+  logLevel?: keyof typeof levels;
+  cbs: Callbacks;
+}) {
+  if (!token) {
+    console.error(
+      "callbacks: service token to connect to Tajriba is required (--token)"
+    );
 
-if (!argv["token"]) {
-  console.error(
-    "callbacks: service token to connect to Tajriba is required (--token)"
-  );
+    process.exit(1);
+  }
 
-  process.exit(1);
-}
+  const sighup = () => process.exit(0);
+  process.on("SIGHUP", sighup);
 
-const sessionTokenPath = argv["sessionTokenPath"];
-const token = argv["token"];
-const name = "callbacks";
-const url = "http://localhost:3000/query";
+  let quitResolve: (value: unknown) => void;
+  const quit = new Promise((resolve) => {
+    quitResolve = resolve;
+  });
 
-process.on("SIGHUP", () => {
-  process.exit(0);
-});
+  const sigint = () => quitResolve;
+  process.on("SIGINT", sigint);
 
-let quitResolve;
-const quit = new Promise((resolve) => {
-  quitResolve = resolve;
-});
+  if (logLevel) {
+    setLogLevel(logLevel);
+  }
 
-process.on("SIGINT", function () {
-  quitResolve();
-});
-
-const h = callbacks.merge(advancedCallbacks);
-
-export async function connect() {
   let connected = false;
 
   if (sessionTokenPath) {
@@ -55,7 +61,7 @@ export async function connect() {
     if (sessionToken) {
       console.debug("callbacks: found sessionToken, logging in with session");
       try {
-        await Empirica.sessionLogin(url, sessionToken, h);
+        await Empirica.sessionLogin(url, sessionToken, cbs);
         connected = true;
         console.info("callbacks: started");
       } catch (err) {
@@ -67,7 +73,7 @@ export async function connect() {
 
   if (!connected) {
     try {
-      const [_, st] = await Empirica.registerService(url, name, token, h);
+      const [_, st] = await Empirica.registerService(url, name, token, cbs);
 
       console.info("callbacks: started");
 
@@ -89,5 +95,6 @@ export async function connect() {
 
   await quit;
 
-  process.exit(0);
+  process.off("SIGHUP", sighup);
+  process.off("SIGINT", sigint);
 }

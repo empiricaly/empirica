@@ -1,8 +1,5 @@
-import r from "rand-seed";
-import { shuffle } from "./utils.js";
-
-// Node moduel support...
-const Rand = r.default;
+import Rand from "rand-seed";
+import { shuffle } from "./object";
 
 const rand = new Rand(new Date().toString());
 
@@ -10,10 +7,10 @@ const rand = new Rand(new Date().toString());
 // documentation.
 // const rand = new Rand('1234', PRNG.xoshiro128ss);
 
-export function pickRandom(arr) {
+export function pickRandom(arr: []) {
   return arr[Math.floor(arr.length * rand.next())];
 }
 
-export function selectRandom(arr, num) {
+export function selectRandom(arr: Array<any>, num: number) {
   return shuffle(arr.slice()).slice(0, num);
 }

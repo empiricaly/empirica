@@ -87,6 +87,8 @@
   },
   "dependencies": {
     "@empirica/tajriba": "latest",
-    "events": "3.3.0"
+    "events": "3.3.0",
+    "minimist": "1.2.5",
+    "rand-seed": "1.0.1"
   }
 }

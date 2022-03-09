@@ -21,7 +21,7 @@ export const Empirica = {
     username: string,
     password: string,
     callbacks?: Callbacks
-  ) {
+  ): Promise<[Admin, string]> {
     const taj = new Tajriba(url);
     const [t, sessionToken] = await taj.login(username, password);
     taj.stop();
@@ -51,7 +51,7 @@ export const Empirica = {
     name: string,
     serviceToken: string,
     callbacks?: Callbacks
-  ) {
+  ): Promise<[Admin, string]> {
     const taj = new Tajriba(url);
     const [t, sessionToken] = await taj.registerService(name, serviceToken);
     taj.stop();

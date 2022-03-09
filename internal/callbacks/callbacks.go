@@ -116,15 +116,20 @@ func (cb *Callbacks) watch(ctx context.Context) error {
 		return errors.Wrap(err, "get current dir")
 	}
 
-	p := path.Join(dir, cb.config.Path)
-	log.Debug().Str("path", p).Msg("callbacks: watchers starting")
+	p := path.Join(dir, cb.config.Path, "src")
 
 	modchan := make(chan *moddwatch.Mod, watchChBuf)
 
 	var (
-		includePaths = []string{"**/**.mjs", "**/**.js"}
+		includePaths = []string{"**/*.mjs", "**/*.js"}
 		excludePaths = []string{"node_modules"}
 	)
+
+	log.Debug().
+		Str("path", p).
+		Strs("incl", includePaths).
+		Strs("excl", excludePaths).
+		Msg("callbacks: watchers starting")
 
 	watcher, err := moddwatch.Watch(
 		p,
@@ -142,18 +147,34 @@ func (cb *Callbacks) watch(ctx context.Context) error {
 			select {
 			case mod, ok := <-modchan:
 				if mod == nil || !ok {
-					return
+					log.Trace().Msgf("callbacks: watch ending")
+
+					continue
 				}
 
-				log.Trace().Str("mod", mod.String()).Msgf("callbacks: mod")
+				log.Debug().Str("mod", mod.String()).Msg("callbacks: mod")
 
 				cb.Lock()
+
 				if cb.c != nil {
+					// log.Debug().Str("mod", mod.String()).Msg("callbacks: restarting")
+
+					// c := exec.CommandContext(ctx, "kill", "-INT", strconv.Itoa(cb.c.Process.Pid))
+
+					// c.Stderr = os.Stderr
+					// c.Stdout = os.Stdout
+
+					// if err := c.Run(); err != nil {
+					// 	log.Debug().Err(err).Msg("callback: failed to send signal")
+					// }
+
 					if err := cb.c.Process.Signal(os.Interrupt); err != nil {
 						log.Debug().Err(err).Msg("callback: failed to send signal")
 					}
+
 					cb.c = nil
 				}
+
 				cb.Unlock()
 			case <-ctx.Done():
 				watcher.Stop()
@@ -282,6 +303,7 @@ type callbacksWriter struct {
 	w            io.Writer
 	comp         *term.Component
 	isDefaultCmd bool
+	startedOnce  bool
 }
 
 func (c *callbacksWriter) Write(p []byte) (n int, err error) {
@@ -296,6 +318,11 @@ func (c *callbacksWriter) Write(p []byte) (n int, err error) {
 
 	if ready {
 		c.comp.Ready()
+		if c.startedOnce {
+			log.Info().Msg("callbacks: restarted")
+		}
+
+		c.startedOnce = true
 	}
 
 	return len(p), nil

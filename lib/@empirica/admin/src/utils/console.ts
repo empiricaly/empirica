@@ -31,7 +31,7 @@ const colorHex = {
   [Color.DarkGray]: "color: #555753",
 };
 
-const levels = {
+export const levels = {
   trace: 0,
   debug: 1,
   log: 2,
