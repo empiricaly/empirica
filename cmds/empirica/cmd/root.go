@@ -21,49 +21,53 @@ func defineRoot() (*cobra.Command, *bool, error) {
 	isUsingConfigFile := false
 	usingConfigFile := &isUsingConfigFile
 
-	// rootCmd represents the base command when called without any subcommands.
-	rootCmd := &cobra.Command{
+	// cmd represents the base command when called without any subcommands.
+	cmd := &cobra.Command{
 		Use:   "empirica",
 		Short: "empirica is an engine for multiplayer interactive experiments",
 		// Long: ``,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Args:          cobra.NoArgs,
-		Run: func(cmd *cobra.Command, args []string) {
-			root(cmd, args, usingConfigFile)
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return root(cmd, args, usingConfigFile)
 		},
 	}
 
-	err := empirica.ConfigFlags(rootCmd)
+	err := empirica.ConfigFlags(cmd)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "define flags")
 	}
 
-	rootCmd.PersistentFlags().String("config", "", "config file (default is .empirica/empirica.toml)")
+	cmd.PersistentFlags().String("config", "", "config file (default is .empirica/empirica.toml)")
 
-	err = viper.BindPFlags(rootCmd.Flags())
+	err = viper.BindPFlags(cmd.Flags())
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "bind root flags")
 	}
 
-	err = viper.BindPFlags(rootCmd.PersistentFlags())
+	err = viper.BindPFlags(cmd.PersistentFlags())
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "bind root persistent flags")
 	}
 
-	return rootCmd, usingConfigFile, nil
+	return cmd, usingConfigFile, nil
 }
 
 const closeMaxCuration = time.Second * 5
 
-func root(_ *cobra.Command, _ []string, usingConfigFile *bool) {
+func root(_ *cobra.Command, _ []string, usingConfigFile *bool) error {
 	ctx := initContext()
+
+	if err := settings.InstallVoltaIfNeeded(ctx); err != nil {
+		return errors.Wrap(err, "check node")
+	}
 
 	conf := getConfig()
 
 	t, err := empirica.Start(ctx, conf, *usingConfigFile)
 	if err != nil {
-		log.Fatal().Err(err).Msg("empirica: failed to start")
+		return errors.Wrap(err, "failed to start")
 	}
 
 	<-ctx.Done()
@@ -73,10 +77,14 @@ func root(_ *cobra.Command, _ []string, usingConfigFile *bool) {
 	defer cancel()
 
 	t.Close(ctx)
+
+	return nil
 }
 
 func failedStart(err error) {
-	log.Fatal().Err(err).Msg("empirica: failed to start")
+	if err != nil {
+		log.Fatal().Err(err).Msg("empirica: failed to start")
+	}
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -89,17 +97,12 @@ func Execute() {
 		failedStart(err)
 	}
 
-	if err := addCreateCommand(rootCmd); err != nil {
-		failedStart(err)
-	}
-
-	if err := addBundleCommand(rootCmd); err != nil {
-		failedStart(err)
-	}
-
-	if err := addServeCommand(rootCmd); err != nil {
-		failedStart(err)
-	}
+	failedStart(addCreateCommand(rootCmd))
+	failedStart(addBundleCommand(rootCmd))
+	failedStart(addServeCommand(rootCmd))
+	failedStart(addSetupCommand(rootCmd))
+	failedStart(addNodeCommand(rootCmd))
+	failedStart(addYarnCommand(rootCmd))
 
 	cobra.OnInitialize(initConfig(rootCmd, usingConfigFile))
 
@@ -150,15 +153,17 @@ func initConfig(rootCmd *cobra.Command, usingConfigFile *bool) func() {
 	}
 }
 
-func getConfig() *empirica.Config {
+func getConfig(validate ...bool) *empirica.Config {
 	conf := new(empirica.Config)
 
 	if err := viper.Unmarshal(conf); err != nil {
 		log.Fatal().Err(err).Msg("could not parse configuration")
 	}
 
-	if err := conf.Validate(); err != nil {
-		log.Fatal().Err(err).Msg("invalid config")
+	if len(validate) > 0 && validate[0] {
+		if err := conf.Validate(); err != nil {
+			log.Fatal().Err(err).Msg("invalid config")
+		}
 	}
 
 	return conf

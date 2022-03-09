@@ -246,9 +246,9 @@
     "@babel/helper-validator-identifier" "^7.15.7"
     to-fast-properties "^2.0.0"
 
-"@empirica/player@^1.0.0-alpha.4":
+"@empirica/player@latest":
   version "1.0.0-alpha.4"
-  resolved "https://registry.npmjs.org/@empirica/player/-/player-1.0.0-alpha.4.tgz"
+  resolved "https://registry.yarnpkg.com/@empirica/player/-/player-1.0.0-alpha.4.tgz#97b54a830d5e71dda0ce03c467329057a4a09457"
   integrity sha512-1fbgYfGvBmz8WpMkn0mGo2AG0dzvVImaqXE8MTpgkpjyUYPevLul/EUY2gh8QykM5WOjEQrkYjNvybUNzPyEmw==
   dependencies:
     "@empirica/tajriba" "^1.0.0-alpha.0"

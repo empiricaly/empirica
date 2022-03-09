@@ -2,13 +2,14 @@ package cmd
 
 import (
 	"github.com/empiricaly/empirica/internal/bundle"
+	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 func addBundleCommand(parent *cobra.Command) error {
-	bundleCmd := &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "bundle",
 		Short: "Bundle project",
 		// 	Long: ``,
@@ -30,7 +31,7 @@ func addBundleCommand(parent *cobra.Command) error {
 
 			conf := getConfig()
 
-			if err := installNodeIfNeeded(ctx); err != nil {
+			if err := settings.InstallVoltaIfNeeded(ctx); err != nil {
 				return errors.Wrap(err, "check node")
 			}
 
@@ -38,15 +39,15 @@ func addBundleCommand(parent *cobra.Command) error {
 		},
 	}
 
-	bundleCmd.Flags().Bool("gzip", false, "use gzip")
-	bundleCmd.Flags().String("out", "", "defaults to durrent dir")
+	cmd.Flags().Bool("gzip", false, "use gzip")
+	cmd.Flags().String("out", "", "defaults to durrent dir")
 
-	err := viper.BindPFlags(bundleCmd.Flags())
+	err := viper.BindPFlags(cmd.Flags())
 	if err != nil {
 		return errors.Wrap(err, "bind bundle flags")
 	}
 
-	parent.AddCommand(bundleCmd)
+	parent.AddCommand(cmd)
 
 	return nil
 }

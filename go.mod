@@ -7,7 +7,7 @@ require (
 	github.com/adrg/xdg v0.4.0
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/cortesi/moddwatch v0.0.0-20210323234936-df014e95c743
-	github.com/empiricaly/tajriba v1.0.0-alpha.1.0.20220302143250-e4fc5b9c1963
+	github.com/empiricaly/tajriba v1.0.0-alpha.2
 	github.com/jpillora/backoff v1.0.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/mattn/go-isatty v0.0.14
@@ -55,5 +55,3 @@ require (
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
-
-replace github.com/empiricaly/tajriba => /Users/npaton/projects/empirica/projects/v2/tajriba

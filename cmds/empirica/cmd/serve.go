@@ -2,13 +2,14 @@ package cmd
 
 import (
 	"github.com/empiricaly/empirica/internal/bundle"
+	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 func addServeCommand(parent *cobra.Command) error {
-	serveCmd := &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "serve",
 		Short: "Serve bundle",
 		// 	Long: ``,
@@ -32,7 +33,7 @@ func addServeCommand(parent *cobra.Command) error {
 				return errors.Wrap(err, "parse ddr flag")
 			}
 
-			if err := installNodeIfNeeded(ctx); err != nil {
+			if err := settings.InstallVoltaIfNeeded(ctx); err != nil {
 				return errors.Wrap(err, "check node")
 			}
 
@@ -45,20 +46,19 @@ func addServeCommand(parent *cobra.Command) error {
 		},
 	}
 
-	serveCmd.Flags().Bool("clean", false, "cleanup old installation")
+	cmd.Flags().Bool("clean", false, "cleanup old installation")
 
 	flag := "addr"
 	sval := ":3000"
-	serveCmd.Flags().String(flag, sval, "Address of the server")
+	cmd.Flags().String(flag, sval, "Address of the server")
 	viper.SetDefault(flag, sval)
 
-	err := viper.BindPFlags(serveCmd.Flags())
+	err := viper.BindPFlags(cmd.Flags())
 	if err != nil {
 		return errors.Wrap(err, "bind serve flags")
 	}
 
-	parent.AddCommand(serveCmd)
+	parent.AddCommand(cmd)
 
-	return nil
 	return nil
 }

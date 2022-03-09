@@ -127,6 +127,8 @@ if cp "$BIN_FILE" "$PREFIX/bin/empirica" >/dev/null 2>&1; then
   chmod u+x $PREFIX/bin/empirica
   echo "Writing empirica to $PREFIX/bin/empirica for your convenience."
 
+  empirica setup
+
   cat <<EOF
 
 To get started fast:
@@ -155,8 +157,12 @@ elif type sudo >/dev/null 2>&1; then
   if sudo cp "$BIN_FILE" "$PREFIX/bin/empirica"; then
   sudo chmod +x $PREFIX/bin/empirica
   echo ""
+
+  empirica setup
+
 # Add docs here
   cat <<EOF
+  
 
 To get started fast:
 
@@ -182,7 +188,7 @@ else
 Now you need to do the following:
 
   Run the following as root:
-        cp "$BIN_FILE" /usr/bin/empirica
+        cp "$BIN_FILE" /usr/local/bin/empirica
 EOF
 fi
 

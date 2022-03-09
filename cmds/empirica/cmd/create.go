@@ -31,7 +31,7 @@ func addCreateCommand(parent *cobra.Command) error {
 
 			ctx := initContext()
 
-			if err := installNodeIfNeeded(ctx); err != nil {
+			if err := settings.InstallVoltaIfNeeded(ctx); err != nil {
 				return errors.Wrap(err, "check node")
 			}
 
@@ -128,23 +128,4 @@ func askForConfirmation() bool {
 		fmt.Println("I'm sorry but I didn't get what you meant, please type (y)es or (n)o and then press enter:")
 		return askForConfirmation()
 	}
-}
-
-func installNodeIfNeeded(ctx context.Context) error {
-	if !commandExists("node") || (!commandExists("npm") && !commandExists("yarn")) {
-		fmt.Print("We could not detect any Node.js installation. May we install it for you? (y)es or (n)o: ")
-		if !askForConfirmation() {
-			return errors.New("Could not create project, node/npm is missing")
-		}
-
-		if err := runCmd(ctx, "", "bash", "-c", "curl https://get.volta.sh | bash -s - --skip-setup"); err != nil {
-			return errors.Wrap(err, "install volta")
-		}
-
-		if err := runCmd(ctx, "", "volta", "install", "node"); err != nil {
-			return errors.Wrap(err, "install node")
-		}
-	}
-
-	return nil
 }
