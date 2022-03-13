@@ -107,6 +107,7 @@ func (p *Player) run(ctx context.Context) {
 			if err != nil {
 				errs := err.Error()
 				if errors.Is(err, context.Canceled) ||
+					strings.Contains(errs, "context canceled") ||
 					strings.Contains(errs, "signal: interrupt") ||
 					strings.Contains(errs, "signal: killed") ||
 					strings.Contains(errs, "signal: hangup") {

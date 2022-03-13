@@ -214,6 +214,7 @@ func (cb *Callbacks) run(ctx context.Context) {
 				errs := err.Error()
 				if errors.Is(err, context.Canceled) ||
 					// strings.Contains(errs, "signal: interrupt") ||
+					strings.Contains(errs, "context canceled") ||
 					strings.Contains(errs, "signal: killed") ||
 					strings.Contains(errs, "signal: hangup") {
 					log.Debug().Msg("callback: quit")
@@ -223,6 +224,7 @@ func (cb *Callbacks) run(ctx context.Context) {
 
 				if strings.Contains(errs, "signal: interrupt") {
 					log.Debug().Msg("callback: restarting")
+
 					continue
 				}
 			}
