@@ -1,20 +1,17 @@
 import fs from "fs";
 import minimist from "minimist";
-import process from "process";
 import { Callbacks } from "./callbacks";
 import { Empirica } from "./empirica";
 import { levels, setLogLevel } from "./utils/console";
 
 Error.stackTraceLimit = Infinity;
 
-var argv = minimist(process.argv.slice(2), { string: ["token"] });
-
 export async function connect({
   url = "http://localhost:3000/query",
   name = "callbacks",
-  token = argv["token"],
-  sessionTokenPath = argv["sessionTokenPath"],
-  logLevel = argv["loglevel"],
+  token,
+  sessionTokenPath,
+  logLevel,
   cbs,
 }: {
   url?: string;
@@ -24,6 +21,20 @@ export async function connect({
   logLevel?: keyof typeof levels;
   cbs: Callbacks;
 }) {
+  let argv = process && minimist(process.argv.slice(2), { string: ["token"] });
+
+  if (!token) {
+    token = argv["token"];
+  }
+
+  if (!sessionTokenPath) {
+    sessionTokenPath = argv["sessionTokenPath"];
+  }
+
+  if (!logLevel) {
+    logLevel = argv["loglevel"];
+  }
+
   if (!token) {
     console.error(
       "callbacks: service token to connect to Tajriba is required (--token)"
