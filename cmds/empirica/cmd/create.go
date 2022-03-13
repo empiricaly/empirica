@@ -59,11 +59,11 @@ func addCreateCommand(parent *cobra.Command) error {
 				return errors.Wrap(err, "client: copy directory")
 			}
 
-			if err := runCmd(ctx, clientDir, "npm", "install"); err != nil {
+			if err := runCmd(ctx, clientDir, "yarn", "install"); err != nil {
 				return errors.Wrap(err, "client")
 			}
 
-			if err := runCmd(ctx, serverDir, "npm", "install"); err != nil {
+			if err := runCmd(ctx, serverDir, "yarn", "install"); err != nil {
 				return errors.Wrap(err, "server")
 			}
 

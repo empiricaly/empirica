@@ -1,7 +1,6 @@
-import React, { useState } from "react";
-import { Button } from "../base/Button";
+import React, { FormEvent, useState } from "react";
 
-export function Quiz({ next }) {
+export function Quiz({ next }: { next: () => void }) {
   const labelClassName = "block text-sm font-medium text-gray-700 mb-2";
   const inputClassName =
     "appearance-none block px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-empirica-500 focus:border-empirica-500 sm:text-sm";
@@ -9,7 +8,7 @@ export function Quiz({ next }) {
   const [sum, setSum] = useState("");
   const [horse, setHorse] = useState("");
 
-  function handleSubmit(e) {
+  function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
     if (sum !== "4" || horse !== "white") {
@@ -58,7 +57,12 @@ export function Quiz({ next }) {
             />
           </p>
 
-          <Button type="submit">Submit</Button>
+          <button
+            type="submit"
+            className="inline-flex items-center px-4 py-2 border text-sm font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
+          >
+            Submit
+          </button>
         </form>
       </div>
     </div>

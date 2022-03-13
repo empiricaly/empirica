@@ -1,9 +1,8 @@
 # Empirica v2
 
-Empirica v2 is currently in alpha and ready for early testing. We do not
-recommend building experiments that need to release in the near future on
-Empirica v2 yet. We also recommend only developers with experience with v1 to
-venture into v2 world.
+Empirica v2 is currently in beta and ready for testing. We do not recommend
+building new experiments with v2 that need to run before June 2022.
+We will be supporting Empirica v1 until December 2022.
 
 # Requirements
 
@@ -16,15 +15,13 @@ We are working to lower requirements.
 
 # Installation
 
-Download the empirica binary from: https://github.com/empiricaly/empirica/releases/download/v0.1.0-alpha.0/empirica
-
-Place it in `/usr/local/bin`. Run:
+Run the installation script:
 
 ```sh
-chmod +x /usr/local/bin/empirica
+curl https://get.empirica.dev | sh
 ```
 
-To update, do the same process.
+To update, run the command again.
 
 # Getting started
 
@@ -34,6 +31,6 @@ cd my-project
 empirica
 ```
 
-The server will have started and go to http://localhost:8844 to get started. Go
-to http://localhost:8844/admin to access the admin, the credentials are in
+The server will have started, and go to http://localhost:3000 to get started. Go
+to http://localhost:3000/admin to access the admin, the credentials are in
 `.empirica/empirica.toml`.

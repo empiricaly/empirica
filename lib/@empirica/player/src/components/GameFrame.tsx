@@ -1,24 +1,35 @@
+import React from "react";
 import {
-  Consent,
-  isDevelopment,
-  Loading,
-  PlayerID,
-  Steps,
   useConsent,
   useGame,
   useGlobal,
   usePlayer,
   usePlayerID,
   useStage,
-} from "@empirica/player";
-import React from "react";
-import { Lobby } from "./base/Lobby";
-import { ExitSurvey } from "./intro-exit/ExitSurvey";
-import { IntroOne } from "./intro-exit/IntructionStepOne";
-import { IntroTwo } from "./intro-exit/IntructionStepTwo";
-import { Quiz } from "./intro-exit/Quiz";
+} from "../hooks";
+import { isDevelopment } from "../utils/debug";
+import { Consent } from "./Consent";
+import { Loading } from "./Loading";
+import { Lobby as DefaultLobby } from "./Lobby";
+import { PlayerID } from "./PlayerID";
+import { Steps } from "./Steps";
 
-export function Affix({ children }) {
+interface GameFrameProps {
+  children: React.ReactNode;
+  noGames?: React.ElementType;
+  lobby?: React.ElementType;
+  playerID?: React.ElementType;
+  introSteps: React.ElementType[];
+  exitSteps: React.ElementType[];
+}
+
+export function GameFrame({
+  children,
+  noGames: NoGames = DefaultNoGames,
+  lobby = DefaultLobby,
+  introSteps = [],
+  exitSteps = [],
+}: GameFrameProps) {
   const { experimentOpen } = useGlobal();
   const player = usePlayer();
   const game = useGame();
@@ -33,7 +44,7 @@ export function Affix({ children }) {
     return <Consent onConsent={onConsent} />;
   }
 
-  if (!hasPlayer) {
+  if (!hasPlayer && onPlayerID) {
     return <PlayerID onPlayerID={onPlayerID} />;
   }
 
@@ -42,17 +53,25 @@ export function Affix({ children }) {
   }
 
   return (
-    <Steps
-      progressKey="intro"
-      doneKey="introDone"
-      steps={[IntroOne, IntroTwo, Quiz]}
-    >
-      <PostIntro>{children}</PostIntro>
+    <Steps progressKey="intro" doneKey="introDone" steps={introSteps}>
+      <PostIntro exitSteps={exitSteps} lobby={lobby}>
+        {children}
+      </PostIntro>
     </Steps>
   );
 }
 
-function PostIntro({ children }) {
+interface PostIntroProps {
+  children: React.ReactNode;
+  lobby: React.ElementType;
+  exitSteps: React.ElementType[];
+}
+
+export function PostIntro({
+  children,
+  lobby: Lobby,
+  exitSteps,
+}: PostIntroProps) {
   const game = useGame();
   const stage = useStage();
 
@@ -66,19 +85,25 @@ function PostIntro({ children }) {
 
   if (game.state == "ended") {
     return (
-      <Steps progressKey="exitStep" doneKey="exitStepDone" steps={[ExitSurvey]}>
-        <div className="h-full flex flex-col items-center justify-center">
-          <h2 className="font-medium text-gray-700">Finished</h2>
-          <p className="mt-2 text-gray-400">Thank you for participating</p>
-        </div>
+      <Steps progressKey="exitStep" doneKey="exitStepDone" steps={exitSteps}>
+        <Finished />
       </Steps>
     );
   }
 
-  return children;
+  return <>{children}</>;
 }
 
-function NoGames() {
+export function Finished() {
+  return (
+    <div className="h-full flex flex-col items-center justify-center">
+      <h2 className="font-medium text-gray-700">Finished</h2>
+      <p className="mt-2 text-gray-400">Thank you for participating</p>
+    </div>
+  );
+}
+
+export function DefaultNoGames() {
   return (
     <div className="h-screen flex items-center justify-center">
       <div className="w-92 flex flex-col items-center">

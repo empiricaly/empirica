@@ -138,7 +138,7 @@ func Enable(
 	router *httprouter.Router,
 ) error {
 	router.GET("/", index)
-	u, _ := url.Parse("http://localhost:8844")
+	u, _ := url.Parse("http://127.0.0.1:8844")
 	prox := httputil.NewSingleHostReverseProxy(u)
 	prox.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
 		rw.WriteHeader(http.StatusBadGateway)

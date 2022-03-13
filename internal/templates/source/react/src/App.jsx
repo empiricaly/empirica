@@ -1,9 +1,9 @@
-import { EmpiricaPlayer } from "@empirica/player";
 import React from "react";
+import { EmpiricaPlayer, EmpiricaMenu, GameFrame } from "@empirica/player";
 import "virtual:windi.css";
-import { Affix } from "./components/Affix";
-import { Menu } from "./components/base/Menu";
 import { Game } from "./components/Game";
+import { ExitSurvey } from "./components/intro-exit/ExitSurvey";
+import { Introduction } from "./components/intro-exit/Introduction";
 
 export default function App() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -11,12 +11,12 @@ export default function App() {
 
   return (
     <div className="h-screen relative">
-      <Menu />
+      <EmpiricaMenu />
       <div className="h-full overflow-auto">
         <EmpiricaPlayer ns={playerKey}>
-          <Affix>
+          <GameFrame introSteps={[Introduction]} exitSteps={[ExitSurvey]}>
             <Game />
-          </Affix>
+          </GameFrame>
         </EmpiricaPlayer>
       </div>
     </div>
