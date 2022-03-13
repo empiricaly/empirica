@@ -50,7 +50,7 @@ func (ui *UI) printClean() {
 	lipgloss.SetColorProfile(termenv.TrueColor)
 	// lipgloss.SetHasDarkBackground(false)
 
-	// columnWidth -= 20
+	columnWidth -= 20
 
 	subtle := lipgloss.AdaptiveColor{Light: "#555", Dark: "#aaaaaa"}
 	highConstrast := lipgloss.AdaptiveColor{Light: "#222222", Dark: "#ccc"}
@@ -87,18 +87,21 @@ func (ui *UI) printClean() {
 
 	var buildStr string
 
-	if build.Version == "" {
-		if build.BuildNum == "" {
-			buildStr = "local build"
-		} else {
-			buildStr = "build #" + build.BuildNum
-		}
+	// if build.Version == "" {
+	if build.BuildNum == "" {
+		buildStr = "local build"
 	} else {
-		buildStr = build.Version
+		buildStr = "build #" + build.BuildNum
 	}
-	strs = append(strs, lineHeader(highlightStr("Empirica")+subtleStr(" ("+buildStr+") server running:")))
-	strs = append(strs, urlLine(urlHeader("Player  ")+subtleStr("http://localhost:3000")))
-	strs = append(strs, urlLine(urlHeader("Admin   ")+subtleStr("http://localhost:3000/admin")))
+	// } else {
+	// 	buildStr = build.Version
+	// }
+
+	strs = append(strs,
+		lineHeader(highlightStr("Empirica")+subtleStr(" ("+buildStr+") server running:")),
+		urlLine(urlHeader("Player  ")+subtleStr("http://localhost:3000")),
+		urlLine(urlHeader("Admin   ")+subtleStr("http://localhost:3000/admin")),
+	)
 
 	lists := list.Render(
 		lipgloss.JoinVertical(lipgloss.Left,
@@ -106,7 +109,7 @@ func (ui *UI) printClean() {
 		),
 	)
 
-	doc.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, lists))
+	doc.WriteString(lists)
 
 	docStyle := lipgloss.NewStyle().Padding(0, 2, 2, 2)
 	fmt.Fprintln(os.Stderr, docStyle.Render(doc.String()))
