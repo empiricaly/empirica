@@ -24,7 +24,7 @@
   },
   "volta": {
     "node": "16.4.1",
-    "yarn": "1.22.10",
+    "yarn": "1.22.15",
     "npm": "7.19.1"
   },
   "homepage": "https://github.com/empiricaly/empirica#readme",

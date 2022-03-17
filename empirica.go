@@ -29,10 +29,12 @@ type Runner struct {
 func (r *Runner) Close(ctx context.Context) {
 	if r.server != nil {
 		r.server.Wait()
+		log.Debug().Msg("empirica: server stopped")
 	}
 
 	if r.taj != nil {
 		r.taj.Close(ctx)
+		log.Debug().Msg("empirica: tajriba stopped")
 	}
 }
 

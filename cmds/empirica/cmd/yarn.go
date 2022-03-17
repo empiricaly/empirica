@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/empiricaly/empirica/internal/experiment"
 	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -14,7 +15,7 @@ func addYarnCommand(parent *cobra.Command) error {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		// Args:               cobra.An,
-		Hidden:             true,
+		Hidden:             false,
 		DisableFlagParsing: true,
 		TraverseChildren:   true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -24,7 +25,7 @@ func addYarnCommand(parent *cobra.Command) error {
 				return errors.Wrap(err, "check node")
 			}
 
-			return runCmd(ctx, "", "yarn", args...)
+			return experiment.RunCmd(ctx, "", "yarn", args...)
 		},
 	}
 

@@ -1,16 +1,12 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
-	"os"
 	"os/exec"
-	"path"
-	"path/filepath"
 	"strings"
 
+	"github.com/empiricaly/empirica/internal/experiment"
 	"github.com/empiricaly/empirica/internal/settings"
-	"github.com/empiricaly/empirica/internal/templates"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -36,70 +32,15 @@ func addCreateCommand(parent *cobra.Command) error {
 			}
 
 			// current, err := os.Getwd()
-			// if err != nil {
-			// 	return errors.Wrap(err, "get current directory")
-			// }
+			// if
 
-			project := args[0]
-
-			dir := filepath.Clean(project)
-
-			if err := createDir(dir); err != nil {
-				return errors.Wrap(err, "project")
-			}
-
-			serverDir := path.Join(dir, "server")
-			clientDir := path.Join(dir, "client")
-
-			if err := templates.CopyDir(project, serverDir, "callbacks"); err != nil {
-				return errors.Wrap(err, "server: copy directory")
-			}
-
-			if err := templates.CopyDir(project, clientDir, "react"); err != nil {
-				return errors.Wrap(err, "client: copy directory")
-			}
-
-			if err := runCmd(ctx, clientDir, "yarn", "install"); err != nil {
-				return errors.Wrap(err, "client")
-			}
-
-			if err := runCmd(ctx, serverDir, "yarn", "install"); err != nil {
-				return errors.Wrap(err, "server")
-			}
-
-			if err := settings.Init(project, dir); err != nil {
-				return errors.Wrap(err, "empirica")
+			if err := experiment.Create(ctx, args[0]); err != nil {
+				return errors.Wrap(err, "get current directory")
 			}
 
 			return nil
 		},
 	})
-
-	return nil
-}
-
-const dirPerm = 0o777
-
-func createDir(dir string) error {
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		if err := os.MkdirAll(dir, dirPerm); err != nil {
-			return errors.Wrapf(err, "create directory '%s'", dir)
-		}
-	}
-
-	return nil
-}
-
-func runCmd(ctx context.Context, dir, command string, args ...string) error {
-	c := exec.CommandContext(ctx, command, args...)
-
-	c.Stderr = os.Stderr
-	c.Stdout = os.Stdout
-	c.Dir = dir
-
-	if err := c.Run(); err != nil {
-		return errors.Wrapf(err, "%s %s", command, strings.Join(args, " "))
-	}
 
 	return nil
 }

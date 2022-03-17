@@ -100,6 +100,7 @@ func (s *Server) Start(ctx context.Context) (err error) {
 			cancel()
 		}
 
+		log.Debug().Msg("server: shutdown")
 		s.wg.Done()
 	}()
 

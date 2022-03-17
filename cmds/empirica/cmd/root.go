@@ -78,6 +78,8 @@ func root(_ *cobra.Command, _ []string, usingConfigFile *bool) error {
 
 	t.Close(ctx)
 
+	log.Debug().Msg("empirica: stopped")
+
 	return nil
 }
 
@@ -103,6 +105,7 @@ func Execute() {
 	failedStart(addSetupCommand(rootCmd))
 	failedStart(addNodeCommand(rootCmd))
 	failedStart(addYarnCommand(rootCmd))
+	failedStart(addUpgradeCommand(rootCmd))
 
 	cobra.OnInitialize(initConfig(rootCmd, usingConfigFile))
 
