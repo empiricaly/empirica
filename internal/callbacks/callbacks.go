@@ -9,6 +9,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/cortesi/moddwatch"
@@ -110,6 +111,25 @@ const (
 	watchChBuf = 1024
 )
 
+func (cb *Callbacks) sigint() {
+	pgid, err := syscall.Getpgid(cb.c.Process.Pid)
+	if err != nil {
+		log.Debug().Err(err).Msg("callback: failed to send signal")
+
+		return
+	}
+
+	if err := syscall.Kill(-pgid, syscall.SIGINT); err != nil {
+		log.Debug().Err(err).Msg("callback: failed to send signal")
+	}
+
+	// if err := cb.c.Process.Signal(os.Interrupt); err != nil {
+	// 	log.Debug().Err(err).Msg("callback: failed to send signal")
+	// }
+
+	cb.c = nil
+}
+
 func (cb *Callbacks) watch(ctx context.Context) error {
 	dir, err := os.Getwd()
 	if err != nil {
@@ -152,27 +172,12 @@ func (cb *Callbacks) watch(ctx context.Context) error {
 					continue
 				}
 
-				log.Debug().Str("mod", mod.String()).Msg("callbacks: mod")
+				log.Trace().Str("mod", mod.String()).Msg("callbacks: mod")
 
 				cb.Lock()
 
 				if cb.c != nil {
-					// log.Debug().Str("mod", mod.String()).Msg("callbacks: restarting")
-
-					// c := exec.CommandContext(ctx, "kill", "-INT", strconv.Itoa(cb.c.Process.Pid))
-
-					// c.Stderr = os.Stderr
-					// c.Stdout = os.Stdout
-
-					// if err := c.Run(); err != nil {
-					// 	log.Debug().Err(err).Msg("callback: failed to send signal")
-					// }
-
-					if err := cb.c.Process.Signal(os.Interrupt); err != nil {
-						log.Debug().Err(err).Msg("callback: failed to send signal")
-					}
-
-					cb.c = nil
+					cb.sigint()
 				}
 
 				cb.Unlock()
@@ -198,59 +203,61 @@ func (cb *Callbacks) run(ctx context.Context) {
 
 	for {
 		c, err := cb.runOnce(ctx)
+		if err != nil {
+			d := connRetry.Duration()
 
-		if err == nil {
-			if !cb.isDefaultCmd {
-				cb.comp.Ready()
-			}
+			log.Error().
+				Err(err).
+				Str("waiting", d.String()).
+				Msg("callbacks: command failed, restarting")
 
-			cb.Lock()
-			cb.c = c
-			cb.Unlock()
-
-			err = c.Wait()
-
-			if err != nil {
-				errs := err.Error()
-				if errors.Is(err, context.Canceled) ||
-					// strings.Contains(errs, "signal: interrupt") ||
-					strings.Contains(errs, "context canceled") ||
-					strings.Contains(errs, "signal: killed") ||
-					strings.Contains(errs, "signal: hangup") {
-					log.Debug().Msg("callback: quit")
-
-					return
-				}
-
-				if strings.Contains(errs, "signal: interrupt") {
-					log.Debug().Msg("callback: restarting")
-
-					continue
-				}
-			}
-
-			if err == nil {
-				select {
-				case <-ctx.Done():
-					return
-				default:
-					continue
-				}
+			select {
+			case <-time.After(d):
+				continue
+			case <-ctx.Done():
+				return
 			}
 		}
 
-		d := connRetry.Duration()
+		if !cb.isDefaultCmd {
+			cb.comp.Ready()
+		}
 
-		log.Error().
-			Err(err).
-			Str("waiting", d.String()).
-			Msg("callbacks: command failed, restarting")
+		cb.Lock()
+		cb.c = c
+		cb.Unlock()
+
+		waiting := make(chan error)
+		go func() {
+			waiting <- c.Wait()
+		}()
 
 		select {
-		case <-time.After(d):
-			continue
 		case <-ctx.Done():
+			cb.sigint()
 			return
+		case err = <-waiting:
+		}
+
+		if err != nil {
+			errs := err.Error()
+
+			if errors.Is(err, context.Canceled) ||
+				strings.Contains(errs, "signal: interrupt") ||
+				strings.Contains(errs, "context canceled") ||
+				strings.Contains(errs, "signal: killed") ||
+				strings.Contains(errs, "signal: hangup") {
+				log.Debug().Msg("callback: quit")
+
+				return
+			}
+		} else {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				continue
+			}
 		}
 	}
 }
@@ -288,7 +295,12 @@ func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 		args = parts[1:]
 	}
 
+	// parts = append([]string{"-c"}, cmd)
+	// spew.Dump(parts)
+	// c := exec.CommandContext(ctx, "bash", parts...)
+
 	c := exec.CommandContext(ctx, parts[0], args...)
+	c.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pgid: 0}
 
 	c.Stderr = os.Stderr
 	c.Stdout = cb.stdout
@@ -321,7 +333,10 @@ func (c *callbacksWriter) Write(p []byte) (n int, err error) {
 	if ready {
 		c.comp.Ready()
 		if c.startedOnce {
-			log.Info().Msg("callbacks: restarted")
+			go func() {
+				time.Sleep(100 * time.Millisecond)
+				log.Info().Msg("callbacks: restarted")
+			}()
 		}
 
 		c.startedOnce = true

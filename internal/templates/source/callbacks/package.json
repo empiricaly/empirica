@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "yarn version && node --trace-warnings --enable-source-maps src/index.js",
+    "dev": "node --trace-warnings --enable-source-maps src/index.js",
     "build": "rsync -aP --exclude=node_modules --exclude=*.js -m src/* dist/ && esbuild src/index.js --platform=node --bundle --minify --outfile=dist/index.js",
     "serve": "node --trace-warnings --enable-source-maps index.js"
   },
@@ -19,6 +19,5 @@
   },
   "devDependencies": {
     "esbuild": "0.14.25"
-  },
-  "version": "0.0.0"
+  }
 }

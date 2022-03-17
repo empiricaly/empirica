@@ -43,7 +43,9 @@ export async function connect({
     process.exit(1);
   }
 
-  const sighup = () => process.exit(0);
+  const sighup = () => {
+    process.exit(0);
+  };
   process.on("SIGHUP", sighup);
 
   let quitResolve: (value: unknown) => void;
@@ -51,7 +53,9 @@ export async function connect({
     quitResolve = resolve;
   });
 
-  const sigint = () => quitResolve;
+  const sigint = () => {
+    quitResolve(1);
+  };
   process.on("SIGINT", sigint);
 
   if (logLevel) {
