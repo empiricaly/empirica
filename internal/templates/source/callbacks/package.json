@@ -3,13 +3,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --trace-warnings --enable-source-maps src/index.js",
+    "dev": "yarn version && node --trace-warnings --enable-source-maps src/index.js",
     "build": "rsync -aP --exclude=node_modules --exclude=*.js -m src/* dist/ && esbuild src/index.js --platform=node --bundle --minify --outfile=dist/index.js",
     "serve": "node --trace-warnings --enable-source-maps index.js"
   },
   "volta": {
     "node": "16.4.1",
-    "yarn": "1.22.10",
+    "yarn": "1.22.15",
     "npm": "7.19.1"
   },
   "dependencies": {
@@ -19,5 +19,6 @@
   },
   "devDependencies": {
     "esbuild": "0.14.25"
-  }
+  },
+  "version": "0.0.0"
 }
