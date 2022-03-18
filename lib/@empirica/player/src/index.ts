@@ -8,6 +8,7 @@ export * from "./components/GameFrame";
 export * from "./components/Loading";
 export * from "./components/Logo";
 export * from "./components/PlayerID";
+export * from "./components/Slider";
 export * from "./components/Steps";
 export * from "./empirica";
 export * from "./hooks";

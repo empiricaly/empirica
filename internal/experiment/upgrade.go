@@ -7,7 +7,7 @@ import (
 )
 
 func Upgrade(ctx context.Context, playerPath, callbacksPath string) error {
-	stop := ShowSpinner("Upgrade to latest empirica packages")
+	stop := ShowSpinner("Upgrade empirica packages")
 
 	if err := RunCmdSilent(ctx, playerPath, "yarn", "upgrade", "--silent", "@empirica/player@latest"); err != nil {
 		return errors.Wrap(err, "upgrade client")

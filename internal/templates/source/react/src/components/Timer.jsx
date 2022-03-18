@@ -6,7 +6,9 @@ export function Timer() {
 
   return (
     <div className="flex flex-col items-center">
-      <h1 className="font-mono text-3xl font-bold">{humanTimer(remaining)}</h1>
+      <h1 className="font-mono text-3xl text-gray-500 font-semibold">
+        {humanTimer(remaining)}
+      </h1>
     </div>
   );
 }

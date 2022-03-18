@@ -1,5 +1,5 @@
 import React from "react";
-import { Button } from "../base/Button";
+import { Button } from "../components/Button";
 
 export function Introduction({ next }) {
   return (

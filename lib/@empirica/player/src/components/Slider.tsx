@@ -1,16 +1,23 @@
-import React, { useRef } from "react";
+import React, { RefObject, ChangeEventHandler, useRef } from "react";
 
 export function Slider({
   value,
-  onChange = null,
+  onChange,
   min = 0,
   max = 100,
   stepSize = 1,
   disabled = false,
+}: {
+  value: number;
+  onChange?: ChangeEventHandler<HTMLInputElement> | undefined;
+  min?: number;
+  max?: number;
+  stepSize?: number;
+  disabled?: boolean;
 }) {
   const val = value === null ? (max - min) / 2 : value;
   const cls = value === null ? "slider-thumb-zero" : "slider-thumb";
-  const ref = useRef(null);
+  const ref: RefObject<HTMLInputElement> = useRef(null);
 
   if (value !== null && ref.current) {
     const nmin = min ? min : 0;
@@ -23,7 +30,7 @@ export function Slider({
   return (
     <div className="relative w-full">
       <input
-        className={`rounded-lg appearance-none bg-gray-200 h-3 w-full ${cls}`}
+        className={cls}
         type="range"
         min={min}
         max={max}

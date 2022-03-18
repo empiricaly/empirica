@@ -1,9 +1,9 @@
 import React from "react";
 import { EmpiricaPlayer, EmpiricaMenu, GameFrame } from "@empirica/player";
 import "virtual:windi.css";
-import { Game } from "./components/Game";
-import { ExitSurvey } from "./components/intro-exit/ExitSurvey";
-import { Introduction } from "./components/intro-exit/Introduction";
+import { Game } from "./Game";
+import { ExitSurvey } from "./intro-exit/ExitSurvey";
+import { Introduction } from "./intro-exit/Introduction";
 
 export default function App() {
   const urlParams = new URLSearchParams(window.location.search);

@@ -5,6 +5,7 @@ import {
   useGlobal,
   usePlayer,
   usePlayerID,
+  useRound,
   useStage,
 } from "../hooks";
 import { isDevelopment } from "../utils/debug";
@@ -74,12 +75,13 @@ export function PostIntro({
 }: PostIntroProps) {
   const game = useGame();
   const stage = useStage();
+  const round = useRound();
 
   if (!game) {
     return <Lobby />;
   }
 
-  if (!stage) {
+  if (!stage || !round) {
     return <Loading />;
   }
 

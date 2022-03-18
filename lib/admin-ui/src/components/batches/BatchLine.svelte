@@ -215,7 +215,7 @@
             </button> -->
             <button
               type="button"
-              class="text-gray-700 group flex items-center px-4 py-2 text-sm"
+              class="text-gray-700 group flex items-center px-4 py-2 text-sm w-full"
               role="menuitem"
               tabindex="-1"
               id="project-options-menu-0-item-1"
