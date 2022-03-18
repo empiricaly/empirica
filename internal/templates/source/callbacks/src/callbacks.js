@@ -8,15 +8,6 @@ Empirica.onGameStart(function ({ game }) {
 
   // Jelly beans
 
-  for (let i = 0; i < 10; i++) {
-    const round = game.addRound({
-      name: `Round 1 - Jelly Beans ${i}`,
-      task: "jellybeans",
-    });
-    round.addStage({ name: "Answer", duration: 300_000 });
-    round.addStage({ name: "Result", duration: 120_000 });
-  }
-
   const round = game.addRound({
     name: "Round 1 - Jelly Beans",
     task: "jellybeans",
@@ -32,14 +23,14 @@ Empirica.onGameStart(function ({ game }) {
   });
   round2.addStage({ name: "Play", duration: 300 });
 
-  // Public Goods
+  // // Public Goods
 
-  const round3 = game.addRound({
-    name: "Round 3 - Public Goods",
-    task: "publicgoods",
-  });
-  round3.addStage({ name: "Answer", duration: 300 });
-  round3.addStage({ name: "Result", duration: 120 });
+  // const round3 = game.addRound({
+  //   name: "Round 3 - Public Goods",
+  //   task: "publicgoods",
+  // });
+  // round3.addStage({ name: "Answer", duration: 300 });
+  // round3.addStage({ name: "Result", duration: 120 });
 
   // Set initial player scores to 0
 

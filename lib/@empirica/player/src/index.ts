@@ -4,6 +4,7 @@ export * from "./components/Context";
 export * from "./components/EmpiricaGlobal";
 export * from "./components/EmpiricaMenu";
 export * from "./components/EmpiricaPlayer";
+export * from "./components/examples/Sweeper";
 export * from "./components/GameFrame";
 export * from "./components/Loading";
 export * from "./components/Logo";

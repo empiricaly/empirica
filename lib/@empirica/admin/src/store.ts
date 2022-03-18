@@ -704,7 +704,7 @@ export class Store {
   updateAttribute(a: Attribute) {
     const scope = this.scopes[a.node.id];
     if (!scope) {
-      console.warn("scopes: got attribute without scope", a.node.id, a.key);
+      console.debug("scopes: got attribute without scope", a.node.id, a.key);
       return;
     }
 

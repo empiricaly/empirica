@@ -37,6 +37,7 @@ export default defineConfig({
       restart: [
         "./windi.config.cjs",
         "./node_modules/@empirica/player/dist-src/**/*.{js,ts,jsx,tsx}",
+        "./node_modules/@empirica/player/assets/**/*.css",
       ],
     }),
     windi(),

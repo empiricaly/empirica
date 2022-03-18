@@ -26,7 +26,7 @@ const (
 
 	TreatmentsYAML = "treatments.yaml"
 	treatmentsyaml = `factors:
-  - desc: playerCount determines how many players are in a game.
+  - desc: playerCount determines the number of Players are in a Game.
     name: playerCount
     values:
       - value: 1
@@ -35,6 +35,15 @@ const (
       - value: 5
       - value: 8
       - value: 13
+treatments:
+  - desc: "Single-player Game"
+    factors:
+      playerCount: 1
+    name: Solo
+  - desc: "Two-player Game"
+    factors:
+      playerCount: 2
+    name: Two Players
 `
 
 	EmpiricaTOML = "empirica.toml"

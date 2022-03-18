@@ -220,6 +220,7 @@ export class Runtime {
 
     this.store.addScope(rootScope);
     await this.getScopesOfKind("global");
+    await this.getScopesOfKind("root");
     await this.getScopesOfKind("player");
     await this.getScopesOfKind("batch");
     await this.getScopesOfKind("game");
