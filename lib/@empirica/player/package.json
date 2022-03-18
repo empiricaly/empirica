@@ -1,6 +1,6 @@
 {
   "name": "@empirica/player",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-beta.1",
   "description": "Empirica Player",
   "main": "src/index.ts",
   "repository": {
@@ -59,7 +59,10 @@
           "-devDependencies": {}
         }
       ],
-      ["@pika/plugin-copy-assets", {}],
+      [
+        "@pika/plugin-copy-assets",
+        {}
+      ],
       [
         "@pika/plugin-build-types"
       ],
