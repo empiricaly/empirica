@@ -1,5 +1,4 @@
 import { Slider, usePlayer, usePlayers, useStage } from "@empirica/player";
-import "@empirica/player/assets/slider.css";
 import React from "react";
 import { Avatar } from "../components/Avatar";
 import { Button } from "../components/Button";
@@ -19,28 +18,33 @@ export function JellyBeans() {
 
   let jelly = <JellyBeanJar />;
 
+  const isResultStage = stage.get("name") === "Result";
+
   if (players.length > 1) {
     jelly = (
       <div className="grid grid-cols-2 items-center">
         {jelly}
         <div>
+          {isResultStage ? (
+            <>
+              <div className="text-gray-500 text-2xl">You</div>
+              <div className="border-b-3 border-blue-500/50 pb-2 mb-8">
+                {PlayerScore(player, () => {}, isResultStage)}
+              </div>
+            </>
+          ) : null}
           {players
             .filter((p) => p.id !== player.id)
-            .map((p) => (
-              <div key={p.id} className="py-4">
-                <div className="flex items-center space-x-6">
-                  <div className="h-12 w-12 shrink-0">
-                    <Avatar player={p} />
-                  </div>
-                  <Slider
-                    value={p.round.get("guess")}
-                    onChange={handleChange}
-                    disabled={true}
-                    max={5000}
-                  />
-                </div>
-              </div>
-            ))}
+            .map((p) => PlayerScore(p, handleChange, isResultStage))}
+        </div>
+      </div>
+    );
+  } else if (players.length == 1 && isResultStage) {
+    jelly = (
+      <div className="grid grid-cols-2 items-center">
+        {jelly}
+        <div>
+          {isResultStage ? PlayerScore(player, () => {}, isResultStage) : null}
         </div>
       </div>
     );
@@ -48,16 +52,22 @@ export function JellyBeans() {
 
   return (
     <div className="md:min-w-96 lg:min-w-128 xl:min-w-192 flex flex-col items-center space-y-10">
-      <p>Guess how many Jelly Beans are in the jar below.</p>
+      <p>
+        {isResultStage
+          ? "Result"
+          : "Guess how many Jelly Beans are in the jar below."}
+      </p>
 
       {jelly}
 
-      <Slider
-        value={player.round.get("guess")}
-        onChange={handleChange}
-        disabled={stage.get("name") !== "Answer"}
-        max={5000}
-      />
+      {!isResultStage ? (
+        <Slider
+          value={player.round.get("guess")}
+          onChange={handleChange}
+          disabled={stage.get("name") !== "Answer"}
+          max={5000}
+        />
+      ) : null}
 
       <Button handleClick={handleSubmit} primary>
         Submit
@@ -77,6 +87,34 @@ function JellyBeanJar() {
         }}
         alt="Jelly Beans Jar"
       />
+    </div>
+  );
+}
+
+function PlayerScore(player, onChange, isResultStage) {
+  return (
+    <div key={player.id} className="py-4">
+      <div className="flex items-center space-x-6">
+        <div className="h-12 w-12 shrink-0">
+          <Avatar player={player} />
+        </div>
+        <Slider
+          value={player.round.get("guess")}
+          onChange={onChange}
+          disabled={true}
+          max={5000}
+        />
+        {isResultStage ? (
+          <div className="flex flex-col items-center space-y-0.5">
+            <div className="text-2xl font-semibold leading-none font-mono">
+              {player.get("score") || 0}
+            </div>
+            <h1 className="text-xs font-semibold uppercase tracking-wider leading-none text-gray-400">
+              Score
+            </h1>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }
