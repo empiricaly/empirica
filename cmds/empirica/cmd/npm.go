@@ -7,15 +7,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func addYarnCommand(parent *cobra.Command) error {
+func addNPMCommand(parent *cobra.Command) error {
 	cmd := &cobra.Command{
-		Use:   "yarn",
-		Short: "Run yarn commands",
+		Use:   "npm",
+		Short: "Run npm commands",
 		// 	Long: ``,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		// Args:               cobra.An,
-		Hidden:             true,
+		Hidden:             false,
 		DisableFlagParsing: true,
 		TraverseChildren:   true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -25,7 +25,7 @@ func addYarnCommand(parent *cobra.Command) error {
 				return errors.Wrap(err, "check node")
 			}
 
-			return experiment.RunCmd(ctx, "", "yarn", args...)
+			return experiment.RunCmd(ctx, "", "npm", args...)
 		},
 	}
 

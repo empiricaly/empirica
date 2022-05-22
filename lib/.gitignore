@@ -1,3 +1,5 @@
 node_modules
 pkg
 yarn-error.log
+.parcel-cache
+dist

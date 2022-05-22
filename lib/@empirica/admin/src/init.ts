@@ -4,6 +4,7 @@ import { Callbacks } from "./callbacks";
 import { Empirica } from "./empirica";
 import { levels, setLogLevel } from "./utils/console";
 
+// Increase stack trace size
 Error.stackTraceLimit = Infinity;
 
 export async function connect({
@@ -87,6 +88,10 @@ export async function connect({
   }
 
   if (!connected) {
+    if (!token) {
+      console.error("callbacks: token missing");
+      process.exit(1);
+    }
     try {
       const [_, st] = await Empirica.registerService(url, name, token, cbs);
 

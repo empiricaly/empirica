@@ -8,14 +8,11 @@
     "serve": "node --trace-warnings --enable-source-maps index.js"
   },
   "volta": {
-    "node": "16.4.1",
-    "yarn": "1.22.15",
-    "npm": "7.19.1"
+    "node": "16.15.0",
+    "npm": "8.10.0"
   },
   "dependencies": {
-    "@empirica/admin": "latest",
-    "minimist": "1.2.5",
-    "rand-seed": "1.0.1"
+    "@empirica/admin": "latest"
   },
   "devDependencies": {
     "esbuild": "0.14.25"
