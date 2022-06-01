@@ -38,8 +38,6 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean bool) 
 
 		args = append(args, "--token", conf.Callbacks.Token)
 
-		log.Info().Interface("config", conf).Strs("args", args).Msg("args")
-
 		c := exec.CommandContext(ctx, parts[0], args...)
 
 		p := path.Join(dir, "callbacks")
