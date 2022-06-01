@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -13,23 +14,105 @@ import (
 	"github.com/empiricaly/empirica"
 	"github.com/klauspost/compress/gzip"
 	"github.com/klauspost/compress/zstd"
+	cp "github.com/otiai10/copy"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
+	"github.com/spf13/viper"
 	"github.com/twmb/murmur3"
 )
 
-func Unbundle(ctx context.Context, conf *empirica.Config, in string, clean bool) (string, error) {
-	ext := path.Ext(in)
-	useGzip := ext == ".tgz"
+func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return nil, errors.Wrap(err, "get working dir")
+	}
 
+	dst := path.Join(wd, ".empirica")
+	src := path.Join(dir, ".empirica")
+
+	_, err = os.Stat(dst)
+
+	if err != nil && !os.IsNotExist(err) {
+		return nil, errors.Wrap(err, "check .empirica already exists")
+	}
+
+	if !os.IsNotExist(err) {
+		for _, fileName := range []string{"empirica.toml", "treatments.yaml"} {
+			bytesRead, err := ioutil.ReadFile(path.Join(src, fileName))
+			if err != nil {
+				return nil, errors.Wrapf(err, "read %s", fileName)
+			}
+
+			err = ioutil.WriteFile(path.Join(dst, fileName), bytesRead, 0o600)
+			if err != nil {
+				return nil, errors.Wrapf(err, "write %s", fileName)
+			}
+		}
+	} else {
+		if err := cp.Copy(src, dst); err != nil {
+			return nil, errors.Wrap(err, "copy .empirica")
+		}
+	}
+
+	confFile := path.Join(dst, "empirica.toml")
+
+	viper.SetConfigFile(confFile)
+
+	conf := new(empirica.Config)
+
+	if err := viper.Unmarshal(conf); err != nil {
+		log.Fatal().Err(err).Msg("could not parse configuration")
+	}
+
+	// FIXME configuration manual tweaking is not ideal
+
+	conf.Callbacks.Token = conf.Tajriba.Auth.ServiceRegistrationToken
+	conf.Production = true
+	conf.Tajriba.Server.Production = true
+
+	if inConf.Tajriba.Store.UseMemory {
+		conf.Tajriba.Store.UseMemory = true
+	}
+
+	if inConf.Tajriba.Store.File != empirica.DefaultStoreFile {
+		conf.Tajriba.Store.File = inConf.Tajriba.Store.File
+	}
+
+	if err := os.MkdirAll(path.Dir(conf.Tajriba.Store.File), os.ModePerm); err != nil {
+		return nil, errors.Wrap(err, "create storage dir")
+	}
+
+	_, err = os.Stat(conf.Tajriba.Store.File)
+
+	if err != nil && !os.IsNotExist(err) {
+		return nil, errors.Wrap(err, "check storage file already exists")
+	}
+
+	if os.IsNotExist(err) {
+		log.Info().Msg("unbundle: creating new storage file")
+		file, err := os.Create(conf.Tajriba.Store.File)
+		if err != nil {
+			return nil, errors.Wrap(err, "create storage file")
+		}
+
+		file.Close()
+	}
+
+	return conf, nil
+}
+
+func Unbundle(_ context.Context, config *empirica.Config, in string, clean bool) (string, *empirica.Config, error) {
 	f, err := os.Open(in)
 	if err != nil {
-		return "", errors.Wrap(err, "open bundle")
+		return "", nil, errors.Wrap(err, "open bundle")
 	}
 	defer f.Close()
 
 	hasher := murmur3.New64()
-	io.Copy(hasher, f)
+	if _, err := io.Copy(hasher, f); err != nil {
+		return "", nil, errors.Wrap(err, "hash bundle")
+	}
+
 	hash := fmt.Sprintf("%x", hasher.Sum64())
 
 	dir := path.Join(os.TempDir(), hash)
@@ -45,10 +128,15 @@ func Unbundle(ctx context.Context, conf *empirica.Config, in string, clean bool)
 				Msg("unbundle: removing old installation")
 
 			if err := os.RemoveAll(dir); err != nil {
-				return "", errors.Wrap(err, "remove previous installation")
+				return "", nil, errors.Wrap(err, "remove previous installation")
 			}
 		} else {
-			return dir, nil
+			conf, err := prepDotEmpirica(config, dir)
+			if err != nil {
+				return "", nil, errors.Wrap(err, "copy .empirica")
+			}
+
+			return dir, conf, nil
 		}
 	}
 
@@ -57,14 +145,14 @@ func Unbundle(ctx context.Context, conf *empirica.Config, in string, clean bool)
 		Msg("unbundle: installing")
 
 	if _, err := f.Seek(0, io.SeekStart); err != nil {
-		return "", errors.Wrap(err, "rewind file")
+		return "", nil, errors.Wrap(err, "rewind file")
 	}
 
 	var decompressor io.Reader
-	if useGzip {
+	if useGzip := path.Ext(in) == ".tgz"; useGzip {
 		gzipReader, err := gzip.NewReader(f)
 		if err != nil {
-			return "", errors.Wrap(err, "create zstd reader")
+			return "", nil, errors.Wrap(err, "create zstd reader")
 		}
 		defer gzipReader.Close()
 
@@ -72,7 +160,7 @@ func Unbundle(ctx context.Context, conf *empirica.Config, in string, clean bool)
 	} else {
 		zstdReader, err := zstd.NewReader(f)
 		if err != nil {
-			return "", errors.Wrap(err, "create zstd reader")
+			return "", nil, errors.Wrap(err, "create zstd reader")
 		}
 		defer zstdReader.Close()
 
@@ -85,10 +173,15 @@ func Unbundle(ctx context.Context, conf *empirica.Config, in string, clean bool)
 		header, err := tr.Next()
 
 		switch {
-		case err == io.EOF:
-			return dir, nil
+		case errors.Is(err, io.EOF):
+			conf, err := prepDotEmpirica(config, dir)
+			if err != nil {
+				return "", nil, errors.Wrap(err, "copy .empirica")
+			}
+
+			return dir, conf, nil
 		case err != nil:
-			return "", errors.Wrap(err, "read tar")
+			return "", nil, errors.Wrap(err, "read tar")
 
 		// if the header is nil, just skip it (not sure how this happens)
 		case header == nil:
@@ -96,7 +189,7 @@ func Unbundle(ctx context.Context, conf *empirica.Config, in string, clean bool)
 		}
 
 		if err := unbundleFile(tr, header, dir); err != nil {
-			return "", errors.Wrap(err, "untar file")
+			return "", nil, errors.Wrap(err, "untar file")
 		}
 	}
 }

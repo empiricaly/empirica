@@ -18,13 +18,13 @@ import (
 )
 
 func Serve(ctx context.Context, config *empirica.Config, in string, clean bool) error {
-	dir, err := Unbundle(ctx, config, in, clean)
+	dir, conf, err := Unbundle(ctx, config, in, clean)
 	if err != nil {
 		return errors.Wrap(err, "unbundle")
 	}
 
 	go func() {
-		parts := strings.Split(config.Callbacks.ServeCmd, " ")
+		parts := strings.Split(conf.Callbacks.ServeCmd, " ")
 		if len(parts) == 0 {
 			log.Error().Msg("callbacks: empty serve command")
 
@@ -36,15 +36,19 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean bool) 
 			args = parts[1:]
 		}
 
+		args = append(args, "--token", conf.Callbacks.Token)
+
+		log.Info().Interface("config", conf).Strs("args", args).Msg("args")
+
 		c := exec.CommandContext(ctx, parts[0], args...)
 
 		p := path.Join(dir, "callbacks")
 
-		os.Chdir(p)
+		// os.Chdir(p)
 
 		c.Stderr = os.Stderr
 		c.Stdout = os.Stdout
-		c.Dir = path.Join(dir, "callbacks")
+		c.Dir = p
 
 		if err := c.Start(); err != nil {
 			log.Error().Err(err).Msg("callbacks: failed serve command")
@@ -65,7 +69,7 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean bool) 
 		}
 	}()
 
-	s, err := server.Prepare(config.Server)
+	s, err := server.Prepare(conf.Server)
 	if err != nil {
 		return errors.Wrap(err, "prepare server")
 	}
@@ -77,17 +81,17 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean bool) 
 	})
 	s.Router.NotFound = playerFS
 
-	s.Router.GET("/treatments", server.ReadTreatments(config.Server.Treatments))
-	s.Router.PUT("/treatments", server.WriteTreatments(config.Server.Treatments))
+	s.Router.GET("/treatments", server.ReadTreatments(conf.Server.Treatments))
+	s.Router.PUT("/treatments", server.WriteTreatments(conf.Server.Treatments))
 	s.Router.ServeFiles("/admin/*filepath", templates.HTTPFS("admin-ui"))
 
-	ctx, taj, schema, err := tajriba.Setup(ctx, config.Tajriba, false)
+	ctx, taj, schema, err := tajriba.Setup(ctx, conf.Tajriba, false)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start tajriba")
 	}
 	defer taj.Close(ctx)
 
-	err = tajriba.Init(ctx, config.Tajriba, schema, s.Router)
+	err = tajriba.Init(ctx, conf.Tajriba, schema, s.Router)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start tajriba")
 	}
