@@ -1,0 +1,95 @@
+{
+  "name": "@empirica/core",
+  "version": "1.0.0-beta.0",
+  "description": "Empirica Core",
+  "author": "Nicolas Paton <nicolas.paton@gmail.com>",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/empiricaly/empirica#readme",
+  "bugs": {
+    "url": "https://github.com/empiricaly/empirica/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/empiricaly/empirica.git"
+  },
+  "keywords": [
+    "empirica",
+    "experiment",
+    "research",
+    "multiplayer",
+    "real-time",
+    "behavioral",
+    "social-science",
+    "psychology"
+  ],
+  "source": "src/participant/index.ts",
+  "main": "dist/main.js",
+  "module": "dist/module.js",
+  "types": "dist/types.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/module.js",
+      "require": "./dist/main.js"
+    }
+  },
+  "targets": {
+    "module": {
+      "includeNodeModules": [
+        "rand-seed"
+      ]
+    }
+  },
+  "volta": {
+    "node": "16.15.0",
+    "npm": "8.10.0"
+  },
+  "engines": {
+    "node": ">= 16.15.0"
+  },
+  "browserslist": "> 0.5%, last 2 versions, not dead",
+  "ava": {
+    "files": [
+      "**/*_test.ts"
+    ],
+    "extensions": {
+      "ts": "module"
+    },
+    "nodeArguments": [
+      "--loader=ts-node/esm",
+      "--experimental-specifier-resolution=node"
+    ]
+  },
+  "files": [
+    "dist/*"
+  ],
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
+  "scripts": {
+    "build": "parcel build",
+    "test": "ava",
+    "test:watch": "ava --watch",
+    "prerelease": "npm run build",
+    "release:next": "np --tag next",
+    "release": "np --tag latest",
+    "postversion": "cd pkg && yarn version --new-version $npm_package_version --no-git-tag-version --no-commit-hooks"
+  },
+  "devDependencies": {
+    "@parcel/packager-ts": "^2.5.0",
+    "@parcel/transformer-typescript-types": "^2.5.0",
+    "@types/node": "17.0.35",
+    "ava": "4.2.0",
+    "np": "7.5.0",
+    "parcel": "2.5.0",
+    "prettier": "2.2.1",
+    "ts-node": "10.8.0",
+    "typescript": "4.6.4"
+  },
+  "dependencies": {
+    "@empirica/tajriba": "latest",
+    "@swc/helpers": "0.3.15",
+    "rxjs": "7.5.5"
+  }
+}
