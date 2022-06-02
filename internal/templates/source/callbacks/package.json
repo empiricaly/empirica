@@ -1,10 +1,9 @@
 {
   "name": "empirica-server-demo",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "node --trace-warnings --enable-source-maps src/index.js",
-    "build": "rsync -aP --exclude=node_modules --exclude=*.js -m src/* dist/ && esbuild src/index.js --platform=node --bundle --minify --outfile=dist/index.js",
+    "build": "rsync -aP --exclude=node_modules --exclude=*.js -m src/* dist/ && esbuild src/index.js --platform=node --define:process.env.NODE_ENV='\"production\"' --bundle --minify --outfile=dist/index.js",
     "serve": "node --trace-warnings --enable-source-maps index.js"
   },
   "volta": {
@@ -13,6 +12,9 @@
   },
   "dependencies": {
     "@empirica/admin": "latest"
+  },
+  "resolutions": {
+    "graphql": "15.5.0"
   },
   "devDependencies": {
     "esbuild": "0.14.25"

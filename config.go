@@ -47,6 +47,8 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+const DefaultStoreFile = ".empirica/local/tajriba.json"
+
 // ConfigFlags helps configure cobra and viper flags.
 func ConfigFlags(cmd *cobra.Command) error {
 	if cmd == nil {
@@ -65,7 +67,7 @@ func ConfigFlags(cmd *cobra.Command) error {
 		return errors.Wrap(err, "set callbacks configuration flags")
 	}
 
-	if err := tajriba.ConfigFlags(cmd, "tajriba", ".empirica/local/tajriba.json"); err != nil {
+	if err := tajriba.ConfigFlags(cmd, "tajriba", DefaultStoreFile); err != nil {
 		return errors.Wrap(err, "set tajriba configuration flags")
 	}
 
