@@ -90,6 +90,7 @@ func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, err
 
 	if os.IsNotExist(err) {
 		log.Info().Msg("unbundle: creating new storage file")
+
 		file, err := os.Create(conf.Tajriba.Store.File)
 		if err != nil {
 			return nil, errors.Wrap(err, "create storage file")
@@ -212,7 +213,7 @@ func unbundleFile(tr *tar.Reader, header *tar.Header, dir string) error {
 
 	case tar.TypeReg:
 
-		log.Debug().
+		log.Trace().
 			Str("from", header.Name).
 			Str("to", target).
 			Msg("unbundle: copying file")
