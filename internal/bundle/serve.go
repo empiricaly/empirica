@@ -23,6 +23,11 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean bool) 
 		return errors.Wrap(err, "unbundle")
 	}
 
+	log.Trace().
+		Interface("dir", dir).
+		Interface("config", config).
+		Msg("serve: current config")
+
 	go func() {
 		parts := strings.Split(conf.Callbacks.ServeCmd, " ")
 		if len(parts) == 0 {
@@ -38,32 +43,35 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean bool) 
 
 		args = append(args, "--token", conf.Callbacks.Token)
 
+		log.Trace().
+			Strs("args", args).
+			Str("cmd", parts[0]).
+			Msg("serve: start server command")
+
 		c := exec.CommandContext(ctx, parts[0], args...)
 
 		p := path.Join(dir, "callbacks")
-
-		// os.Chdir(p)
 
 		c.Stderr = os.Stderr
 		c.Stdout = os.Stdout
 		c.Dir = p
 
 		if err := c.Start(); err != nil {
-			log.Error().Err(err).Msg("callbacks: failed serve command")
+			log.Error().Err(err).Msg("serve: failed server command")
 
 			return
 		}
 
-		log.Info().Msg("callbacks: started")
+		log.Info().Msg("serve: server started")
 
 		if err := c.Wait(); err != nil {
 			if strings.Contains(err.Error(), "signal: killed") {
-				log.Debug().Msg("callback: restarting")
+				log.Debug().Msg("serve: restarting server")
 
 				return
 			}
 
-			log.Error().Err(err).Msg("callbacks: failed serve command")
+			log.Error().Err(err).Msg("serve: failed server command")
 		}
 	}()
 

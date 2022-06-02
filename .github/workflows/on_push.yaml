@@ -12,7 +12,7 @@ jobs:
   tawonctl:
     name: Build and upload cli
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'empiricaly/empirica' }}
+    if: github.repository == 'empiricaly/empirica' && github.event.pull_request.draft == false
     steps:
       - name: Checkout
         uses: actions/checkout@v2
