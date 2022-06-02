@@ -85,6 +85,7 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean bool) 
 	s.Router.GET("/", func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
 		playerFS.ServeHTTP(w, req)
 	})
+
 	s.Router.NotFound = playerFS
 
 	s.Router.GET("/treatments", server.ReadTreatments(conf.Server.Treatments))
