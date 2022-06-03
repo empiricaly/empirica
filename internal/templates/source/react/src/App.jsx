@@ -1,5 +1,5 @@
+import { EmpiricaMenu, EmpiricaPlayer, GameFrame } from "@empirica/player";
 import React from "react";
-import { EmpiricaPlayer, EmpiricaMenu, GameFrame } from "@empirica/player";
 import "virtual:windi.css";
 import { Game } from "./Game";
 import { ExitSurvey } from "./intro-exit/ExitSurvey";

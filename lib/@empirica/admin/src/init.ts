@@ -6,8 +6,17 @@ import { levels, setLogLevel } from "./utils/console";
 
 Error.stackTraceLimit = Infinity;
 
+let defaultURL = "http://localhost:3000/query";
+
+if (typeof window !== "undefined" && window.location) {
+  const host = window.location.hostname;
+  if (host !== "localhost") {
+    defaultURL = "https://" + host + "/query";
+  }
+}
+
 export async function connect({
-  url = "http://localhost:3000/query",
+  url = defaultURL,
   name = "callbacks",
   token,
   sessionTokenPath,

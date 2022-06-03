@@ -9,3 +9,4 @@ yarn-error.log
 node_modules
 go.work
 no.work
+lib/@empirica/core/

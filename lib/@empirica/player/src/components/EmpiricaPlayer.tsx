@@ -5,15 +5,13 @@ import { Player } from "../player";
 import {
   EmpiricaContext,
   NSContext,
-  URLContext,
   OnPlayerIDContext,
+  URLContext,
 } from "./Context";
 import { Loading } from "./Loading";
 
 interface EmpiricaPlayerProps {
   url?: string;
-  consent?: React.ElementType | null;
-  playerID?: React.ElementType;
   ns?: string;
 }
 
