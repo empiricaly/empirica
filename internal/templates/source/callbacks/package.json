@@ -19,6 +19,7 @@
   "resolutions": {
     "graphql": "15.5.0"
   },
+  "type": "module",
   "devDependencies": {
     "esbuild": "0.14.25"
   }
