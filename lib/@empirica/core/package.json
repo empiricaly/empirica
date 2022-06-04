@@ -69,8 +69,8 @@
   },
   "scripts": {
     "build": "parcel build",
-    "test": "ava",
-    "test:watch": "ava --watch",
+    "test": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ava -v --timeout 60s",
+    "test:watch": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ava --watch --timeout 60s -v",
     "prerelease": "npm run build",
     "release:next": "np --tag next",
     "release": "np --tag latest",

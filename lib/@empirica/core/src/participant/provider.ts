@@ -1,13 +1,13 @@
 import {
   AttributeChange as TAttribute,
-  ParticipantChange as TParticipant,
-  StepChange as TStep,
-  ScopeChange as TScope,
   ChangePayload,
-  SubAttributesPayload,
+  ParticipantChange as TParticipant,
+  ScopeChange as TScope,
   SetAttributeInput,
+  StepChange as TStep,
+  SubAttributesPayload,
 } from "@empirica/tajriba";
-import { Observable, Subject, groupBy } from "rxjs";
+import { groupBy, Observable, Subject } from "rxjs";
 
 export interface ScopeChange {
   scope: TScope;

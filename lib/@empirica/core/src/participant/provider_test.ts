@@ -1,90 +1,23 @@
-import { ChangePayload, State } from "@empirica/tajriba";
+import {
+  ChangePayload,
+  SetAttributeInput,
+  SubAttributesPayload,
+} from "@empirica/tajriba";
 import test from "ava";
 import { Subject } from "rxjs";
+import {
+  attrChange,
+  partChange,
+  scopeChange,
+  stepChange,
+} from "./test_helpers";
 import { TajribaProvider } from "./provider";
 
-function attrChange(
-  { key, val, done, removed } = {
-    key: "a",
-    val: "1",
-    done: true,
-    removed: false,
-  }
-): ChangePayload {
-  return {
-    __typename: "ChangePayload",
-    change: {
-      __typename: "AttributeChange",
-      id: "123",
-      nodeID: "",
-      deleted: false,
-      isNew: false,
-      vector: false,
-      version: 1,
-      key,
-      val,
-    },
-    removed,
-    done,
-  };
-}
-
-function partChange(
-  { done, removed } = {
-    done: true,
-    removed: false,
-  }
-): ChangePayload {
-  return {
-    __typename: "ChangePayload",
-    change: {
-      __typename: "ParticipantChange",
-      id: "123",
-    },
-    removed,
-    done,
-  };
-}
-
-function scopeChange(
-  { done, removed } = {
-    done: true,
-    removed: false,
-  }
-): ChangePayload {
-  return {
-    __typename: "ChangePayload",
-    change: {
-      __typename: "ScopeChange",
-      id: "123",
-    },
-    removed,
-    done,
-  };
-}
-
-function stepChange(
-  { done, removed } = {
-    done: true,
-    removed: false,
-  }
-): ChangePayload {
-  return {
-    __typename: "ChangePayload",
-    change: {
-      __typename: "StepChange",
-      id: "123",
-      running: false,
-      state: State.Created,
-    },
-    removed,
-    done,
-  };
-}
-
-test("TajribaProvider should have a name property when instantiated", (t) => {
+test("TajribaProvider should split out scope, attribute and participant changes", (t) => {
   const changes = new Subject<ChangePayload>();
-  const provider = new TajribaProvider(changes);
+  const globals = new Subject<SubAttributesPayload>();
+  const setAttributes = async (input: SetAttributeInput[]) => {};
+  const provider = new TajribaProvider(changes, globals, setAttributes);
 
   let dones = 0;
   provider.dones.subscribe({
@@ -122,8 +55,24 @@ test("TajribaProvider should have a name property when instantiated", (t) => {
   });
 
   changes.next(partChange({ done: false, removed: false }));
-  changes.next(attrChange({ key: "a", val: "1", done: false, removed: false }));
-  changes.next(attrChange({ key: "a", val: "1", done: true, removed: false }));
+  changes.next(
+    attrChange({
+      key: "a",
+      val: "1",
+      nodeID: "abc",
+      done: false,
+      removed: false,
+    })
+  );
+  changes.next(
+    attrChange({
+      key: "a",
+      val: "1",
+      nodeID: "abc",
+      done: true,
+      removed: false,
+    })
+  );
   changes.next(stepChange({ done: false, removed: false }));
   changes.next(stepChange({ done: false, removed: false }));
   changes.next(stepChange({ done: false, removed: false }));

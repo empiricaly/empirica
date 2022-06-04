@@ -1,7 +1,0 @@
-{
-  "plugins": "node_modules/ts-node/register/index.js",
-  "suites": "tests/unit/**/*.ts",
-  "instrumenterOptions": {
-    "esModules": true
-  }
-}

@@ -1,261 +1,121 @@
-import {
-  AttributeChange,
-  ScopeChange,
-  SetAttributeInput,
-  SubAttributesPayload,
-} from "@empirica/tajriba";
-import { BehaviorSubject, Observable } from "rxjs";
-import { JsonValue } from "../utils/json";
+import { BehaviorSubject } from "rxjs";
+import { Attributes } from "./attributes";
 import { TajribaProvider } from "./provider";
+import { Constructor, Globals, Scope, Scopes } from "./scopes";
+import { Steps } from "./steps";
 
-export interface AttributeOptions {
-  /**
-   * Private indicates the attribute will not be visible to other Participants.
-   */
-  private: boolean;
-  /**
-   * Protected indicates the attribute will not be updatable by other
-   * Participants.
-   */
-  protected: boolean;
-  /** Immutable creates an Attribute that cannot be updated. */
-  immutable: boolean;
-  /** Vector indicates the value is a vector. */
-  vector: boolean;
-  /**
-   * Index, only used if the Attribute is a vector, indicates which index to
-   * update the value at.
-   */
-  index: number | null;
-  /**
-   * Append, only used if the Attribute is a vector, indicates to append the
-   * attribute to the vector.
-   */
-  append: boolean | null;
-}
-
-class Attribute {
-  private attr: AttributeChange | null = null;
-  private val = new BehaviorSubject<JsonValue>(null);
-
-  constructor(
-    private attrs: Attributes,
-    readonly scopeID: string,
-    readonly key: string
-  ) {}
-
-  get obs(): Observable<JsonValue> {
-    return this.val;
+export class Game extends Scope<Context, ClassicKinds> {
+  get stage() {
+    return this.scopeByKey("stageID") as Stage | undefined;
   }
 
-  get value() {
-    return this.val.getValue();
-  }
-
-  set(value: JsonValue, ao?: Partial<AttributeOptions>) {
-    this.val.next(value);
-
-    const attrProps = {
-      key: this.key,
-      nodeID: this.scopeID,
-      val: JSON.stringify(value),
-    };
-
-    if (ao) {
-      // TODO Fix this. Should check if compatible with existing attribute and
-      // only set fields set on ao.
-      ao.private = ao.private;
-      ao.protected = ao.protected;
-      ao.immutable = ao.immutable;
-      ao.append = ao.append;
-      ao.vector = ao.vector;
-      ao.index = ao.index;
-    }
-
-    this.attrs.setAttributes([attrProps]);
-  }
-
-  // internal only
-  _update(attr: AttributeChange | null) {
-    this.attr = attr;
-    let value: JsonValue = null;
-    if (this.attr?.val) {
-      value = JSON.parse(this.attr.val);
-    }
-    this.val.next(value);
+  get round() {
+    return this.stage?.round;
   }
 }
 
-class Attributes {
-  private attrs = new Map<string, Map<string, Attribute>>();
-  private updates = new Map<string, Map<string, AttributeChange | boolean>>();
-
-  constructor(
-    readonly setAttributes: (input: SetAttributeInput[]) => Promise<void>
-  ) {}
-
-  attribute(scopeID: string, key: string): Attribute {
-    let scopeMap = this.attrs.get(scopeID);
-    if (!scopeMap) {
-      scopeMap = new Map();
-      this.attrs.set(scopeID, scopeMap);
+export class Player extends Scope<Context, ClassicKinds> {
+  get game() {
+    const { game } = this.ctx;
+    if (!game) {
+      return;
     }
 
-    let attr = scopeMap.get(key);
-    if (!attr) {
-      attr = new Attribute(this, scopeID, key);
-      scopeMap.set(key, attr);
-    }
-
-    return attr;
+    return this.scopeByKey(`playerGameID-${game.id}`) as PlayerGame | undefined;
   }
 
-  update(attr: AttributeChange, removed: boolean) {
-    let scopeMap = this.updates.get(attr.nodeID);
-    if (!scopeMap) {
-      scopeMap = new Map();
-      this.updates.set(attr.nodeID, scopeMap);
+  get round() {
+    const { stage } = this.ctx;
+    if (!stage) {
+      return;
     }
 
-    if (removed) {
-      scopeMap.set(attr.key, true);
-    } else {
-      scopeMap.set(attr.key, attr);
+    const { round } = stage;
+    if (!round) {
+      return;
     }
+
+    return this.scopeByKey(`playerRoundID-${round.id}`) as
+      | PlayerRound
+      | undefined;
   }
 
-  scopeWasUpdated(scope: Scope | undefined): boolean {
-    if (!scope) {
-      return false;
+  get stage() {
+    const { stage } = this.ctx;
+    if (!stage) {
+      return;
     }
 
-    return this.updates.has(scope.id);
-  }
-
-  next() {
-    for (const [scopeID, attrs] of this.updates) {
-      let scopeMap = this.attrs.get(scopeID);
-
-      if (!scopeMap) {
-        scopeMap = new Map();
-        this.attrs.set(scopeID, scopeMap);
-      }
-
-      for (const [key, attrOrDel] of attrs) {
-        let attr = scopeMap.get(key);
-        if (typeof attrOrDel === "boolean") {
-          if (attr) {
-            attr._update(null);
-          }
-        } else {
-          if (!attr) {
-            attr = new Attribute(this, scopeID, key);
-            scopeMap.set(key, attr);
-          }
-
-          attr._update(attrOrDel);
-        }
-      }
-    }
-
-    this.updates.clear();
+    return this.scopeByKey(`playerStageID-${stage.id}`) as
+      | PlayerStage
+      | undefined;
   }
 }
 
-class Scope {
-  deleted = false;
-  constructor(readonly scope: ScopeChange, private attributes: Attributes) {}
+export class PlayerGame extends Scope<Context, ClassicKinds> {}
+export class PlayerRound extends Scope<Context, ClassicKinds> {}
+export class PlayerStage extends Scope<Context, ClassicKinds> {}
 
-  get id() {
-    return this.scope.id;
+export class Round extends Scope<Context, ClassicKinds> {}
+
+export class Stage extends Scope<Context, ClassicKinds> {
+  get round() {
+    return this.scopeByKey("roundID") as Round | undefined;
   }
 
-  get kind() {
-    return this.scope.kind || "";
-  }
-
-  get(key: string): JsonValue {
-    return this.attributes.attribute(this.scope.id, key).value;
-  }
-
-  sub(key: string): Observable<JsonValue> {
-    return this.attributes.attribute(this.scope.id, key).obs;
-  }
-
-  set(key: string, value: JsonValue) {
-    return this.attributes.attribute(this.scope.id, key).set(value);
+  get timer() {
+    return this.tickerByKey("timerID");
   }
 }
 
-class Game extends Scope {}
-class Player extends Scope {}
-class Round extends Scope {}
-class Stage extends Scope {}
+// TODO update context
+class Context {
+  public game?: Game;
+  public stage?: Stage;
+}
+
+type ClassicKinds = {
+  game: Constructor<Game>;
+  player: Constructor<Player>;
+  playerGame: Constructor<PlayerGame>;
+  playerRound: Constructor<PlayerRound>;
+  playerStage: Constructor<PlayerStage>;
+  round: Constructor<Round>;
+  stage: Constructor<Stage>;
+};
 
 const kinds = {
   game: Game,
   player: Player,
+  playerGame: PlayerGame,
+  playerRound: PlayerRound,
+  playerStage: PlayerStage,
   round: Round,
   stage: Stage,
 };
-
-class Globals {
-  private attrs = new Map<string, BehaviorSubject<JsonValue>>();
-  public self: BehaviorSubject<Globals> | undefined;
-
-  constructor(globals: Observable<SubAttributesPayload>) {
-    globals.subscribe({
-      next: ({ attribute, done }) => {
-        if (attribute) {
-          let val = null;
-          if (attribute.val) {
-            val = JSON.parse(attribute.val);
-          }
-
-          this.obs(attribute.key).next(val);
-        }
-
-        if (done && this.self) {
-          this.self.next(this);
-        }
-      },
-    });
-  }
-
-  get(key: string) {
-    const o = this.attrs.get(key);
-    if (o) {
-      return o.getValue();
-    }
-
-    return null as JsonValue;
-  }
-
-  obs(key: string) {
-    let o = this.attrs.get(key);
-    if (!o) {
-      o = new BehaviorSubject<JsonValue>(null);
-      this.attrs.set(key, o);
-    }
-
-    return o;
-  }
-}
 
 export function ClassicMode(
   playerID: string,
   provider: TajribaProvider,
   coarseReactivity: boolean = false
 ) {
-  const attributes = new Attributes(provider.setAttributes);
-  let scopesUpdated = false;
-  let updated = new Set<string>();
+  const ctx = new Context();
+  const attributes = new Attributes(
+    provider.attributes,
+    provider.dones,
+    provider.setAttributes
+  );
+  const steps = new Steps(provider.steps, provider.dones);
+  const scopes = new Scopes(
+    provider.scopes,
+    provider.dones,
+    ctx,
+    kinds,
+    attributes,
+    steps
+  );
 
-  const scopes = new Map<string, Scope>();
-  const games = new Map<string, Game>();
-  const players = new Map<string, Player>();
-  const rounds = new Map<string, Round>();
-  const stages = new Map<string, Stage>();
+  const participants = new Set<string>();
 
   let game: Game | undefined;
   let player: Player | undefined;
@@ -276,79 +136,22 @@ export function ClassicMode(
     globals,
   };
 
-  provider.scopes.subscribe({
-    next: ({ scope, removed }) => {
+  provider.participants.subscribe({
+    next: ({ participant, removed }) => {
       if (removed) {
-        const existing = scopes.get(scope.id);
-        if (existing) {
-          existing.deleted = true;
-        } else {
-          console.warn("classic: missing scope");
-
-          return;
+        if (participants.has(participant.id)) {
+          participants.delete(participant.id);
         }
       } else {
-        const existing = scopes.get(scope.id);
-        if (existing) {
-          existing.deleted = false;
-          console.warn("classic: replacing scope");
-        }
-
-        if (!scope.kind) {
-          console.warn("classic: scope missing kind on scope");
-
-          return;
-        }
-
-        const kind = kinds[scope.kind as keyof typeof kinds];
-        if (!kind) {
-          console.warn(`classic: unknown scope kind: ${scope.kind}`);
-
-          return;
-        }
-
-        const obj = new kind(scope, attributes);
-        scopes.set(scope.id, obj);
-
-        switch (kind) {
-          case Game:
-            games.set(scope.id, obj);
-
-            break;
-          case Player:
-            players.set(scope.id, obj);
-
-            break;
-          case Round:
-            rounds.set(scope.id, obj);
-
-            break;
-          case Stage:
-            stages.set(scope.id, obj);
-
-            break;
+        if (!participants.has(participant.id)) {
+          participants.add(participant.id);
         }
       }
-
-      scopesUpdated = true;
-    },
-  });
-
-  provider.attributes.subscribe({
-    next: ({ attribute, removed }) => {
-      attributes.update(attribute, removed);
-
-      updated.add(attribute.nodeID);
     },
   });
 
   provider.dones.subscribe({
     next: () => {
-      if (!scopesUpdated) {
-        // Do something different?
-      }
-      scopesUpdated = false;
-
       let gameUpdated = false;
       let stageUpdated = false;
       let roundUpdated = false;
@@ -356,11 +159,12 @@ export function ClassicMode(
       let playersUpdated = false;
 
       if (!player || player.id !== playerID) {
-        player = players.get(playerID);
+        player = scopes.scope(playerID) as Player;
         playerUpdated = true;
       }
 
-      switch (games.size) {
+      const games = scopes.byKind("game") as Map<string, Game>;
+      switch (games?.size) {
         case 0:
           if (game) {
             game = undefined;
@@ -392,8 +196,10 @@ export function ClassicMode(
           }
 
           break;
+        case undefined:
+          return;
         default:
-          // TODO why more than 1 game (☉_☉)
+          //? why more than 1 game (☉_☉)
           return;
       }
 
@@ -405,7 +211,7 @@ export function ClassicMode(
 
             return;
           } else {
-            stage = stages.get(stageID);
+            stage = scopes.scope(stageID) as Stage;
             stageUpdated = true;
           }
         }
@@ -419,7 +225,7 @@ export function ClassicMode(
 
                 return;
               } else {
-                round = rounds.get(roundID);
+                round = scopes.scope(roundID) as Round;
                 roundUpdated = true;
               }
             }
@@ -439,11 +245,15 @@ export function ClassicMode(
           const sameLen = curPlayers.length === playerID.length;
           if (
             !sameLen ||
-            playerIDs.find((id, index) => curPlayers[index].id !== id)
+            playerIDs.find((id, index) => curPlayers[index]?.id !== id)
           ) {
             curPlayers = [];
             for (const playerID of playerIDs) {
-              const p = players.get(playerID);
+              if (!participants.has(playerID)) {
+                continue;
+              }
+
+              const p = scopes.scope(playerID) as Player;
               if (p) {
                 curPlayers.push(p);
               }
@@ -458,24 +268,24 @@ export function ClassicMode(
       }
 
       if (coarseReactivity) {
-        if (attributes.scopeWasUpdated(game)) {
+        if (attributes.scopeWasUpdated(game?.id)) {
           gameUpdated = true;
         }
 
-        if (attributes.scopeWasUpdated(round)) {
+        if (attributes.scopeWasUpdated(round?.id)) {
           roundUpdated = true;
         }
 
-        if (attributes.scopeWasUpdated(stage)) {
+        if (attributes.scopeWasUpdated(stage?.id)) {
           stageUpdated = true;
         }
 
-        if (attributes.scopeWasUpdated(player)) {
+        if (attributes.scopeWasUpdated(player?.id)) {
           playerUpdated = true;
         }
 
         for (const player of curPlayers) {
-          if (attributes.scopeWasUpdated(player)) {
+          if (attributes.scopeWasUpdated(player?.id)) {
             playersUpdated = true;
             break;
           }
@@ -501,8 +311,6 @@ export function ClassicMode(
       if (playersUpdated) {
         ret.players.next(curPlayers);
       }
-
-      attributes.next();
     },
   });
 
