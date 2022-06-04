@@ -3,7 +3,15 @@ import { Json } from "./json";
 import { Player } from "./player";
 import { Store } from "./store";
 
-export const DefaultURL = "http://localhost:3000/query";
+let url = window.location.hostname;
+
+if (url === "localhost") {
+  url = "http://localhost:3000/query";
+} else {
+  url = "https://" + url + "/query";
+}
+
+export const DefaultURL = url;
 
 export const Empirica = {
   async sessionLogin(url: string, sessionToken: string, participant: Ptpt) {

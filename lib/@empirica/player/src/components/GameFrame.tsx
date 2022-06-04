@@ -15,11 +15,20 @@ import { Lobby as DefaultLobby } from "./Lobby";
 import { PlayerID } from "./PlayerID";
 import { Steps } from "./Steps";
 
+interface ConsentProps {
+  onConsent: () => void;
+}
+
+interface PlayerIDProps {
+  onPlayerID: (playerID: string) => void;
+}
+
 interface GameFrameProps {
   children: React.ReactNode;
   noGames?: React.ElementType;
+  consent?: React.ElementType<ConsentProps>;
+  playerIDForm?: React.ElementType<PlayerIDProps>;
   lobby?: React.ElementType;
-  playerID?: React.ElementType;
   introSteps: React.ElementType[];
   exitSteps: React.ElementType[];
 }
@@ -28,6 +37,8 @@ export function GameFrame({
   children,
   noGames: NoGames = DefaultNoGames,
   lobby = DefaultLobby,
+  playerIDForm: PlayerIDForm = PlayerID,
+  consent: ConsentComp = Consent,
   introSteps = [],
   exitSteps = [],
 }: GameFrameProps) {
@@ -42,11 +53,11 @@ export function GameFrame({
   }
 
   if (!consented) {
-    return <Consent onConsent={onConsent} />;
+    return <ConsentComp onConsent={onConsent} />;
   }
 
   if (!hasPlayer && onPlayerID) {
-    return <PlayerID onPlayerID={onPlayerID} />;
+    return <PlayerIDForm onPlayerID={onPlayerID} />;
   }
 
   if (!player) {

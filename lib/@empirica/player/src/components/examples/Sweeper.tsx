@@ -114,7 +114,6 @@ export function Sweeper({ avatar: Avatar }: { avatar: React.ElementType }) {
   }
 
   const visitCell = (i: number, j: number) => {
-    console.log(i, j, lost, bombs, visited);
     if (lost || !bombs || !visited) {
       return;
     }

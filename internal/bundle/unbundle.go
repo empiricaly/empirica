@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/empiricaly/empirica"
 	"github.com/klauspost/compress/gzip"
@@ -54,6 +55,9 @@ func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, err
 		}
 	}
 
+	// Wait for some reason, config not always read otherwise
+	time.Sleep(100 * time.Millisecond)
+
 	confFile := path.Join(dst, "empirica.toml")
 
 	viper.SetConfigFile(confFile)
@@ -63,6 +67,20 @@ func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, err
 	if err := viper.Unmarshal(conf); err != nil {
 		log.Fatal().Err(err).Msg("could not parse configuration")
 	}
+
+	log.Trace().
+		Interface("config", conf).
+		Str("file", confFile).
+		Msg("config: got config first time")
+
+	if err := viper.Unmarshal(conf); err != nil {
+		log.Fatal().Err(err).Msg("could not parse configuration")
+	}
+
+	log.Trace().
+		Interface("config", conf).
+		Str("file", confFile).
+		Msg("config: got config second time")
 
 	// FIXME configuration manual tweaking is not ideal
 
@@ -90,6 +108,7 @@ func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, err
 
 	if os.IsNotExist(err) {
 		log.Info().Msg("unbundle: creating new storage file")
+
 		file, err := os.Create(conf.Tajriba.Store.File)
 		if err != nil {
 			return nil, errors.Wrap(err, "create storage file")
@@ -212,7 +231,7 @@ func unbundleFile(tr *tar.Reader, header *tar.Header, dir string) error {
 
 	case tar.TypeReg:
 
-		log.Debug().
+		log.Trace().
 			Str("from", header.Name).
 			Str("to", target).
 			Msg("unbundle: copying file")
