@@ -1,7 +1,8 @@
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, Subject } from "rxjs";
 import { Attributes } from "./attributes";
+import { Globals } from "./globals";
 import { TajribaProvider } from "./provider";
-import { Constructor, Globals, Scope, Scopes } from "./scopes";
+import { Constructor, Scope, Scopes } from "./scopes";
 import { Steps } from "./steps";
 
 export class Game extends Scope<Context, ClassicKinds> {
@@ -69,7 +70,7 @@ export class Stage extends Scope<Context, ClassicKinds> {
 }
 
 // TODO update context
-class Context {
+export class Context {
   public game?: Game;
   public stage?: Stage;
 }
@@ -84,7 +85,7 @@ type ClassicKinds = {
   stage: Constructor<Stage>;
 };
 
-const kinds = {
+export const kinds = {
   game: Game,
   player: Player,
   playerGame: PlayerGame,
@@ -94,38 +95,41 @@ const kinds = {
   stage: Stage,
 };
 
+type ClassicContext = {
+  game: BehaviorSubject<Game | undefined>;
+  player: BehaviorSubject<Player | undefined>;
+  players: BehaviorSubject<Player[]>;
+  round: BehaviorSubject<Round | undefined>;
+  stage: BehaviorSubject<Stage | undefined>;
+  globals: BehaviorSubject<Globals>;
+};
+
 export function ClassicMode(
   playerID: string,
   provider: TajribaProvider,
   coarseReactivity: boolean = false
-) {
+): ClassicContext {
+  const attributesDones = new Subject<void>();
+  const scopesDones = new Subject<void>();
+
   const ctx = new Context();
   const attributes = new Attributes(
     provider.attributes,
-    provider.dones,
+    attributesDones,
     provider.setAttributes
   );
   const steps = new Steps(provider.steps, provider.dones);
   const scopes = new Scopes(
     provider.scopes,
-    provider.dones,
+    scopesDones,
     ctx,
     kinds,
     attributes,
     steps
   );
-
   const participants = new Set<string>();
 
-  let game: Game | undefined;
-  let player: Player | undefined;
-  let curPlayers: Player[] = [];
-  let round: Round | undefined;
-  let stage: Stage | undefined;
-
   const glob = new Globals(provider.globals);
-  const globals = new BehaviorSubject(glob);
-  glob.self = globals;
 
   const ret = {
     game: new BehaviorSubject<Game | undefined>(undefined),
@@ -133,7 +137,7 @@ export function ClassicMode(
     players: new BehaviorSubject<Player[]>([]),
     round: new BehaviorSubject<Round | undefined>(undefined),
     stage: new BehaviorSubject<Stage | undefined>(undefined),
-    globals,
+    globals: glob.self,
   };
 
   provider.participants.subscribe({
@@ -152,165 +156,167 @@ export function ClassicMode(
 
   provider.dones.subscribe({
     next: () => {
-      let gameUpdated = false;
-      let stageUpdated = false;
-      let roundUpdated = false;
-      let playerUpdated = false;
-      let playersUpdated = false;
+      scopesDones.next();
+      attributesDones.next();
+      // let gameUpdated = false;
+      // let stageUpdated = false;
+      // let roundUpdated = false;
+      // let playerUpdated = false;
+      // let playersUpdated = false;
 
-      if (!player || player.id !== playerID) {
-        player = scopes.scope(playerID) as Player;
-        playerUpdated = true;
-      }
+      // if (!player || player.id !== playerID) {
+      //   player = scopes.scope(playerID) as Player;
+      //   playerUpdated = true;
+      // }
 
-      const games = scopes.byKind("game") as Map<string, Game>;
-      switch (games?.size) {
-        case 0:
-          if (game) {
-            game = undefined;
-            gameUpdated = true;
-          }
+      // const games = scopes.byKind("game") as Map<string, Game>;
+      // switch (games?.size) {
+      //   case 0:
+      //     if (game) {
+      //       game = undefined;
+      //       gameUpdated = true;
+      //     }
 
-          if (round) {
-            round = undefined;
-            roundUpdated = true;
-          }
+      //     if (round) {
+      //       round = undefined;
+      //       roundUpdated = true;
+      //     }
 
-          if (stage) {
-            stage = undefined;
-            stageUpdated = true;
-          }
+      //     if (stage) {
+      //       stage = undefined;
+      //       stageUpdated = true;
+      //     }
 
-          break;
-        case 1:
-          for (const [gameID, g] of games) {
-            if (!game) {
-              game = g;
-              gameUpdated = true;
-            } else if (gameID !== game.id) {
-              console.log("classic: game changed?!");
+      //     break;
+      //   case 1:
+      //     for (const [gameID, g] of games) {
+      //       if (!game) {
+      //         game = g;
+      //         gameUpdated = true;
+      //       } else if (gameID !== game.id) {
+      //         console.log("classic: game changed?!");
 
-              game = g;
-              gameUpdated = true;
-            }
-          }
+      //         game = g;
+      //         gameUpdated = true;
+      //       }
+      //     }
 
-          break;
-        case undefined:
-          return;
-        default:
-          //? why more than 1 game (☉_☉)
-          return;
-      }
+      //     break;
+      //   case undefined:
+      //     return;
+      //   default:
+      //     //? why more than 1 game (☉_☉)
+      //     return;
+      // }
 
-      if (game) {
-        const stageID = game.get("stageID");
-        if (!stage || stageID !== stage.id) {
-          if (typeof stageID !== "string") {
-            console.error("classic: stageID is not a string");
+      // if (game) {
+      //   const stageID = game.get("stageID");
+      //   if (!stage || stageID !== stage.id) {
+      //     if (typeof stageID !== "string") {
+      //       console.error("classic: stageID is not a string");
 
-            return;
-          } else {
-            stage = scopes.scope(stageID) as Stage;
-            stageUpdated = true;
-          }
-        }
+      //       return;
+      //     } else {
+      //       stage = scopes.scope(stageID) as Stage;
+      //       stageUpdated = true;
+      //     }
+      //   }
 
-        if (stage) {
-          const roundID = stage.get("roundID");
-          if (roundID) {
-            if (!round || roundID !== round.id) {
-              if (typeof roundID !== "string") {
-                console.error("classic: roundID is not a string");
+      //   if (stage) {
+      //     const roundID = stage.get("roundID");
+      //     if (roundID) {
+      //       if (!round || roundID !== round.id) {
+      //         if (typeof roundID !== "string") {
+      //           console.error("classic: roundID is not a string");
 
-                return;
-              } else {
-                round = scopes.scope(roundID) as Round;
-                roundUpdated = true;
-              }
-            }
-          } else if (round) {
-            round = undefined;
-            roundUpdated = true;
-          }
-        } else {
-          if (round) {
-            round = undefined;
-            roundUpdated = true;
-          }
-        }
+      //           return;
+      //         } else {
+      //           round = scopes.scope(roundID) as Round;
+      //           roundUpdated = true;
+      //         }
+      //       }
+      //     } else if (round) {
+      //       round = undefined;
+      //       roundUpdated = true;
+      //     }
+      //   } else {
+      //     if (round) {
+      //       round = undefined;
+      //       roundUpdated = true;
+      //     }
+      //   }
 
-        const playerIDs = game.get("playerIDs") as string[];
-        if (playerIDs && Array.isArray(playerIDs) && playerIDs.length > 0) {
-          const sameLen = curPlayers.length === playerID.length;
-          if (
-            !sameLen ||
-            playerIDs.find((id, index) => curPlayers[index]?.id !== id)
-          ) {
-            curPlayers = [];
-            for (const playerID of playerIDs) {
-              if (!participants.has(playerID)) {
-                continue;
-              }
+      //   const playerIDs = game.get("playerIDs") as string[];
+      //   if (playerIDs && Array.isArray(playerIDs) && playerIDs.length > 0) {
+      //     const sameLen = curPlayers.length === playerID.length;
+      //     if (
+      //       !sameLen ||
+      //       playerIDs.find((id, index) => curPlayers[index]?.id !== id)
+      //     ) {
+      //       curPlayers = [];
+      //       for (const playerID of playerIDs) {
+      //         if (!participants.has(playerID)) {
+      //           continue;
+      //         }
 
-              const p = scopes.scope(playerID) as Player;
-              if (p) {
-                curPlayers.push(p);
-              }
-            }
+      //         const p = scopes.scope(playerID) as Player;
+      //         if (p) {
+      //           curPlayers.push(p);
+      //         }
+      //       }
 
-            playersUpdated = true;
-          }
-        } else if (curPlayers.length > 0) {
-          curPlayers = [];
-          playersUpdated = true;
-        }
-      }
+      //       playersUpdated = true;
+      //     }
+      //   } else if (curPlayers.length > 0) {
+      //     curPlayers = [];
+      //     playersUpdated = true;
+      //   }
+      // }
 
-      if (coarseReactivity) {
-        if (attributes.scopeWasUpdated(game?.id)) {
-          gameUpdated = true;
-        }
+      // if (coarseReactivity) {
+      //   if (attributes.scopeWasUpdated(game?.id)) {
+      //     gameUpdated = true;
+      //   }
 
-        if (attributes.scopeWasUpdated(round?.id)) {
-          roundUpdated = true;
-        }
+      //   if (attributes.scopeWasUpdated(round?.id)) {
+      //     roundUpdated = true;
+      //   }
 
-        if (attributes.scopeWasUpdated(stage?.id)) {
-          stageUpdated = true;
-        }
+      //   if (attributes.scopeWasUpdated(stage?.id)) {
+      //     stageUpdated = true;
+      //   }
 
-        if (attributes.scopeWasUpdated(player?.id)) {
-          playerUpdated = true;
-        }
+      //   if (attributes.scopeWasUpdated(player?.id)) {
+      //     playerUpdated = true;
+      //   }
 
-        for (const player of curPlayers) {
-          if (attributes.scopeWasUpdated(player?.id)) {
-            playersUpdated = true;
-            break;
-          }
-        }
-      }
+      //   for (const player of curPlayers) {
+      //     if (attributes.scopeWasUpdated(player?.id)) {
+      //       playersUpdated = true;
+      //       break;
+      //     }
+      //   }
+      // }
 
-      if (gameUpdated) {
-        ret.game.next(game);
-      }
+      // if (gameUpdated) {
+      //   ret.game.next(game);
+      // }
 
-      if (stageUpdated) {
-        ret.stage.next(stage);
-      }
+      // if (stageUpdated) {
+      //   ret.stage.next(stage);
+      // }
 
-      if (roundUpdated) {
-        ret.round.next(round);
-      }
+      // if (roundUpdated) {
+      //   ret.round.next(round);
+      // }
 
-      if (playerUpdated) {
-        ret.player.next(player);
-      }
+      // if (playerUpdated) {
+      //   ret.player.next(player);
+      // }
 
-      if (playersUpdated) {
-        ret.players.next(curPlayers);
-      }
+      // if (playersUpdated) {
+      //   ret.players.next(curPlayers);
+      // }
     },
   });
 

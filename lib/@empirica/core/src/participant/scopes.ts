@@ -1,7 +1,8 @@
-import { ScopeChange as TScope, SubAttributesPayload } from "@empirica/tajriba";
+import { ScopeChange as TScope } from "@empirica/tajriba";
 import { BehaviorSubject, Observable } from "rxjs";
+import { warn } from "../utils/console";
 import { JsonValue } from "../utils/json";
-import { Attributes } from "./attributes";
+import { AttributeOptions, Attributes } from "./attributes";
 import { ScopeChange } from "./provider";
 import { Steps } from "./steps";
 
@@ -17,7 +18,7 @@ export class Scopes<
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> },
   K extends keyof Kinds = ""
 > {
-  private scopes = new Map<string, Scope<Context, Kinds>>();
+  private scopes = new Map<string, BehaviorSubject<Scope<Context, Kinds>>>();
   private scopesByKind = new Map<K, Map<string, Scope<Context, Kinds>>>();
   private kindUpdated = new Set<keyof Kinds>();
 
@@ -36,38 +37,59 @@ export class Scopes<
     });
 
     donesObs.subscribe({
-      next: () => {
-        // this.next();
-      },
+      next: this.next.bind(this),
     });
   }
 
-  scope(id: string) {
+  scope(id: string): Scope<Context, Kinds> | undefined {
+    return this.scopes.get(id)?.getValue();
+  }
+
+  scopeObs(id: string): Observable<Scope<Context, Kinds>> | undefined {
     return this.scopes.get(id);
   }
 
   byKind(kind: K) {
-    return this.scopesByKind.get(kind);
+    let map = this.scopesByKind.get(kind);
+    if (!map) {
+      map = new Map();
+      this.scopesByKind.set(kind, map);
+    }
+
+    return map;
   }
 
   kindWasUpdated(kind: keyof Kinds): boolean {
     return this.kindUpdated.has(kind);
   }
 
+  private next() {
+    this.kindUpdated.clear();
+    for (const [_, scopeSubject] of this.scopes) {
+      const scope = scopeSubject.getValue();
+      if (scope._updated || this.attributes.scopeWasUpdated(scope.id)) {
+        scope._updated = false;
+        scopeSubject.next(scope);
+      }
+    }
+  }
+
   private update(scope: TScope, removed: boolean) {
+    const existing = this.scopes.get(scope.id)?.getValue();
+
     if (removed) {
-      const existing = this.scopes.get(scope.id);
       if (!existing) {
-        console.warn("classic: missing scope");
+        warn("classic: missing scope on removal");
 
         return;
       }
 
-      existing.deleted = true;
+      existing._deleted = true;
+      existing._updated = true;
       this.scopes.delete(scope.id);
 
       if (!scope.kind) {
-        console.warn("classic: scope missing kind on scope");
+        warn("classic: scope missing kind on scope on removal");
 
         return;
       }
@@ -79,14 +101,13 @@ export class Scopes<
       return;
     }
 
-    const existing = this.scopes.get(scope.id);
     if (existing) {
-      existing.deleted = false;
-      console.warn("classic: replacing scope");
+      existing._deleted = false;
+      warn("classic: replacing scope");
     }
 
     if (!scope.kind) {
-      console.warn("classic: scope missing kind on scope");
+      warn("classic: scope missing kind on scope");
 
       return;
     }
@@ -94,13 +115,20 @@ export class Scopes<
     const kind = scope.kind as K;
     const scopeClass = this.kinds[kind];
     if (!scopeClass) {
-      console.warn(`classic: unknown scope kind: ${scope.kind}`);
+      warn(`classic: unknown scope kind: ${scope.kind}`);
 
       return;
     }
 
-    const obj = new scopeClass(this.ctx, scope, this.attributes, this.steps);
-    this.scopes.set(scope.id, obj);
+    const obj = new scopeClass(
+      this.ctx,
+      scope,
+      this,
+      this.attributes,
+      this.steps
+    );
+    const subj = new BehaviorSubject(obj);
+    this.scopes.set(scope.id, subj);
 
     let skm = this.scopesByKind.get(kind);
     if (!skm) {
@@ -110,6 +138,7 @@ export class Scopes<
 
     skm.set(scope.id, obj);
 
+    obj._updated = true;
     this.kindUpdated.add(kind);
   }
 }
@@ -118,7 +147,8 @@ export class Scope<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
-  deleted = false;
+  _deleted = false;
+  _updated = false;
 
   constructor(
     readonly ctx: Context,
@@ -136,16 +166,16 @@ export class Scope<
     return this.scope.kind || "";
   }
 
-  get(key: string): JsonValue {
+  get(key: string): JsonValue | undefined {
     return this.attributes.attribute(this.scope.id, key).value;
   }
 
-  sub(key: string): Observable<JsonValue> {
+  obs(key: string): Observable<JsonValue | undefined> {
     return this.attributes.attribute(this.scope.id, key).obs;
   }
 
-  set(key: string, value: JsonValue) {
-    return this.attributes.attribute(this.scope.id, key).set(value);
+  set(key: string, value: JsonValue, ao?: Partial<AttributeOptions>) {
+    return this.attributes.attribute(this.scope.id, key).set(value, ao);
   }
 
   protected ticker(id: string) {
@@ -158,7 +188,7 @@ export class Scope<
       return;
     }
 
-    return this.steps.step(id);
+    return this.ticker(id);
   }
 
   protected scopeByKey(key: string) {
@@ -168,48 +198,5 @@ export class Scope<
     }
 
     return this.scopes.scope(id);
-  }
-}
-
-export class Globals {
-  private attrs = new Map<string, BehaviorSubject<JsonValue>>();
-  public self?: BehaviorSubject<Globals>;
-
-  constructor(globals: Observable<SubAttributesPayload>) {
-    globals.subscribe({
-      next: ({ attribute, done }) => {
-        if (attribute) {
-          let val = null;
-          if (attribute.val) {
-            val = JSON.parse(attribute.val);
-          }
-
-          this.obs(attribute.key).next(val);
-        }
-
-        if (done && this.self) {
-          this.self.next(this);
-        }
-      },
-    });
-  }
-
-  get(key: string) {
-    const o = this.attrs.get(key);
-    if (o) {
-      return o.getValue();
-    }
-
-    return null as JsonValue;
-  }
-
-  obs(key: string) {
-    let o = this.attrs.get(key);
-    if (!o) {
-      o = new BehaviorSubject<JsonValue>(null);
-      this.attrs.set(key, o);
-    }
-
-    return o;
   }
 }

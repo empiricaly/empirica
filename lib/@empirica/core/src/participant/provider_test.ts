@@ -1,23 +1,14 @@
-import {
-  ChangePayload,
-  SetAttributeInput,
-  SubAttributesPayload,
-} from "@empirica/tajriba";
 import test from "ava";
-import { Subject } from "rxjs";
 import {
   attrChange,
   partChange,
   scopeChange,
+  setupProvider,
   stepChange,
 } from "./test_helpers";
-import { TajribaProvider } from "./provider";
 
 test("TajribaProvider should split out scope, attribute and participant changes", (t) => {
-  const changes = new Subject<ChangePayload>();
-  const globals = new Subject<SubAttributesPayload>();
-  const setAttributes = async (input: SetAttributeInput[]) => {};
-  const provider = new TajribaProvider(changes, globals, setAttributes);
+  const { changes, provider } = setupProvider();
 
   let dones = 0;
   provider.dones.subscribe({
@@ -76,7 +67,9 @@ test("TajribaProvider should split out scope, attribute and participant changes"
   changes.next(stepChange({ done: false, removed: false }));
   changes.next(stepChange({ done: false, removed: false }));
   changes.next(stepChange({ done: false, removed: false }));
-  changes.next(scopeChange({ done: true, removed: false }));
+  changes.next(
+    scopeChange({ id: "123", kind: "round", done: true, removed: false })
+  );
 
   t.is(dones, 2);
   t.is(attrs.length, 2);

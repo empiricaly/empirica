@@ -76,7 +76,7 @@ export class Attributes {
         let attr = scopeMap.get(key);
         if (typeof attrOrDel === "boolean") {
           if (attr) {
-            attr._update(null);
+            attr._update(undefined);
           }
         } else {
           if (!attr) {
@@ -120,8 +120,8 @@ export interface AttributeOptions {
 }
 
 export class Attribute {
-  private attr: TAttribute | null = null;
-  private val = new BehaviorSubject<JsonValue>(null);
+  private attr?: TAttribute;
+  private val = new BehaviorSubject<JsonValue | undefined>(undefined);
 
   constructor(
     private attrs: Attributes,
@@ -129,7 +129,7 @@ export class Attribute {
     readonly key: string
   ) {}
 
-  get obs(): Observable<JsonValue> {
+  get obs(): Observable<JsonValue | undefined> {
     return this.val;
   }
 
@@ -140,7 +140,7 @@ export class Attribute {
   set(value: JsonValue, ao?: Partial<AttributeOptions>) {
     this.val.next(value);
 
-    const attrProps = {
+    const attrProps: SetAttributeInput = {
       key: this.key,
       nodeID: this.scopeID,
       val: JSON.stringify(value),
@@ -149,21 +149,21 @@ export class Attribute {
     if (ao) {
       // TODO Fix this. Should check if compatible with existing attribute and
       // only set fields set on ao.
-      ao.private = ao.private;
-      ao.protected = ao.protected;
-      ao.immutable = ao.immutable;
-      ao.append = ao.append;
-      ao.vector = ao.vector;
-      ao.index = ao.index;
+      attrProps.private = ao.private;
+      attrProps.protected = ao.protected;
+      attrProps.immutable = ao.immutable;
+      attrProps.append = ao.append;
+      attrProps.vector = ao.vector;
+      attrProps.index = ao.index;
     }
 
     this.attrs.setAttributes([attrProps]);
   }
 
   // internal only
-  _update(attr: TAttribute | null) {
+  _update(attr?: TAttribute) {
     this.attr = attr;
-    let value: JsonValue = null;
+    let value: JsonValue | undefined = undefined;
     if (this.attr?.val) {
       value = JSON.parse(this.attr.val);
     }

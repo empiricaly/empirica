@@ -1,19 +1,58 @@
-import { ChangePayload, State } from "@empirica/tajriba";
+import { SetAttributeInput, SubAttributesPayload } from "@empirica/tajriba";
+import { Subject } from "rxjs";
+import { TajribaProvider } from "./provider";
 
-export function attrChange(
-  { key, val, nodeID, done, removed } = {
-    key: "a",
-    val: "1",
-    nodeID: "abc",
-    done: true,
-    removed: false,
-  }
-): ChangePayload {
+import { ChangePayload, State } from "@empirica/tajriba";
+import { JsonValue } from "../utils/json";
+import { Constructor, Scope } from "./scopes";
+
+export function setupProvider() {
+  const attributes = new Map<string, JsonValue | undefined>();
+  const changes = new Subject<ChangePayload>();
+  const globals = new Subject<SubAttributesPayload>();
+  const setAttributes = async (input: SetAttributeInput[]) => {
+    for (const at of input) {
+      let val: JsonValue | undefined;
+      if (at.val) {
+        val = JSON.parse(at.val);
+      }
+
+      attributes.set(at.key, val);
+    }
+  };
+  const provider = new TajribaProvider(changes, globals, setAttributes);
+
+  return { provider, changes, attributes };
+}
+
+interface attrChangeProps {
+  done: boolean;
+  removed: boolean;
+  id: string;
+  nodeID: string;
+  key: string;
+  val: string;
+}
+
+const attrChangeDefaults: attrChangeProps = {
+  done: true,
+  removed: false,
+  id: "123",
+  nodeID: "abc",
+  key: "123",
+  val: "1",
+};
+
+export function attrChange(props: Partial<attrChangeProps>): ChangePayload {
+  const { done, removed, id, nodeID, key, val } = {
+    ...attrChangeDefaults,
+    ...props,
+  };
   return {
     __typename: "ChangePayload",
     change: {
       __typename: "AttributeChange",
-      id: "123",
+      id,
       nodeID,
       deleted: false,
       isNew: false,
@@ -27,55 +66,125 @@ export function attrChange(
   };
 }
 
-export function partChange(
-  { done, removed } = {
-    done: true,
-    removed: false,
-  }
-): ChangePayload {
+interface partChangeProps {
+  done: boolean;
+  removed: boolean;
+  id: string;
+}
+
+const partChangeDefaults: partChangeProps = {
+  done: true,
+  removed: false,
+  id: "123",
+};
+
+export function partChange(props: Partial<partChangeProps>): ChangePayload {
+  const { done, removed, id } = { ...partChangeDefaults, ...props };
   return {
     __typename: "ChangePayload",
     change: {
       __typename: "ParticipantChange",
-      id: "123",
+      id,
     },
     removed,
     done,
   };
 }
 
-export function scopeChange(
-  { done, removed } = {
-    done: true,
-    removed: false,
-  }
-): ChangePayload {
+interface scopeChangeProps {
+  done: boolean;
+  removed: boolean;
+  id: string;
+  kind: string | null;
+}
+
+const scopeChangeDefaults: scopeChangeProps = {
+  done: true,
+  removed: false,
+  id: "123",
+  kind: "scope",
+};
+
+export function scopeChange(props: Partial<scopeChangeProps>): ChangePayload {
+  const { done, removed, id, kind } = { ...scopeChangeDefaults, ...props };
   return {
     __typename: "ChangePayload",
     change: {
       __typename: "ScopeChange",
-      id: "123",
+      id,
+      kind,
     },
     removed,
     done,
   };
 }
 
-export function stepChange(
-  { done, removed } = {
-    done: true,
-    removed: false,
-  }
-): ChangePayload {
+interface stepChangeProps {
+  done: boolean;
+  removed: boolean;
+  id: string;
+  running: boolean;
+  ellapsed?: number;
+  remaining?: number;
+}
+
+const stepChangeDefaults: stepChangeProps = {
+  done: true,
+  removed: false,
+  id: "123",
+  running: false,
+  // ellapsed: 0,
+  // remaining: 10,
+};
+
+export function stepChange(props: Partial<stepChangeProps>): ChangePayload {
+  const { done, removed, id, running, remaining, ellapsed } = {
+    ...stepChangeDefaults,
+    ...props,
+  };
   return {
     __typename: "ChangePayload",
     change: {
       __typename: "StepChange",
-      id: "123",
-      running: false,
+      id,
+      running,
       state: State.Created,
+      remaining,
+      ellapsed,
     },
     removed,
     done,
   };
 }
+
+export class Context {
+  public hello?: string;
+}
+export class Stage extends Scope<Context, TestKinds> {}
+export class Game extends Scope<Context, TestKinds> {
+  get stage() {
+    return this.scopeByKey("stageID") as Stage | undefined;
+  }
+
+  get badStage() {
+    return this.scopeByKey("noStageID") as Stage | undefined;
+  }
+
+  get timer() {
+    return this.tickerByKey("stepID");
+  }
+
+  get badTimer() {
+    return this.tickerByKey("notTickerID");
+  }
+}
+
+type TestKinds = {
+  game: Constructor<Game>;
+  stage: Constructor<Stage>;
+};
+
+export const kinds = {
+  game: Game,
+  stage: Stage,
+};

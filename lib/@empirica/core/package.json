@@ -69,8 +69,8 @@
   },
   "scripts": {
     "build": "parcel build",
-    "test": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ava -v --timeout 60s",
-    "test:watch": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ava --watch --timeout 60s -v",
+    "test": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true c8 -r html ava -v",
+    "test:watch": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ava --watch -v",
     "prerelease": "npm run build",
     "release:next": "np --tag next",
     "release": "np --tag latest",
@@ -81,6 +81,7 @@
     "@parcel/transformer-typescript-types": "^2.5.0",
     "@types/node": "17.0.35",
     "ava": "4.2.0",
+    "c8": "7.11.3",
     "np": "7.5.0",
     "parcel": "2.5.0",
     "prettier": "2.2.1",
