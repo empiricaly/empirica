@@ -275,8 +275,8 @@ function textHasLog(
   log: string
 ) {
   t.is(logs.length, 1);
-  t.regex(logs[0]?.args[0], new RegExp(log));
-  t.is(logs[0]?.level, level);
+  t.regex(logs[0]!.args[0], new RegExp(log));
+  t.is(logs[0]!.level, level);
 }
 
 test("Scopes works on removal of missing scope", (t) => {

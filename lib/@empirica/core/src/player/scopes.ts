@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable } from "rxjs";
 import { warn } from "../utils/console";
 import { JsonValue } from "../utils/json";
 import { AttributeOptions, Attributes } from "./attributes";
-import { ScopeChange } from "./provider";
+import { ScopeUpdate } from "./provider";
 import { Steps } from "./steps";
 
 export type Constructor<T extends {} = {}> = new (...args: any[]) => T;
@@ -23,7 +23,7 @@ export class Scopes<
   private kindUpdated = new Set<keyof Kinds>();
 
   constructor(
-    scopesObs: Observable<ScopeChange>,
+    scopesObs: Observable<ScopeUpdate>,
     donesObs: Observable<void>,
     private ctx: Context,
     protected kinds: Kinds,
@@ -79,7 +79,7 @@ export class Scopes<
 
     if (removed) {
       if (!existing) {
-        warn("classic: missing scope on removal");
+        warn("scopes: missing scope on removal");
 
         return;
       }
@@ -89,13 +89,16 @@ export class Scopes<
       this.scopes.delete(scope.id);
 
       if (!scope.kind) {
-        warn("classic: scope missing kind on scope on removal");
+        warn("scopes: scope missing kind on scope on removal");
 
         return;
       }
 
       const kind = scope.kind as K;
-      this.scopesByKind.get(kind)?.delete(scope.id);
+
+      // Using ! because scopes by kind must exist, since this scope was found.
+      this.scopesByKind.get(kind)!.delete(scope.id);
+
       this.kindUpdated.add(kind);
 
       return;
@@ -103,11 +106,11 @@ export class Scopes<
 
     if (existing) {
       existing._deleted = false;
-      warn("classic: replacing scope");
+      warn(`scopes: replacing scope: ${scope.kind}`);
     }
 
     if (!scope.kind) {
-      warn("classic: scope missing kind on scope");
+      warn("scopes: scope missing kind on scope");
 
       return;
     }
@@ -115,12 +118,12 @@ export class Scopes<
     const kind = scope.kind as K;
     const scopeClass = this.kinds[kind];
     if (!scopeClass) {
-      warn(`classic: unknown scope kind: ${scope.kind}`);
+      warn(`scopes: unknown scope kind: ${scope.kind}`);
 
       return;
     }
 
-    const obj = new scopeClass(
+    const obj = new scopeClass!(
       this.ctx,
       scope,
       this,
@@ -153,7 +156,7 @@ export class Scope<
   constructor(
     readonly ctx: Context,
     readonly scope: TScope,
-    protected scopes: Scopes<Context, Kinds>,
+    protected scopes: Scopes<Context, Kinds, keyof Kinds>,
     protected attributes: Attributes,
     protected steps: Steps
   ) {}
@@ -163,7 +166,8 @@ export class Scope<
   }
 
   get kind() {
-    return this.scope.kind || "";
+    // Using ! because we don't allow scopes without kind
+    return this.scope.kind!;
   }
 
   get(key: string): JsonValue | undefined {
@@ -191,12 +195,16 @@ export class Scope<
     return this.ticker(id);
   }
 
-  protected scopeByKey(key: string) {
+  scopeByKey(key: string) {
     const id = this.get(key);
     if (!id || typeof id !== "string") {
       return;
     }
 
     return this.scopes.scope(id);
+  }
+
+  hasUpdated() {
+    return this._updated || this.attributes.scopeWasUpdated(this.id);
   }
 }

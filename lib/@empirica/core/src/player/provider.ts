@@ -1,45 +1,45 @@
 import {
-  AttributeChange as TAttribute,
+  AttributeChange,
   ChangePayload,
-  ParticipantChange as TParticipant,
-  ScopeChange as TScope,
+  ParticipantChange,
+  ScopeChange,
   SetAttributeInput,
-  StepChange as TStep,
+  StepChange,
   SubAttributesPayload,
 } from "@empirica/tajriba";
 import { groupBy, Observable, Subject } from "rxjs";
 
-export interface ScopeChange {
-  scope: TScope;
+export interface ScopeUpdate {
+  scope: ScopeChange;
   removed: boolean;
 }
 
-export interface AttributeChange {
-  attribute: TAttribute;
+export interface AttributeUpdate {
+  attribute: AttributeChange;
   removed: boolean;
 }
 
-export interface ParticipantChange {
-  participant: TParticipant;
+export interface ParticipantUpdate {
+  participant: ParticipantChange;
   removed: boolean;
 }
 
-export interface StepChange {
-  step: TStep;
+export interface StepUpdate {
+  step: StepChange;
   removed: boolean;
 }
 
 export class TajribaProvider {
-  public scopes = new Subject<ScopeChange>();
-  public attributes = new Subject<AttributeChange>();
-  public participants = new Subject<ParticipantChange>();
-  public steps = new Subject<StepChange>();
+  public scopes = new Subject<ScopeUpdate>();
+  public attributes = new Subject<AttributeUpdate>();
+  public participants = new Subject<ParticipantUpdate>();
+  public steps = new Subject<StepUpdate>();
   public dones = new Subject<void>();
 
   constructor(
     changes: Observable<ChangePayload>,
     readonly globals: Observable<SubAttributesPayload>,
-    readonly setAttributes: (input: SetAttributeInput[]) => Promise<void>
+    readonly setAttributes: (input: SetAttributeInput[]) => Promise<any>
   ) {
     changes.pipe(groupBy((chg) => chg.change.__typename)).subscribe({
       next: (group) => {
@@ -48,7 +48,7 @@ export class TajribaProvider {
             group.subscribe({
               next: (scope) => {
                 this.scopes.next({
-                  scope: <TScope>scope.change,
+                  scope: <ScopeChange>scope.change,
                   removed: scope.removed,
                 });
 
@@ -63,7 +63,7 @@ export class TajribaProvider {
             group.subscribe({
               next: (scope) => {
                 this.attributes.next({
-                  attribute: <TAttribute>scope.change,
+                  attribute: <AttributeChange>scope.change,
                   removed: scope.removed,
                 });
 
@@ -78,7 +78,7 @@ export class TajribaProvider {
             group.subscribe({
               next: (scope) => {
                 this.participants.next({
-                  participant: <TParticipant>scope.change,
+                  participant: <ParticipantChange>scope.change,
                   removed: scope.removed,
                 });
 
@@ -93,7 +93,7 @@ export class TajribaProvider {
             group.subscribe({
               next: (scope) => {
                 this.steps.next({
-                  step: <TStep>scope.change,
+                  step: <StepChange>scope.change,
                   removed: scope.removed,
                 });
 

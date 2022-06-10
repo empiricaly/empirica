@@ -4,14 +4,14 @@ import {
 } from "@empirica/tajriba";
 import { BehaviorSubject, Observable } from "rxjs";
 import { JsonValue } from "../utils/json";
-import { AttributeChange } from "./provider";
+import { AttributeUpdate } from "./provider";
 
 export class Attributes {
   private attrs = new Map<string, Map<string, Attribute>>();
   private updates = new Map<string, Map<string, TAttribute | boolean>>();
 
   constructor(
-    attributesObs: Observable<AttributeChange>,
+    attributesObs: Observable<AttributeUpdate>,
     donesObs: Observable<void>,
     readonly setAttributes: (input: SetAttributeInput[]) => Promise<void>
   ) {
@@ -39,6 +39,37 @@ export class Attributes {
     }
 
     return attr;
+  }
+
+  nextAttributeValue(scopeID: string, key: string): JsonValue | undefined {
+    let scopeUpdateMap = this.updates.get(scopeID);
+    if (scopeUpdateMap) {
+      const updated = scopeUpdateMap.get(key);
+      if (updated) {
+        if (typeof updated === "boolean") {
+          return undefined;
+        } else {
+          if (!updated.val) {
+            return undefined;
+          } else {
+            return JSON.parse(updated.val);
+          }
+        }
+      }
+    }
+
+    let scopeMap = this.attrs.get(scopeID);
+    if (!scopeMap) {
+      scopeMap = new Map();
+      this.attrs.set(scopeID, scopeMap);
+    }
+
+    let attr = scopeMap.get(key);
+    if (!attr) {
+      return undefined;
+    }
+
+    return attr.value;
   }
 
   private update(attr: TAttribute, removed: boolean) {

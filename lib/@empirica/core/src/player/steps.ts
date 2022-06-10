@@ -1,6 +1,6 @@
 import { StepChange as TStep } from "@empirica/tajriba";
 import { BehaviorSubject, map, Observable } from "rxjs";
-import { StepChange } from "./provider";
+import { StepUpdate } from "./provider";
 
 export interface StepTick {
   started: boolean;
@@ -24,8 +24,8 @@ export function setNow(now: number) {
     if (now === 0) {
       // This is a reset scheduled should be empty
       scheduled = [];
+      /* c8 ignore next 3 */
     } else {
-      /* c8 ignore next 2 */
       throw "time must move forward";
     }
   }
@@ -67,7 +67,7 @@ function timeout(callback: (args: void) => void, ms: number) {
 
 // The number of milliseconds elapsed since January 1, 1970 00:00:00 UTC, with
 // leap seconds ignored.
-type Epoch = number;
+export type Epoch = number;
 
 export class Step {
   private running = false;
@@ -149,7 +149,7 @@ export class Steps {
 
   private ticker: BehaviorSubject<Epoch>;
 
-  constructor(stepsObs: Observable<StepChange>, donesObs: Observable<void>) {
+  constructor(stepsObs: Observable<StepUpdate>, donesObs: Observable<void>) {
     stepsObs.subscribe({
       next: ({ step, removed }) => {
         this.update(step, removed);
@@ -203,6 +203,7 @@ export class Steps {
   }
 }
 
+/* c8 ignore next 6 */
 export const root: any =
   typeof self === "object" && self.self == self
     ? self
@@ -230,6 +231,7 @@ function timerInterval(
   const start = Math.floor(pnow() / 1000) * 1000;
 
   function frame(time: number) {
+    /* c8 ignore next */
     if (signal.aborted) return;
     callback(time);
     scheduleFrame(time);

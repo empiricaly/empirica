@@ -31,7 +31,7 @@ interface attrChangeProps {
   id: string;
   nodeID: string;
   key: string;
-  val: string;
+  val?: string;
 }
 
 const attrChangeDefaults: attrChangeProps = {
@@ -40,14 +40,14 @@ const attrChangeDefaults: attrChangeProps = {
   id: "123",
   nodeID: "abc",
   key: "123",
-  val: "1",
 };
 
 export function attrChange(props: Partial<attrChangeProps>): ChangePayload {
-  const { done, removed, id, nodeID, key, val } = {
+  let { done, removed, id, nodeID, key, val } = {
     ...attrChangeDefaults,
     ...props,
   };
+
   return {
     __typename: "ChangePayload",
     change: {

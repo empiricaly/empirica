@@ -75,6 +75,110 @@ test("Attributes should update attributes on done", (t) => {
   t.is(bAttr.value, 1);
 });
 
+test("Attributes next should return next value", (t) => {
+  const { changes, attributes } = setupAttributes();
+
+  changes.next(
+    attrChange({
+      key: "a",
+      val: "1",
+      nodeID: "abc",
+      done: false,
+      removed: false,
+    })
+  );
+  t.is(attributes.nextAttributeValue("abc", "a"), 1);
+});
+
+test("Attributes next should return next value even if current", (t) => {
+  const { changes, attributes } = setupAttributes();
+
+  changes.next(
+    attrChange({
+      key: "a",
+      val: "0",
+      nodeID: "abc",
+      done: true,
+      removed: false,
+    })
+  );
+
+  changes.next(
+    attrChange({
+      key: "a",
+      val: "1",
+      nodeID: "abc",
+      done: false,
+      removed: false,
+    })
+  );
+  t.is(attributes.nextAttributeValue("abc", "a"), 1);
+});
+
+test("Attributes next should return current value if no next", (t) => {
+  const { changes, attributes } = setupAttributes();
+
+  changes.next(
+    attrChange({
+      key: "a",
+      val: "1",
+      nodeID: "abc",
+      done: true,
+      removed: false,
+    })
+  );
+
+  t.is(attributes.nextAttributeValue("abc", "a"), 1);
+});
+
+test("Attributes next should return nothing if next deleted", (t) => {
+  const { changes, attributes } = setupAttributes();
+
+  changes.next(
+    attrChange({
+      key: "a",
+      val: "1",
+      nodeID: "abc",
+      done: true,
+      removed: false,
+    })
+  );
+
+  changes.next(
+    attrChange({
+      key: "a",
+      val: "1",
+      nodeID: "abc",
+      done: false,
+      removed: true,
+    })
+  );
+
+  t.is(attributes.nextAttributeValue("abc", "a"), undefined);
+});
+
+test("Attributes next should return undefined if next val undefined", (t) => {
+  const { changes, attributes } = setupAttributes();
+
+  changes.next(
+    attrChange({
+      key: "a",
+      val: undefined,
+      nodeID: "abc",
+      done: false,
+      removed: false,
+    })
+  );
+
+  t.is(attributes.nextAttributeValue("abc", "a"), undefined);
+});
+
+test("Attributes next should return undefined if key missing", (t) => {
+  const { attributes } = setupAttributes();
+
+  t.is(attributes.nextAttributeValue("abc", "a"), undefined);
+});
+
 test("Attributes should be removed", (t) => {
   const { changes, attributes } = setupAttributes();
 

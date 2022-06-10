@@ -22,22 +22,40 @@
     "social-science",
     "psychology"
   ],
-  "source": "src/participant/index.ts",
-  "main": "dist/main.js",
-  "module": "dist/module.js",
-  "types": "dist/types.d.ts",
   "type": "module",
   "exports": {
-    ".": {
-      "import": "./dist/module.js",
-      "require": "./dist/main.js"
+    "./console": {
+      "import": "./dist/console.js"
+    },
+    "./player": {
+      "import": "./dist/player.js"
+    },
+    "./player/classic": {
+      "import": "./dist/player-classic.js"
     }
   },
+  "types": "dist/types.d.ts",
+  "player": "dist/player.js",
+  "player-classic": "dist/player-classic.js",
+  "console": "dist/console.js",
   "targets": {
-    "module": {
-      "includeNodeModules": [
-        "rand-seed"
-      ]
+    "player": {
+      "source": "src/player/index.ts",
+      "isLibrary": true,
+      "outputFormat": "esmodule",
+      "sourceMap": true
+    },
+    "player-classic": {
+      "source": "src/player/classic/index.ts",
+      "isLibrary": true,
+      "outputFormat": "esmodule",
+      "sourceMap": true
+    },
+    "console": {
+      "source": "src/utils/console.ts",
+      "isLibrary": true,
+      "outputFormat": "esmodule",
+      "sourceMap": true
     }
   },
   "volta": {
@@ -80,6 +98,7 @@
     "@parcel/packager-ts": "^2.5.0",
     "@parcel/transformer-typescript-types": "^2.5.0",
     "@types/node": "17.0.35",
+    "@types/react": "18.0.12",
     "ava": "4.2.0",
     "c8": "7.11.3",
     "np": "7.5.0",
@@ -92,5 +111,8 @@
     "@empirica/tajriba": "latest",
     "@swc/helpers": "0.3.15",
     "rxjs": "7.5.5"
+  },
+  "peerDependencies": {
+    "react": "18.1.0"
   }
 }
