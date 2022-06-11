@@ -56,7 +56,6 @@
         {
           "+volta": "^",
           "+author": "^",
-          "+type": "^",
           "-devDependencies": {}
         }
       ],

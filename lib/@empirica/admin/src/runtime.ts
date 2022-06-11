@@ -113,7 +113,8 @@ class EventEmitter {
     }
 
     if (scope) {
-      scope.set(key, true, { immutable: true });
+      // scope.set(key, true, { immutable: true });
+      scope.set(key, true);
       await this.processChanges();
     }
   }
@@ -607,7 +608,6 @@ export class Runtime {
             attributes.push(<Attribute>{
               key,
               val: JSON.stringify(change.attrs[key]),
-              immutable: true,
             });
           }
         }
@@ -625,13 +625,15 @@ export class Runtime {
           case "game":
             const game = <Game>change.scope;
             const group = await this.taj.addGroup({ participantIDs: [] });
-            game.set("groupID", group.id, { immutable: true });
+            // game.set("groupID", group.id, { immutable: true });
+            game.set("groupID", group.id);
             game.group = <Group>group;
             break;
           case "stage":
             const stage = <Stage>change.scope;
             const step = await this.taj.addStep({ duration: stage.duration });
-            stage.set("stepID", step.id, { immutable: true });
+            // stage.set("stepID", step.id, { immutable: true });
+            stage.set("stepID", step.id);
             this.store.addStep(<Step>(<unknown>step));
             break;
           default:

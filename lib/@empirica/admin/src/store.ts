@@ -352,7 +352,7 @@ export class Batch extends EScope {
       <Attribute>{
         key: "rootID",
         val: JSON.stringify(this.root.id),
-        immutable: true,
+        // immutable: true,
       },
     ];
   }
@@ -480,7 +480,7 @@ export class Game extends EScope {
       <Attribute>{
         key: "batchID",
         val: JSON.stringify(this.batch.id),
-        immutable: true,
+        // immutable: true,
       },
     ];
   }
@@ -540,7 +540,7 @@ export class Round extends EScope {
       <Attribute>{
         key: "gameID",
         val: JSON.stringify(this.game.id),
-        immutable: true,
+        // immutable: true,
       },
     ];
   }
@@ -581,7 +581,7 @@ export class Stage extends EScope {
       <Attribute>{
         key: "roundID",
         val: JSON.stringify(this.round.id),
-        immutable: true,
+        // immutable: true,
       },
     ];
   }

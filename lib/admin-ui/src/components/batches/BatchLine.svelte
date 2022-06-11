@@ -8,7 +8,7 @@
   import PlayIcon from "../PlayIcon.svelte";
   import StopIcon from "../StopIcon.svelte";
   import FactorsString from "../treatments/FactorsString.svelte";
-
+  
   export let batch;
 
   let open = false;
@@ -100,7 +100,7 @@
             <div class="ml-2 truncate overflow-ellipsis italic">
               {treatment.treatment.name}
             </div>
-            <div class="ml-2 truncate overflow-ellipsis opacity-60">
+            <div class="ml-2 truncate max-w-12 overflow-ellipsis opacity-60">
               <FactorsString factors={treatment.treatment.factors} />
             </div>
           </div>
