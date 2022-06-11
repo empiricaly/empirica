@@ -107,6 +107,8 @@ func Execute() {
 	failedStart(addYarnCommand(rootCmd))
 	failedStart(addUpgradeCommand(rootCmd))
 
+	failedStart(addUtilsCommands(rootCmd))
+
 	cobra.OnInitialize(initConfig(rootCmd, usingConfigFile))
 
 	if err := rootCmd.Execute(); err != nil {
