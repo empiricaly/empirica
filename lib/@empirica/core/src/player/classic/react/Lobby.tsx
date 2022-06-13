@@ -1,6 +1,6 @@
 import React from "react";
-import { usePlayers } from "../hooks";
-import { Loading } from "./Loading";
+import { usePlayers } from "./hooks";
+import { Loading } from "../../react/Loading";
 
 export function Lobby() {
   const players = usePlayers();

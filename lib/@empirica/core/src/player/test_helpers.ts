@@ -6,7 +6,7 @@ import {
   Tajriba,
   TajribaParticipant,
 } from "@empirica/tajriba";
-import { Observable, Subject } from "rxjs";
+import { Observable, BehaviorSubject, Subject } from "rxjs";
 import { fake, replace, SinonSpy } from "sinon";
 import { JsonValue } from "../utils/json";
 import { TajribaProvider } from "./provider";
@@ -31,6 +31,7 @@ export function fakeTajribaConnect(
   };
 
   const cbs: { [key: string]: (() => any)[] } = {};
+  const changes = new Subject<ChangePayload>();
   let taj: TajribaParticipant;
   taj = <TajribaParticipant>{
     id,
@@ -39,7 +40,7 @@ export function fakeTajribaConnect(
       return new Subject<SubAttributesPayload>();
     },
     changes(): Observable<ChangePayload> {
-      return new Subject<ChangePayload>();
+      return changes;
     },
     setAttributes(input: SetAttributeInput[]) {},
     removeAllListeners() {},
@@ -83,6 +84,7 @@ export function fakeTajribaConnect(
       "sessionParticipant",
       session
     ) as SinonSpy,
+    changes,
     cbs,
   };
 }

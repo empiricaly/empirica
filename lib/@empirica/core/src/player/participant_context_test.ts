@@ -136,6 +136,7 @@ test.serial("TajribaConnection session", async (t) => {
   await t.throwsAsync(
     async () => {
       await conn.session("", { id: "12", identifier: "34" });
+      /* c8 ignore next */
     },
     { message: /not connected/ }
   );
@@ -621,6 +622,7 @@ test.serial("ParticipantContext register while disconnected", async (t) => {
   await t.throwsAsync(
     async () => {
       await conn.register("123");
+      /* c8 ignore next */
     },
     { message: /not connected/ }
   );
@@ -645,6 +647,7 @@ test.serial("ParticipantContext invalid register", async (t) => {
   await t.throwsAsync(
     async () => {
       await conn.register("123");
+      /* c8 ignore next */
     },
     { message: /invalid registration/ }
   );
@@ -669,6 +672,7 @@ test.serial("ParticipantContext failed register", async (t) => {
   await t.throwsAsync(
     async () => {
       await conn.register("123");
+      /* c8 ignore next */
     },
     { message: /failed/ }
   );

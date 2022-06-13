@@ -8,6 +8,11 @@ import { Steps } from "./steps";
 
 export type Constructor<T extends {} = {}> = new (...args: any[]) => T;
 
+export type Attributable = {
+  get: (key: string) => JsonValue | undefined;
+  set: (key: string, value: JsonValue, ao?: Partial<AttributeOptions>) => void;
+};
+
 export type ScopeConstructor<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }

@@ -1,4 +1,13 @@
-import React, { RefObject, ChangeEventHandler, useRef } from "react";
+import React, { ChangeEventHandler, RefObject, useRef } from "react";
+
+export interface SliderProps {
+  value: number;
+  onChange?: ChangeEventHandler<HTMLInputElement> | undefined;
+  min?: number;
+  max?: number;
+  stepSize?: number;
+  disabled?: boolean;
+}
 
 export function Slider({
   value,
@@ -7,17 +16,10 @@ export function Slider({
   max = 100,
   stepSize = 1,
   disabled = false,
-}: {
-  value: number;
-  onChange?: ChangeEventHandler<HTMLInputElement> | undefined;
-  min?: number;
-  max?: number;
-  stepSize?: number;
-  disabled?: boolean;
-}) {
+}: SliderProps) {
   const val = value === null ? (max - min) / 2 : value;
   const cls = value === null ? "slider-thumb-zero" : "slider-thumb";
-  const ref: RefObject<HTMLInputElement> = useRef(null);
+  const ref: RefObject<HTMLOutputElement> = useRef(null);
 
   if (value !== null && ref.current) {
     const nmin = min ? min : 0;

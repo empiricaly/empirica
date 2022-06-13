@@ -1,19 +1,57 @@
 import { useContext, useEffect, useState } from "react";
 import { merge, Observable } from "rxjs";
 import { Globals } from "../globals";
-import { ParticipantContext, Session } from "../participant_context";
+import {
+  ParticipantContext,
+  Session,
+  TajribaConnection,
+} from "../participant_context";
 import { ParticipantCtx } from "./EmpiricaParticipant";
 
-export function userParticipantContext() {
+export function useParticipantContext() {
   return useContext(ParticipantCtx);
+}
+
+export function useTajribaConnecting() {
+  return useTajribaCtxKey<boolean, "connecting">("connecting");
+}
+
+export function useTajribaConnected() {
+  return useTajribaCtxKey<boolean, "connected">("connected");
+}
+
+export function useTajriba() {
+  const ctx = useParticipantContext();
+  return ctx?.tajriba;
 }
 
 export function useGlobal() {
   return usePartCtxKey<Globals, "globals">("globals");
 }
 
-export function usePlayerID() {
-  const ctx = userParticipantContext();
+const defaultConsentKey = "empirica:consent";
+
+export function useConsent(
+  ns: string = ""
+): [boolean, (() => void) | undefined] {
+  const key = `${defaultConsentKey}${ns ? `:${ns}` : ""}`;
+  const getConsented = () => Boolean(window.localStorage[key]);
+  const [consented, setConsented] = useState(getConsented());
+
+  function onConsent() {
+    window.localStorage[key] = true;
+    setConsented(true);
+  }
+
+  return [consented, consented ? undefined : onConsent];
+}
+
+export function usePlayerID(): [
+  boolean,
+  string | undefined,
+  ((v: string) => void) | undefined
+] {
+  const ctx = useParticipantContext();
   const [connecting, setConnecting] = useState<boolean>(true);
   const [playerID, setPlayerID] = useState<string | undefined>(undefined);
   const [changePlayerID, setChangePlayerID] = useState<
@@ -48,7 +86,7 @@ export function usePlayerID() {
             await ctx.register(playerIdentifier);
           });
         } else {
-          setPlayerID(session?.participant.identifier);
+          setPlayerID(session.participant.identifier);
           setChangePlayerID(undefined);
         }
       },
@@ -60,8 +98,19 @@ export function usePlayerID() {
   return [connecting, playerID, changePlayerID];
 }
 
+function useTajribaCtxKey<T, K extends keyof TajribaConnection>(name: K) {
+  return useCtxKey<T, TajribaConnection, K>(useTajriba, name);
+}
+
 function usePartCtxKey<T, K extends keyof ParticipantContext>(name: K) {
-  const ctx = userParticipantContext();
+  return useCtxKey<T, ParticipantContext, K>(useParticipantContext, name);
+}
+
+function useCtxKey<T, O extends {}, K extends keyof O>(
+  ctxFunc: () => O | undefined,
+  name: K
+) {
+  const ctx = ctxFunc();
   const [val, setVal] = useState<T | undefined>(undefined);
 
   useEffect(() => {
@@ -71,13 +120,13 @@ function usePartCtxKey<T, K extends keyof ParticipantContext>(name: K) {
 
     const obs = (<unknown>ctx[name]) as Observable<T>;
 
-    const { unsubscribe } = obs.subscribe({
+    const sub = obs.subscribe({
       next(g) {
         setVal(g);
       },
     });
 
-    return unsubscribe;
+    return sub.unsubscribe.bind(sub);
   }, [ctx]);
 
   return val;

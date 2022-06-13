@@ -1,68 +1,58 @@
 import React from "react";
-import { useGame, usePlayer } from "../hooks";
-import { Json } from "../json";
-import { EScope } from "../store";
+import { WithChildren } from "../../react/helpers";
+import { Attributable } from "../../scopes";
+import { Game, Player } from "../classic";
+import { useGame, usePlayer } from "./hooks";
 
-export type StepsFunc = (treatment: Json) => React.ElementType[] | undefined;
+export type StepsFunc = (props: {
+  game?: Game;
+  player?: Player;
+}) => React.ElementType[] | undefined;
 
-export interface StepsProps {
+export type StepsProps = WithChildren<{
   steps: React.ElementType[] | StepsFunc;
   progressKey: string;
   doneKey: string;
-  object?: EScope;
-}
+  object?: Attributable;
+}>;
 
-{
-  /* 
-  <Steps steps=[Introduction, Challenge]>
-    <Game></Game>
-
-  </Steps>
-*/
-}
-
-export const Steps: React.FC<StepsProps> = ({
+export function Steps({
   steps,
   progressKey,
   doneKey,
   object,
   children,
-}) => {
-  let obj: EScope;
-  const player = usePlayer();
+}: StepsProps) {
+  let obj: Attributable;
   const game = useGame();
+  const player = usePlayer();
 
+  // Find state receiver
   if (object) {
     obj = object;
-  } else {
-    if (!player) {
-      return <></>;
-    }
-
+  } else if (player) {
     obj = player;
+  } else {
+    console.error("no receiver and no player in Steps");
+    return <div>Missing attribute</div>;
   }
 
+  // Are we already done
   if (obj.get(doneKey)) {
     return <>{children}</>;
   }
 
-  let actualSteps: React.ElementType[];
+  // Static steps
+  let actualSteps = steps as React.ElementType[];
 
+  // Dynamic steps
   if (typeof steps === "function") {
-    if (!game) {
-      console.warn("steps: cannot use steps function if game not assigned");
-      return <></>;
-    }
-
-    const res = steps(game?.treatment || {});
-    if (!res) {
+    actualSteps = steps({ game, player })!;
+    if (!actualSteps) {
       obj.set(doneKey, true);
 
       return <>{children}</>;
     }
-    actualSteps = res;
-  } else {
-    actualSteps = steps;
   }
 
   const index = (obj.get(progressKey) as number) || 0;
@@ -74,6 +64,11 @@ export const Steps: React.FC<StepsProps> = ({
 
   const Step = actualSteps[index];
 
+  if (!Step) {
+    console.error("missing step at index");
+    return <div>Step missing</div>;
+  }
+
   const next = () => {
     if (index + 1 >= actualSteps.length) {
       obj.set(doneKey, true);
@@ -83,4 +78,4 @@ export const Steps: React.FC<StepsProps> = ({
   };
 
   return <Step next={next}></Step>;
-};
+}

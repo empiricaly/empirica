@@ -2,7 +2,7 @@ import React from "react";
 import {
   Mode,
   ParticipantContext,
-  ParticipantMode,
+  ParticipantModeContext,
 } from "../participant_context";
 import { WithChildren } from "./helpers";
 
@@ -13,7 +13,7 @@ export const ParticipantCtx = React.createContext<
 type EmpiricaParticipantProps = WithChildren<{
   url: string;
   ns: string;
-  modeFunc: Mode<any>;
+  modeFunc?: Mode<any>;
 }>;
 
 export function EmpiricaParticipant({
@@ -22,7 +22,12 @@ export function EmpiricaParticipant({
   modeFunc,
   children,
 }: EmpiricaParticipantProps) {
-  const partCtx = new ParticipantContext(url, ns);
+  let partCtx: ParticipantContext;
+  if (modeFunc) {
+    partCtx = new ParticipantModeContext(url, ns, modeFunc);
+  } else {
+    partCtx = new ParticipantContext(url, ns);
+  }
 
   return (
     <ParticipantCtx.Provider value={partCtx}>
@@ -30,20 +35,3 @@ export function EmpiricaParticipant({
     </ParticipantCtx.Provider>
   );
 }
-
-// const {
-//   EmpiricaPlayer,
-//   EmpiricaContextConsumer,
-// } = createEmpiricaPlayerContent<EmpiricaClassicContext>();
-
-// export { EmpiricaContextConsumer };
-
-// function ret() {
-//   return (
-//     <EmpiricaPlayer
-//       url="http..."
-//       ns=""
-//       modeFunc={EmpiricaClassic}
-//     ></EmpiricaPlayer>
-//   );
-// }

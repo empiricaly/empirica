@@ -12,7 +12,7 @@ export function Quiz({ next }: { next: () => void }) {
     e.preventDefault();
 
     if (sum !== "4" || horse !== "white") {
-      alert("Incorrect! Read the instructions, and please try again.");
+      alert("Incorrect! Read the instructions and please try again.");
     } else {
       next();
     }
@@ -49,7 +49,7 @@ export function Quiz({ next }: { next: () => void }) {
               dir="auto"
               id="horse"
               name="horse"
-              placeholder="e.g. brown"
+              placeholder="brown"
               value={horse}
               onChange={(e) => setHorse(e.target.value)}
               autoComplete="off"

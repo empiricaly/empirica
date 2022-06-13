@@ -1,6 +1,6 @@
 import useMouse from "@react-hook/mouse-position";
 import React, { useEffect, useRef } from "react";
-import { usePlayer, usePlayers, useRound } from "../../hooks";
+import { usePlayer, usePlayers, useRound } from "../hooks";
 
 const buttonStyle = {
   width: 40,
@@ -28,6 +28,10 @@ const visitStyle = {
   fontSize: "24px",
   display: "inline-block",
 };
+
+type cell = number | string;
+type row = [cell, cell, cell, cell, cell, cell, cell, cell, cell, cell];
+type grid = [row, row, row, row, row, row, row, row, row, row];
 
 export function Sweeper({ avatar: Avatar }: { avatar: React.ElementType }) {
   const ref = useRef(null);
@@ -57,9 +61,9 @@ export function Sweeper({ avatar: Avatar }: { avatar: React.ElementType }) {
   useEffect(
     function () {
       if (!mouse.x) {
-        player.round.set("position", null);
+        player.round!.set("position", null);
       } else {
-        player.round.set("position", [mouse.x, mouse.y]);
+        player.round!.set("position", [mouse.x, mouse.y]);
       }
     },
     [mouse]
@@ -70,37 +74,37 @@ export function Sweeper({ avatar: Avatar }: { avatar: React.ElementType }) {
       return;
     }
 
-    let bombArr = Array(10)
+    let bombArr = new Array(10)
       .fill(0)
-      .map((elem) => Array(10).fill(0));
+      .map(() => new Array(10).fill(0)) as grid;
 
     for (let i = 0; i < bombArr.length; i++) {
       let bombPos = Math.floor(Math.random() * 10);
-      bombArr[i][bombPos] = "X";
+      bombArr[i]![bombPos] = "X";
     }
 
     for (let i = 0; i < bombArr.length; i++) {
-      for (let j = 0; j < bombArr[i].length; j++) {
-        if (bombArr[i][j] !== "X") {
+      for (let j = 0; j < bombArr[i]!.length; j++) {
+        if (bombArr[i]![j] !== "X") {
           let sum = 0;
 
-          if (i > 0 && bombArr[i - 1][j] == "X") sum++;
-          if (i < bombArr.length - 1 && bombArr[i + 1][j] == "X") sum++;
-          if (j < bombArr.length - 1 && bombArr[i][j + 1] == "X") sum++;
-          if (j > 0 && bombArr[i][j - 1] == "X") sum++;
-          if (i < bombArr.length - 1 && j > 0 && bombArr[i + 1][j - 1] == "X")
+          if (i > 0 && bombArr[i - 1]![j] == "X") sum++;
+          if (i < bombArr.length - 1 && bombArr[i + 1]![j] == "X") sum++;
+          if (j < bombArr.length - 1 && bombArr[i]![j + 1] == "X") sum++;
+          if (j > 0 && bombArr[i]![j - 1] == "X") sum++;
+          if (i < bombArr.length - 1 && j > 0 && bombArr[i + 1]![j - 1] == "X")
             sum++;
           if (
             i < bombArr.length - 1 &&
             j < bombArr.length - 1 &&
-            bombArr[i + 1][j + 1] == "X"
+            bombArr[i + 1]![j + 1] == "X"
           )
             sum++;
-          if (i > 0 && j > 0 && bombArr[i - 1][j - 1] == "X") sum++;
-          if (i > 0 && j < bombArr.length - 1 && bombArr[i - 1][j + 1] == "X")
+          if (i > 0 && j > 0 && bombArr[i - 1]![j - 1] == "X") sum++;
+          if (i > 0 && j < bombArr.length - 1 && bombArr[i - 1]![j + 1] == "X")
             sum++;
 
-          bombArr[i][j] = sum;
+          bombArr[i]![j] = sum;
         }
       }
     }
@@ -109,7 +113,8 @@ export function Sweeper({ avatar: Avatar }: { avatar: React.ElementType }) {
 
     let cover = Array(10)
       .fill(0)
-      .map((elem) => Array(10).fill(0));
+      .map(() => Array(10).fill(0));
+
     round.set("visited", cover);
   }
 
@@ -118,12 +123,12 @@ export function Sweeper({ avatar: Avatar }: { avatar: React.ElementType }) {
       return;
     }
 
-    if (bombs[i][j] == "X") {
+    if (bombs[i]![j] === "X") {
       round.set("lost", true);
     }
 
     dfsCells(i, j);
-    visited[i][j] = 1;
+    visited[i]![j] = 1;
     round.set("visited", [...visited]);
   };
 
@@ -136,16 +141,16 @@ export function Sweeper({ avatar: Avatar }: { avatar: React.ElementType }) {
       i < 0 ||
       i > visited.length - 1 ||
       j < 0 ||
-      j > visited[0].length - 1 ||
-      visited[i][j] == 1 ||
-      bombs[i][j] == "X"
+      j > visited[0]!.length - 1 ||
+      visited[i]![j] == 1 ||
+      bombs[i]![j] == "X"
     )
       return;
 
-    visited[i][j] = 1;
+    visited[i]![j] = 1;
 
     round.set("visited", [...visited]);
-    if (bombs[i][j] < 1) {
+    if (bombs[i]![j]! < 1) {
       dfsCells(i + 1, j);
       dfsCells(i - 1, j);
       dfsCells(i, j + 1);
@@ -171,7 +176,7 @@ export function Sweeper({ avatar: Avatar }: { avatar: React.ElementType }) {
       ) : (
         <div className="absolute h-full w-full text-white text-2xl pointer-events-none">
           {players.map((p) => {
-            const m = p.round.get("position") as [number, number];
+            const m = p.round!.get("position") as [number, number];
             if (!m) {
               return null;
             }
@@ -203,18 +208,18 @@ export function Sweeper({ avatar: Avatar }: { avatar: React.ElementType }) {
 
       {bombs.map((arr, index) => (
         <div key={index}>
-          {arr.map((elem, i) => (
+          {arr.map((_, i) => (
             <div
               key={i}
               onClick={() => visitCell(index, i)}
-              style={visited[index][i] == 0 ? buttonStyle : visitStyle}
+              style={visited[index]![i] == 0 ? buttonStyle : visitStyle}
             >
               <div className="h-full w-full flex items-center justify-center">
-                {visited[index][i] == 0
+                {visited[index]![i] == 0
                   ? null
-                  : bombs[index][i] == 0
+                  : bombs[index]![i] == 0
                   ? ""
-                  : bombs[index][i]}
+                  : bombs[index]![i]}
               </div>
             </div>
           ))}
