@@ -2,7 +2,7 @@ import React from "react";
 import {
   Mode,
   ParticipantContext,
-  ParticipantModeContext,
+  ParticipantMode,
 } from "../participant_context";
 import { WithChildren } from "./helpers";
 
@@ -22,12 +22,7 @@ export function EmpiricaParticipant({
   modeFunc,
   children,
 }: EmpiricaParticipantProps) {
-  const partCtx = new ParticipantModeContext(
-    url,
-    ns,
-    window.localStorage,
-    modeFunc
-  );
+  const partCtx = new ParticipantContext(url, ns);
 
   return (
     <ParticipantCtx.Provider value={partCtx}>

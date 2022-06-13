@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
-import { Observable } from "rxjs";
+import { merge, Observable } from "rxjs";
 import { Globals } from "../globals";
-import { ParticipantContext } from "../participant_context";
+import { ParticipantContext, Session } from "../participant_context";
 import { ParticipantCtx } from "./EmpiricaParticipant";
 
 export function userParticipantContext() {
@@ -14,6 +14,7 @@ export function useGlobal() {
 
 export function usePlayerID() {
   const ctx = userParticipantContext();
+  const [connecting, setConnecting] = useState<boolean>(true);
   const [playerID, setPlayerID] = useState<string | undefined>(undefined);
   const [changePlayerID, setChangePlayerID] = useState<
     ((v: string) => void) | undefined
@@ -24,11 +25,26 @@ export function usePlayerID() {
       return;
     }
 
-    const { unsubscribe } = ctx.session.subscribe({
-      next(session) {
-        if (!session) {
+    let _connecting = true;
+    let session: Session | undefined;
+    const sub = merge(
+      ctx.participant.connecting,
+      ctx.session.sessions
+    ).subscribe({
+      next(sessionOrConnecting) {
+        if (typeof sessionOrConnecting === "boolean") {
+          setConnecting(sessionOrConnecting);
+          _connecting = sessionOrConnecting;
+        } else {
+          session = sessionOrConnecting;
+        }
+
+        if (_connecting) {
           setPlayerID(undefined);
-          setChangePlayerID(async (playerIdentifier: string) => {
+          setChangePlayerID(undefined);
+        } else if (!session) {
+          setPlayerID(undefined);
+          setChangePlayerID(() => async (playerIdentifier: string) => {
             await ctx.register(playerIdentifier);
           });
         } else {
@@ -38,19 +54,11 @@ export function usePlayerID() {
       },
     });
 
-    return unsubscribe;
-  });
+    return sub.unsubscribe.bind(sub);
+  }, [ctx]);
 
-  return [playerID, changePlayerID];
+  return [connecting, playerID, changePlayerID];
 }
-
-// useConsent,
-// useGame,
-// useGlobal,
-// usePlayer,
-// usePlayerID,
-// useRound,
-// useStage,
 
 function usePartCtxKey<T, K extends keyof ParticipantContext>(name: K) {
   const ctx = userParticipantContext();

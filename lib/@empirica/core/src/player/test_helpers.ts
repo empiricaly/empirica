@@ -1,10 +1,91 @@
-import { SetAttributeInput, SubAttributesPayload } from "@empirica/tajriba";
-import { Subject } from "rxjs";
-import { TajribaProvider } from "./provider";
-
-import { ChangePayload, State } from "@empirica/tajriba";
+import {
+  ChangePayload,
+  SetAttributeInput,
+  State,
+  SubAttributesPayload,
+  Tajriba,
+  TajribaParticipant,
+} from "@empirica/tajriba";
+import { Observable, Subject } from "rxjs";
+import { fake, replace, SinonSpy } from "sinon";
 import { JsonValue } from "../utils/json";
+import { TajribaProvider } from "./provider";
 import { Constructor, Scope } from "./scopes";
+
+export const nextTick = (d = 0) =>
+  new Promise((resolved) => setTimeout(resolved, d));
+
+const fakeTajribaConnectDefaults = {
+  id: "123",
+  connected: false,
+  failSession: false,
+  failRegister: false,
+  invalidRegister: false,
+};
+export function fakeTajribaConnect(
+  props: Partial<typeof fakeTajribaConnectDefaults> = {}
+) {
+  const { id, connected, failSession, failRegister, invalidRegister } = {
+    ...fakeTajribaConnectDefaults,
+    ...props,
+  };
+
+  const cbs: { [key: string]: (() => any)[] } = {};
+  let taj: TajribaParticipant;
+  taj = <TajribaParticipant>{
+    id,
+    connected,
+    globalAttributes(): Observable<SubAttributesPayload> {
+      return new Subject<SubAttributesPayload>();
+    },
+    changes(): Observable<ChangePayload> {
+      return new Subject<ChangePayload>();
+    },
+    setAttributes(input: SetAttributeInput[]) {},
+    removeAllListeners() {},
+    registerParticipant(playerIdentifier: string) {
+      return new Promise((resolve, reject) => {
+        if (failRegister) {
+          reject(new Error("failed"));
+        } else {
+          if (invalidRegister) {
+            resolve(["", { id: "", identifier: "" }]);
+          } else {
+            resolve(["sometoken", { id: "123", identifier: playerIdentifier }]);
+          }
+        }
+      });
+    },
+    sessionParticipant(token, pident) {
+      return new Promise<Tajriba>((resolve, reject) => {
+        if (failSession) {
+          reject();
+        } else {
+          resolve(taj);
+        }
+      });
+    },
+    stop() {},
+    on(evt: string, cb: () => void) {
+      if (!cbs[evt]) {
+        cbs[evt] = [];
+      }
+      cbs[evt]!.push(cb);
+    },
+  };
+  const connect = fake.returns(taj);
+  const session = fake.resolves(async () => taj);
+
+  return {
+    connect: replace(Tajriba, "connect", connect) as SinonSpy,
+    session: replace(
+      Tajriba.prototype,
+      "sessionParticipant",
+      session
+    ) as SinonSpy,
+    cbs,
+  };
+}
 
 export function setupProvider() {
   const attributes = new Map<string, JsonValue | undefined>();
