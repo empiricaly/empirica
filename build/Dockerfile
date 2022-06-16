@@ -1,4 +1,4 @@
-FROM ghcr.io/gythialy/golang-cross:v1.17.7
+FROM ghcr.io/gythialy/golang-cross:v1.18.3
 
 ARG BUILD_DATE
 ARG BUILD_SHA
