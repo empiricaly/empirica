@@ -1,0 +1,13 @@
+{
+  "name": "cypress",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {},
+  "author": "",
+  "dependencies": {
+    "cypress": "^10.0.3"
+  },
+  "devDependencies": {
+    "cypress-wait-until": "^1.7.2"
+  }
+}
