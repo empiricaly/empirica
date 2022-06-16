@@ -68,8 +68,10 @@
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "ava": {
     "files": [
-      "**/*_test.ts",
-      "**/*_test.tsx"
+      "src/user/**/*_test.ts",
+      "src/user/**/*_test.tsx",
+      "src/shared/**/*_test.ts",
+      "src/shared/**/*_test.tsx"
     ],
     "extensions": {
       "ts": "module",

@@ -9,7 +9,7 @@ import {
   ParticipantModeContext,
 } from "../participant_context";
 import { TajribaProvider } from "../provider";
-import { fakeTajribaConnect } from "../test_helpers";
+import { fakeTajribaConnect } from "../../shared/test_helpers";
 import { EmpiricaParticipant } from "./EmpiricaParticipant";
 import { useParticipantContext } from "./hooks";
 

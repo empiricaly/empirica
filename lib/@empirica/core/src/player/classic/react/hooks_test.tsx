@@ -10,7 +10,7 @@ import {
   ParticipantSession,
 } from "../../participant_context";
 import { ParticipantCtx } from "../../react/EmpiricaParticipant";
-import { fakeTajribaConnect, nextTick } from "../../test_helpers";
+import { fakeTajribaConnect, nextTick } from "../../../shared/test_helpers";
 import { EmpiricaClassic, Game, Player, Round, Stage } from "../classic";
 import { setupGame, setupPlayer, setupStage } from "../test_helpers";
 import { useGame, usePlayer, usePlayers, useRound, useStage } from "./hooks";

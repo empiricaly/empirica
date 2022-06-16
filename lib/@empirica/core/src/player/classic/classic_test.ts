@@ -5,7 +5,7 @@ import {
   partChange,
   scopeChange,
   stepChange,
-} from "../test_helpers";
+} from "../../shared/test_helpers";
 import {
   Game,
   Player,

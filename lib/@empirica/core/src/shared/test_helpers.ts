@@ -9,8 +9,8 @@ import {
 import { Observable, BehaviorSubject, Subject } from "rxjs";
 import { fake, replace, SinonSpy } from "sinon";
 import { JsonValue } from "../utils/json";
-import { TajribaProvider } from "./provider";
-import { Constructor, Scope } from "./scopes";
+import { TajribaProvider } from "../player/provider";
+import { Constructor, Scope } from "../player/scopes";
 
 export const nextTick = (d = 0) =>
   new Promise((resolved) => setTimeout(resolved, d));

@@ -1,6 +1,6 @@
 import test from "ava";
 import { setNow, Steps, StepTick } from "./steps";
-import { partChange, setupProvider, stepChange } from "./test_helpers";
+import { partChange, setupProvider, stepChange } from "../shared/test_helpers";
 
 function setupSteps() {
   const { provider, changes } = setupProvider();

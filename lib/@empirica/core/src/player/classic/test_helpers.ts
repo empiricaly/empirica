@@ -5,7 +5,7 @@ import {
   partChange,
   scopeChange,
   setupProvider,
-} from "../test_helpers";
+} from "../../shared/test_helpers";
 import { EmpiricaClassic } from "./classic";
 
 const defaultProps = { participantID: "participant1" };

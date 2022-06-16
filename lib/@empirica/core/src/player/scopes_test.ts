@@ -15,7 +15,7 @@ import {
   setupProvider,
   Stage,
   stepChange,
-} from "./test_helpers";
+} from "../shared/test_helpers";
 
 function setupScopes() {
   const { provider, changes } = setupProvider();

@@ -1,11 +1,11 @@
 import "global-jsdom/register";
 
-import {
-  ParticipantIdent,
-  Tajriba,
-  TajribaParticipant,
-} from "@empirica/tajriba";
+import { ParticipantIdent, TajribaParticipant } from "@empirica/tajriba";
 import { BehaviorSubject, merge, Observable, Subject } from "rxjs";
+import {
+  ErrNotConnected,
+  TajribaConnection,
+} from "../shared/tajriba_connection";
 import { Globals } from "./globals";
 import { TajribaProvider } from "./provider";
 
@@ -14,7 +14,7 @@ export interface Session {
   participant: ParticipantIdent;
 }
 
-function bs<T>(init: T) {
+export function bs<T>(init: T) {
   return new BehaviorSubject<T>(init);
 }
 
@@ -222,7 +222,10 @@ export class ParticipantConnection {
         this._connecting.next(true);
 
         try {
-          const tajPart = await taj.session(session.token, session.participant);
+          const tajPart = await taj.sessionParticipant(
+            session.token,
+            session.participant
+          );
 
           this._tajribaPart.next(tajPart);
           this._connected.next(true);
@@ -282,65 +285,6 @@ export class ParticipantConnection {
 
   get participant() {
     return this._tajribaPart;
-  }
-}
-
-const ErrNotConnected = new Error("not connected");
-
-export class TajribaConnection {
-  readonly tajriba: Tajriba;
-  private _connected = bs(false);
-  private _connecting = bs(true);
-  private _stopped = bs(false);
-
-  constructor(private url: string) {
-    this.tajriba = Tajriba.connect(this.url);
-    this._connected.next(this.tajriba.connected);
-
-    this.tajriba.on("connected", () => {
-      this._connected.next(true);
-      this._connecting.next(false);
-    });
-    this.tajriba.on("disconnected", () => {
-      this._connected.next(false);
-      this._connecting.next(true);
-    });
-  }
-
-  get connecting() {
-    return this._connecting;
-  }
-
-  get connected() {
-    return this._connected;
-  }
-
-  get stopped() {
-    return this._stopped;
-  }
-
-  async session(token: string, pident: ParticipantIdent) {
-    if (!this._connected.getValue()) {
-      throw ErrNotConnected;
-    }
-
-    return await this.tajriba.sessionParticipant(token, pident);
-  }
-
-  stop() {
-    if (this._stopped.getValue()) {
-      return;
-    }
-
-    if (this.tajriba) {
-      this.tajriba.removeAllListeners("connected");
-      this.tajriba.removeAllListeners("disconnected");
-      this.tajriba.stop();
-    }
-
-    this._connecting.next(false);
-    this._connected.next(false);
-    this._stopped.next(true);
   }
 }
 

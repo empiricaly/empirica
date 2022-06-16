@@ -5,7 +5,7 @@ import {
   scopeChange,
   setupProvider,
   stepChange,
-} from "./test_helpers";
+} from "../shared/test_helpers";
 
 test("TajribaProvider should split out scope, attribute and participant changes", (t) => {
   const { changes, provider } = setupProvider();
