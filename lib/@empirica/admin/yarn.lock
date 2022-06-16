@@ -928,9 +928,9 @@
     to-fast-properties "^2.0.0"
 
 "@empirica/tajriba@latest":
-  version "1.0.0-alpha.2"
-  resolved "https://registry.yarnpkg.com/@empirica/tajriba/-/tajriba-1.0.0-alpha.2.tgz#919b7e8fac400995bb78d5ca7da354fda07c464e"
-  integrity sha512-dIdxkwpIvls1ViH6mGZDgedrINOWjNxIUzFYZTG7VBLf279Ax7/6aoMntcI/ZSKjjmbu2j1O9qNTTu4BMjzXjw==
+  version "1.0.0-alpha.3"
+  resolved "https://registry.yarnpkg.com/@empirica/tajriba/-/tajriba-1.0.0-alpha.3.tgz#0a16fa88813a9c57b9a5db112260901650adea26"
+  integrity sha512-TAxt6hyDGXvfiNJY+xrBx3MIpFNPY3aJ4Fm0ZfBXNfiYsoBr3QcK0O2BgBMc6c/VgE5jH6Zw9a3uxsqbyjajhA==
   dependencies:
     "@apollo/client" "3.3.7"
     graphql "15.5.0"

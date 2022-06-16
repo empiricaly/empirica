@@ -21,10 +21,10 @@
     tslib "^1.10.0"
     zen-observable "^0.8.14"
 
-"@empirica/admin@^1.0.0-beta.2":
-  version "1.0.0-beta.2"
-  resolved "https://registry.yarnpkg.com/@empirica/admin/-/admin-1.0.0-beta.2.tgz#cea6bbf7ffd815015554658de7f4dd49e280e179"
-  integrity sha512-3q1PicTOY5o/kRpNMsYS+clkdHA2Y9xU2VKGEZuLMIbcMe6wJGfqs8gp8Z7eMi0wuE5m1KA0juzRr3Kxv072CQ==
+"@empirica/admin@latest":
+  version "1.0.0-beta.3"
+  resolved "https://registry.yarnpkg.com/@empirica/admin/-/admin-1.0.0-beta.3.tgz#c6b664474c2d5c485283a2e3ae9c8c15da200b97"
+  integrity sha512-mTTnIUkbbIb41gkNJduODftu7vTZ/BRTRwn2yd0KVGBSegcPnaEG1gvL6UKnwWyPItYA7nj0UuQbDvtCWuSUZw==
   dependencies:
     "@empirica/tajriba" latest
     events "3.3.0"
