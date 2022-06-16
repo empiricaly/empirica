@@ -7,7 +7,7 @@ FROM node:16.15.1-bullseye as empirica_base
 RUN apt-get update && apt-get install -y ca-certificates curl rsync
 # note: this file should be run from the main empirica directory,
 # with the -f flag, as is pattern for vscode: https://stackoverflow.com/a/67944726
-ADD ../build/public/empirica-linux-amd64 /usr/local/bin/empirica
+ADD build/public/empirica-linux-amd64 /usr/local/bin/empirica
 RUN chmod u+x /usr/local/bin/empirica
 RUN empirica setup
 #
@@ -22,7 +22,7 @@ FROM empirica_base as builder
 WORKDIR /app
 RUN empirica create test_experiment
 WORKDIR /app/test_experiment
-COPY ../test/empirica.toml .empirica/empirica.toml
+COPY test/empirica.toml .empirica/empirica.toml
 RUN empirica bundle
 
 # serve the template experiment
