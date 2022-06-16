@@ -1,16 +1,23 @@
 import {
   ChangePayload,
+  ParticipantIdent,
   SetAttributeInput,
   State,
   SubAttributesPayload,
   Tajriba,
+  TajribaAdmin,
   TajribaParticipant,
 } from "@empirica/tajriba";
-import { Observable, BehaviorSubject, Subject } from "rxjs";
+import { ExecutionContext } from "ava";
+import { Observable, Subject } from "rxjs";
 import { fake, replace, SinonSpy } from "sinon";
-import { JsonValue } from "../utils/json";
+import { TokenProvider } from "../admin/token_file";
 import { TajribaProvider } from "../player/provider";
 import { Constructor, Scope } from "../player/scopes";
+import { LogLine } from "../utils/console";
+import { JsonValue } from "../utils/json";
+import { bsu } from "../utils/object";
+import { TajribaConnection } from "./tajriba_connection";
 
 export const nextTick = (d = 0) =>
   new Promise((resolved) => setTimeout(resolved, d));
@@ -21,19 +28,32 @@ const fakeTajribaConnectDefaults = {
   failSession: false,
   failRegister: false,
   invalidRegister: false,
+
+  failRegisterService: false,
+  serviceToken: "abc",
 };
+
 export function fakeTajribaConnect(
   props: Partial<typeof fakeTajribaConnectDefaults> = {}
 ) {
-  const { id, connected, failSession, failRegister, invalidRegister } = {
+  const {
+    id,
+    connected,
+    failSession,
+    failRegister,
+    invalidRegister,
+    failRegisterService,
+    serviceToken,
+  } = {
     ...fakeTajribaConnectDefaults,
     ...props,
   };
 
   const cbs: { [key: string]: (() => any)[] } = {};
   const changes = new Subject<ChangePayload>();
-  let taj: TajribaParticipant;
-  taj = <TajribaParticipant>{
+  let tajParticipant: TajribaParticipant;
+  let tajAdmin: TajribaAdmin;
+  const taj = <Tajriba>(<unknown>{
     id,
     connected,
     globalAttributes(): Observable<SubAttributesPayload> {
@@ -42,6 +62,7 @@ export function fakeTajribaConnect(
     changes(): Observable<ChangePayload> {
       return changes;
     },
+    /* c8 ignore next */
     setAttributes(input: SetAttributeInput[]) {},
     removeAllListeners() {},
     registerParticipant(playerIdentifier: string) {
@@ -57,12 +78,30 @@ export function fakeTajribaConnect(
         }
       });
     },
-    sessionParticipant(token, pident) {
-      return new Promise<Tajriba>((resolve, reject) => {
+    registerService(name: string, serviceRegistrationToken: string) {
+      return new Promise((resolve, reject) => {
+        if (failRegisterService) {
+          reject(new Error("failed"));
+        } else {
+          resolve(serviceToken);
+        }
+      });
+    },
+    sessionParticipant(token: string, pident: ParticipantIdent) {
+      return new Promise<TajribaParticipant>((resolve, reject) => {
         if (failSession) {
           reject();
         } else {
-          resolve(taj);
+          resolve(tajParticipant);
+        }
+      });
+    },
+    sessionAdmin(token: string) {
+      return new Promise<TajribaAdmin>((resolve, reject) => {
+        if (failSession) {
+          reject();
+        } else {
+          resolve(tajAdmin);
         }
       });
     },
@@ -73,7 +112,9 @@ export function fakeTajribaConnect(
       }
       cbs[evt]!.push(cb);
     },
-  };
+  });
+  tajParticipant = <TajribaParticipant>taj;
+  tajAdmin = <TajribaAdmin>taj;
   const connect = fake.returns(taj);
   const session = fake.resolves(async () => taj);
 
@@ -271,3 +312,77 @@ export const kinds = {
   game: Game,
   stage: Stage,
 };
+
+export function textHasLog(
+  t: ExecutionContext<unknown>,
+  logs: LogLine[],
+  level: string,
+  log: string
+) {
+  t.is(logs.length, 1);
+  t.regex(logs[0]!.args[0], new RegExp(log));
+  t.is(logs[0]!.level, level);
+}
+
+const setupTokenProviderDefaults = {
+  initToken: "123",
+  failRegisterService: false,
+  failSession: false,
+};
+
+type setupTokenProviderProps = {
+  initToken?: string;
+  failRegisterService?: boolean;
+  failSession?: boolean;
+};
+
+export function setupTokenProvider(
+  props: setupTokenProviderProps = setupTokenProviderDefaults
+) {
+  const { initToken, failRegisterService, failSession } = {
+    ...setupTokenProviderDefaults,
+    ...props,
+  };
+
+  const serviceName = "callbacks";
+  const serviceRegistrationToken = "d6w54q3d51qw3";
+
+  const { cbs } = fakeTajribaConnect({ failRegisterService, failSession });
+
+  const taj = new TajribaConnection("someurl");
+  const tokens: string[] = [];
+  const tokensbs = bsu<string>(initToken);
+  const strg = {
+    tokens: tokensbs,
+    updateToken: async (token: string) => {
+      tokens.push(token);
+      tokensbs.next(token);
+    },
+    /* c8 ignore next */
+    clearToken: async () => {},
+  };
+
+  let tokenReset = 0;
+  const resetToken = () => {
+    tokenReset++;
+  };
+
+  const tp = new TokenProvider(
+    taj,
+    strg,
+    serviceName,
+    serviceRegistrationToken
+  );
+
+  return {
+    tp,
+    taj,
+    cbs,
+    strg,
+    tokens,
+    resetToken,
+    get tokenReset() {
+      return tokenReset;
+    },
+  };
+}

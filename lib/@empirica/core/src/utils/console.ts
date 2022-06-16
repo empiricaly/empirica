@@ -32,9 +32,20 @@ class LogsMock {
 }
 
 let logsMock: LogsMock | undefined;
-export function captureLogs(cb: () => void): LogLine[] {
+export function captureLogs(cb: () => Promise<void>): LogLine[] {
   const lm = mockLogging();
   cb();
+  const ret = lm.logs;
+  stopMockLogging();
+
+  return ret;
+}
+
+export async function captureLogsAsync(
+  cb: () => Promise<void>
+): Promise<LogLine[]> {
+  const lm = mockLogging();
+  await cb();
   const ret = lm.logs;
   stopMockLogging();
 

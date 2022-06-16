@@ -1,24 +1,17 @@
 import { TajribaAdmin } from "@empirica/tajriba";
-import { BehaviorSubject, merge } from "rxjs";
+import { BehaviorSubject, merge, Subscription } from "rxjs";
 import {
   ErrNotConnected,
   TajribaConnection,
 } from "../shared/tajriba_connection";
-
-export function bs<T>(init: T) {
-  return new BehaviorSubject<T>(init);
-}
-
-function bsu<T>(init: T | undefined = undefined) {
-  return new BehaviorSubject<T | undefined>(init);
-}
+import { bs, bsu } from "../utils/object";
 
 export class AdminConnection {
   private _tajriba = bsu<TajribaAdmin>();
   private _connected = bs(false);
   private _connecting = bs(false);
   private _stopped = bs(false);
-  private _unsub: () => void;
+  private sub: Subscription;
 
   constructor(
     taj: TajribaConnection,
@@ -27,7 +20,7 @@ export class AdminConnection {
   ) {
     let token: string | undefined;
     let connected = false;
-    const { unsubscribe } = merge(taj.connected, tokens).subscribe({
+    this.sub = merge(taj.connected, tokens).subscribe({
       next: async (tokenOrConnected) => {
         if (typeof tokenOrConnected === "boolean") {
           connected = tokenOrConnected;
@@ -36,9 +29,6 @@ export class AdminConnection {
         }
 
         if (!token || !connected) {
-          if (this._connected.getValue()) {
-          }
-
           return;
         }
 
@@ -49,16 +39,16 @@ export class AdminConnection {
         this._connecting.next(true);
 
         try {
-          const tajUser = await taj.sessionAdmin(token);
+          const tajAdmin = await taj.sessionAdmin(token);
 
-          this._tajriba.next(tajUser);
+          this._tajriba.next(tajAdmin);
           this._connected.next(true);
 
-          tajUser.on(
+          tajAdmin.on(
             "connected",
             this._connected.next.bind(this._connected, true)
           );
-          tajUser.on(
+          tajAdmin.on(
             "disconnected",
             this._connected.next.bind(this._connected, false)
           );
@@ -71,8 +61,6 @@ export class AdminConnection {
         this._connecting.next(false);
       },
     });
-
-    this._unsub = unsubscribe;
   }
 
   stop() {
@@ -88,7 +76,7 @@ export class AdminConnection {
       this._tajriba.next(undefined);
     }
 
-    this._unsub();
+    this.sub.unsubscribe();
 
     this._connecting.next(false);
     this._connected.next(false);
@@ -107,7 +95,7 @@ export class AdminConnection {
     return this._stopped;
   }
 
-  get participant() {
+  get admin() {
     return this._tajriba;
   }
 }

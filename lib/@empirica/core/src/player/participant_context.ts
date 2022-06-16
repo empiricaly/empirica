@@ -6,20 +6,13 @@ import {
   ErrNotConnected,
   TajribaConnection,
 } from "../shared/tajriba_connection";
+import { bs, bsu } from "../utils/object";
 import { Globals } from "./globals";
 import { TajribaProvider } from "./provider";
 
 export interface Session {
   token: string;
   participant: ParticipantIdent;
-}
-
-export function bs<T>(init: T) {
-  return new BehaviorSubject<T>(init);
-}
-
-function bsu<T>(init: T | undefined = undefined) {
-  return new BehaviorSubject<T | undefined>(init);
 }
 
 export class ParticipantContext {
@@ -209,9 +202,6 @@ export class ParticipantConnection {
         }
 
         if (!session || !connected) {
-          if (this._connected.getValue()) {
-          }
-
           return;
         }
 

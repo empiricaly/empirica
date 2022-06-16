@@ -119,7 +119,7 @@ test.serial("TajribaConnection connection stopped ", (t) => {
   t.deepEqual(stoppedVals, [false, true]);
 });
 
-test.serial("TajribaConnection session", async (t) => {
+test.serial("TajribaConnection session participant", async (t) => {
   const { cbs } = fakeTajribaConnect();
 
   const conn = new TajribaConnection("someurl");
@@ -136,5 +136,25 @@ test.serial("TajribaConnection session", async (t) => {
 
   await t.notThrowsAsync(async () => {
     await conn.sessionParticipant("", { id: "12", identifier: "34" });
+  });
+});
+
+test.serial("TajribaConnection session admin", async (t) => {
+  const { cbs } = fakeTajribaConnect();
+
+  const conn = new TajribaConnection("someurl");
+
+  await t.throwsAsync(
+    async () => {
+      await conn.sessionAdmin("");
+      /* c8 ignore next */
+    },
+    { message: /not connected/ }
+  );
+
+  cbs["connected"]![0]!();
+
+  await t.notThrowsAsync(async () => {
+    await conn.sessionAdmin("");
   });
 });

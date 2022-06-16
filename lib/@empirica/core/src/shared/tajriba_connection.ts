@@ -1,5 +1,5 @@
 import { ParticipantIdent, Tajriba } from "@empirica/tajriba";
-import { bs } from "../player/participant_context";
+import { bs } from "../utils/object";
 
 export const ErrNotConnected = new Error("not connected");
 

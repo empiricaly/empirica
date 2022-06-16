@@ -1,10 +1,5 @@
-import test, { ExecutionContext } from "ava";
+import test from "ava";
 import { Subject } from "rxjs";
-import { captureLogs, LogLine } from "../utils/console";
-import { JsonValue } from "../utils/json";
-import { Attributes } from "./attributes";
-import { Scopes } from "./scopes";
-import { Steps } from "./steps";
 import {
   attrChange,
   Context,
@@ -15,7 +10,13 @@ import {
   setupProvider,
   Stage,
   stepChange,
+  textHasLog,
 } from "../shared/test_helpers";
+import { captureLogs } from "../utils/console";
+import { JsonValue } from "../utils/json";
+import { Attributes } from "./attributes";
+import { Scopes } from "./scopes";
+import { Steps } from "./steps";
 
 function setupScopes() {
   const { provider, changes } = setupProvider();
@@ -267,17 +268,6 @@ test("Scopes should be queryingable by kind", (t) => {
   const gamesAgain = scopes.byKind("game")!;
   t.truthy(gamesAgain.size === 0);
 });
-
-function textHasLog(
-  t: ExecutionContext<unknown>,
-  logs: LogLine[],
-  level: string,
-  log: string
-) {
-  t.is(logs.length, 1);
-  t.regex(logs[0]!.args[0], new RegExp(log));
-  t.is(logs[0]!.level, level);
-}
 
 test("Scopes works on removal of missing scope", (t) => {
   const { changes, scopes } = setupScopes();
