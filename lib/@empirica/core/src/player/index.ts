@@ -1,5 +1,5 @@
-export { Attribute, Attributes } from "./attributes";
-export type { AttributeOptions } from "./attributes";
+export { Attribute, Attributes } from "../shared/attributes";
+export type { AttributeOptions } from "../shared/attributes";
 export { Globals } from "./globals";
 export { TajribaProvider } from "./provider";
 export type {
@@ -9,6 +9,7 @@ export type {
   StepUpdate,
 } from "./provider";
 export { Scope, Scopes } from "./scopes";
-export type { Constructor, ScopeConstructor } from "./scopes";
+export type { ScopeConstructor } from "./scopes";
+export type { Constructor } from "../shared/helpers";
 export { Step, Steps } from "./steps";
 export type { Epoch, StepTick } from "./steps";

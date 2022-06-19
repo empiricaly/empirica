@@ -1,5 +1,5 @@
-import { ScopeConstructor } from "./scopes";
-import { ScopeSubscriptionInput, Subscriptions } from "./subscriptions";
+import { ScopeConstructor } from "../shared/scopes";
+import { ScopeSubscriptionInput } from "./subscriptions";
 
 export type Subscriber<
   Context,

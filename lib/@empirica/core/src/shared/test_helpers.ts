@@ -13,11 +13,11 @@ import { Observable, Subject } from "rxjs";
 import { fake, replace, SinonSpy } from "sinon";
 import { TokenProvider } from "../admin/token_file";
 import { TajribaProvider } from "../player/provider";
-import { Scope } from "../player/scopes";
+import { Scope } from "./scopes";
 import { LogLine } from "../utils/console";
 import { JsonValue } from "../utils/json";
 import { bsu } from "../utils/object";
-import { Constructor } from "./scopes";
+import { Constructor } from "./helpers";
 import { TajribaConnection } from "./tajriba_connection";
 
 export const nextTick = (d = 0) =>
@@ -295,13 +295,13 @@ export class Game extends Scope<Context, TestKinds> {
     return this.scopeByKey("noStageID") as Stage | undefined;
   }
 
-  get timer() {
-    return this.tickerByKey("stepID");
-  }
+  // get timer() {
+  //   return this.tickerByKey("stepID");
+  // }
 
-  get badTimer() {
-    return this.tickerByKey("notTickerID");
-  }
+  // get badTimer() {
+  //   return this.tickerByKey("notTickerID");
+  // }
 }
 
 type TestKinds = {

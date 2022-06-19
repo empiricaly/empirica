@@ -5,7 +5,7 @@ import {
   partChange,
   scopeChange,
   setupProvider,
-} from "../shared/test_helpers";
+} from "./test_helpers";
 
 function setupAttributes() {
   const { provider, changes } = setupProvider();

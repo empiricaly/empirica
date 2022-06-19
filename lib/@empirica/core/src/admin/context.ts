@@ -3,7 +3,7 @@ import { TajribaConnection } from "../shared/tajriba_connection";
 import { warn } from "../utils/console";
 import { AdminConnection } from "./connection";
 import { EventContext, ListenersCollector, Subscriber } from "./events";
-import { ScopeConstructor } from "./scopes";
+import { ScopeConstructor } from "../shared/scopes";
 import { Subscriptions } from "./subscriptions";
 import { FileTokenStorage, TokenProvider } from "./token_file";
 

@@ -1,31 +1,16 @@
 import {
-  AttributeChange,
   ChangePayload,
   ParticipantChange,
-  ScopeChange,
   SetAttributeInput,
-  StepChange,
   SubAttributesPayload,
 } from "@empirica/tajriba";
 import { groupBy, Observable, Subject } from "rxjs";
-
-export interface ScopeUpdate {
-  scope: ScopeChange;
-  removed: boolean;
-}
-
-export interface AttributeUpdate {
-  attribute: AttributeChange;
-  removed: boolean;
-}
+import { AttributeChange, AttributeUpdate } from "../shared/attributes";
+import { ScopeIdent, ScopeUpdate } from "./scopes";
+import { StepChange, StepUpdate } from "./steps";
 
 export interface ParticipantUpdate {
   participant: ParticipantChange;
-  removed: boolean;
-}
-
-export interface StepUpdate {
-  step: StepChange;
   removed: boolean;
 }
 
@@ -48,7 +33,7 @@ export class TajribaProvider {
             group.subscribe({
               next: (scope) => {
                 this.scopes.next({
-                  scope: <ScopeChange>scope.change,
+                  scope: <ScopeIdent>scope.change,
                   removed: scope.removed,
                 });
 

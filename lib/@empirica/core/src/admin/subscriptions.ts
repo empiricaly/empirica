@@ -1,4 +1,4 @@
-import { ScopeConstructor } from "./scopes";
+import { ScopeConstructor } from "../shared/scopes";
 
 export interface ScopeSubscriptionInput {
   /** ids of the matching Scopes. */

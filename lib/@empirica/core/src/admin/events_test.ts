@@ -1,8 +1,8 @@
 import test from "ava";
-import { Constructor } from "../shared/scopes";
+import { Constructor } from "../shared/helpers";
 import { Context } from "../shared/test_helpers";
 import { EventContext, ListenersCollector, TajribaEvent } from "./events";
-import { Scope } from "./scopes";
+import { Scope } from "../shared/scopes";
 import { ScopeSubscriptionInput } from "./subscriptions";
 
 export class Batch extends Scope<Context, Kinds> {}
@@ -20,10 +20,12 @@ export const kinds = {
 test.serial("ListenersCollector tracks listeners", async (t) => {
   const listeners = new ListenersCollector<Context, Kinds>();
 
+  /* c8 ignore next */
   const startCB = (ctx: EventContext<Context, Kinds>) => {};
   listeners.on("start", startCB);
   t.deepEqual(listeners.starts, [startCB]);
 
+  /* c8 ignore next */
   const tajCB = (ctx: EventContext<Context, Kinds>) => {};
   listeners.on(TajribaEvent.ParticipantConnect, tajCB);
   t.deepEqual(listeners.tajEvents, [
@@ -36,10 +38,12 @@ test.serial("ListenersCollector tracks listeners", async (t) => {
     { event: TajribaEvent.TransitionAdd, nodeID: "123", callback: tajCB },
   ]);
 
+  /* c8 ignore next */
   const kindCB = (ctx: EventContext<Context, Kinds>) => {};
   listeners.on("game", kindCB);
   t.deepEqual(listeners.kindEvents, [{ kind: "game", callback: kindCB }]);
 
+  /* c8 ignore next */
   const attribCB = (ctx: EventContext<Context, Kinds>) => {};
   listeners.on("game", "something", attribCB);
   t.deepEqual(listeners.attributeEvents, [
@@ -50,6 +54,7 @@ test.serial("ListenersCollector tracks listeners", async (t) => {
 test.serial("ListenersCollector fails with wrong start", async (t) => {
   const listeners = new ListenersCollector<Context, Kinds>();
 
+  /* c8 ignore next */
   const startCB = (ctx: EventContext<Context, Kinds>) => {};
 
   t.throws(
@@ -74,8 +79,6 @@ test.serial("ListenersCollector fails with wrong start", async (t) => {
 test.serial("ListenersCollector fails with wrong tajriba event", async (t) => {
   const listeners = new ListenersCollector<Context, Kinds>();
 
-  const tajCB = (ctx: EventContext<Context, Kinds>) => {};
-
   t.throws(
     () => {
       // @ts-ignore
@@ -99,8 +102,6 @@ test.serial(
   "ListenersCollector fails with wrong attribute event",
   async (t) => {
     const listeners = new ListenersCollector<Context, Kinds>();
-
-    const tajCB = (ctx: EventContext<Context, Kinds>) => {};
 
     t.throws(
       () => {

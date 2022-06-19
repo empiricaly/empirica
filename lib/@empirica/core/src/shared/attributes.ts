@@ -2,12 +2,13 @@ import { SetAttributeInput } from "@empirica/tajriba";
 import { BehaviorSubject, Observable } from "rxjs";
 import { JsonValue } from "../utils/json";
 
-interface AttributeChange {
+export interface AttributeChange {
   key: string;
   nodeID: string;
   val?: string | null;
 }
-interface AttributeUpdate {
+
+export interface AttributeUpdate {
   attribute: AttributeChange;
   removed: boolean;
 }

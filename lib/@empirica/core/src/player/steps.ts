@@ -1,6 +1,16 @@
-import { StepChange as TStep } from "@empirica/tajriba";
 import { BehaviorSubject, map, Observable } from "rxjs";
-import { StepUpdate } from "./provider";
+
+export interface StepChange {
+  id: string;
+  running: boolean;
+  ellapsed?: number;
+  remaining?: number;
+}
+
+export interface StepUpdate {
+  step: StepChange;
+  removed: boolean;
+}
 
 export interface StepTick {
   started: boolean;
@@ -75,7 +85,7 @@ export class Step {
   private startAt: number = 0;
   private endAt: number = 0;
 
-  constructor(step: TStep, ticker: Observable<DOMHighResTimeStamp>) {
+  constructor(step: StepChange, ticker: Observable<DOMHighResTimeStamp>) {
     ticker.pipe(map(this.recalc.bind(this))).subscribe({
       next: (val) => {
         this.ticker.next(val);
@@ -99,7 +109,7 @@ export class Step {
     } as StepTick;
   }
 
-  obs() {
+  obs(): Observable<StepTick | undefined> {
     return this.ticker;
   }
 
@@ -108,7 +118,7 @@ export class Step {
   }
 
   // internal only
-  _update(step: TStep) {
+  _update(step: StepChange) {
     if (!step.running) {
       this.running = false;
       this.ticker.next(undefined);
@@ -145,7 +155,7 @@ export class Step {
 
 export class Steps {
   private steps = new Map<string, Step>();
-  private updates = new Map<string, TStep | boolean>();
+  private updates = new Map<string, StepChange | boolean>();
 
   private ticker: BehaviorSubject<Epoch>;
 
@@ -173,7 +183,7 @@ export class Steps {
     return this.steps.get(stepID);
   }
 
-  private update(step: TStep, removed: boolean) {
+  private update(step: StepChange, removed: boolean) {
     if (removed) {
       this.updates.set(step.id, true);
     } else {

@@ -1,9 +1,9 @@
 import { BehaviorSubject, Subject } from "rxjs";
-import { Constructor } from "../../shared/scopes";
-import { Attributes } from "../attributes";
+import { Attributes } from "../../shared/attributes";
+import { Constructor } from "../../shared/helpers";
+import { Scope, Scopes } from "../scopes";
 import { Globals } from "../globals";
 import { TajribaProvider } from "../provider";
-import { Scope, Scopes } from "../scopes";
 import { Steps } from "../steps";
 
 export class Game extends Scope<Context, EmpiricaClassicKinds> {
@@ -260,7 +260,7 @@ function getCurrent(ctx: EmpiricaClassicContext): mainObjects {
 
 function getMainObjects(
   participantID: string,
-  scopes: Scopes<Context, EmpiricaClassicKinds, keyof EmpiricaClassicKinds>,
+  scopes: Scopes<Context, EmpiricaClassicKinds>,
   attributes: Attributes
 ): mainObjects {
   const players = scopes.byKind("player");
@@ -301,7 +301,7 @@ function getMainObjects(
 }
 
 function nextScopeByKey(
-  scopes: Scopes<Context, EmpiricaClassicKinds, keyof EmpiricaClassicKinds>,
+  scopes: Scopes<Context, EmpiricaClassicKinds>,
   attributes: Attributes,
   scope: Scope<Context, EmpiricaClassicKinds>,
   key: string
