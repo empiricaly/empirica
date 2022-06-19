@@ -7,7 +7,7 @@ import { restore } from "sinon";
 import {
   ParticipantContext,
   ParticipantModeContext,
-} from "../participant_context";
+} from "../context
 import { TajribaProvider } from "../provider";
 import { fakeTajribaConnect } from "../../shared/test_helpers";
 import { EmpiricaParticipant } from "./EmpiricaParticipant";

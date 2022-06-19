@@ -32,7 +32,7 @@ class LogsMock {
 }
 
 let logsMock: LogsMock | undefined;
-export function captureLogs(cb: () => Promise<void>): LogLine[] {
+export function captureLogs(cb: () => void): LogLine[] {
   const lm = mockLogging();
   cb();
   const ret = lm.logs;

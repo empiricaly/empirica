@@ -13,10 +13,11 @@ import { Observable, Subject } from "rxjs";
 import { fake, replace, SinonSpy } from "sinon";
 import { TokenProvider } from "../admin/token_file";
 import { TajribaProvider } from "../player/provider";
-import { Constructor, Scope } from "../player/scopes";
+import { Scope } from "../player/scopes";
 import { LogLine } from "../utils/console";
 import { JsonValue } from "../utils/json";
 import { bsu } from "../utils/object";
+import { Constructor } from "./scopes";
 import { TajribaConnection } from "./tajriba_connection";
 
 export const nextTick = (d = 0) =>
@@ -53,7 +54,7 @@ export function fakeTajribaConnect(
   const changes = new Subject<ChangePayload>();
   let tajParticipant: TajribaParticipant;
   let tajAdmin: TajribaAdmin;
-  const taj = <Tajriba>(<unknown>{
+  const taj = <unknown>(<unknown>{
     id,
     connected,
     globalAttributes(): Observable<SubAttributesPayload> {
@@ -115,7 +116,7 @@ export function fakeTajribaConnect(
   });
   tajParticipant = <TajribaParticipant>taj;
   tajAdmin = <TajribaAdmin>taj;
-  const connect = fake.returns(taj);
+  const connect = fake.returns(<Tajriba>taj);
   const session = fake.resolves(async () => taj);
 
   return {

@@ -1,11 +1,33 @@
-import { ScopeChange as TScope } from "@empirica/tajriba";
 import { BehaviorSubject, Observable } from "rxjs";
 import { Constructor } from "../shared/scopes";
 import { warn } from "../utils/console";
 import { JsonValue } from "../utils/json";
-import { AttributeOptions, Attributes } from "./attributes";
-import { ScopeUpdate } from "./provider";
-import { Steps } from "./steps";
+// import { AttributeOptions, Attributes } from "./attributes";
+// import { ScopeUpdate } from "./provider";
+// import { Steps } from "./steps";
+
+interface Attribute {
+  value: JsonValue | undefined;
+  obs: Observable<JsonValue | undefined>;
+  set: (value: JsonValue, ao?: Partial<AttributeOptions>) => void;
+}
+interface Attributes {
+  attribute: (scopeID: string, key: string) => Attribute;
+  scopeWasUpdated: (id: string) => boolean;
+}
+interface AttributeOptions {}
+interface Steps {
+  step: (id: string) => void;
+}
+
+export interface ScopeUpdate {
+  scope: ScopeIdent;
+  removed: boolean;
+}
+
+//
+// ======================
+//
 
 export type Attributable = {
   get: (key: string) => JsonValue | undefined;
@@ -63,22 +85,22 @@ export class Scopes<
     return map;
   }
 
-  kindWasUpdated(kind: keyof Kinds): boolean {
-    return this.kindUpdated.has(kind);
-  }
+  // kindWasUpdated(kind: keyof Kinds): boolean {
+  //   return this.kindUpdated.has(kind);
+  // }
 
   private next() {
-    this.kindUpdated.clear();
-    for (const [_, scopeSubject] of this.scopes) {
-      const scope = scopeSubject.getValue();
-      if (scope._updated || this.attributes.scopeWasUpdated(scope.id)) {
-        scope._updated = false;
-        scopeSubject.next(scope);
-      }
-    }
+    // this.kindUpdated.clear();
+    // for (const [_, scopeSubject] of this.scopes) {
+    //   const scope = scopeSubject.getValue();
+    //   if (scope._updated || this.attributes.scopeWasUpdated(scope.id)) {
+    //     scope._updated = false;
+    //     scopeSubject.next(scope);
+    //   }
+    // }
   }
 
-  private update(scope: TScope, removed: boolean) {
+  private update(scope: ScopeIdent, removed: boolean) {
     const existing = this.scopes.get(scope.id)?.getValue();
 
     if (removed) {
@@ -150,6 +172,11 @@ export class Scopes<
   }
 }
 
+interface ScopeIdent {
+  id: string;
+  kind: string;
+}
+
 export class Scope<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
@@ -159,7 +186,7 @@ export class Scope<
 
   constructor(
     readonly ctx: Context,
-    readonly scope: TScope,
+    readonly scope: ScopeIdent,
     protected scopes: Scopes<Context, Kinds, keyof Kinds>,
     protected attributes: Attributes,
     protected steps: Steps

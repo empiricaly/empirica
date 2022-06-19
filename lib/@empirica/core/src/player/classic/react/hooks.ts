@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Observable } from "rxjs";
-import { ParticipantModeContext } from "../../participant_context";
+import { ParticipantModeContext } from "../../context";
 import { useParticipantContext } from "../../react/hooks";
 import { EmpiricaClassicContext, Game, Player, Round, Stage } from "../classic";
 

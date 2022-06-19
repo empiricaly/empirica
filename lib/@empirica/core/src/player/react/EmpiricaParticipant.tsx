@@ -3,7 +3,7 @@ import {
   Mode,
   ParticipantContext,
   ParticipantModeContext,
-} from "../participant_context";
+} from "../context
 import { WithChildren } from "./helpers";
 
 export const ParticipantCtx = React.createContext<

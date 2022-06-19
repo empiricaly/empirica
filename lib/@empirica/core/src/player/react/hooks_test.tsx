@@ -13,7 +13,7 @@ import { Subject } from "rxjs";
 import { restore } from "sinon";
 import { TajribaConnection } from "../../shared/tajriba_connection";
 import { Globals } from "../globals";
-import { ParticipantContext, ParticipantSession } from "../participant_context";
+import { ParticipantContext, ParticipantSession } from "../context
 import { fakeTajribaConnect, nextTick } from "../../shared/test_helpers";
 import { ParticipantCtx } from "./EmpiricaParticipant";
 import {

@@ -5,12 +5,10 @@ import test, { ExecutionContext } from "ava";
 import React from "react";
 import { Subject } from "rxjs";
 import { restore } from "sinon";
-import {
-  ParticipantModeContext,
-  ParticipantSession,
-} from "../../participant_context";
-import { ParticipantCtx } from "../../react/EmpiricaParticipant";
 import { fakeTajribaConnect, nextTick } from "../../../shared/test_helpers";
+import { ParticipantSession } from "../../connection";
+import { ParticipantModeContext } from "../../context";
+import { ParticipantCtx } from "../../react/EmpiricaParticipant";
 import { EmpiricaClassic, Game, Player, Round, Stage } from "../classic";
 import { setupGame, setupPlayer, setupStage } from "../test_helpers";
 import { useGame, usePlayer, usePlayers, useRound, useStage } from "./hooks";
