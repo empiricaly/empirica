@@ -1,5 +1,5 @@
 import { ScopeChange as TScope } from "@empirica/tajriba";
-import { BehaviorSubject, Observable } from "rxjs";
+import { Observable } from "rxjs";
 import { Attributes } from "../shared/attributes";
 import {
   Scope as SharedScope,
@@ -8,7 +8,6 @@ import {
   Scopes as SharedScopes,
   ScopeUpdate,
 } from "../shared/scopes";
-import { warn } from "../utils/console";
 import { Steps } from "./steps";
 
 export class Scopes<

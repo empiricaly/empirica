@@ -10,12 +10,10 @@ export enum TajribaEvent {
   TransitionAdd = "TRANSITION_ADD",
   ParticipantConnect = "PARTICIPANT_CONNECT",
   ParticipantDisconnect = "PARTICIPANT_DISCONNECT",
-  ParticipantConnected = "PARTICIPANT_CONNECTED",
 }
 
 type TajEventSub<Callback extends Function> = {
   event: TajribaEvent;
-  nodeID?: string;
   callback: Callback;
 };
 
@@ -40,7 +38,7 @@ export class ListenersCollector<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
-  readonly starts: EvtCtxCallback<Context, Kinds>[] = [];
+  readonly starts: ((ctx: EventContext<Context, Kinds>) => void)[] = [];
   readonly tajEvents: TajEventSub<EvtCtxCallback<Context, Kinds>>[] = [];
   readonly kindEvents: KindEventSub<EvtCtxCallback<Context, Kinds>>[] = [];
   readonly attributeEvents: AttributeEventSub<
@@ -48,17 +46,13 @@ export class ListenersCollector<
   >[] = [];
 
   // First callback called.
-  on(kind: "start", callback: EvtCtxCallback<Context, Kinds>): void;
+  on(
+    kind: "start",
+    callback: (ctx: EventContext<Context, Kinds>) => void
+  ): void;
 
   // Attach to Tajriba Hooks.
   on(event: TajribaEvent, callback: EvtCtxCallback<Context, Kinds>): void;
-
-  // Attach to Tajriba Hooks per NodeID.
-  on(
-    event: TajribaEvent,
-    nodeID: string,
-    callback: EvtCtxCallback<Context, Kinds>
-  ): void;
 
   // Receive Scopes by Kind as they are fetched.
   on<Kind extends string>(
@@ -78,7 +72,8 @@ export class ListenersCollector<
     keyOrNodeIDOrEventOrCallback?:
       | string
       | TajribaEvent
-      | EvtCtxCallback<Context, Kinds>,
+      | EvtCtxCallback<Context, Kinds>
+      | ((ctx: EventContext<Context, Kinds>) => void),
     callback?: EvtCtxCallback<Context, Kinds>
   ): void {
     if (kindOrEvent === "start") {
@@ -90,32 +85,24 @@ export class ListenersCollector<
         throw new Error("second argument expected to be a callback");
       }
 
-      this.starts.push(keyOrNodeIDOrEventOrCallback);
+      this.starts.push(
+        keyOrNodeIDOrEventOrCallback as (
+          ctx: EventContext<Context, Kinds>
+        ) => void
+      );
 
       return;
     }
 
     if (Object.values(TajribaEvent).includes(kindOrEvent as any)) {
-      if (typeof keyOrNodeIDOrEventOrCallback === "string") {
-        if (typeof callback !== "function") {
-          throw new Error("third argument expected to be a callback");
-        }
-
-        this.tajEvents.push({
-          event: <TajribaEvent>kindOrEvent,
-          nodeID: keyOrNodeIDOrEventOrCallback,
-          callback,
-        });
-      } else {
-        if (typeof keyOrNodeIDOrEventOrCallback !== "function") {
-          throw new Error("second argument expected to be a callback");
-        }
-
-        this.tajEvents.push({
-          event: <TajribaEvent>kindOrEvent,
-          callback: keyOrNodeIDOrEventOrCallback,
-        });
+      if (typeof keyOrNodeIDOrEventOrCallback !== "function") {
+        throw new Error("second argument expected to be a callback");
       }
+
+      this.tajEvents.push({
+        event: <TajribaEvent>kindOrEvent,
+        callback: keyOrNodeIDOrEventOrCallback,
+      });
 
       return;
     }

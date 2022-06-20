@@ -8,11 +8,7 @@ test.serial("Subscriptions tracks scope id subs", async (t) => {
     scopes: { ids: [], kinds: [] },
     transitions: [],
   });
-  t.deepEqual(subs.newSubs(), {
-    participants: false,
-    scopes: { ids: [], kinds: [] },
-    transitions: [],
-  });
+  t.deepEqual(subs.newSubs(), undefined);
 
   subs.scopeSub({ ids: ["123"] });
 
@@ -26,11 +22,7 @@ test.serial("Subscriptions tracks scope id subs", async (t) => {
     scopes: { ids: ["123"], kinds: [] },
     transitions: [],
   });
-  t.deepEqual(subs.newSubs(), {
-    participants: false,
-    scopes: { ids: [], kinds: [] },
-    transitions: [],
-  });
+  t.deepEqual(subs.newSubs(), undefined);
 
   subs.scopeSub({ ids: ["123"] });
 
@@ -39,11 +31,7 @@ test.serial("Subscriptions tracks scope id subs", async (t) => {
     scopes: { ids: ["123"], kinds: [] },
     transitions: [],
   });
-  t.deepEqual(subs.newSubs(), {
-    participants: false,
-    scopes: { ids: [], kinds: [] },
-    transitions: [],
-  });
+  t.deepEqual(subs.newSubs(), undefined);
 
   subs.scopeSub({ ids: ["456"] });
 
@@ -66,11 +54,7 @@ test.serial("Subscriptions tracks scope kinds subs", async (t) => {
     scopes: { ids: [], kinds: [] },
     transitions: [],
   });
-  t.deepEqual(subs.newSubs(), {
-    participants: false,
-    scopes: { ids: [], kinds: [] },
-    transitions: [],
-  });
+  t.deepEqual(subs.newSubs(), undefined);
 
   subs.scopeSub({ kinds: ["123"] });
 
@@ -84,11 +68,7 @@ test.serial("Subscriptions tracks scope kinds subs", async (t) => {
     scopes: { ids: [], kinds: ["123"] },
     transitions: [],
   });
-  t.deepEqual(subs.newSubs(), {
-    participants: false,
-    scopes: { ids: [], kinds: [] },
-    transitions: [],
-  });
+  t.deepEqual(subs.newSubs(), undefined);
 
   subs.scopeSub({ kinds: ["123"] });
 
@@ -97,11 +77,7 @@ test.serial("Subscriptions tracks scope kinds subs", async (t) => {
     scopes: { ids: [], kinds: ["123"] },
     transitions: [],
   });
-  t.deepEqual(subs.newSubs(), {
-    participants: false,
-    scopes: { ids: [], kinds: [] },
-    transitions: [],
-  });
+  t.deepEqual(subs.newSubs(), undefined);
 
   subs.scopeSub({ kinds: ["456"] });
 
@@ -124,11 +100,7 @@ test.serial("Subscriptions tracks scope kinds and ids subs", async (t) => {
     scopes: { ids: [], kinds: [] },
     transitions: [],
   });
-  t.deepEqual(subs.newSubs(), {
-    participants: false,
-    scopes: { ids: [], kinds: [] },
-    transitions: [],
-  });
+  t.deepEqual(subs.newSubs(), undefined);
 
   subs.scopeSub({ kinds: ["123", "456"], ids: ["abc", "def"] });
 
@@ -142,11 +114,7 @@ test.serial("Subscriptions tracks scope kinds and ids subs", async (t) => {
     scopes: { kinds: ["123", "456"], ids: ["abc", "def"] },
     transitions: [],
   });
-  t.deepEqual(subs.newSubs(), {
-    participants: false,
-    scopes: { ids: [], kinds: [] },
-    transitions: [],
-  });
+  t.deepEqual(subs.newSubs(), undefined);
 
   subs.scopeSub({ kinds: ["9"], ids: ["z"] });
 
@@ -169,11 +137,7 @@ test.serial("Subscriptions tracks participants sub", async (t) => {
     scopes: { ids: [], kinds: [] },
     transitions: [],
   });
-  t.deepEqual(subs.newSubs(), {
-    participants: false,
-    scopes: { ids: [], kinds: [] },
-    transitions: [],
-  });
+  t.deepEqual(subs.newSubs(), undefined);
 
   subs.participantsSub();
 
@@ -193,11 +157,7 @@ test.serial("Subscriptions tracks participants sub", async (t) => {
     scopes: { ids: [], kinds: [] },
     transitions: [],
   });
-  t.deepEqual(subs.newSubs(), {
-    participants: false,
-    scopes: { ids: [], kinds: [] },
-    transitions: [],
-  });
+  t.deepEqual(subs.newSubs(), undefined);
 
   subs.participantsSub();
 
@@ -206,11 +166,7 @@ test.serial("Subscriptions tracks participants sub", async (t) => {
     scopes: { ids: [], kinds: [] },
     transitions: [],
   });
-  t.deepEqual(subs.newSubs(), {
-    participants: false,
-    scopes: { ids: [], kinds: [] },
-    transitions: [],
-  });
+  t.deepEqual(subs.newSubs(), undefined);
 });
 
 test.serial("Subscriptions tracks transitions sub", async (t) => {
@@ -220,11 +176,7 @@ test.serial("Subscriptions tracks transitions sub", async (t) => {
     scopes: { ids: [], kinds: [] },
     transitions: [],
   });
-  t.deepEqual(subs.newSubs(), {
-    participants: false,
-    scopes: { ids: [], kinds: [] },
-    transitions: [],
-  });
+  t.deepEqual(subs.newSubs(), undefined);
 
   subs.transitionsSub("abc");
 
@@ -244,11 +196,7 @@ test.serial("Subscriptions tracks transitions sub", async (t) => {
     scopes: { ids: [], kinds: [] },
     transitions: ["abc"],
   });
-  t.deepEqual(subs.newSubs(), {
-    participants: false,
-    scopes: { ids: [], kinds: [] },
-    transitions: [],
-  });
+  t.deepEqual(subs.newSubs(), undefined);
 
   subs.transitionsSub("abc");
 
@@ -257,11 +205,7 @@ test.serial("Subscriptions tracks transitions sub", async (t) => {
     scopes: { ids: [], kinds: [] },
     transitions: ["abc"],
   });
-  t.deepEqual(subs.newSubs(), {
-    participants: false,
-    scopes: { ids: [], kinds: [] },
-    transitions: [],
-  });
+  t.deepEqual(subs.newSubs(), undefined);
 
   subs.transitionsSub("xyz");
 

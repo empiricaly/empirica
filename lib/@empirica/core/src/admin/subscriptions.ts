@@ -7,7 +7,7 @@ export interface ScopeSubscriptionInput {
   kinds: string[];
 }
 
-interface Subs {
+export interface Subs {
   participants: boolean;
   scopes: {
     ids: string[];
@@ -47,16 +47,9 @@ export class Subscriptions<
   }
 
   // newSubs will return only new subs since the last call.
-  newSubs(): Subs {
+  newSubs(): Subs | undefined {
     if (!this.dirty) {
-      return {
-        participants: false,
-        scopes: {
-          ids: [],
-          kinds: [],
-        },
-        transitions: [],
-      };
+      return;
     }
 
     const current = this.subs;

@@ -1,10 +1,10 @@
-import { Observable, Subject, Subscription } from "rxjs";
+import { Subject } from "rxjs";
+import { ScopeConstructor } from "../shared/scopes";
 import { TajribaConnection } from "../shared/tajriba_connection";
 import { warn } from "../utils/console";
 import { AdminConnection } from "./connection";
-import { EventContext, ListenersCollector, Subscriber } from "./events";
-import { ScopeConstructor } from "../shared/scopes";
-import { Subscriptions } from "./subscriptions";
+import { Subscriber } from "./events";
+import { Runloop } from "./runloop";
 import { FileTokenStorage, TokenProvider } from "./token_file";
 
 export class AdminContext<
@@ -13,52 +13,57 @@ export class AdminContext<
 > {
   readonly tajriba: TajribaConnection;
   public adminConn: AdminConnection | undefined;
-  private admin: Admin<Context, Kinds> | undefined;
+  private runloop: Runloop<Context, Kinds> | undefined;
   private adminSubs = new Subject<Subscriber<Context, Kinds>>();
   private adminStop = new Subject<void>();
   private subs: Subscriber<Context, Kinds>[] = [];
 
-  private constructor(url: string) {
+  private constructor(url: string, private ctx: Context, private kinds: Kinds) {
     this.tajriba = new TajribaConnection(url);
   }
 
-  static async init(
+  static async init<
+    Context,
+    Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
+  >(
     url: string,
     tokenFile: string,
     serviceName: string,
-    serviceRegistrationToken: string
+    serviceRegistrationToken: string,
+    ctx: Context,
+    kinds: Kinds
   ) {
-    const ctx = new this(url);
+    const adminContext = new this(url, ctx, kinds);
     const reset = new Subject<void>();
     const strg = await FileTokenStorage.init(tokenFile, reset);
     const tp = new TokenProvider(
-      ctx.tajriba,
+      adminContext.tajriba,
       strg,
       serviceName,
       serviceRegistrationToken
     );
-    ctx.adminConn = new AdminConnection(
-      ctx.tajriba,
+    adminContext.adminConn = new AdminConnection(
+      adminContext.tajriba,
       tp.tokens,
       reset.next.bind(reset)
     );
 
-    ctx.tajriba.connected.subscribe({
+    adminContext.tajriba.connected.subscribe({
       next: () => {
-        ctx.initOrStop();
+        adminContext.initOrStop();
       },
     });
 
-    ctx.adminConn.connected.subscribe({
+    adminContext.adminConn.connected.subscribe({
       next: () => {
-        ctx.initOrStop();
+        adminContext.initOrStop();
       },
     });
   }
 
   register(subscriber: Subscriber<Context, Kinds>) {
     this.subs.push(subscriber);
-    if (this.admin) {
+    if (this.runloop) {
       this.adminSubs.next(subscriber);
     }
   }
@@ -75,7 +80,7 @@ export class AdminContext<
   }
 
   private initSubs() {
-    if (this.admin) {
+    if (this.runloop) {
       warn("context: admin already connected");
       return;
     }
@@ -85,7 +90,13 @@ export class AdminContext<
       return;
     }
 
-    this.admin = new Admin(this.adminConn, this.adminSubs, this.adminStop);
+    this.runloop = new Runloop(
+      this.adminConn,
+      this.ctx,
+      this.kinds,
+      this.adminSubs,
+      this.adminStop
+    );
     for (const sub of this.subs) {
       this.adminSubs.next(sub);
     }
@@ -93,41 +104,6 @@ export class AdminContext<
 
   private stopSubs() {
     this.adminStop.next();
-    this.admin = undefined;
-  }
-}
-
-export class Admin<
-  Context,
-  Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
-> {
-  private listeners = new ListenersCollector<Context, Kinds>();
-  private subs = new Subscriptions<Context, Kinds>();
-  private evtctx: EventContext<Context, Kinds>[] = [];
-
-  constructor(
-    private conn: AdminConnection,
-    subs: Observable<Subscriber<Context, Kinds>>,
-    stop: Observable<void>
-  ) {
-    const ctx = new EventContext(this.subs);
-    this.evtctx.push(ctx);
-    const subsSub = subs.subscribe({
-      next: (subscriber) => {
-        subscriber(this.listeners);
-      },
-    });
-
-    let stopSub: Subscription;
-    stopSub = stop.subscribe({
-      next: () => {
-        subsSub.unsubscribe();
-        stopSub.unsubscribe();
-      },
-    });
-  }
-
-  private get taj() {
-    return this.conn.admin.getValue();
+    this.runloop = undefined;
   }
 }

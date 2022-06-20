@@ -1,10 +1,13 @@
+import { SetAttributeInput } from "@empirica/tajriba";
 import test from "ava";
-import { Attributes } from "./attributes";
+import { captureLogs } from "../utils/console";
+import { Attribute, Attributes } from "./attributes";
 import {
   attrChange,
   partChange,
   scopeChange,
   setupProvider,
+  textHasLog,
 } from "./test_helpers";
 
 function setupAttributes() {
@@ -47,6 +50,33 @@ test("Attributes should update attributes on done", (t) => {
     })
   );
   t.is(attributes.attribute("abc", "a").value, 2);
+
+  t.log("No update using same attribute ID");
+
+  changes.next(
+    attrChange({
+      key: "a",
+      val: "3",
+      nodeID: "abc",
+      done: true,
+      removed: false,
+    })
+  );
+  t.is(attributes.attribute("abc", "a").value, 2);
+
+  t.log("Update using different attribute ID");
+
+  changes.next(
+    attrChange({
+      id: "otherid",
+      key: "a",
+      val: "4",
+      nodeID: "abc",
+      done: true,
+      removed: false,
+    })
+  );
+  t.is(attributes.attribute("abc", "a").value, 4);
 
   t.log("Test with other value");
 
@@ -236,4 +266,156 @@ test("Attributes should track if scope is updated", (t) => {
   changes.next(partChange({ done: true }));
 
   t.false(attributes.scopeWasUpdated("abd"));
+});
+
+test("Attributes peek should return attribute if exists", (t) => {
+  const { changes, attributes } = setupAttributes();
+
+  t.log("non-existing scope");
+
+  t.is(attributes.attributePeek("xyz", "a"), undefined);
+
+  t.log("no value next attribute");
+
+  changes.next(
+    attrChange({
+      key: "a",
+      val: "",
+      nodeID: "abc",
+      done: false,
+      removed: false,
+    })
+  );
+
+  t.is(attributes.attributePeek("abc", "a"), undefined);
+
+  t.log("next attribute");
+
+  changes.next(
+    attrChange({
+      key: "a",
+      val: "1",
+      nodeID: "abc",
+      done: false,
+      removed: false,
+    })
+  );
+
+  t.is(attributes.attributePeek("abc", "a")!.key, "a");
+  t.is(attributes.attributePeek("abc", "a")!.value, 1);
+
+  t.log("current attribute");
+
+  changes.next(
+    attrChange({
+      key: "a",
+      val: "2",
+      nodeID: "abc",
+      done: true,
+      removed: false,
+    })
+  );
+
+  t.is(attributes.attributePeek("abc", "a")!.key, "a");
+  t.is(attributes.attributePeek("abc", "a")!.value, 2);
+
+  t.log("unknown attribute");
+
+  t.is(attributes.attributePeek("abc", "b"), undefined);
+
+  t.log("going to remove scope");
+
+  changes.next(
+    attrChange({
+      key: "a",
+      val: "1",
+      nodeID: "abc",
+      done: false,
+      removed: true,
+    })
+  );
+
+  t.is(attributes.attributePeek("abc", "a"), undefined);
+
+  t.log("removed scope");
+
+  changes.next(
+    attrChange({
+      key: "a",
+      val: "1",
+      nodeID: "abc",
+      done: true,
+      removed: true,
+    })
+  );
+
+  t.is(attributes.attributePeek("abc", "a"), undefined);
+});
+
+test("Attributes update without any node ID should fail", (t) => {
+  const { changes, attributes } = setupAttributes();
+
+  const logs = captureLogs(function () {
+    changes.next(
+      attrChange({
+        key: "a",
+        val: "1",
+        nodeID: "",
+        done: true,
+        removed: false,
+      })
+    );
+  });
+
+  textHasLog(t, logs, "error", "new attribute without node ID");
+
+  t.is(attributes.attributePeek("abc", "a"), undefined);
+
+  const logs2 = captureLogs(function () {
+    changes.next(
+      attrChange({
+        key: "a",
+        val: "1",
+        nodeID: "",
+        noNode: true,
+        done: true,
+        removed: false,
+      })
+    );
+  });
+
+  textHasLog(t, logs2, "error", "new attribute without node ID");
+
+  t.is(attributes.attributePeek("abc", "a"), undefined);
+});
+
+test("Attribute returns nodeID", (t) => {
+  /* c8 ignore next */
+  const setAttr = async (input: SetAttributeInput[]) => {};
+
+  const attr = new Attribute(setAttr, "abc", "a");
+
+  t.is(attr.nodeID, undefined);
+
+  attr._update({
+    id: "1",
+    key: "a",
+    vector: false,
+    version: 0,
+    nodeID: "xyz",
+  });
+  t.is(attr.nodeID, "xyz");
+
+  attr._update({
+    id: "2",
+    key: "a",
+    vector: false,
+    version: 0,
+    node: {
+      __typename: "Scope",
+      id: "hey",
+      kind: "game",
+    },
+  });
+  t.is(attr.nodeID, "hey");
 });

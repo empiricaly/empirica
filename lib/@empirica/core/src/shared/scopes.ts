@@ -76,7 +76,7 @@ export class Scopes<
     return this.kindUpdated.has(kind);
   }
 
-  private next() {
+  protected next() {
     this.kindUpdated.clear();
     for (const [_, scopeSubject] of this.scopes) {
       const scope = scopeSubject.getValue();
@@ -119,7 +119,7 @@ export class Scopes<
 
     if (existing) {
       existing._deleted = false;
-      warn(`scopes: replacing scope: ${scope.kind}`);
+      return;
     }
 
     if (!scope.kind) {
@@ -136,7 +136,6 @@ export class Scopes<
       return;
     }
 
-    // const obj = new scopeClass!(this.ctx, scope, this, this.attributes);
     const obj = this.create(scopeClass, scope);
     const subj = new BehaviorSubject(obj);
     this.scopes.set(scope.id, subj);

@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { Constructor } from "../../shared/helpers";
+import { Scope } from "../../shared/scopes";
 import { ListenersCollector } from "../events";
-import { Scope } from "../scopes";
 
 const stringArray = z.string().array();
 const string = z.string();

@@ -13,11 +13,11 @@ import { Observable, Subject } from "rxjs";
 import { fake, replace, SinonSpy } from "sinon";
 import { TokenProvider } from "../admin/token_file";
 import { TajribaProvider } from "../player/provider";
-import { Scope } from "./scopes";
 import { LogLine } from "../utils/console";
 import { JsonValue } from "../utils/json";
 import { bsu } from "../utils/object";
 import { Constructor } from "./helpers";
+import { Scope } from "./scopes";
 import { TajribaConnection } from "./tajriba_connection";
 
 export const nextTick = (d = 0) =>
@@ -155,6 +155,9 @@ interface attrChangeProps {
   removed: boolean;
   id: string;
   nodeID: string;
+  nodeKind: string;
+  noNode: boolean;
+  noNodeID: boolean;
   key: string;
   val?: string;
 }
@@ -164,11 +167,27 @@ const attrChangeDefaults: attrChangeProps = {
   removed: false,
   id: "123",
   nodeID: "abc",
+  nodeKind: "game",
+  noNode: false,
+  noNodeID: false,
   key: "123",
 };
 
-export function attrChange(props: Partial<attrChangeProps>): ChangePayload {
-  let { done, removed, id, nodeID, key, val } = {
+interface NodeAttributeChange {
+  __typename: "ChangePayload";
+  change: {
+    __typename: "AttributeChange";
+    node?: {
+      id: string;
+      kind: string;
+    };
+  };
+}
+
+export function attrChange(
+  props: Partial<attrChangeProps>
+): ChangePayload & NodeAttributeChange {
+  let { done, removed, id, nodeID, nodeKind, noNode, noNodeID, key, val } = {
     ...attrChangeDefaults,
     ...props,
   };
@@ -178,7 +197,13 @@ export function attrChange(props: Partial<attrChangeProps>): ChangePayload {
     change: {
       __typename: "AttributeChange",
       id,
-      nodeID,
+      nodeID: noNodeID ? "" : nodeID,
+      node: noNode
+        ? undefined
+        : {
+            id: nodeID,
+            kind: nodeKind,
+          },
       deleted: false,
       isNew: false,
       vector: false,

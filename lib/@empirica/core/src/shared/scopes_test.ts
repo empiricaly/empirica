@@ -93,6 +93,7 @@ test("Scopes should track scopes and attributes", (t) => {
 
   changes.next(
     attrChange({
+      id: "otherid",
       key: "a",
       val: "2",
       nodeID: "abc",
@@ -351,23 +352,19 @@ test("Scopes ignore missing kinds", (t) => {
 test("Scopes supports replacing of scope", (t) => {
   const { changes, scopes } = setupScopes();
 
-  const logs = captureLogs(function () {
-    changes.next(
-      scopeChange({ id: "abc", kind: "game", done: true, removed: false })
-    );
+  changes.next(
+    scopeChange({ id: "abc", kind: "game", done: true, removed: false })
+  );
 
-    const scope = scopes.scope("abc")!;
-    t.truthy(scope);
+  const scope = scopes.scope("abc")!;
+  t.truthy(scope);
 
-    changes.next(
-      scopeChange({ id: "abc", kind: "game", done: true, removed: false })
-    );
+  changes.next(
+    scopeChange({ id: "abc", kind: "game", done: true, removed: false })
+  );
 
-    const scopeAgain = scopes.scope("abc")!;
-    t.truthy(scopeAgain);
-  });
-
-  textHasLog(t, logs, "warn", "replacing scope");
+  const scopeAgain = scopes.scope("abc")!;
+  t.truthy(scopeAgain);
 });
 
 test("Scope should know if it was updated", (t) => {
@@ -466,6 +463,7 @@ test("Scope sub works", (t) => {
 
   changes.next(
     attrChange({
+      id: "otherid",
       key: "a",
       val: `"pancake"`,
       nodeID: "abc",

@@ -6,7 +6,7 @@ import {
 } from "@empirica/tajriba";
 import { groupBy, Observable, Subject } from "rxjs";
 import { AttributeChange, AttributeUpdate } from "../shared/attributes";
-import { ScopeIdent, ScopeUpdate } from "./scopes";
+import { ScopeIdent, ScopeUpdate } from "../shared/scopes";
 import { StepChange, StepUpdate } from "./steps";
 
 export interface ParticipantUpdate {

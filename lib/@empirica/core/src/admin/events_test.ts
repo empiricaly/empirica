@@ -32,12 +32,6 @@ test.serial("ListenersCollector tracks listeners", async (t) => {
     { event: TajribaEvent.ParticipantConnect, callback: tajCB },
   ]);
 
-  listeners.on(TajribaEvent.TransitionAdd, "123", tajCB);
-  t.deepEqual(listeners.tajEvents, [
-    { event: TajribaEvent.ParticipantConnect, callback: tajCB },
-    { event: TajribaEvent.TransitionAdd, nodeID: "123", callback: tajCB },
-  ]);
-
   /* c8 ignore next */
   const kindCB = (ctx: EventContext<Context, Kinds>) => {};
   listeners.on("game", kindCB);
@@ -78,15 +72,6 @@ test.serial("ListenersCollector fails with wrong start", async (t) => {
 
 test.serial("ListenersCollector fails with wrong tajriba event", async (t) => {
   const listeners = new ListenersCollector<Context, Kinds>();
-
-  t.throws(
-    () => {
-      // @ts-ignore
-      listeners.on(TajribaEvent.ParticipantConnect, "");
-      /* c8 ignore next */
-    },
-    { message: /be a callback/ }
-  );
 
   t.throws(
     () => {
