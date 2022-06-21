@@ -62,7 +62,6 @@ function attrib(props: Partial<typeof attribProps> = attribProps) {
 async function setupRunloop() {
   const {
     cbs,
-    tp,
     taj,
     strg,
     resetToken,
@@ -260,7 +259,7 @@ test.serial("Runloop stops", async (t) => {
   adminStop.next();
 
   let calls = 0;
-  adminSubs.next((subs: ListenersCollector<Context, AdminKinds>) => {
+  adminSubs.next((_: ListenersCollector<Context, AdminKinds>) => {
     /* c8 ignore next */
     calls++;
   });

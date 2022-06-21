@@ -105,7 +105,7 @@ test.serial("AdminContext register", async (t) => {
   );
 
   let called = 0;
-  admin.register((subs: ListenersCollector<Context, Kinds>) => {
+  admin.register((_: ListenersCollector<Context, Kinds>) => {
     called++;
   });
 
@@ -148,7 +148,7 @@ test.serial("AdminContext register already connected", async (t) => {
   await nextTick();
 
   let called = 0;
-  admin.register((subs: ListenersCollector<Context, Kinds>) => {
+  admin.register((_: ListenersCollector<Context, Kinds>) => {
     called++;
   });
 

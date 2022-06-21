@@ -110,7 +110,7 @@ test.serial(
 );
 
 test.serial("ParticipantConnection stopped", async (t) => {
-  const { cbs, tp, taj, strg, resetToken } = setupTokenProvider();
+  const { cbs, taj, strg, resetToken } = setupTokenProvider();
   cbs["connected"]![0]!();
 
   const admin = new AdminConnection(taj, strg.tokens, resetToken);

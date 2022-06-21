@@ -4,12 +4,8 @@ import { cleanup, renderHook } from "@testing-library/react";
 import test from "ava";
 import React from "react";
 import { restore } from "sinon";
-import {
-  ParticipantContext,
-  ParticipantModeContext,
-} from "../context
-import { TajribaProvider } from "../provider";
 import { fakeTajribaConnect } from "../../shared/test_helpers";
+import { ParticipantContext, ParticipantModeContext } from "../context";
 import { EmpiricaParticipant } from "./EmpiricaParticipant";
 import { useParticipantContext } from "./hooks";
 
@@ -35,7 +31,7 @@ test.serial("useParticipantContext", (t) => {
 });
 
 /* c8 ignore next 3 */
-const myMode = (id: string, provider: TajribaProvider) => {
+const myMode = () => {
   return { something: "here" };
 };
 

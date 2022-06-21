@@ -1,6 +1,6 @@
 import React from "react";
 import { WithChildren } from "../../react/helpers";
-import { Attributable } from "../../scopes";
+import { Attributable } from "../../../shared/scopes";
 import { Game, Player } from "../classic";
 import { useGame, usePlayer } from "./hooks";
 

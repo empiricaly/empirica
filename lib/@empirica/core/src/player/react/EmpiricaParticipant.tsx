@@ -1,9 +1,5 @@
 import React from "react";
-import {
-  Mode,
-  ParticipantContext,
-  ParticipantModeContext,
-} from "../context
+import { Mode, ParticipantContext, ParticipantModeContext } from "../context";
 import { WithChildren } from "./helpers";
 
 export const ParticipantCtx = React.createContext<

@@ -6,7 +6,6 @@ import { restore } from "sinon";
 import { fakeTajribaConnect, nextTick } from "../shared/test_helpers";
 import { ParticipantSession } from "./connection";
 import { ParticipantContext, ParticipantModeContext } from "./context";
-import { TajribaProvider } from "./provider";
 
 test.serial.afterEach(() => {
   restore();
@@ -158,7 +157,7 @@ test.serial("ParticipantContext failed register", async (t) => {
   );
 });
 
-const myMode = (id: string, provider: TajribaProvider) => {
+const myMode = () => {
   return { something: "here" };
 };
 

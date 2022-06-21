@@ -6,9 +6,7 @@ import { ListenersCollector } from "../events";
 const stringArray = z.string().array();
 const string = z.string();
 
-export function ClassicLoader(
-  subs: ListenersCollector<Context, EmpiricaClassicKinds>
-) {
+export function ClassicLoader(subs: ListenersCollector<Context, ClassicKinds>) {
   subs.on("start", function (ctx) {
     ctx.scopeSub({ kinds: ["Batch"] });
     ctx.participantsSub();
@@ -51,8 +49,8 @@ export function ClassicLoader(
   });
 }
 
-export class Batch extends Scope<Context, EmpiricaClassicKinds> {}
-export class Game extends Scope<Context, EmpiricaClassicKinds> {
+export class Batch extends Scope<Context, ClassicKinds> {}
+export class Game extends Scope<Context, ClassicKinds> {
   get stage() {
     return this.scopeByKey("stageID") as Stage | undefined;
   }
@@ -61,7 +59,7 @@ export class Game extends Scope<Context, EmpiricaClassicKinds> {
   }
 }
 
-export class Player extends Scope<Context, EmpiricaClassicKinds> {
+export class Player extends Scope<Context, ClassicKinds> {
   get game() {
     const { game } = this.ctx;
     if (!game) {
@@ -102,15 +100,15 @@ export class Player extends Scope<Context, EmpiricaClassicKinds> {
   }
 }
 
-export class PlayerGame extends Scope<Context, EmpiricaClassicKinds> {}
+export class PlayerGame extends Scope<Context, ClassicKinds> {}
 
-export class PlayerRound extends Scope<Context, EmpiricaClassicKinds> {}
+export class PlayerRound extends Scope<Context, ClassicKinds> {}
 
-export class PlayerStage extends Scope<Context, EmpiricaClassicKinds> {}
+export class PlayerStage extends Scope<Context, ClassicKinds> {}
 
-export class Round extends Scope<Context, EmpiricaClassicKinds> {}
+export class Round extends Scope<Context, ClassicKinds> {}
 
-export class Stage extends Scope<Context, EmpiricaClassicKinds> {
+export class Stage extends Scope<Context, ClassicKinds> {
   get round() {
     return this.scopeByKey("roundID") as Round | undefined;
   }
@@ -125,7 +123,7 @@ class Context {
   public stage?: Stage;
 }
 
-type EmpiricaClassicKinds = {
+export type ClassicKinds = {
   batch: Constructor<Batch>;
   game: Constructor<Game>;
   player: Constructor<Player>;
@@ -136,7 +134,7 @@ type EmpiricaClassicKinds = {
   stage: Constructor<Stage>;
 };
 
-export const kinds = {
+export const classicKinds = {
   batch: Batch,
   game: Game,
   player: Player,

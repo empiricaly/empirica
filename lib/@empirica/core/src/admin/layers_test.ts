@@ -32,7 +32,7 @@ const setupLayerProps = {
 };
 
 function setupLayer(props: typeof setupLayerProps = setupLayerProps) {
-  const { res, ctx } = setupEventContext();
+  const { ctx } = setupEventContext();
   const { withPostCallback } = { ...setupLayerProps, ...props };
 
   const scopes: { [key: string]: Scope<Context, AdminKinds> } = {
@@ -121,27 +121,27 @@ function setupLayer(props: typeof setupLayerProps = setupLayerProps) {
     };
   }
 
-  layer.listeners.on("start", (ctx) => {
+  layer.listeners.on("start", (_) => {
     called.start++;
   });
 
-  layer.listeners.on("game", (ctx, props) => {
+  layer.listeners.on("game", (_, props) => {
     called.game.push(props);
   });
 
-  layer.listeners.on("game", "a", (ctx, props) => {
+  layer.listeners.on("game", "a", (_, props) => {
     called.gameKeys.push(props);
   });
 
-  layer.listeners.on(TajribaEvent.ParticipantConnect, (ctx, props) => {
+  layer.listeners.on(TajribaEvent.ParticipantConnect, (_, props) => {
     called.partConnect.push(props);
   });
 
-  layer.listeners.on(TajribaEvent.ParticipantDisconnect, (ctx, props) => {
+  layer.listeners.on(TajribaEvent.ParticipantDisconnect, (_, props) => {
     called.partDisconnect.push(props);
   });
 
-  layer.listeners.on(TajribaEvent.TransitionAdd, (ctx, props) => {
+  layer.listeners.on(TajribaEvent.TransitionAdd, (_, props) => {
     called.transitionAdd.push(props);
   });
 

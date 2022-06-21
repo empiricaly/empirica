@@ -32,11 +32,19 @@
     },
     "./player/classic": {
       "import": "./dist/player-classic.js"
+    },
+    "./admin": {
+      "import": "./dist/admin.js"
+    },
+    "./admin/classic": {
+      "import": "./dist/admin-classic.js"
     }
   },
   "types": "dist/types.d.ts",
   "player": "dist/player.js",
   "player-classic": "dist/player-classic.js",
+  "admin": "dist/admin.js",
+  "admin-classic": "dist/admin-classic.js",
   "console": "dist/console.js",
   "targets": {
     "player": {
@@ -47,6 +55,18 @@
     },
     "player-classic": {
       "source": "src/player/classic/index.ts",
+      "isLibrary": true,
+      "outputFormat": "esmodule",
+      "sourceMap": true
+    },
+    "admin": {
+      "source": "src/admin/index.ts",
+      "isLibrary": true,
+      "outputFormat": "esmodule",
+      "sourceMap": true
+    },
+    "admin-classic": {
+      "source": "src/admin/classic/index.ts",
       "isLibrary": true,
       "outputFormat": "esmodule",
       "sourceMap": true
@@ -69,10 +89,7 @@
   "ava": {
     "files": [
       "src/**/*_test.ts",
-      "src/admin/**/*_test.ts",
-      "src/admin/**/*_test.tsx",
-      "src/shared/**/*_test.ts",
-      "src/shared/**/*_test.tsx"
+      "src/**/*_test.tsx"
     ],
     "extensions": {
       "ts": "module",
@@ -92,6 +109,7 @@
   },
   "scripts": {
     "build": "parcel build",
+    "check": "tsc --noEmit",
     "test": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true c8 -r html ava -v",
     "test:watch": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ava --watch -v",
     "prerelease": "npm run build",
@@ -115,14 +133,14 @@
     "prettier": "2.2.1",
     "sinon": "14.0.0",
     "ts-node": "10.8.0",
-    "typescript": "4.6.4",
-    "zod": "3.17.3"
+    "typescript": "4.6.4"
   },
   "dependencies": {
     "@empirica/tajriba": "latest",
     "@react-hook/mouse-position": "4.1.3",
     "@swc/helpers": "0.3.15",
-    "rxjs": "7.5.5"
+    "rxjs": "7.5.5",
+    "zod": "3.17.3"
   },
   "peerDependencies": {
     "react": "18.1.0"

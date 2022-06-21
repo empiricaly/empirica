@@ -13,7 +13,7 @@ import { Subject } from "rxjs";
 import { restore } from "sinon";
 import { TajribaConnection } from "../../shared/tajriba_connection";
 import { Globals } from "../globals";
-import { ParticipantContext, ParticipantSession } from "../context
+import { ParticipantContext } from "../context";
 import { fakeTajribaConnect, nextTick } from "../../shared/test_helpers";
 import { ParticipantCtx } from "./EmpiricaParticipant";
 import {
@@ -25,6 +25,7 @@ import {
   useTajribaConnected,
   useTajribaConnecting,
 } from "./hooks";
+import { ParticipantSession } from "../connection";
 
 test.serial.afterEach.always(() => {
   cleanup();

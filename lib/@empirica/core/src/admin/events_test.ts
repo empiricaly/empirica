@@ -6,24 +6,24 @@ test.serial("ListenersCollector tracks listeners", async (t) => {
   const listeners = new ListenersCollector<Context, AdminKinds>();
 
   /* c8 ignore next */
-  const startCB = (ctx: EventContext<Context, AdminKinds>) => {};
+  const startCB = (_: EventContext<Context, AdminKinds>) => {};
   listeners.on("start", startCB);
   t.deepEqual(listeners.starts, [startCB]);
 
   /* c8 ignore next */
-  const tajCB = (ctx: EventContext<Context, AdminKinds>) => {};
+  const tajCB = (_: EventContext<Context, AdminKinds>) => {};
   listeners.on(TajribaEvent.ParticipantConnect, tajCB);
   t.deepEqual(listeners.tajEvents, [
     { event: TajribaEvent.ParticipantConnect, callback: tajCB },
   ]);
 
   /* c8 ignore next */
-  const kindCB = (ctx: EventContext<Context, AdminKinds>) => {};
+  const kindCB = (_: EventContext<Context, AdminKinds>) => {};
   listeners.on("game", kindCB);
   t.deepEqual(listeners.kindEvents, [{ kind: "game", callback: kindCB }]);
 
   /* c8 ignore next */
-  const attribCB = (ctx: EventContext<Context, AdminKinds>) => {};
+  const attribCB = (_: EventContext<Context, AdminKinds>) => {};
   listeners.on("game", "something", attribCB);
   t.deepEqual(listeners.attributeEvents, [
     { kind: "game", key: "something", callback: attribCB },
@@ -34,7 +34,7 @@ test.serial("ListenersCollector fails with wrong start", async (t) => {
   const listeners = new ListenersCollector<Context, AdminKinds>();
 
   /* c8 ignore next */
-  const startCB = (ctx: EventContext<Context, AdminKinds>) => {};
+  const startCB = (_: EventContext<Context, AdminKinds>) => {};
 
   t.throws(
     () => {

@@ -2,8 +2,9 @@ import { useContext, useEffect, useState } from "react";
 import { merge, Observable } from "rxjs";
 import { TajribaConnection } from "../../shared/tajriba_connection";
 import { Globals } from "../globals";
-import { ParticipantContext, Session } from "../context";
+import { ParticipantContext } from "../context";
 import { ParticipantCtx } from "./EmpiricaParticipant";
+import { Session } from "../connection";
 
 export function useParticipantContext() {
   return useContext(ParticipantCtx);

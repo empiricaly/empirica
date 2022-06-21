@@ -391,7 +391,7 @@ test("Attributes update without any node ID should fail", (t) => {
 
 test("Attribute returns nodeID", (t) => {
   /* c8 ignore next */
-  const setAttr = async (input: SetAttributeInput[]) => {};
+  const setAttr = async (_: SetAttributeInput[]) => {};
 
   const attr = new Attribute(setAttr, "abc", "a");
 

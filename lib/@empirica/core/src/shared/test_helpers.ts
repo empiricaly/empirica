@@ -74,7 +74,7 @@ export function fakeTajribaConnect(
       return changes;
     },
     /* c8 ignore next */
-    setAttributes(input: SetAttributeInput[]) {},
+    setAttributes(_: SetAttributeInput[]) {},
     removeAllListeners() {},
     scopedAttributes() {
       return scopedAttributesSub;
@@ -95,7 +95,7 @@ export function fakeTajribaConnect(
         }
       });
     },
-    registerService(name: string, serviceRegistrationToken: string) {
+    registerService(_: string, __: string) {
       return new Promise((resolve, reject) => {
         if (failRegisterService) {
           reject(new Error("failed"));
@@ -104,7 +104,7 @@ export function fakeTajribaConnect(
         }
       });
     },
-    sessionParticipant(token: string, pident: ParticipantIdent) {
+    sessionParticipant(_: string, __: ParticipantIdent) {
       return new Promise<TajribaParticipant>((resolve, reject) => {
         if (failSession) {
           reject();
@@ -113,7 +113,7 @@ export function fakeTajribaConnect(
         }
       });
     },
-    sessionAdmin(token: string) {
+    sessionAdmin(_: string) {
       return new Promise<TajribaAdmin>((resolve, reject) => {
         if (failSession) {
           reject();
