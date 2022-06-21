@@ -44,7 +44,7 @@ func Create(ctx context.Context, name string) error {
 
 	stop = ShowSpinner("Install client packages")
 
-	if err := RunCmdSilent(ctx, clientDir, "yarn", "install", "--silent"); err != nil {
+	if err := RunCmdSilent(ctx, clientDir, "npm", "install", "--silent"); err != nil {
 		return errors.Wrap(err, "client")
 	}
 
@@ -52,7 +52,7 @@ func Create(ctx context.Context, name string) error {
 
 	stop = ShowSpinner("Install server packages")
 
-	if err := RunCmdSilent(ctx, serverDir, "yarn", "install", "--silent"); err != nil {
+	if err := RunCmdSilent(ctx, serverDir, "npm", "install", "--silent"); err != nil {
 		return errors.Wrap(err, "server")
 	}
 

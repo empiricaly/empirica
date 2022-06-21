@@ -2,8 +2,6 @@ import useMouse from "@react-hook/mouse-position";
 import React, { useEffect, useRef } from "react";
 import { usePlayer, usePlayers, useRound } from "../../hooks";
 
-// task = <Sweeper />;
-
 const buttonStyle = {
   width: 40,
   height: 40,

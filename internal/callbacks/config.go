@@ -25,9 +25,9 @@ func (c *Config) Validate() error {
 }
 
 const (
-	defaultDevCommand   = "yarn run --silent dev"
-	defaultBuildCommand = "yarn run --silent build"
-	defaultServeCommand = "yarn run --silent serve"
+	defaultDevCommand   = "npm run --silent dev --"
+	defaultBuildCommand = "npm run --silent build --"
+	defaultServeCommand = "npm run --silent serve --"
 	defaultBuildDir     = "dist"
 )
 

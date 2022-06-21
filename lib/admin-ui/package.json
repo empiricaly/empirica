@@ -28,9 +28,8 @@
     "url": "https://github.com/empiricaly/empirica/issues"
   },
   "volta": {
-    "node": "16.4.1",
-    "yarn": "1.22.15",
-    "npm": "7.19.1"
+    "node": "16.15.0",
+    "npm": "8.10.0"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "1.0.0-next.26",

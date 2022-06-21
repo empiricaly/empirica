@@ -6,6 +6,9 @@ import windi from "vite-plugin-windicss";
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  optimizeDeps: {
+    exclude: ["@empirica/tajriba", "@empirica/player"],
+  },
   server: {
     port: 8844,
     open: false,
