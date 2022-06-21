@@ -203,4 +203,8 @@ export class Scope<
 
     return this.scopes.scope(id);
   }
+
+  hasUpdated() {
+    return this._updated || this.attributes.scopeWasUpdated(this.id);
+  }
 }

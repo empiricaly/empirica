@@ -34,9 +34,13 @@ export function transitionsSub(
       }
 
       transitions.next({
-        ...node,
+        id: node.id,
+        to: node.to,
+        from: node.from,
         step: {
-          ...node.node,
+          id: node.node.id,
+          duration: node.node.duration,
+          state: node.node.state,
         },
       });
     },

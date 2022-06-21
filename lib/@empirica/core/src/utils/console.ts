@@ -152,8 +152,9 @@ function colorize(s: string, ...cc: Color[]): string[] {
 
   let out = "";
   for (const c of cc) {
-    out += `\x1b[${c}m${s}\x1b[0m`;
+    out += `\x1b[${c}m`;
   }
+  out += `${s}\x1b[0m`;
 
   return [out];
 }
@@ -162,7 +163,7 @@ export const trace = createLogger(0, colorize("TRC", Color.Magenta));
 export const debug = createLogger(1, colorize("DBG", Color.Yellow));
 export const log = createLogger(2, colorize("LOG", Color.Yellow));
 export const info = createLogger(2, colorize("INF", Color.Green));
-export const warn = createLogger(3, colorize("WRN", Color.Red));
+export const warn = createLogger(3, colorize("WRN", Color.Cyan));
 export const error = createLogger(4, colorize("ERR", Color.Red, Color.Bold));
 
 // export {

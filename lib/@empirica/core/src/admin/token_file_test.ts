@@ -3,6 +3,7 @@ import fs from "fs/promises";
 import { Subject } from "rxjs";
 import { fake, replace, restore } from "sinon";
 import {
+  ErrnoException,
   nextTick,
   setupTokenProvider,
   textHasLog,
@@ -14,12 +15,6 @@ test.serial.afterEach(() => {
   restore();
 });
 
-class ErrnoException extends Error {
-  constructor(message: string, public code: string) {
-    super(message);
-  }
-}
-
 test.serial("FileTokenStorage no existing token", async (t) => {
   const readFile = fake.throws(new ErrnoException("not found", "ENOENT"));
   replace(fs, "readFile", readFile);
@@ -27,7 +22,7 @@ test.serial("FileTokenStorage no existing token", async (t) => {
   const reset = new Subject<void>();
   const fts = await FileTokenStorage.init("/some/file", reset);
 
-  t.is(fts.token, undefined);
+  t.is(fts.token, null);
 });
 
 test.serial("FileTokenStorage read existing token", async (t) => {
@@ -108,7 +103,7 @@ test.serial("FileTokenStorage sub to token", async (t) => {
   const reset = new Subject<void>();
   const fts = await FileTokenStorage.init("/some/file", reset);
 
-  const vals: (string | undefined)[] = [];
+  const vals: (string | null | undefined)[] = [];
   fts.tokens.subscribe({
     next: (val) => vals.push(val),
   });
@@ -175,14 +170,12 @@ test.serial("TokenProvider with existing token", async (t) => {
 
 test.serial("TokenProvider without existing token", async (t) => {
   const { tp } = setupTokenProvider({ initToken: undefined });
-  tp.tokens;
 
   t.is(tp.tokens.getValue(), undefined);
 });
 
 test.serial("TokenProvider no token, taj connect", async (t) => {
-  const { tp, cbs } = setupTokenProvider({ initToken: undefined });
-  tp.tokens;
+  const { tp, cbs } = setupTokenProvider({ initToken: null });
 
   t.is(tp.tokens.getValue(), undefined);
 
@@ -196,10 +189,9 @@ test.serial("TokenProvider no token, taj connect", async (t) => {
 test.serial("TokenProvider no token, taj connect, failed", async (t) => {
   const logs = await captureLogsAsync(async function () {
     const { tp, cbs } = setupTokenProvider({
-      initToken: undefined,
+      initToken: null,
       failRegisterService: true,
     });
-    tp.tokens;
 
     t.is(tp.tokens.getValue(), undefined);
 
@@ -214,8 +206,7 @@ test.serial("TokenProvider no token, taj connect, failed", async (t) => {
 });
 
 test.serial("TokenProvider stop", async (t) => {
-  const { tp, cbs } = setupTokenProvider({ initToken: undefined });
-  tp.tokens;
+  const { tp, cbs } = setupTokenProvider({ initToken: null });
 
   t.is(tp.tokens.getValue(), undefined);
 
@@ -230,4 +221,23 @@ test.serial("TokenProvider stop", async (t) => {
   tp.stop();
 
   t.is(tp.tokens.getValue(), undefined);
+});
+
+test.serial("TokenProvider no token, taj connected early", async (t) => {
+  const { tp, strg } = setupTokenProvider({
+    initToken: undefined,
+    connectEarly: true,
+  });
+
+  t.is(tp.token, undefined);
+
+  await nextTick();
+
+  t.is(tp.token, undefined);
+
+  strg.tokens.next(null);
+
+  await nextTick();
+
+  t.is(tp.token, "abc");
 });

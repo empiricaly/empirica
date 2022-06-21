@@ -74,7 +74,7 @@ export class Runloop<
     });
   }
 
-  async initLayer(layer: Layer<Context, Kinds>) {
+  private async initLayer(layer: Layer<Context, Kinds>) {
     await layer.start();
 
     // Keep loading until no more subs
@@ -94,7 +94,7 @@ export class Runloop<
     };
   }
 
-  async processNewScopesSub(filters: ScopedAttributesInput[]) {
+  private async processNewScopesSub(filters: ScopedAttributesInput[]) {
     if (filters.length === 0) {
       return;
     }
@@ -122,14 +122,15 @@ export class Runloop<
 
         if (done) {
           resolve(null);
+          this.donesSub.next();
         }
       },
     });
 
-    return prom;
+    await prom;
   }
 
-  async processNewSub(subs: Subs) {
+  private async processNewSub(subs: Subs) {
     const filters: ScopedAttributesInput[] = [];
     if (subs.scopes.ids.length > 0) {
       filters.push({ ids: subs.scopes.ids });

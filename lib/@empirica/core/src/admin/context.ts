@@ -59,6 +59,8 @@ export class AdminContext<
         adminContext.initOrStop();
       },
     });
+
+    return adminContext;
   }
 
   register(subscriber: Subscriber<Context, Kinds>) {
@@ -69,9 +71,10 @@ export class AdminContext<
   }
 
   private initOrStop() {
+    // Forcing this.adminConn since adminConn is always created by init().
     if (
       this.tajriba.connected.getValue() &&
-      this.adminConn?.connected.getValue()
+      this.adminConn!.connected.getValue()
     ) {
       this.initSubs();
     } else {
@@ -81,11 +84,12 @@ export class AdminContext<
 
   private initSubs() {
     if (this.runloop) {
-      warn("context: admin already connected");
       return;
     }
 
+    /* c8 ignore next 5 */
     if (!this.adminConn) {
+      // This condition is nearly impossible to create
       warn("context: admin not connected");
       return;
     }

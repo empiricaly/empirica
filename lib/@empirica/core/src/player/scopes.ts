@@ -62,8 +62,4 @@ export class Scope<
 
     return this.ticker(id);
   }
-
-  hasUpdated() {
-    return this._updated || this.attributes.scopeWasUpdated(this.id);
-  }
 }

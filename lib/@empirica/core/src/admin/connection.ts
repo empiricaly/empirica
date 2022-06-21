@@ -15,10 +15,10 @@ export class AdminConnection {
 
   constructor(
     taj: TajribaConnection,
-    tokens: BehaviorSubject<string | undefined>,
+    tokens: BehaviorSubject<string | null | undefined>,
     private resetToken: () => void
   ) {
-    let token: string | undefined;
+    let token: string | null | undefined;
     let connected = false;
     this.sub = merge(taj.connected, tokens).subscribe({
       next: async (tokenOrConnected) => {

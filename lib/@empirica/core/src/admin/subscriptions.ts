@@ -70,7 +70,7 @@ export class Subscriptions<
       ),
     };
 
-    this.last = next;
+    this.last = current;
     this.dirty = false;
 
     return next;

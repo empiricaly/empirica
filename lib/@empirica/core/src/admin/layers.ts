@@ -10,7 +10,7 @@ export class Layer<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
-  listeners = new ListenersCollector<Context, Kinds>();
+  readonly listeners = new ListenersCollector<Context, Kinds>();
   postCallback: (() => Promise<void>) | undefined;
 
   constructor(
@@ -120,6 +120,8 @@ export class Layer<
           });
           break;
         }
+        // This is difficult to simulate
+        /* c8 ignore next 3 */
         default: {
           error(`unsupported tajriba event listener: ${tajEvent.event}`);
         }
@@ -177,6 +179,8 @@ export class Layer<
           // noop
           break;
         }
+        // This is difficult to simulate
+        /* c8 ignore next 3 */
         default: {
           error(`unsupported tajriba event listener: ${tajEvent.event}`);
         }

@@ -64,7 +64,7 @@ test.serial("ParticipantConnection token and no conn", async (t) => {
 
 test.serial("ParticipantConnection conn and no token, register", async (t) => {
   const { cbs, tp, taj, strg, resetToken } = setupTokenProvider({
-    initToken: undefined,
+    initToken: null,
   });
 
   cbs["connected"]![0]!();

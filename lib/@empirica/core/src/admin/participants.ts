@@ -6,10 +6,12 @@ export interface Participant {
   id: string;
   identifier: string;
 }
+
 export interface Connection {
   participant: Participant;
   connected: boolean;
 }
+
 export function participantsSub(
   taj: TajribaAdmin,
   connections: Subject<Connection>,

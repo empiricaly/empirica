@@ -91,6 +91,19 @@ test.serial("Subscriptions tracks scope kinds subs", async (t) => {
     scopes: { ids: [], kinds: ["456"] },
     transitions: [],
   });
+
+  subs.scopeSub({ ids: ["uyt"] });
+
+  t.deepEqual(subs.subs, {
+    participants: false,
+    scopes: { ids: ["uyt"], kinds: ["123", "456"] },
+    transitions: [],
+  });
+  t.deepEqual(subs.newSubs(), {
+    participants: false,
+    scopes: { ids: ["uyt"], kinds: [] },
+    transitions: [],
+  });
 });
 
 test.serial("Subscriptions tracks scope kinds and ids subs", async (t) => {

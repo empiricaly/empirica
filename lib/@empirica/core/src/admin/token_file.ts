@@ -6,7 +6,7 @@ import { bsu } from "../utils/object";
 
 export class TokenProvider {
   private sub: Subscription | undefined;
-  readonly tokens = bsu<string | undefined>(undefined);
+  readonly tokens = bsu<string | null>(undefined);
 
   constructor(
     taj: TajribaConnection,
@@ -15,7 +15,7 @@ export class TokenProvider {
     serviceRegistrationToken: string
   ) {
     let connected = false;
-    let token: string | undefined;
+    let token: string | null | undefined;
     this.sub = merge(taj.connected, storage.tokens).subscribe({
       next: async (tokenOrConnected) => {
         if (typeof tokenOrConnected === "boolean") {
@@ -30,6 +30,10 @@ export class TokenProvider {
         }
 
         if (!connected) {
+          return;
+        }
+
+        if (token === undefined) {
           return;
         }
 
@@ -80,13 +84,13 @@ export class TokenProvider {
 // }
 
 interface SavedTokenStorage {
-  tokens: BehaviorSubject<string | undefined>;
+  tokens: BehaviorSubject<string | null | undefined>;
   updateToken: (token: string) => Promise<void>;
   clearToken: () => Promise<void>;
 }
 
 export class FileTokenStorage {
-  private _tokens = bsu<string | undefined>(undefined);
+  private _tokens = bsu<string | null>(null);
 
   private constructor(
     protected serviceTokenFile: string,

@@ -11,6 +11,8 @@ import {
 import { ExecutionContext } from "ava";
 import { Observable, Subject } from "rxjs";
 import { fake, replace, SinonSpy } from "sinon";
+import { EventContext } from "../admin/events";
+import { ScopeSubscriptionInput } from "../admin/subscriptions";
 import { TokenProvider } from "../admin/token_file";
 import { TajribaProvider } from "../player/provider";
 import { LogLine } from "../utils/console";
@@ -22,6 +24,12 @@ import { TajribaConnection } from "./tajriba_connection";
 
 export const nextTick = (d = 0) =>
   new Promise((resolved) => setTimeout(resolved, d));
+
+export class ErrnoException extends Error {
+  constructor(message: string, public code: string) {
+    super(message);
+  }
+}
 
 const fakeTajribaConnectDefaults = {
   id: "123",
@@ -54,6 +62,8 @@ export function fakeTajribaConnect(
   const changes = new Subject<ChangePayload>();
   let tajParticipant: TajribaParticipant;
   let tajAdmin: TajribaAdmin;
+  const scopedAttributesSub = new Subject();
+  const onEventSub = new Subject();
   const taj = <unknown>(<unknown>{
     id,
     connected,
@@ -66,6 +76,12 @@ export function fakeTajribaConnect(
     /* c8 ignore next */
     setAttributes(input: SetAttributeInput[]) {},
     removeAllListeners() {},
+    scopedAttributes() {
+      return scopedAttributesSub;
+    },
+    onEvent() {
+      return onEventSub;
+    },
     registerParticipant(playerIdentifier: string) {
       return new Promise((resolve, reject) => {
         if (failRegister) {
@@ -128,6 +144,8 @@ export function fakeTajribaConnect(
     ) as SinonSpy,
     changes,
     cbs,
+    scopedAttributesSub,
+    onEventSub,
   };
 }
 
@@ -354,18 +372,20 @@ const setupTokenProviderDefaults = {
   initToken: "123",
   failRegisterService: false,
   failSession: false,
+  connectEarly: false,
 };
 
 type setupTokenProviderProps = {
-  initToken?: string;
+  initToken?: string | null;
   failRegisterService?: boolean;
   failSession?: boolean;
+  connectEarly?: boolean;
 };
 
 export function setupTokenProvider(
   props: setupTokenProviderProps = setupTokenProviderDefaults
 ) {
-  const { initToken, failRegisterService, failSession } = {
+  const { initToken, failRegisterService, failSession, connectEarly } = {
     ...setupTokenProviderDefaults,
     ...props,
   };
@@ -373,11 +393,14 @@ export function setupTokenProvider(
   const serviceName = "callbacks";
   const serviceRegistrationToken = "d6w54q3d51qw3";
 
-  const { cbs } = fakeTajribaConnect({ failRegisterService, failSession });
+  const { cbs, scopedAttributesSub, onEventSub } = fakeTajribaConnect({
+    failRegisterService,
+    failSession,
+  });
 
   const taj = new TajribaConnection("someurl");
   const tokens: string[] = [];
-  const tokensbs = bsu<string>(initToken);
+  const tokensbs = bsu<string | null>(initToken);
   const strg = {
     tokens: tokensbs,
     updateToken: async (token: string) => {
@@ -387,6 +410,10 @@ export function setupTokenProvider(
     /* c8 ignore next */
     clearToken: async () => {},
   };
+
+  if (connectEarly) {
+    cbs["connected"]![0]!();
+  }
 
   let tokenReset = 0;
   const resetToken = () => {
@@ -407,8 +434,51 @@ export function setupTokenProvider(
     strg,
     tokens,
     resetToken,
+    scopedAttributesSub,
+    onEventSub,
     get tokenReset() {
       return tokenReset;
     },
   };
+}
+
+export class AdminBatch extends Scope<Context, AdminKinds> {}
+export class AdminGame extends Scope<Context, AdminKinds> {}
+export type AdminKinds = {
+  batch: Constructor<AdminBatch>;
+  game: Constructor<AdminGame>;
+};
+
+export const adminKinds = {
+  batch: AdminBatch,
+  game: AdminGame,
+};
+
+export function setupEventContext() {
+  const res: {
+    scopeSub: Partial<ScopeSubscriptionInput>[];
+    participantsSub: number;
+    transitionsSub: string[];
+  } = {
+    scopeSub: [],
+    participantsSub: 0,
+    transitionsSub: [],
+  };
+  const coll = {
+    scopeSub: (...inputs: Partial<ScopeSubscriptionInput>[]) => {
+      for (const input of inputs) {
+        res.scopeSub.push(input);
+      }
+    },
+    participantsSub: () => {
+      res.participantsSub++;
+    },
+    transitionsSub: (stepID: string) => {
+      res.transitionsSub.push(stepID);
+    },
+  };
+
+  const ctx = new EventContext<Context, AdminKinds>(coll);
+
+  return { coll, res, ctx };
 }
