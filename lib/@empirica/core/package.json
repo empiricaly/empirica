@@ -118,31 +118,31 @@
     "postversion": "cd pkg && yarn version --new-version $npm_package_version --no-git-tag-version --no-commit-hooks"
   },
   "devDependencies": {
-    "@parcel/packager-ts": "^2.5.0",
-    "@parcel/transformer-typescript-types": "^2.5.0",
+    "@parcel/packager-ts": "^2.6.1",
+    "@parcel/transformer-typescript-types": "^2.6.1",
     "@testing-library/react": "13.3.0",
-    "@types/node": "17.0.35",
-    "@types/react": "18.0.12",
+    "@types/node": "18.0.0",
+    "@types/react": "18.0.14",
     "@types/sinon": "10.0.11",
-    "ava": "4.2.0",
+    "ava": "4.3.0",
     "c8": "7.11.3",
     "global-jsdom": "8.4.0",
-    "jsdom": "19.0.0",
-    "np": "7.5.0",
-    "parcel": "2.5.0",
-    "prettier": "2.2.1",
+    "jsdom": "20.0.0",
+    "np": "7.6.1",
+    "parcel": "2.6.1",
+    "prettier": "2.7.1",
     "sinon": "14.0.0",
-    "ts-node": "10.8.0",
-    "typescript": "4.6.4"
+    "ts-node": "10.8.1",
+    "typescript": "4.7.4"
   },
   "dependencies": {
-    "@empirica/tajriba": "latest",
+    "@empirica/tajriba": "^1.0.0-alpha.4",
     "@react-hook/mouse-position": "4.1.3",
-    "@swc/helpers": "0.3.15",
+    "@swc/helpers": "0.4.2",
     "rxjs": "7.5.5",
     "zod": "3.17.3"
   },
   "peerDependencies": {
-    "react": "18.1.0"
+    "react": "18.2.0"
   }
 }
