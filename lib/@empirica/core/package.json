@@ -104,18 +104,16 @@
     "dist/*"
   ],
   "publishConfig": {
-    "registry": "https://registry.npmjs.org",
     "access": "public"
   },
   "scripts": {
     "build": "parcel build",
     "check": "tsc --noEmit",
-    "test": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true c8 -r html ava -v",
+    "test": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true c8 -r lcov -r html ava -v",
     "test:watch": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ava --watch -v",
     "prerelease": "npm run build",
     "release:next": "np --tag next",
-    "release": "np --tag latest",
-    "postversion": "cd pkg && yarn version --new-version $npm_package_version --no-git-tag-version --no-commit-hooks"
+    "release": "np --tag latest"
   },
   "devDependencies": {
     "@parcel/packager-ts": "^2.6.1",
