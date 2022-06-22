@@ -3,6 +3,7 @@ package experiment
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -38,6 +39,9 @@ func runCmdSilence(ctx context.Context, dir string, silent bool, command string,
 	if !silent {
 		c.Stderr = os.Stderr
 		c.Stdout = os.Stdout
+	} else {
+		c.Stderr = ioutil.Discard
+		c.Stdout = ioutil.Discard
 	}
 	c.Dir = dir
 

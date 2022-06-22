@@ -127,10 +127,12 @@ func (p *Player) run(ctx context.Context) {
 
 		d := connRetry.Duration()
 
-		log.Error().
-			Err(err).
-			Str("waiting", d.String()).
-			Msg("player: command failed, restarting")
+		if !errors.Is(err, context.Canceled) {
+			log.Error().
+				Err(err).
+				Str("waiting", d.String()).
+				Msg("player: command failed, restarting")
+		}
 
 		select {
 		case <-time.After(d):

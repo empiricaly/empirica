@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	defaultDevCommand   = "yarn run --silent dev"
-	defaultBuildCommand = "yarn run --silent build"
+	defaultDevCommand   = "npm run --silent dev"
+	defaultBuildCommand = "npm run --silent build"
 	// defaultServeCommand = ""
 	defaultBuildDir = "dist"
 )

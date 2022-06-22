@@ -206,10 +206,12 @@ func (cb *Callbacks) run(ctx context.Context) {
 		if err != nil {
 			d := connRetry.Duration()
 
-			log.Error().
-				Err(err).
-				Str("waiting", d.String()).
-				Msg("callbacks: command failed, restarting")
+			if !errors.Is(err, context.Canceled) {
+				log.Error().
+					Err(err).
+					Str("waiting", d.String()).
+					Msg("callbacks: command failed, restarting")
+			}
 
 			select {
 			case <-time.After(d):

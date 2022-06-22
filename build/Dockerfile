@@ -5,7 +5,7 @@ ARG BUILD_SHA
 ARG BUILD_NUM
 ARG VERSION
 
-# Install Node.js and Yarn
+# Install Node.js and NPM
 ##########################
 
 # bash will load volta() function via .bashrc 
@@ -32,7 +32,7 @@ WORKDIR /build
 COPY ./lib/admin-ui ./lib/admin-ui
 
 WORKDIR /build/lib/admin-ui
-RUN yarn install && yarn build
+RUN npm install && npm build
 
 WORKDIR /build
 

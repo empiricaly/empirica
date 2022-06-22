@@ -1,7 +1,15 @@
-import { clear, createNewPlayer, isDevelopment, Logo } from "@empirica/player";
 import React from "react";
+import { createNewParticipant, isDevelopment } from "../utils";
+import { useParticipantContext } from "./hooks";
+import { Logo } from "./Logo";
 
 export function EmpiricaMenu() {
+  const ctx = useParticipantContext();
+
+  if (!ctx) {
+    return null;
+  }
+
   return (
     <div className="group fixed top-full left-full -mt-20 -ml-20 rounded-lg bg-white z-20">
       <div className="w-14 h-14 p-2  text-empirica-500 shadow rounded-lg group-hover:shadow-none">
@@ -12,13 +20,13 @@ export function EmpiricaMenu() {
           {isDevelopment || true ? (
             <div>
               <button
-                onClick={createNewPlayer}
+                onClick={() => createNewParticipant()}
                 className="whitespace-nowrap hover:text-empirica-600 w-full py-2 pl-4 pr-6 text-left"
               >
                 New Player
               </button>
               <button
-                onClick={clear}
+                onClick={ctx.session.clearSession.bind(ctx.session)}
                 className="whitespace-nowrap hover:text-empirica-600 w-full py-2 pl-4 pr-6 text-left"
               >
                 Reset Current Session
@@ -44,7 +52,7 @@ export function EmpiricaMenu() {
               About Empirica
             </a>
             <button
-              onClick={clear}
+              onClick={ctx.session.clearSession.bind(ctx.session)}
               className="whitespace-nowrap hover:text-empirica-600 w-full py-2 pl-4 pr-6 text-left"
             >
               About this Experiment
