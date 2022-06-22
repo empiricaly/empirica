@@ -4,6 +4,7 @@ import { AttributeChange, AttributeUpdate } from "../shared/attributes";
 import { ScopeConstructor, ScopeIdent, ScopeUpdate } from "../shared/scopes";
 import { error } from "../utils/console";
 import { Attributes } from "./attributes";
+import { Cake } from "./cake";
 import { AdminConnection } from "./connection";
 import { EventContext, Subscriber } from "./events";
 import { Layer } from "./layers";
@@ -37,6 +38,7 @@ export class Runloop<
     this.kinds,
     this.attributes
   );
+  private cake: Cake<Context, Kinds>;
 
   constructor(
     private conn: AdminConnection,
@@ -46,21 +48,28 @@ export class Runloop<
     stop: Observable<void>
   ) {
     this.evtctx = new EventContext(this.subs);
+    this.cake = new Cake(
+      this.evtctx,
+      this.scopes.scope.bind(this.scopes),
+      this.scopes.subscribeKind.bind(this.scopes),
+      (kind: keyof Kinds, key: string) =>
+        this.attributes.subscribeAttribute(<string>kind, key),
+      this.connections,
+      this.transitions
+    );
+    this.cake.postCallback = this.postCallback.bind(this);
+
     const subsSub = subs.subscribe({
       next: async (subscriber) => {
         const layer = new Layer(
           this.evtctx,
-          this.scopes.scope.bind(this.scopes),
           this.scopes.byKind.bind(this.scopes),
           this.attributes.attributePeek.bind(this.scopes),
-          this.scopes.subscribeKind.bind(this.scopes),
-          this.attributes.subscribeAttribute.bind(this.attributes),
-          this.participants,
-          this.connections,
-          this.transitions
+          this.participants
         );
         this.layers.push(layer);
         subscriber(layer.listeners);
+        await this.cake.add(layer.listeners);
         await this.initLayer(layer);
       },
     });
@@ -86,12 +95,14 @@ export class Runloop<
       await this.processNewSub(subs);
     }
 
-    layer.postCallback = async () => {
-      const subs = this.subs.newSubs();
-      if (subs) {
-        await this.processNewSub(subs);
-      }
-    };
+    layer.postCallback = this.postCallback.bind(this);
+  }
+
+  private async postCallback() {
+    const subs = this.subs.newSubs();
+    if (subs) {
+      await this.processNewSub(subs);
+    }
   }
 
   private async processNewScopesSub(filters: ScopedAttributesInput[]) {
@@ -138,6 +149,18 @@ export class Runloop<
 
     if (subs.scopes.kinds.length > 0) {
       filters.push({ kinds: subs.scopes.kinds });
+    }
+
+    if (subs.scopes.names.length > 0) {
+      filters.push({ names: subs.scopes.names });
+    }
+
+    if (subs.scopes.keys.length > 0) {
+      filters.push({ keys: subs.scopes.keys });
+    }
+
+    if (subs.scopes.kvs.length > 0) {
+      filters.push({ kvs: subs.scopes.kvs });
     }
 
     if (subs.participants) {

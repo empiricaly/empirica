@@ -12,23 +12,40 @@ export enum TajribaEvent {
   ParticipantDisconnect = "PARTICIPANT_DISCONNECT",
 }
 
-type TajEventSub<Callback extends Function> = {
+export enum ListernerPlacement {
+  Before,
+  None, // Not before or after
+  After,
+}
+
+export type StartListener<
+  Context,
+  Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
+> = {
+  placement: ListernerPlacement;
+  callback: (ctx: EventContext<Context, Kinds>) => void;
+};
+
+export type TajEventListener<Callback extends Function> = {
+  placement: ListernerPlacement;
   event: TajribaEvent;
   callback: Callback;
 };
 
-type KindEventSub<Callback extends Function> = {
+export type KindEventListener<Callback extends Function> = {
+  placement: ListernerPlacement;
   kind: string;
   callback: Callback;
 };
 
-type AttributeEventSub<Callback extends Function> = {
+export type AttributeEventListener<Callback extends Function> = {
+  placement: ListernerPlacement;
   kind: string;
   key: string;
   callback: Callback;
 };
 
-type EvtCtxCallback<
+export type EvtCtxCallback<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > = (ctx: EventContext<Context, Kinds>, props: any) => void;
@@ -38,10 +55,12 @@ export class ListenersCollector<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
-  readonly starts: ((ctx: EventContext<Context, Kinds>) => void)[] = [];
-  readonly tajEvents: TajEventSub<EvtCtxCallback<Context, Kinds>>[] = [];
-  readonly kindEvents: KindEventSub<EvtCtxCallback<Context, Kinds>>[] = [];
-  readonly attributeEvents: AttributeEventSub<
+  readonly starts: StartListener<Context, Kinds>[] = [];
+  readonly tajEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
+  readonly kindListeners: KindEventListener<
+    EvtCtxCallback<Context, Kinds>
+  >[] = [];
+  readonly attributeListeners: AttributeEventListener<
     EvtCtxCallback<Context, Kinds>
   >[] = [];
 
@@ -76,6 +95,58 @@ export class ListenersCollector<
       | ((ctx: EventContext<Context, Kinds>) => void),
     callback?: EvtCtxCallback<Context, Kinds>
   ): void {
+    this.registerListerner(
+      ListernerPlacement.None,
+      kindOrEvent,
+      keyOrNodeIDOrEventOrCallback,
+      callback
+    );
+  }
+
+  before(
+    kindOrEvent: string,
+    keyOrNodeIDOrEventOrCallback?:
+      | string
+      | TajribaEvent
+      | EvtCtxCallback<Context, Kinds>
+      | ((ctx: EventContext<Context, Kinds>) => void),
+    callback?: EvtCtxCallback<Context, Kinds>
+  ): void {
+    this.registerListerner(
+      ListernerPlacement.Before,
+      kindOrEvent,
+      keyOrNodeIDOrEventOrCallback,
+      callback
+    );
+  }
+
+  after(
+    kindOrEvent: string,
+    keyOrNodeIDOrEventOrCallback?:
+      | string
+      | TajribaEvent
+      | EvtCtxCallback<Context, Kinds>
+      | ((ctx: EventContext<Context, Kinds>) => void),
+    callback?: EvtCtxCallback<Context, Kinds>
+  ): void {
+    this.registerListerner(
+      ListernerPlacement.After,
+      kindOrEvent,
+      keyOrNodeIDOrEventOrCallback,
+      callback
+    );
+  }
+
+  private registerListerner(
+    placement: ListernerPlacement,
+    kindOrEvent: string,
+    keyOrNodeIDOrEventOrCallback?:
+      | string
+      | TajribaEvent
+      | EvtCtxCallback<Context, Kinds>
+      | ((ctx: EventContext<Context, Kinds>) => void),
+    callback?: EvtCtxCallback<Context, Kinds>
+  ): void {
     if (kindOrEvent === "start") {
       if (callback) {
         throw new Error("start event only accepts 2 arguments");
@@ -85,11 +156,12 @@ export class ListenersCollector<
         throw new Error("second argument expected to be a callback");
       }
 
-      this.starts.push(
-        keyOrNodeIDOrEventOrCallback as (
+      this.starts.push({
+        placement,
+        callback: keyOrNodeIDOrEventOrCallback as (
           ctx: EventContext<Context, Kinds>
-        ) => void
-      );
+        ) => void,
+      });
 
       return;
     }
@@ -100,6 +172,7 @@ export class ListenersCollector<
       }
 
       this.tajEvents.push({
+        placement,
         event: <TajribaEvent>kindOrEvent,
         callback: keyOrNodeIDOrEventOrCallback,
       });
@@ -108,7 +181,8 @@ export class ListenersCollector<
     }
 
     if (typeof keyOrNodeIDOrEventOrCallback === "function") {
-      this.kindEvents.push({
+      this.kindListeners.push({
+        placement,
         kind: kindOrEvent,
         callback: keyOrNodeIDOrEventOrCallback,
       });
@@ -120,7 +194,8 @@ export class ListenersCollector<
         throw new Error("third argument expected to be a callback");
       }
 
-      this.attributeEvents.push({
+      this.attributeListeners.push({
+        placement,
         kind: kindOrEvent,
         key: keyOrNodeIDOrEventOrCallback,
         callback,

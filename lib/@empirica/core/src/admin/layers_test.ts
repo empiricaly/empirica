@@ -1,11 +1,15 @@
-import { State } from "@empirica/tajriba";
 import test from "ava";
 import { Subject } from "rxjs";
 import { restore } from "sinon";
 import { Attribute } from "../shared/attributes";
 import { Constructor } from "../shared/helpers";
 import { Scope } from "../shared/scopes";
-import { AdminKinds, Context, setupEventContext } from "../shared/test_helpers";
+import {
+  AdminKinds,
+  Context,
+  nextTick,
+  setupEventContext,
+} from "../shared/test_helpers";
 import { TajribaEvent } from "./events";
 import { Layer } from "./layers";
 import { Connection, Participant } from "./participants";
@@ -40,10 +44,6 @@ function setupLayer(props: typeof setupLayerProps = setupLayerProps) {
     xyz: <Scope<Context, AdminKinds>>{},
   };
 
-  const scope = (id: string) => {
-    return scopes[id];
-  };
-
   const kindScopes = new Map<string, Map<string, Scope<Context, AdminKinds>>>();
   const scopesByKind = (kind: keyof AdminKinds) => {
     if (!kindScopes.has(kind)) {
@@ -58,43 +58,15 @@ function setupLayer(props: typeof setupLayerProps = setupLayerProps) {
     return attributes[scopeID + "-" + key];
   };
 
-  const kindsSubs = new Map<string, Subject<Scope<Context, Kinds>>>();
-  const kindSubscription = (kind: keyof AdminKinds) => {
-    let sub = kindsSubs.get(kind);
-    if (!sub) {
-      sub = new Subject<Scope<Context, Kinds>>();
-      kindsSubs.set(kind, sub);
-    }
-
-    return sub;
-  };
-
-  const attribSubs = new Map<string, Subject<Attribute>>();
-  const attributeSubscription = (kind: string, key: string) => {
-    const k = kind + "-" + key;
-    let sub = attribSubs.get(k);
-    if (!sub) {
-      sub = new Subject<Attribute>();
-      attribSubs.set(k, sub);
-    }
-
-    return sub;
-  };
-
   const participants = new Map<string, Participant>();
   const connections = new Subject<Connection>();
   const transitions = new Subject<Transition>();
 
   const layer = new Layer<Context, AdminKinds>(
     ctx,
-    scope,
     scopesByKind,
     attribute,
-    kindSubscription,
-    attributeSubscription,
-    participants,
-    connections,
-    transitions
+    participants
   );
 
   const called: {
@@ -138,19 +110,19 @@ function setupLayer(props: typeof setupLayerProps = setupLayerProps) {
   });
 
   layer.listeners.on(TajribaEvent.ParticipantDisconnect, (_, props) => {
+    /* c8 ignore next 2 */
     called.partDisconnect.push(props);
   });
 
   layer.listeners.on(TajribaEvent.TransitionAdd, (_, props) => {
+    /* c8 ignore next 2 */
     called.transitionAdd.push(props);
   });
 
   return {
     layer,
     called,
-    kindsSubs,
     kindScopes,
-    attribSubs,
     attributes,
     scopes,
     participants,
@@ -158,45 +130,6 @@ function setupLayer(props: typeof setupLayerProps = setupLayerProps) {
     transitions,
   };
 }
-
-test.serial("Layer start called", async (t) => {
-  const { layer, called } = setupLayer();
-
-  t.is(called.start, 0);
-
-  await layer.start();
-
-  t.is(called.start, 1);
-});
-
-test.serial("Layer kind subs called", async (t) => {
-  const { layer, called, kindsSubs } = setupLayer();
-
-  await layer.start();
-
-  t.is(called.game.length, 0);
-
-  const game = <Scope<Context, AdminKinds>>{};
-  kindsSubs.get("game")!.next(game);
-
-  t.is(called.game.length, 1);
-  t.deepEqual(called.game[0], { game });
-});
-
-test.serial("Layer kind subs called with postCallback", async (t) => {
-  const { layer, called, kindsSubs } = setupLayer({
-    withPostCallback: true,
-  });
-
-  await layer.start();
-
-  t.is(called.cbcalled, 0);
-
-  const game = <Scope<Context, AdminKinds>>{};
-  kindsSubs.get("game")!.next(game);
-
-  t.is(called.cbcalled, 1);
-});
 
 test.serial("Layer kind subs called with existing kind", async (t) => {
   const { layer, called, kindScopes } = setupLayer({ withPostCallback: true });
@@ -208,67 +141,11 @@ test.serial("Layer kind subs called with existing kind", async (t) => {
   t.is(called.cbcalled, 0);
 
   await layer.start();
+  await nextTick();
 
   t.is(called.game.length, 1);
   t.deepEqual(called.game[0], { game });
   t.is(called.cbcalled, 1);
-});
-
-test.serial("Layer attribute subs called", async (t) => {
-  const { layer, called, attribSubs, scopes } = setupLayer();
-
-  await layer.start();
-
-  t.is(called.gameKeys.length, 0);
-
-  const attribute = <Attribute>{ value: "hey", nodeID: "abc" };
-  attribSubs.get("game-a")!.next(attribute);
-
-  t.is(called.gameKeys.length, 1);
-  t.deepEqual(called.gameKeys[0], { attribute, a: "hey", game: scopes["abc"] });
-});
-
-test.serial("Layer attribute subs called with postCallback", async (t) => {
-  const { layer, called, attribSubs } = setupLayer({
-    withPostCallback: true,
-  });
-
-  await layer.start();
-
-  t.is(called.cbcalled, 0);
-
-  const attribute = <Attribute>{ value: "hey", nodeID: "abc" };
-  attribSubs.get("game-a")!.next(attribute);
-
-  t.is(called.cbcalled, 1);
-});
-
-test.serial("Layer attribute subs called without kind", async (t) => {
-  const { layer, called, attribSubs, scopes } = setupLayer();
-
-  await layer.start();
-
-  t.is(called.gameKeys.length, 0);
-
-  const attribute = <Attribute>{ value: "hey", nodeID: "xyz" };
-  attribSubs.get("game-a")!.next(attribute);
-
-  t.is(called.gameKeys.length, 1);
-  t.deepEqual(called.gameKeys[0], { attribute, a: "hey", game: scopes["xyz"] });
-});
-
-test.serial("Layer attribute subs called without node", async (t) => {
-  const { layer, called, attribSubs } = setupLayer();
-
-  await layer.start();
-
-  t.is(called.gameKeys.length, 0);
-
-  const attribute = <Attribute>{ value: "hey" };
-  attribSubs.get("game-a")!.next(attribute);
-
-  t.is(called.gameKeys.length, 1);
-  t.deepEqual(called.gameKeys[0], { attribute, a: "hey" });
 });
 
 test.serial("Layer attribute subs with existing attribute", async (t) => {
@@ -292,34 +169,6 @@ test.serial("Layer attribute subs with existing attribute", async (t) => {
   t.is(called.cbcalled, 2);
 });
 
-test.serial("Layer participant connect subs called", async (t) => {
-  const { layer, called, connections } = setupLayer();
-
-  await layer.start();
-
-  t.is(called.partConnect.length, 0);
-
-  const participant = {
-    id: "1",
-    identifier: "a",
-  };
-  connections.next({
-    connected: true,
-    participant,
-  });
-
-  t.is(called.partConnect.length, 1);
-  t.deepEqual(called.partConnect[0], { participant });
-
-  connections.next({
-    connected: false,
-    participant,
-  });
-
-  t.is(called.partConnect.length, 1);
-  t.deepEqual(called.partConnect[0], { participant });
-});
-
 test.serial("Layer participant already connected", async (t) => {
   const { layer, called, participants } = setupLayer({
     withPostCallback: true,
@@ -338,118 +187,5 @@ test.serial("Layer participant already connected", async (t) => {
 
   t.is(called.partConnect.length, 1);
   t.deepEqual(called.partConnect[0], { participant });
-  t.is(called.cbcalled, 1);
-});
-
-test.serial("Layer participant connect with postCallback", async (t) => {
-  const { layer, called, connections } = setupLayer({ withPostCallback: true });
-
-  await layer.start();
-
-  t.is(called.cbcalled, 0);
-
-  const participant = {
-    id: "1",
-    identifier: "a",
-  };
-  connections.next({
-    connected: true,
-    participant,
-  });
-
-  t.is(called.cbcalled, 1);
-});
-
-test.serial("Layer participant disconnect subs called", async (t) => {
-  const { layer, called, connections } = setupLayer();
-
-  await layer.start();
-
-  t.is(called.partDisconnect.length, 0);
-
-  const participant = {
-    id: "1",
-    identifier: "a",
-  };
-  connections.next({
-    connected: false,
-    participant,
-  });
-
-  t.is(called.partDisconnect.length, 1);
-  t.deepEqual(called.partDisconnect[0], { participant });
-
-  connections.next({
-    connected: true,
-    participant,
-  });
-
-  t.is(called.partDisconnect.length, 1);
-  t.deepEqual(called.partDisconnect[0], { participant });
-});
-
-test.serial("Layer participant disconnect with postCallback", async (t) => {
-  const { layer, called, connections } = setupLayer({ withPostCallback: true });
-
-  await layer.start();
-
-  t.is(called.cbcalled, 0);
-
-  const participant = {
-    id: "1",
-    identifier: "a",
-  };
-  connections.next({
-    connected: false,
-    participant,
-  });
-
-  t.is(called.cbcalled, 1);
-});
-
-test.serial("Layer transition subs called", async (t) => {
-  const { layer, called, transitions } = setupLayer();
-
-  await layer.start();
-
-  t.is(called.transitionAdd.length, 0);
-
-  const step = {
-    id: "abc",
-    duration: 100,
-    state: State.Running,
-  };
-  const transition = {
-    from: State.Created,
-    to: State.Running,
-    id: "123",
-    step,
-  };
-  transitions.next(transition);
-
-  t.is(called.transitionAdd.length, 1);
-  t.deepEqual(called.transitionAdd[0], { transition, step });
-});
-
-test.serial("Layer transition subs with postCallback", async (t) => {
-  const { layer, called, transitions } = setupLayer({ withPostCallback: true });
-
-  await layer.start();
-
-  t.is(called.cbcalled, 0);
-
-  const step = {
-    id: "abc",
-    duration: 100,
-    state: State.Running,
-  };
-  const transition = {
-    from: State.Created,
-    to: State.Running,
-    id: "123",
-    step,
-  };
-  transitions.next(transition);
-
   t.is(called.cbcalled, 1);
 });

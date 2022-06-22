@@ -97,6 +97,9 @@ async function setupRunloop() {
       called.kindCalled++;
       ctx.scopeSub({ kinds: ["batch"] });
       ctx.scopeSub({ ids: ["poi"] });
+      ctx.scopeSub({ names: ["poi"] });
+      ctx.scopeSub({ keys: ["poi"] });
+      ctx.scopeSub({ kvs: [{ key: "poi", val: "iop" }] });
     });
     subs.on("batch", (ctx) => {
       called.kindCalled++;
@@ -233,6 +236,8 @@ test.serial("Runloop adds new layer", async (t) => {
       ctx.scopeSub({ kinds: ["game"] });
     });
   });
+
+  await nextTick();
 
   t.is(called.subscriber, 2);
   t.is(called.startCalled, 2);
