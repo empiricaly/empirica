@@ -1,6 +1,5 @@
 export { Attribute } from "../shared/attributes";
 export type { AttributeOptions } from "../shared/attributes";
-export { Scope } from "../shared/scopes";
 export type { ScopeUpdate } from "../shared/scopes";
 export { Attributes } from "./attributes";
 export { AdminConnection } from "./connection";
@@ -11,7 +10,7 @@ export { Layer } from "./layers";
 export { participantsSub } from "./participants";
 export type { Participant } from "./participants";
 export { Runloop } from "./runloop";
-export { Scopes } from "./scopes";
+export { Scope, Scopes } from "./scopes";
 export { Subscriptions } from "./subscriptions";
 export type { ScopeSubscriptionInput, Subs } from "./subscriptions";
 export { FileTokenStorage, TokenProvider } from "./token_file";

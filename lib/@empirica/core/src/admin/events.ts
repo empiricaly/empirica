@@ -1,4 +1,12 @@
+import {
+  AddGroupInput,
+  AddScopeInput,
+  AddStepInput,
+  LinkInput,
+  TransitionInput,
+} from "@empirica/tajriba";
 import { ScopeConstructor } from "../shared/scopes";
+import { TajribaAdminAccess } from "./context";
 import { ScopeSubscriptionInput } from "./subscriptions";
 
 export type Subscriber<
@@ -218,7 +226,10 @@ export class EventContext<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
-  constructor(private subs: SubscriptionCollector) {}
+  constructor(
+    private subs: SubscriptionCollector,
+    private taj: TajribaAdminAccess
+  ) {}
 
   scopeSub(...inputs: Partial<ScopeSubscriptionInput>[]) {
     for (const input of inputs) {
@@ -232,5 +243,36 @@ export class EventContext<
 
   transitionsSub(stepID: string) {
     this.subs.transitionsSub(stepID);
+  }
+
+  // c8 ignore: the TajribaAdminAccess proxy functions are tested elswhere
+  /* c8 ignore next 3 */
+  addScopes(input: AddScopeInput[]) {
+    this.taj.addScopes(input);
+  }
+
+  /* c8 ignore next 3 */
+  addGroups(input: AddGroupInput[]) {
+    this.taj.addGroups(input);
+  }
+
+  /* c8 ignore next 3 */
+  addLinks(input: LinkInput[]) {
+    this.taj.addLinks(input);
+  }
+
+  /* c8 ignore next 3 */
+  addSteps(input: AddStepInput[]) {
+    return this.taj.addSteps(input);
+  }
+
+  /* c8 ignore next 3 */
+  addTransitions(input: TransitionInput[]) {
+    this.taj.addTransitions(input);
+  }
+
+  /* c8 ignore next 3 */
+  get globals() {
+    return this.taj.globals;
   }
 }

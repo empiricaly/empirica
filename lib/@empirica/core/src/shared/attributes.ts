@@ -216,6 +216,10 @@ export class Attribute {
     readonly key: string
   ) {}
 
+  get id() {
+    return this.attr?.id;
+  }
+
   get obs(): Observable<JsonValue | undefined> {
     return this.val;
   }

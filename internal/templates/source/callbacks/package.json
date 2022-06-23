@@ -1,5 +1,5 @@
 {
-  "name": "empirica-server-demo",
+  "name": "empirica-server",
   "private": true,
   "scripts": {
     "dev": "npm run build && node --trace-warnings --enable-source-maps dist/index.js",
@@ -11,12 +11,9 @@
     "npm": "8.10.0"
   },
   "dependencies": {
-    "@empirica/admin": "latest"
-  },
-  "resolutions": {
-    "graphql": "15.5.0"
+    "@empirica/core": "latest"
   },
   "devDependencies": {
-    "esbuild": "0.14.25"
+    "esbuild": "0.14.47"
   }
 }

@@ -1,15 +1,48 @@
+import {
+  AddGroupInput,
+  AddScopeInput,
+  AddStepInput,
+  LinkInput,
+  SubAttributesPayload,
+  TransitionInput,
+} from "@empirica/tajriba";
 import test from "ava";
 import { Subject } from "rxjs";
-import { Scope } from "../shared/scopes";
+import { Constructor } from "../shared/helpers";
 import {
   attrChange,
   Context,
-  kinds,
   scopeChange,
   setupProvider,
 } from "../shared/test_helpers";
 import { Attributes } from "./attributes";
-import { Scopes } from "./scopes";
+import { TajribaAdminAccess } from "./context";
+import { Globals } from "./globals";
+import { Scope, Scopes } from "./scopes";
+
+export class AdminBatch extends Scope<Context, AdminKinds> {}
+export class AdminGame extends Scope<Context, AdminKinds> {
+  get batch() {
+    return this.scopeByKey("batchID") as AdminBatch | undefined;
+  }
+
+  get badBatch() {
+    return this.scopeByKey("noStageID") as AdminBatch | undefined;
+  }
+
+  addBatch() {
+    this.addScopes([{ kind: "batch" }]);
+  }
+}
+export type AdminKinds = {
+  batch: Constructor<AdminBatch>;
+  game: Constructor<AdminGame>;
+};
+
+export const adminKinds = {
+  batch: AdminBatch,
+  game: AdminGame,
+};
 
 function setupScopes() {
   const { provider, changes } = setupProvider();
@@ -25,12 +58,56 @@ function setupScopes() {
     provider.setAttributes
   );
 
+  const called: {
+    addScopes: AddScopeInput[][];
+    addGroups: AddGroupInput[][];
+    addLinks: LinkInput[][];
+    addSteps: AddStepInput[][];
+    addTransitions: TransitionInput[][];
+  } = {
+    addScopes: [],
+    addGroups: [],
+    addLinks: [],
+    addSteps: [],
+    addTransitions: [],
+  };
+
+  // c8 ignores in scope addX callbacks because they are tested elsewhere
+
+  const globals = new Subject<SubAttributesPayload>();
+
+  const mut = new TajribaAdminAccess(
+    (inputs: AddScopeInput[]) => {
+      called.addScopes.push(inputs);
+    },
+    (inputs: AddGroupInput[]) => {
+      /* c8 ignore next */
+      called.addGroups.push(inputs);
+    },
+    (inputs: LinkInput[]) => {
+      /* c8 ignore next */
+      called.addLinks.push(inputs);
+    },
+    async (inputs: AddStepInput[]) => {
+      /* c8 ignore next 3 */
+      called.addSteps.push(inputs);
+
+      return [{ id: "123", duration: inputs[0]!.duration }];
+    },
+    (inputs: TransitionInput[]) => {
+      /* c8 ignore next 2 */
+      called.addTransitions.push(inputs);
+    },
+    new Globals(globals, "globals", provider.setAttributes)
+  );
+
   const scopes = new Scopes(
     provider.scopes,
     scopesDones,
     ctx,
-    kinds,
-    attributes
+    adminKinds,
+    attributes,
+    mut
   );
 
   provider.dones.subscribe({
@@ -40,7 +117,7 @@ function setupScopes() {
     },
   });
 
-  return { changes, scopes, attributes };
+  return { changes, scopes, attributes, called };
 }
 
 test("Scopes should be observable by kind", (t) => {
@@ -48,7 +125,7 @@ test("Scopes should be observable by kind", (t) => {
 
   const scopeObs = scopes.subscribeKind("game");
 
-  const vals: Scope<Context, typeof kinds>[] = [];
+  const vals: Scope<Context, AdminKinds>[] = [];
   scopeObs.subscribe({
     next(scope) {
       vals.push(scope);
@@ -91,7 +168,7 @@ test("Scopes observable by kind should respect done", (t) => {
 
   const scopeObs = scopes.subscribeKind("game");
 
-  const vals: Scope<Context, typeof kinds>[] = [];
+  const vals: Scope<Context, AdminKinds>[] = [];
   scopeObs.subscribe({
     next(scope) {
       vals.push(scope);
@@ -128,7 +205,7 @@ test("Scopes observable by kind should respect kind", (t) => {
 
   const scopeObs = scopes.subscribeKind("game");
 
-  const vals: Scope<Context, typeof kinds>[] = [];
+  const vals: Scope<Context, AdminKinds>[] = [];
   scopeObs.subscribe({
     next(scope) {
       vals.push(scope);
@@ -160,8 +237,72 @@ test("Scopes observable by kind should respect kind", (t) => {
   // Different Kind
 
   changes.next(
-    scopeChange({ id: "xyz", kind: "stage", done: true, removed: false })
+    scopeChange({ id: "xyz", kind: "batch", done: true, removed: false })
   );
 
   t.is(vals.length, 1);
+});
+
+test("Scope should get other scope by key", (t) => {
+  const { changes, scopes } = setupScopes();
+
+  changes.next(
+    scopeChange({ id: "abc", kind: "game", done: true, removed: false })
+  );
+
+  changes.next(
+    scopeChange({ id: "efg", kind: "batch", done: true, removed: false })
+  );
+
+  changes.next(
+    attrChange({
+      key: "batchID",
+      val: `"efg"`,
+      nodeID: "abc",
+      done: true,
+      removed: false,
+    })
+  );
+
+  changes.next(
+    attrChange({
+      key: "noBatchID",
+      val: `"efg"`,
+      nodeID: "0",
+      done: true,
+      removed: false,
+    })
+  );
+
+  const scope = scopes.scope("abc") as AdminGame;
+  t.truthy(scope);
+  t.truthy(scope.batch);
+  t.truthy(scope.batch instanceof AdminBatch);
+  t.falsy(scope.badBatch instanceof AdminBatch);
+});
+
+test("Scope should add other scope", (t) => {
+  const { changes, scopes, called } = setupScopes();
+
+  changes.next(
+    scopeChange({ id: "abc", kind: "game", done: true, removed: false })
+  );
+
+  const scope = scopes.scope("abc") as AdminGame;
+  scope.addBatch();
+
+  t.deepEqual(called.addScopes, [[{ kind: "batch" }]]);
+});
+
+test("Scope should have access to globals", (t) => {
+  const { changes, scopes } = setupScopes();
+
+  changes.next(
+    scopeChange({ id: "abc", kind: "game", done: true, removed: false })
+  );
+
+  const scope = scopes.scope("abc") as AdminGame;
+  scope.addBatch();
+
+  t.true(scope.globals instanceof Globals);
 });

@@ -4,7 +4,7 @@ import { Subject } from "rxjs";
 import { restore } from "sinon";
 import { Attribute } from "../shared/attributes";
 import { Constructor } from "../shared/helpers";
-import { Scope } from "../shared/scopes";
+import { Scope } from "./scopes";
 import {
   AdminKinds,
   Context,
@@ -53,11 +53,11 @@ function setupLayer(props: typeof setupLayerProps = setupLayerProps) {
 
   const attributes: { [key: string]: Attribute } = {};
 
-  const kindsSubs = new Map<string, Subject<Scope<Context, Kinds>>>();
+  const kindsSubs = new Map<string, Subject<Scope<Context, AdminKinds>>>();
   const kindSubscription = (kind: keyof AdminKinds) => {
     let sub = kindsSubs.get(kind);
     if (!sub) {
-      sub = new Subject<Scope<Context, Kinds>>();
+      sub = new Subject<Scope<Context, AdminKinds>>();
       kindsSubs.set(kind, sub);
     }
 

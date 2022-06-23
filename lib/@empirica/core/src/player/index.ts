@@ -2,7 +2,7 @@ export { Attribute, Attributes } from "../shared/attributes";
 export type { AttributeOptions, AttributeUpdate } from "../shared/attributes";
 export type { Constructor } from "../shared/helpers";
 export type { ScopeConstructor, ScopeUpdate } from "../shared/scopes";
-export { Globals } from "./globals";
+export { Globals } from "../shared/globals";
 export { TajribaProvider } from "./provider";
 export type { ParticipantUpdate } from "./provider";
 export { Scope, Scopes } from "./scopes";

@@ -4,19 +4,19 @@ import { ClassicKinds, Context } from "./models";
 
 const string = z.string();
 
-export function ClassicLoader(subs: ListenersCollector<Context, ClassicKinds>) {
-  subs.on("start", function (ctx) {
-    ctx.scopeSub({ kinds: ["Batch"] });
+export function ClassicLoader(_: ListenersCollector<Context, ClassicKinds>) {
+  _.on("start", function (ctx) {
+    ctx.scopeSub({ kinds: ["batch", "player"] });
     ctx.participantsSub();
   });
 
-  subs.on("batch", "status", function (ctx, { batch, status }) {
+  _.on("batch", "status", function (ctx, { batch, status }) {
     if (["running", "created"].includes(status)) {
       ctx.scopeSub({ kvs: [{ key: "batchID", val: batch.id }] });
     }
   });
 
-  subs.on("stage", "timerID", function (ctx, { timerID }) {
+  _.on("stage", "timerID", function (ctx, { timerID }) {
     ctx.transitionsSub(string.parse(timerID));
   });
 }

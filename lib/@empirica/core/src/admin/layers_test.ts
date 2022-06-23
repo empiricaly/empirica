@@ -3,7 +3,7 @@ import { Subject } from "rxjs";
 import { restore } from "sinon";
 import { Attribute } from "../shared/attributes";
 import { Constructor } from "../shared/helpers";
-import { Scope } from "../shared/scopes";
+import { Scope } from "./scopes";
 import {
   AdminKinds,
   Context,

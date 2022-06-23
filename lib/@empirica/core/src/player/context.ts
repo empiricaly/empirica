@@ -8,7 +8,7 @@ import {
 } from "../shared/tajriba_connection";
 import { bsu } from "../utils/object";
 import { ParticipantConnection, ParticipantSession } from "./connection";
-import { Globals } from "./globals";
+import { Globals } from "../shared/globals";
 import { TajribaProvider } from "./provider";
 
 export class ParticipantContext {

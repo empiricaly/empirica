@@ -1,18 +1,35 @@
+import { AddScopeInput, State } from "@empirica/tajriba";
 import test from "ava";
 import { Subject } from "rxjs";
 import { restore } from "sinon";
+import { Constructor } from "../player";
 import {
-  AdminKinds,
-  adminKinds,
   Context,
   nextTick,
   setupTokenProvider,
   textHasLog,
 } from "../shared/test_helpers";
-import { captureLogs } from "../utils/console";
+import { captureLogs, captureLogsAsync } from "../utils/console";
 import { AdminConnection } from "./connection";
 import { ListenersCollector, Subscriber } from "./events";
 import { Runloop } from "./runloop";
+import { Scope } from "./scopes";
+
+export class AdminBatch extends Scope<Context, AdminKinds> {}
+export class AdminGame extends Scope<Context, AdminKinds> {
+  addBatch(props: AddScopeInput[]) {
+    this.addScopes(props);
+  }
+}
+export type AdminKinds = {
+  batch: Constructor<AdminBatch>;
+  game: Constructor<AdminGame>;
+};
+
+export const adminKinds = {
+  batch: AdminBatch,
+  game: AdminGame,
+};
 
 test.serial.afterEach(() => {
   restore();
@@ -59,7 +76,13 @@ function attrib(props: Partial<typeof attribProps> = attribProps) {
   };
 }
 
-async function setupRunloop() {
+async function setupRunloop(
+  {
+    failAddScope = false,
+  }: {
+    failAddScope: boolean;
+  } = { failAddScope: false }
+) {
   const {
     cbs,
     taj,
@@ -67,7 +90,8 @@ async function setupRunloop() {
     resetToken,
     scopedAttributesSub,
     onEventSub,
-  } = setupTokenProvider();
+    called: tajCalled,
+  } = setupTokenProvider({ failAddScope });
 
   cbs["connected"]![0]!();
 
@@ -79,12 +103,13 @@ async function setupRunloop() {
   // Wait for session establishement
   await nextTick();
 
-  new Runloop(admin, ctx, adminKinds, adminSubs, adminStop);
+  new Runloop(admin, ctx, adminKinds, "globals", adminSubs, adminStop);
 
   let called = {
     subscriber: 0,
     startCalled: 0,
     kindCalled: 0,
+    tajCalled,
   };
 
   adminSubs.next((subs: ListenersCollector<Context, AdminKinds>) => {
@@ -93,13 +118,27 @@ async function setupRunloop() {
       called.startCalled++;
       ctx.scopeSub({ kinds: ["game"] });
     });
-    subs.on("game", (ctx) => {
+    subs.on("game", (ctx, { game }) => {
       called.kindCalled++;
       ctx.scopeSub({ kinds: ["batch"] });
       ctx.scopeSub({ ids: ["poi"] });
       ctx.scopeSub({ names: ["poi"] });
       ctx.scopeSub({ keys: ["poi"] });
       ctx.scopeSub({ kvs: [{ key: "poi", val: "iop" }] });
+      game.addBatch([{ kind: "batch" }]);
+      game.addGroups([{ participantIDs: ["123"] }]);
+      game.addLinks([
+        { link: true, nodeIDs: ["abc"], participantIDs: ["123"] },
+      ]);
+      game.addSteps([{ duration: 123 }]);
+      game.addTransitions([
+        {
+          from: State.Created,
+          nodeID: "abc",
+          to: State.Running,
+        },
+      ]);
+      game.set("a", 42);
     });
     subs.on("batch", (ctx) => {
       called.kindCalled++;
@@ -272,4 +311,154 @@ test.serial("Runloop stops", async (t) => {
   t.is(called.subscriber, 1);
   t.is(called.startCalled, 1);
   t.is(calls, 0);
+});
+
+test.serial("Runloop creates scopes", async (t) => {
+  const { scopedAttributesSub, called } = await setupRunloop();
+
+  await nextTick();
+
+  scopedAttributesSub.next({
+    attribute: attrib(),
+    done: true,
+  });
+
+  await nextTick();
+
+  t.deepEqual(called.tajCalled.addScopes, [
+    [
+      {
+        kind: "batch",
+      },
+    ],
+  ]);
+});
+
+test.serial("Runloop creates attributes", async (t) => {
+  const { scopedAttributesSub, called } = await setupRunloop();
+
+  await nextTick();
+
+  scopedAttributesSub.next({
+    attribute: attrib(),
+    done: true,
+  });
+
+  await nextTick();
+
+  t.deepEqual(called.tajCalled.setAttributes, [
+    [
+      {
+        key: "a",
+        nodeID: "poi",
+        val: "42",
+      },
+    ],
+  ]);
+});
+
+test.serial("Runloop creates groups", async (t) => {
+  const { scopedAttributesSub, called } = await setupRunloop();
+
+  await nextTick();
+
+  scopedAttributesSub.next({
+    attribute: attrib(),
+    done: true,
+  });
+
+  await nextTick();
+
+  t.deepEqual(called.tajCalled.addGroups, [
+    [
+      {
+        participantIDs: ["123"],
+      },
+    ],
+  ]);
+});
+
+test.serial("Runloop creates links", async (t) => {
+  const { scopedAttributesSub, called } = await setupRunloop();
+
+  await nextTick();
+
+  scopedAttributesSub.next({
+    attribute: attrib(),
+    done: true,
+  });
+
+  await nextTick();
+
+  t.deepEqual(called.tajCalled.addLink, [
+    { link: true, nodeIDs: ["abc"], participantIDs: ["123"] },
+  ]);
+});
+
+test.serial("Runloop creates steps", async (t) => {
+  const { scopedAttributesSub, called } = await setupRunloop();
+
+  await nextTick();
+
+  scopedAttributesSub.next({
+    attribute: attrib(),
+    done: true,
+  });
+
+  await nextTick();
+
+  t.deepEqual(called.tajCalled.addSteps, [[{ duration: 123 }]]);
+});
+
+test.serial("Runloop creates transitions", async (t) => {
+  const { scopedAttributesSub, called } = await setupRunloop();
+
+  await nextTick();
+
+  scopedAttributesSub.next({
+    attribute: attrib(),
+    done: true,
+  });
+
+  await nextTick();
+
+  t.deepEqual(called.tajCalled.addTransitions, [
+    {
+      from: State.Created,
+      nodeID: "abc",
+      to: State.Running,
+    },
+  ]);
+});
+
+test.serial("Runloop failed resource creation", async (t) => {
+  const { scopedAttributesSub, called } = await setupRunloop({
+    failAddScope: true,
+  });
+
+  await nextTick();
+
+  scopedAttributesSub.next({
+    done: true,
+  });
+
+  await nextTick();
+  const logs = await captureLogsAsync(async function () {
+    scopedAttributesSub.next({
+      attribute: attrib(),
+      done: true,
+    });
+
+    await nextTick();
+
+    scopedAttributesSub.next({
+      done: true,
+    });
+
+    await nextTick();
+  });
+
+  t.deepEqual(called.tajCalled.addScopes, []);
+
+  textHasLog(t, logs, "warn", "failing scopes");
 });

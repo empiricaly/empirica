@@ -1,6 +1,7 @@
 import { Observable } from "rxjs";
 import { Attribute } from "../shared/attributes";
-import { Scope, ScopeConstructor } from "../shared/scopes";
+import { Scope } from "./scopes";
+import { ScopeConstructor } from "../shared/scopes";
 import { error } from "../utils/console";
 import {
   AttributeEventListener,

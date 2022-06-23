@@ -1,9 +1,9 @@
 import { BehaviorSubject, Subject } from "rxjs";
 import { Attributes } from "../../shared/attributes";
+import { Globals } from "../../shared/globals";
 import { Constructor } from "../../shared/helpers";
-import { Scope, Scopes } from "../scopes";
-import { Globals } from "../globals";
 import { TajribaProvider } from "../provider";
+import { Scope, Scopes } from "../scopes";
 import { Steps } from "../steps";
 
 export class Game extends Scope<Context, EmpiricaClassicKinds> {

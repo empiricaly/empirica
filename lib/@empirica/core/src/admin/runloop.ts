@@ -1,12 +1,22 @@
-import { ScopedAttributesInput } from "@empirica/tajriba";
+import {
+  AddGroupInput,
+  AddScopeInput,
+  AddStepInput,
+  LinkInput,
+  ScopedAttributesInput,
+  SetAttributeInput,
+  TransitionInput,
+} from "@empirica/tajriba";
 import { Observable, Subject, Subscription } from "rxjs";
 import { AttributeChange, AttributeUpdate } from "../shared/attributes";
 import { ScopeConstructor, ScopeIdent, ScopeUpdate } from "../shared/scopes";
-import { error } from "../utils/console";
+import { error, warn } from "../utils/console";
 import { Attributes } from "./attributes";
 import { Cake } from "./cake";
 import { AdminConnection } from "./connection";
+import { TajribaAdminAccess } from "./context";
 import { EventContext, Subscriber } from "./events";
+import { Globals } from "./globals";
 import { Layer } from "./layers";
 import { Connection, Participant, participantsSub } from "./participants";
 import { Scopes } from "./scopes";
@@ -26,28 +36,52 @@ export class Runloop<
   private scopesSub = new Subject<ScopeUpdate>();
   private attributesSub = new Subject<AttributeUpdate>();
   private donesSub = new Subject<void>();
-  private attributes = new Attributes(
-    this.attributesSub,
-    this.donesSub,
-    this.taj.setAttributes.bind(this.taj)
-  );
-  private scopes = new Scopes<Context, Kinds>(
-    this.scopesSub,
-    this.donesSub,
-    this.ctx,
-    this.kinds,
-    this.attributes
-  );
+  private attributes: Attributes;
+  private scopeInputs: AddScopeInput[] = [];
+  private addGroupsInputs: AddGroupInput[] = [];
+  private addLinksInputs: LinkInput[] = [];
+  private addTransitionsInputs: TransitionInput[] = [];
+  private attributeInputs: SetAttributeInput[] = [];
+  private scopes: Scopes<Context, Kinds>;
   private cake: Cake<Context, Kinds>;
 
   constructor(
     private conn: AdminConnection,
     private ctx: Context,
     private kinds: Kinds,
+    globalScopeID: string,
     subs: Observable<Subscriber<Context, Kinds>>,
     stop: Observable<void>
   ) {
-    this.evtctx = new EventContext(this.subs);
+    this.attributes = new Attributes(
+      this.attributesSub,
+      this.donesSub,
+      this.setAttributes.bind(this)
+    );
+
+    const mut = new TajribaAdminAccess(
+      this.addScopes.bind(this),
+      this.addGroups.bind(this),
+      this.addLinks.bind(this),
+      this.addSteps.bind(this),
+      this.addTransitions.bind(this),
+      new Globals(
+        this.taj.globalAttributes(),
+        globalScopeID,
+        this.setAttributes.bind(this)
+      )
+    );
+
+    this.scopes = new Scopes<Context, Kinds>(
+      this.scopesSub,
+      this.donesSub,
+      this.ctx,
+      this.kinds,
+      this.attributes,
+      mut
+    );
+
+    this.evtctx = new EventContext(this.subs, mut);
     this.cake = new Cake(
       this.evtctx,
       this.scopes.scope.bind(this.scopes),
@@ -99,10 +133,72 @@ export class Runloop<
   }
 
   private async postCallback() {
+    const promises: Promise<any>[] = [];
+
     const subs = this.subs.newSubs();
     if (subs) {
-      await this.processNewSub(subs);
+      promises.push(this.processNewSub(subs));
     }
+
+    if (this.scopeInputs.length > 0) {
+      promises.push(this.taj.addScopes(this.scopeInputs));
+      this.scopeInputs = [];
+    }
+
+    if (this.addGroupsInputs.length > 0) {
+      promises.push(this.taj.addGroups(this.addGroupsInputs));
+      this.addGroupsInputs = [];
+    }
+
+    if (this.addLinksInputs.length > 0) {
+      for (const linkInput of this.addLinksInputs) {
+        promises.push(this.taj.addLink(linkInput));
+      }
+      this.addLinksInputs = [];
+    }
+
+    if (this.addTransitionsInputs.length > 0) {
+      for (const transition of this.addTransitionsInputs) {
+        promises.push(this.taj.transition(transition));
+      }
+      this.addTransitionsInputs = [];
+    }
+
+    if (this.attributeInputs.length > 0) {
+      promises.push(this.taj.setAttributes(this.attributeInputs));
+      this.attributeInputs = [];
+    }
+
+    const res = await Promise.allSettled(promises);
+    for (const r of res) {
+      if (r.status === "rejected") {
+        warn(`failed load: ${r.reason}`);
+      }
+    }
+  }
+
+  async addScopes(inputs: AddScopeInput[]) {
+    this.scopeInputs.push(...inputs);
+  }
+
+  async addGroups(inputs: AddGroupInput[]) {
+    this.addGroupsInputs.push(...inputs);
+  }
+
+  async addLinks(inputs: LinkInput[]) {
+    this.addLinksInputs.push(...inputs);
+  }
+
+  async addSteps(inputs: AddStepInput[]) {
+    return this.taj.addSteps(inputs);
+  }
+
+  async addTransitions(inputs: TransitionInput[]) {
+    this.addTransitionsInputs.push(...inputs);
+  }
+
+  async setAttributes(inputs: SetAttributeInput[]) {
+    this.attributeInputs.push(...inputs);
   }
 
   private async processNewScopesSub(filters: ScopedAttributesInput[]) {

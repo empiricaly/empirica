@@ -1,9 +1,17 @@
-import { Subject } from "rxjs";
+import {
+  AddGroupInput,
+  AddScopeInput,
+  AddStepInput,
+  LinkInput,
+  TransitionInput,
+} from "@empirica/tajriba";
+import { merge, Subject } from "rxjs";
 import { ScopeConstructor } from "../shared/scopes";
 import { TajribaConnection } from "../shared/tajriba_connection";
-import { warn } from "../utils/console";
+import { error, warn } from "../utils/console";
 import { AdminConnection } from "./connection";
 import { Subscriber } from "./events";
+import { Globals } from "./globals";
 import { Runloop } from "./runloop";
 import { FileTokenStorage, TokenProvider } from "./token_file";
 
@@ -48,15 +56,12 @@ export class AdminContext<
       reset.next.bind(reset)
     );
 
-    adminContext.tajriba.connected.subscribe({
-      next: () => {
-        adminContext.initOrStop();
-      },
-    });
-
-    adminContext.adminConn.connected.subscribe({
-      next: () => {
-        adminContext.initOrStop();
+    merge(
+      adminContext.tajriba.connected,
+      adminContext.adminConn.connected
+    ).subscribe({
+      next: async () => {
+        await adminContext.initOrStop();
       },
     });
 
@@ -70,19 +75,19 @@ export class AdminContext<
     }
   }
 
-  private initOrStop() {
+  private async initOrStop() {
     // Forcing this.adminConn since adminConn is always created by init().
     if (
       this.tajriba.connected.getValue() &&
       this.adminConn!.connected.getValue()
     ) {
-      this.initSubs();
+      await this.initSubs();
     } else {
       this.stopSubs();
     }
   }
 
-  private initSubs() {
+  private async initSubs() {
     if (this.runloop) {
       return;
     }
@@ -94,13 +99,38 @@ export class AdminContext<
       return;
     }
 
+    /* c8 ignore next 6 */
+    const tajAdmin = this.adminConn.admin.getValue();
+    if (!tajAdmin) {
+      // This condition is nearly impossible to create
+      warn("context: admin not connected");
+      return;
+    }
+
+    let globalScopeID: string | undefined;
+    try {
+      const scopes = await tajAdmin.scopes({ filter: { names: ["global"] } });
+      globalScopeID = scopes!.edges[0]?.node.id;
+      if (!globalScopeID) {
+        warn("context: global scopeID not found");
+
+        return;
+      }
+    } catch (err) {
+      error(`context: global scopeID not fetch: ${err}`);
+
+      return;
+    }
+
     this.runloop = new Runloop(
       this.adminConn,
       this.ctx,
       this.kinds,
+      globalScopeID,
       this.adminSubs,
       this.adminStop
     );
+
     for (const sub of this.subs) {
       this.adminSubs.next(sub);
     }
@@ -110,4 +140,20 @@ export class AdminContext<
     this.adminStop.next();
     this.runloop = undefined;
   }
+}
+
+export interface StepPayload {
+  id: string;
+  duration: number;
+}
+
+export class TajribaAdminAccess {
+  constructor(
+    readonly addScopes: (input: AddScopeInput[]) => void,
+    readonly addGroups: (input: AddGroupInput[]) => void,
+    readonly addLinks: (input: LinkInput[]) => void,
+    readonly addSteps: (input: AddStepInput[]) => Promise<StepPayload[]>,
+    readonly addTransitions: (input: TransitionInput[]) => void,
+    readonly globals: Globals
+  ) {}
 }
