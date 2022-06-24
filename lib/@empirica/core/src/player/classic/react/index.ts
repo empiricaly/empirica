@@ -1,5 +1,6 @@
 export { EmpiricaContext } from "./EmpiricaContext";
 export type { EmpiricaContextProps } from "./EmpiricaContext";
+export { Sweeper } from "./examples/Sweeper";
 export {
   useGame,
   usePartModeCtx,
@@ -8,6 +9,7 @@ export {
   usePlayers,
   useRound,
   useStage,
+  useStageTimer,
 } from "./hooks";
 export { Lobby } from "./Lobby";
 export { Quiz } from "./Quiz";

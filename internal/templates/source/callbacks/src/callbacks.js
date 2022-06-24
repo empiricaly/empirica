@@ -1,5 +1,7 @@
 export default function (empirica) {
-  empirica.on("game", "start", (ctx, { game }) => {
+  empirica.on("game", "start", (ctx, { game, start }) => {
+    if (!start) return;
+
     console.log("game start");
 
     // Jelly beans
@@ -26,22 +28,34 @@ export default function (empirica) {
     console.log("game start done");
   });
 
-  empirica.on("round", "start", (ctx, { round }) => {
+  empirica.on("round", "start", (ctx, { round, start }) => {
+    if (!start) return;
+
     console.log("round start");
   });
 
-  empirica.on("stage", "start", (ctx, { stage }) => {
+  empirica.on("stage", "start", (ctx, { stage, start }) => {
+    if (!start) return;
+
     console.log("stage start");
   });
 
-  empirica.on("stage", "ended", (ctx, { stage }) => {
+  empirica.on("stage", "ended", (ctx, { stage, ended }) => {
+    if (!ended) return;
+
     console.log("stage end");
     calculateJellyBeansScore(stage);
   });
 
-  empirica.on("round", "ended", (ctx, { round }) => {});
+  empirica.on("round", "ended", (ctx, { round, ended }) => {
+    if (!ended) return;
 
-  empirica.on("game", "ended", (ctx, { game }) => {
+    console.log("round end");
+  });
+
+  empirica.on("game", "ended", (ctx, { game, ended }) => {
+    if (!ended) return;
+
     console.log("game end");
   });
 }

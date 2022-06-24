@@ -1,4 +1,8 @@
-import { usePlayer, useRound, useStage } from "@empirica/player";
+import {
+  usePlayer,
+  useRound,
+  useStage,
+} from "@empirica/core/player/classic/react";
 import React from "react";
 import { Avatar } from "./components/Avatar";
 import { Timer } from "./components/Timer";

@@ -102,6 +102,7 @@ export class ParticipantMode<T> {
     provider.subscribe({
       next: async (provider) => {
         const id = participant.getValue()?.id;
+        console.log("id && provider", id && provider);
         if (id && provider) {
           this._mode.next(modeFunc(id, provider));
         } else {

@@ -8,7 +8,7 @@
   import PlayIcon from "../PlayIcon.svelte";
   import StopIcon from "../StopIcon.svelte";
   import FactorsString from "../treatments/FactorsString.svelte";
-  
+
   export let batch;
 
   let open = false;
@@ -17,7 +17,7 @@
     open = false;
   }
 
-  const config = batch.get("config");
+  const config = batch.attributes["config"];
   console.log(config);
   let gameCount = "unknown";
 
@@ -33,7 +33,7 @@
   let statusColor = "gray";
   let status = "Created";
   $: {
-    switch (batch.get("state")) {
+    switch (batch.attributes["status"]) {
       case "running":
         status = "Running";
         statusColor = "green";
@@ -57,20 +57,32 @@
   }
 
   function duplicate() {
-    $currentAdmin.createBatch({ config });
+    $currentAdmin.addScope({
+      kind: "batch",
+      attributes: [
+        { key: "config", val: JSON.stringify(config), immutable: true },
+      ],
+    });
+    // $currentAdmin.createBatch({ config });
   }
 
   function start() {
     if (status === "Created") {
-      batch.set("state", "running");
-      $currentAdmin.process();
+      $currentAdmin.setAttribute({
+        key: "status",
+        val: JSON.stringify("running"),
+        nodeID: batch.id,
+      });
     }
   }
 
   function stop() {
     if (status === "Running") {
-      batch.set("state", "ended");
-      $currentAdmin.process();
+      $currentAdmin.setAttribute({
+        key: "status",
+        val: JSON.stringify("ended"),
+        nodeID: batch.id,
+      });
     }
   }
 </script>

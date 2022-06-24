@@ -28,10 +28,12 @@ export class TajribaProvider {
   ) {
     changes.pipe(groupBy((chg) => chg.change.__typename)).subscribe({
       next: (group) => {
+        console.log("GROUP", group);
         switch (group.key) {
           case "ScopeChange":
             group.subscribe({
               next: (scope) => {
+                console.log("SCOPE", scope);
                 this.scopes.next({
                   scope: <ScopeIdent>scope.change,
                   removed: scope.removed,
@@ -46,13 +48,15 @@ export class TajribaProvider {
             break;
           case "AttributeChange":
             group.subscribe({
-              next: (scope) => {
+              next: (attribute) => {
+                console.log("ATTRIBUTE", attribute);
                 this.attributes.next({
-                  attribute: <AttributeChange>scope.change,
-                  removed: scope.removed,
+                  attribute: <AttributeChange>attribute.change,
+                  removed: attribute.removed,
                 });
 
-                if (scope.done) {
+                if (attribute.done) {
+                  console.log("DONEDONEDONE", attribute);
                   this.dones.next();
                 }
               },

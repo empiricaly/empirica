@@ -17,28 +17,8 @@ const reservedKeys = [
 ];
 
 export class Batch extends Scope<Context, ClassicKinds> {
-  get games() {
-    const gameIDs = (this.get("gameIDs") as string[]) || [];
-    const games: Game[] = [];
-    for (const gameID of gameIDs) {
-      const game = this.scopeByKey(gameID) as Game;
-      if (game) {
-        games.push(game);
-      }
-    }
-    return games;
-  }
-
-  get unstartedGames() {
-    return this.games.filter((g) => !g.get("state"));
-  }
-
   get isRunning() {
-    return this.get("state") === "running";
-  }
-
-  get available() {
-    return this.isRunning && this.unstartedGames.length > 0;
+    return this.get("status") === "running";
   }
 
   addGame(attributes: { [key: string]: JsonValue } | AttributeInput[]) {
@@ -114,6 +94,17 @@ export class Game extends BatchOwned {
     return endedStatuses.includes(this.get("status") as string);
   }
 
+  get hasNotStarted() {
+    return !this.get("status");
+  }
+
+  get players() {
+    const players = this.scopesByKind("player");
+    return Array.from(players.values()).filter(
+      (p) => p.get("gameID") === this.id
+    );
+  }
+
   addRound(attributes: { [key: string]: JsonValue } | AttributeInput[]) {
     if (!Array.isArray(attributes)) {
       const newAttr: AttributeInput[] = [];
@@ -136,6 +127,11 @@ export class Game extends BatchOwned {
       kind: "game",
       attributes: attrs([
         ...attributes.filter((a) => !reservedKeys.includes(a.key)),
+        {
+          key: "newStages",
+          value: [],
+          protected: true,
+        },
         {
           key: "gameID",
           value: this.id,
@@ -161,19 +157,106 @@ export class Game extends BatchOwned {
 
     this.addScopes([scope]);
 
+    const addStage = (
+      attributes: { [key: string]: JsonValue } | AttributeInput[]
+    ) => {
+      const stages = accessors.get("newStages");
+
+      if (!Array.isArray(attributes)) {
+        const newAttr: AttributeInput[] = [];
+        for (const key in attributes) {
+          newAttr.push({
+            key,
+            value: attributes[key]!,
+          });
+        }
+
+        attributes = newAttr;
+      }
+
+      const durAttr = attributes.find((a) => a.key === "duration");
+      const res = z.number().int().gte(5).safeParse(durAttr?.value);
+      if (!res.success) {
+        throw new Error(`stage duration invalid: ${res.error}`);
+      }
+
+      const batchID = this.get("batchID") as string;
+      if (!batchID) {
+        throw new Error("missing batch ID on round");
+      }
+
+      const scope = {
+        kind: "stage",
+        attributes: attrs([
+          ...attributes.filter((a) => !reservedKeys.includes(a.key)),
+          {
+            key: "gameID",
+            value: this.id,
+            immutable: true,
+          },
+          {
+            key: "batchID",
+            value: batchID,
+            immutable: true,
+          },
+          {
+            key: "start",
+            value: false,
+            protected: true,
+          },
+          {
+            key: "ended",
+            value: false,
+            protected: true,
+          },
+        ]),
+      };
+
+      stages.push(scope);
+      const index = stages.length - 1;
+      accessors.set("newStages", stages);
+
+      return {
+        get(key: string) {
+          const stages = accessors.get("newStages") as AddScopeInput[];
+          const val = stages[index]?.attributes?.find(
+            (a) => a.key === key
+          )?.val;
+          if (val) {
+            return JSON.parse(val);
+          } else {
+            return undefined;
+          }
+        },
+        set(key: string, value: JsonValue) {
+          const stages = accessors.get("newStages") as AddScopeInput[];
+          const val = stages[index]?.attributes?.find(
+            (a) => a.key === key
+          )?.val;
+          if (val) {
+            const kIndex = stages[index]!.attributes!.findIndex(
+              (a) => a.key === key
+            )!;
+            stages[index]!.attributes![kIndex]!.val = JSON.stringify(value);
+          } else {
+            if (!stages[index]?.attributes) {
+              throw new Error("stage not found");
+            }
+
+            stages[index]!.attributes!.push({
+              key,
+              val: JSON.stringify(value),
+            });
+          }
+
+          accessors.set("newStages", stages);
+        },
+      };
+    };
+
     return {
       ...accessors,
-      addStage: (
-        attributes: { [key: string]: JsonValue } | AttributeInput[]
-      ) => {
-        addStage(
-          this.addScopes.bind(this),
-          this.id, //! WARNING THIS IS NOT THE ROUND ID...
-          this.id,
-          batchID,
-          attributes
-        );
-      },
+      addStage,
     };
   }
 
@@ -262,70 +345,26 @@ export class PlayerRound extends GameOwned {}
 
 export class PlayerStage extends GameOwned {}
 
-function addStage(
-  addScopes: (nput: AddScopeInput[]) => void,
-  roundID: string,
-  gameID: string,
-  batchID: string,
-  attributes: { [key: string]: JsonValue } | AttributeInput[]
-) {
-  if (!Array.isArray(attributes)) {
-    const newAttr: AttributeInput[] = [];
-    for (const key in attributes) {
-      newAttr.push({
-        key,
-        value: attributes[key]!,
-      });
-    }
-
-    attributes = newAttr;
-  }
-
-  const durAttr = attributes.find((a) => a.key === "duration");
-  const res = z.number().int().gte(5).safeParse(durAttr?.value);
-  if (!res.success) {
-    throw new Error(`stage duration invalid: ${res.error}`);
-  }
-
-  const [scope, accessors] = scopeConstructor({
-    kind: "stage",
-    attributes: attrs([
-      ...attributes.filter((a) => !reservedKeys.includes(a.key)),
-      {
-        key: "roundID",
-        value: roundID,
-        immutable: true,
-      },
-      {
-        key: "gameID",
-        value: gameID,
-        immutable: true,
-      },
-      {
-        key: "batchID",
-        value: batchID,
-        immutable: true,
-      },
-      {
-        key: "start",
-        value: false,
-        protected: true,
-      },
-      {
-        key: "ended",
-        value: false,
-        protected: true,
-      },
-    ]),
-  });
-
-  addScopes([scope]);
-
-  return accessors;
-}
-
 export class Round extends GameOwned {
   addStage(attributes: { [key: string]: JsonValue } | AttributeInput[]) {
+    if (!Array.isArray(attributes)) {
+      const newAttr: AttributeInput[] = [];
+      for (const key in attributes) {
+        newAttr.push({
+          key,
+          value: attributes[key]!,
+        });
+      }
+
+      attributes = newAttr;
+    }
+
+    const durAttr = attributes.find((a) => a.key === "duration");
+    const res = z.number().int().gte(5).safeParse(durAttr?.value);
+    if (!res.success) {
+      throw new Error(`stage duration invalid: ${res.error}`);
+    }
+
     const batchID = this.get("batchID") as string;
     if (!batchID) {
       throw new Error("missing batch ID on round");
@@ -336,7 +375,41 @@ export class Round extends GameOwned {
       throw new Error("missing game ID on round");
     }
 
-    addStage(this.addScopes.bind(this), this.id, gameID, batchID, attributes);
+    const [scope, accessors] = scopeConstructor({
+      kind: "stage",
+      attributes: attrs([
+        ...attributes.filter((a) => !reservedKeys.includes(a.key)),
+        {
+          key: "roundID",
+          value: this.id,
+          immutable: true,
+        },
+        {
+          key: "gameID",
+          value: gameID,
+          immutable: true,
+        },
+        {
+          key: "batchID",
+          value: batchID,
+          immutable: true,
+        },
+        {
+          key: "start",
+          value: false,
+          protected: true,
+        },
+        {
+          key: "ended",
+          value: false,
+          protected: true,
+        },
+      ]),
+    });
+
+    this.addScopes([scope]);
+
+    return accessors;
   }
 }
 

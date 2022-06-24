@@ -1,10 +1,9 @@
 import { Attribute } from "../shared/attributes";
-import { Scope } from "./scopes";
 import { ScopeConstructor } from "../shared/scopes";
-import { error } from "../utils/console";
+import { debug, error } from "../utils/console";
 import { EventContext, ListenersCollector, TajribaEvent } from "./events";
 import { Participant } from "./participants";
-import { debug } from "console";
+import { Scope } from "./scopes";
 
 export class Layer<
   Context,

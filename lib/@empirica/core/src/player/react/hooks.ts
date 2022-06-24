@@ -24,7 +24,24 @@ export function useTajriba() {
 }
 
 export function useGlobal() {
-  return usePartCtxKey<Globals, "globals">("globals");
+  const ctx = usePartCtxKey<Globals, "globals">("globals");
+  const [val, setVal] = useState<{ g: Globals | undefined }>({ g: undefined });
+
+  useEffect(() => {
+    if (!ctx || !ctx.self) {
+      return;
+    }
+
+    const sub = ctx.self.subscribe({
+      next(g) {
+        setVal({ g });
+      },
+    });
+
+    return sub.unsubscribe.bind(sub);
+  }, [ctx]);
+
+  return val.g;
 }
 
 const defaultConsentKey = "empirica:consent";

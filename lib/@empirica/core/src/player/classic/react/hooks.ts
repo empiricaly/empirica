@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Observable } from "rxjs";
+import { Observable, BehaviorSubject } from "rxjs";
 import { ParticipantModeContext } from "../../context";
 import { useParticipantContext } from "../../react/hooks";
+import { StepTick } from "../../steps";
 import { EmpiricaClassicContext, Game, Player, Round, Stage } from "../classic";
 
 export function usePlayer() {
@@ -20,6 +21,27 @@ export function useStage() {
   return usePartModeCtxKey<EmpiricaClassicContext, "stage", Stage>("stage");
 }
 
+export function useStageTimer() {
+  const stage = useStage();
+  const [val, setVal] = useState<StepTick | undefined>(undefined);
+
+  useEffect(() => {
+    if (!stage || !stage.timer) {
+      return;
+    }
+
+    const sub = stage.timer.obs().subscribe({
+      next(val) {
+        setVal(val);
+      },
+    });
+
+    return sub.unsubscribe.bind(sub);
+  }, [stage]);
+
+  return val;
+}
+
 export function usePlayers() {
   return usePartModeCtxKey<EmpiricaClassicContext, "players", Player[]>(
     "players"
@@ -28,30 +50,37 @@ export function usePlayers() {
 
 export function usePartModeCtx<M>() {
   const ctx = useParticipantContext() as ParticipantModeContext<M>;
-  const [mode, setMode] = useState<M | undefined>(undefined);
+  const [mode, setMode] = useState<{ data: M | undefined }>({
+    data: ctx.mode.getValue(),
+  });
 
   useEffect(() => {
-    if (!ctx) {
+    if (!ctx || !ctx.mode) {
       return;
     }
 
     const sub = ctx.mode.subscribe({
       next(m) {
-        setMode(m);
+        setMode({ data: m });
       },
     });
 
     return sub.unsubscribe.bind(sub);
   }, [ctx]);
 
-  return mode;
+  return mode.data;
 }
 
 export function usePartModeCtxKey<M, K extends keyof M, R>(
   name: K
 ): R | undefined {
   const mode = usePartModeCtx<M>();
-  const [val, setVal] = useState<R | undefined>(undefined);
+  const iniVal =
+    mode &&
+    ((<unknown>mode[name]) as BehaviorSubject<R | undefined> | undefined);
+  const [val, setVal] = useState<{ data: R | undefined }>({
+    data: iniVal?.getValue(),
+  });
 
   useEffect(() => {
     if (!mode) {
@@ -62,12 +91,12 @@ export function usePartModeCtxKey<M, K extends keyof M, R>(
 
     const sub = obs.subscribe({
       next(val) {
-        setVal(val);
+        setVal({ data: val });
       },
     });
 
     return sub.unsubscribe.bind(sub);
   }, [mode]);
 
-  return val;
+  return val.data;
 }

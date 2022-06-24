@@ -189,6 +189,7 @@ export class Cake<
   startConnected() {
     this.connections.subscribe({
       next: async (connection) => {
+        console.log("CONNECTION", connection);
         if (!connection.connected) {
           return;
         }

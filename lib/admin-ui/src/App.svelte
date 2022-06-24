@@ -1,14 +1,17 @@
 <script>
   import { Empirica } from "@empirica/admin";
+  import { TajribaConnection } from "@empirica/core/user";
   import { onMount } from "svelte";
   import Router from "svelte-spa-router";
   import Loading from "./components/common/Loading.svelte";
   import Layout from "./components/layout/Layout.svelte";
   import SignIn from "./components/SignIn.svelte";
-  import { DEFAULT_TOKEN_KEY, URL } from "./constants";
+  import { DEFAULT_TOKEN_KEY,URL } from "./constants";
   import { routes } from "./routes";
   import { setCurrentAdmin } from "./utils/auth";
-
+      
+  const queryURL = `${URL}/query`;
+    
   let loggedIn = false;
   let loaded = false;
 
@@ -22,7 +25,7 @@
   async function sessionLogin() {
     if (token) {
       try {
-        const admin = await Empirica.sessionLogin(`${URL}/query`, token);
+        const admin = await Empirica.sessionLogin(queryURL, token);
         setCurrentAdmin(admin);
         loggedIn = true;
       } catch (e) {
@@ -41,7 +44,7 @@
     }
 
     try {
-      const res = await fetch(`${URL}/dev`);
+      const res = await fetch(`${URL}/dev`, {cache: "reload"});
       await setDevToken(res.status === 200);
     } catch (err) {
       await setDevToken(false);
@@ -53,7 +56,22 @@
     dev = isDev;
 
     if (isDev) {
-      const admin = await Empirica.devLogin(`${URL}/query`);
+      const tajriba = new TajribaConnection(queryURL);
+      let connection = false;
+
+      let resolve;
+      const prom = new Promise(r => (resolve = r))
+      tajriba.connected.subscribe({
+        next: (connected) => {
+          if (connected) {
+            resolve();
+          }
+        }
+      })
+      await prom;
+      const admin = await tajriba.sessionAdmin("123456789")
+      
+      // const admin = await Empirica.devLogin(`${URL}/query`);
       setCurrentAdmin(admin);
       loggedIn = true;
     }

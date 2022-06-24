@@ -3,10 +3,14 @@ import {
   Classic,
   classicKinds,
   ClassicLoader,
+  info,
+  setLogLevel,
 } from "@empirica/core";
 import minimist from "minimist";
 import process from "process";
 import callbacks from "./callbacks";
+
+setLogLevel("trace");
 
 let argv = process && minimist(process.argv.slice(2), { string: ["token"] });
 
@@ -22,4 +26,9 @@ let argv = process && minimist(process.argv.slice(2), { string: ["token"] });
   ctx.register(ClassicLoader);
   ctx.register(Classic);
   ctx.register(callbacks);
+  ctx.register(function (_) {
+    _.on("ready", function () {
+      info("callbacks: started");
+    });
+  });
 })();

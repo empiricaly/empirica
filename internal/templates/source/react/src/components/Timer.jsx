@@ -1,20 +1,20 @@
-import { useStageTimer } from "@empirica/player";
+import { useStageTimer } from "@empirica/core/player/classic/react";
 import React from "react";
 
 export function Timer() {
-  let remaining = useStageTimer();
+  const timer = useStageTimer();
 
   return (
     <div className="flex flex-col items-center">
       <h1 className="font-mono text-3xl text-gray-500 font-semibold">
-        {humanTimer(remaining)}
+        {humanTimer(timer?.remaining)}
       </h1>
     </div>
   );
 }
 
 function humanTimer(seconds) {
-  if (seconds === null) {
+  if (seconds === null || seconds === undefined) {
     return "-";
   }
 

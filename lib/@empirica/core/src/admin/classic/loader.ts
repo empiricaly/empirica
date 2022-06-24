@@ -11,12 +11,17 @@ export function ClassicLoader(
 ) {
   _.on("start", function (ctx) {
     ctx.scopeSub({ kinds: ["batch", "player"] });
+  });
+
+  _.on("ready", function (ctx) {
     ctx.participantsSub();
   });
 
   _.on("batch", "status", function (ctx, { batch, status }) {
     if (["running", "created"].includes(status)) {
-      ctx.scopeSub({ kvs: [{ key: "batchID", val: batch.id }] });
+      ctx.scopeSub({
+        kvs: [{ key: "batchID", val: JSON.stringify(batch.id) }],
+      });
     }
   });
 

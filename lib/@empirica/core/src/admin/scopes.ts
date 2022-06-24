@@ -91,6 +91,10 @@ export class Scope<
     return this.scopes.scope(id);
   }
 
+  scopesByKind(kind: keyof Kinds) {
+    return this.scopes.byKind(kind);
+  }
+
   protected addScopes(input: AddScopeInput[]) {
     this.taj.addScopes(input);
   }

@@ -1,4 +1,4 @@
-import { State } from "@empirica/tajriba";
+import { AddScopeInput, State } from "@empirica/tajriba";
 import { z } from "zod";
 import { PlayerGame } from "../../player/classic";
 import { Attribute } from "../../shared/attributes";
@@ -27,6 +27,8 @@ import {
   Stage,
 } from "./models";
 
+const treatmentSchema = z.record(z.string().min(1), z.any());
+
 const batchConfigSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("simple"),
@@ -34,7 +36,7 @@ const batchConfigSchema = z.discriminatedUnion("kind", [
       count: z.number().int().positive(),
       treatments: z
         .object({
-          factors: z.object({}).passthrough(),
+          factors: treatmentSchema,
         })
         .array(),
     }),
@@ -46,7 +48,7 @@ const batchConfigSchema = z.discriminatedUnion("kind", [
         .object({
           count: z.number().int().positive(),
           treatment: z.object({
-            factors: z.object({}).passthrough(),
+            factors: treatmentSchema,
           }),
         })
         .array(),
@@ -59,6 +61,18 @@ function pickRandom<T>(items: T[]): T {
   return items[random] as T;
 }
 
+export function shuffle(a: Array<any>) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+export function selectRandom(arr: Array<any>, num: number) {
+  return shuffle(arr.slice()).slice(0, num);
+}
+
 function unique<K extends keyof ClassicKinds>(
   kind: K,
   callback: EvtCtxCallback<Context, ClassicKinds>
@@ -66,12 +80,38 @@ function unique<K extends keyof ClassicKinds>(
   return async (ctx: EventContext<Context, ClassicKinds>, props: any) => {
     const attr = props.attribute as Attribute;
     const scope = props[kind] as Scope<Context, ClassicKinds>;
-    if (attr.id || scope.get(`ran-${attr.id}`)) {
+    if (!attr.id || scope.get(`ran-${attr.id}`)) {
       return;
     }
 
     await callback(ctx, props);
+
+    scope.set(`ran-${attr.id}`, true);
   };
+}
+
+function addMissingStages(
+  ctx: EventContext<Context, ClassicKinds>,
+  stages: Stage[]
+) {
+  for (const stage of stages) {
+    if (!stage.round) {
+      error(`stage without round on game init: ${stage.id}`);
+
+      continue;
+    }
+
+    const newStages = stage.round.get("newStages") as AddScopeInput[];
+    for (const newStage of newStages) {
+      newStage.attributes!.push({
+        key: "roundID",
+        val: `"${stage.round.id}"`,
+        immutable: true,
+      });
+      ctx.addScopes([newStage]);
+    }
+    stage.round.set("newStages", []);
+  }
 }
 
 export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
@@ -81,6 +121,7 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
   const playersForParticipant = new Map<string, Player>();
   const playersByGame = new Map<string, Player[]>();
   const playersByID = new Map<string, Player>();
+  const gamesByBatch = new Map<string, Game[]>();
   const stagesByGame = new Map<string, Stage[]>();
   const stageForStepID = new Map<string, Stage>();
   const batches: Batch[] = [];
@@ -95,7 +136,14 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
         continue;
       }
 
-      let availableGames = batch.unstartedGames;
+      let availableGames = [];
+
+      const games = gamesByBatch.get(batch.id) || [];
+      for (const game of games) {
+        if (game.hasNotStarted) {
+          availableGames.push(game);
+        }
+      }
 
       if (player.get("treatment")) {
         availableGames = availableGames.filter((g) =>
@@ -121,13 +169,36 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
 
       return;
     }
+
+    player.set("ended", "no more games");
+  }
+
+  function checkShouldOpenExperiment(ctx: EventContext<Context, ClassicKinds>) {
+    let shouldOpenExperiment = false;
+    LOOP: for (const batch of batches) {
+      if (!batch.isRunning) {
+        continue;
+      }
+
+      const games = gamesByBatch.get(batch.id) || [];
+      for (const game of games) {
+        if (game.hasNotStarted) {
+          shouldOpenExperiment = true;
+          break LOOP;
+        }
+      }
+    }
+
+    ctx.globals.set("experimentOpen", shouldOpenExperiment);
   }
 
   _.on(TajribaEvent.ParticipantConnect, function (ctx, { participant }) {
     online.set(participant.id, participant);
 
     const player = playersForParticipant.get(participant.id);
+    info("HAS PLAYER", Boolean(player));
     if (!player) {
+      info("ADDING PLAYER", participant.id);
       ctx.addScopes([
         {
           attributes: attrs([
@@ -159,6 +230,8 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     player.participantID = participantID;
     playersForParticipant.set(participantID, player);
 
+    info("ADDING PLAYER LINK", player.id, participantID);
+
     ctx.addLinks([
       {
         link: true,
@@ -174,10 +247,10 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
 
   type PlayerGameID = { player: Player; gameID: string };
   _.on("player", "gameID", function (_, { player, gameID }: PlayerGameID) {
-    if (!player.participantID) {
-      error(`game player without participant id: ${player.id}`);
-      return;
-    }
+    // if (!player.participantID) {
+    //   error(`game player without participant id: ${player.id}`);
+    //   return;
+    // }
 
     let players = playersByGame.get(gameID);
     if (!players) {
@@ -186,6 +259,17 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     }
 
     players.push(player);
+  });
+
+  type GameBatchID = { game: Game; batchID: string };
+  _.on("game", "batchID", function (_, { game, batchID }: GameBatchID) {
+    let games = gamesByBatch.get(batchID);
+    if (!games) {
+      games = [];
+      gamesByBatch.set(batchID, games);
+    }
+
+    games.push(game);
   });
 
   _.on("batch", function (_, { batch }: { batch: Batch }) {
@@ -199,7 +283,6 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     }
 
     const config = res.data;
-    info("new batch", config);
 
     switch (config.kind) {
       case "simple":
@@ -250,15 +333,12 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
             }
           }
 
-          const shouldOpenExperiment = batches.some((b) => b.available);
-          ctx.globals.set("experimentOpen", shouldOpenExperiment);
-
+          checkShouldOpenExperiment(ctx);
           break;
         }
-
         case "ended":
           console.debug("callbacks: batch ended");
-          for (const game of batch.games) {
+          for (const game of gamesByBatch.get(batch.id) || []) {
             const status = game.get("status") as string;
             if (["failed", "ended", "terminated"].includes(status)) {
               game.end("batch ended");
@@ -280,12 +360,13 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     "game",
     "status",
     unique("game", function (ctx, { game, status }: GameStatus) {
+      console.log("GAME STATUS", status);
+
       switch (status) {
         case "running": {
           game.set("start", true);
 
-          const shouldOpenExperiment = batches.some((b) => b.available);
-          ctx.globals.set("experimentOpen", shouldOpenExperiment);
+          checkShouldOpenExperiment(ctx);
 
           break;
         }
@@ -297,7 +378,8 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
             return;
           }
 
-          const finishedBatch = !game.batch.games.some((g) => !g.hasEnded);
+          const games = gamesByBatch.get(game.batch.id) || [];
+          const finishedBatch = !games.some((g) => !g.hasEnded);
           if (finishedBatch) {
             game.batch.end("all games finished");
           }
@@ -503,6 +585,37 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     }
   );
 
+  _.on("player", "introDone", function (ctx, { player }: { player: Player }) {
+    if (!player.currentGame) {
+      warn("callbacks: introDone without game");
+
+      return;
+    }
+
+    const game = player.currentGame;
+    const treatment = treatmentSchema.parse(game.get("treatment"));
+    const playerCount = treatment["playerCount"] as number;
+
+    const gamePlayers = playersByGame.get(game.id) || [];
+    const readyPlayers = gamePlayers.filter((p) => p.get("introDone"));
+
+    if (readyPlayers.length < playerCount) {
+      console.debug("callbacks: not enough players ready yet");
+
+      return;
+    }
+
+    const players = selectRandom(readyPlayers, playerCount);
+    for (const plyr of gamePlayers) {
+      if (!players.some((p) => p.id === plyr.id)) {
+        player.set("gameID", null);
+        assignplayer(player);
+      }
+    }
+
+    game.set("start", true);
+  });
+
   type BeforeGameStart = { game: Game; start: boolean };
   _.before(
     "game",
@@ -587,6 +700,8 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
 
         return;
       }
+
+      addMissingStages(ctx, stages);
 
       // Checked length > 0 above
       const stage = stages[0]!;
@@ -694,13 +809,15 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
         return;
       }
 
+      addMissingStages(ctx, stages);
+
       const players = playersByGame.get(gameID) || [];
 
       const participantIDs: string[] = [];
       const nodeIDs = [round.id];
       for (const player of players) {
         participantIDs.push(player.participantID!);
-        const playerRoundID = player.get(`playerGameID-${round.id}`) as string;
+        const playerRoundID = player.get(`playerRoundID-${round.id}`) as string;
         if (playerRoundID) {
           nodeIDs.push(playerRoundID);
         } else {
@@ -1008,7 +1125,7 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     TajribaEvent.TransitionAdd,
     function (_, { step, transition }: TransitionAdd) {
       const stage = stageForStepID.get(step.id);
-      info(step, transition, stage);
+      info("transition =>", step, transition, stage);
       if (transition.from === State.Running && transition.to === State.Ended) {
         if (!stage) {
           error(`step ending without stage: ${step.id}`);

@@ -1,4 +1,9 @@
-import { Loading, usePlayer, usePlayers, useRound } from "@empirica/player";
+import {
+  usePlayer,
+  usePlayers,
+  useRound,
+} from "@empirica/core/player/classic/react";
+import { Loading } from "@empirica/core/player/react";
 import React from "react";
 import { JellyBeans } from "./examples/JellyBeans";
 import { MineSweeper } from "./examples/MineSweeper";

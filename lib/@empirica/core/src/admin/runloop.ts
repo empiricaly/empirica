@@ -131,6 +131,16 @@ export class Runloop<
 
     await layer.ready();
 
+    while (true) {
+      const subs = this.subs.newSubs();
+      if (!subs) {
+        break;
+      }
+      await this.processNewSub(subs);
+    }
+
+    // await new Promise((r) => setTimeout(r, 200));
+
     layer.postCallback = this.postCallback.bind(this);
   }
 
@@ -203,10 +213,35 @@ export class Runloop<
     this.attributeInputs.push(...inputs);
   }
 
+  // TODO ADD iteration attributes per scope, only first 100...
+  private loadAllScopes(filters: ScopedAttributesInput[], after?: any) {
+    this.taj.scopes({ filter: filters, first: 100, after }).then((conn) => {
+      for (const edge of conn?.edges || []) {
+        for (const attrEdge of edge.node.attributes.edges || []) {
+          this.attributesSub.next({
+            attribute: attrEdge.node as AttributeChange,
+            removed: false,
+          });
+        }
+
+        this.scopesSub.next({
+          scope: edge.node as ScopeIdent,
+          removed: false,
+        });
+      }
+
+      if (conn?.pageInfo.hasNextPage && conn?.pageInfo.endCursor) {
+        return this.loadAllScopes(filters, conn?.pageInfo.endCursor);
+      }
+    });
+  }
+
   private async processNewScopesSub(filters: ScopedAttributesInput[]) {
     if (filters.length === 0) {
       return;
     }
+
+    const initProm = this.loadAllScopes(filters);
 
     let resolve: (value: unknown) => void;
     const prom = new Promise((r) => (resolve = r));
@@ -236,7 +271,7 @@ export class Runloop<
       },
     });
 
-    await prom;
+    await Promise.all([prom, initProm]);
   }
 
   private async processNewSub(subs: Subs) {
@@ -262,6 +297,7 @@ export class Runloop<
     }
 
     if (subs.participants) {
+      console.log("PARTICIOANT SUB");
       participantsSub(this.taj, this.connections, this.participants);
     }
 

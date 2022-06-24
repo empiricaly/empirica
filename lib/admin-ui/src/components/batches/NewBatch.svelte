@@ -43,7 +43,7 @@
     }
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     let config;
     switch (assignmentMethod) {
       case "simple":
@@ -64,7 +64,15 @@
     error = null;
     try {
       validateBatchConfig(config);
-      $currentAdmin.createBatch({ config });
+      // $currentAdmin.createBatch({ config });
+
+      await $currentAdmin.addScope({
+        kind: "batch",
+        attributes: [
+          { key: "config", val: JSON.stringify(config), immutable: true },
+        ],
+      });
+
       newBatch = false;
     } catch (err) {
       error = err.toString();

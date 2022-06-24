@@ -55,7 +55,14 @@ export class ParticipantConnection {
             "disconnected",
             this._connected.next.bind(this._connected, false)
           );
+          tajPart.on("error", (error) => {
+            console.log("conn error", error);
+          });
+          tajPart.on("accessDenied", () => {
+            this.resetSession();
+          });
         } catch (error) {
+          console.log("ERROR HERE", error);
           if (error !== ErrNotConnected) {
             this.resetSession();
           }
@@ -110,10 +117,25 @@ export interface Session {
   participant: ParticipantIdent;
 }
 
+interface Storage {
+  clear(): void;
+  getItem(key: string): string | null;
+  removeItem(key: string): void;
+  setItem(key: string, value: string): void;
+}
+
+const isBrowser =
+  typeof window !== "undefined" && typeof window.document !== "undefined";
+
+let storage: Storage;
+if (isBrowser) {
+  storage = window.localStorage;
+}
+
 export class ParticipantSession {
   static tokenKey = "empirica:token";
   static partKey = "empirica:participant";
-  static storage: Storage = window.localStorage;
+  static storage: Storage = storage;
 
   private _sessions: BehaviorSubject<Session | undefined>;
   private _token?: string;
