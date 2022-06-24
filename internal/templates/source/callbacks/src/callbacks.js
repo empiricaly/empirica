@@ -1,64 +1,50 @@
-import { Callbacks } from "@empirica/admin";
+export default function (empirica) {
+  empirica.on("game", "start", (ctx, { game }) => {
+    console.log("game start");
 
-const Empirica = new Callbacks();
-export default Empirica;
+    // Jelly beans
 
-Empirica.onGameStart(function ({ game }) {
-  console.log("game start");
+    const round = game.addRound({
+      name: "Round 1 - Jelly Beans",
+      task: "jellybeans",
+    });
+    round.addStage({ name: "Answer", duration: 300 });
+    round.addStage({ name: "Result", duration: 120 });
 
-  // Jelly beans
+    // Minesweeper
 
-  const round = game.addRound({
-    name: "Round 1 - Jelly Beans",
-    task: "jellybeans",
+    const round2 = game.addRound({
+      name: "Round 2 - Minesweeper",
+      task: "minesweeper",
+    });
+    round2.addStage({ name: "Play", duration: 300 });
+
+    for (const player of game.players) {
+      player.set("score", 0);
+    }
+
+    console.log("game start done");
   });
-  round.addStage({ name: "Answer", duration: 300 });
-  round.addStage({ name: "Result", duration: 120 });
 
-  // Minesweeper
-
-  const round2 = game.addRound({
-    name: "Round 2 - Minesweeper",
-    task: "minesweeper",
+  empirica.on("round", "start", (ctx, { round }) => {
+    console.log("round start");
   });
-  round2.addStage({ name: "Play", duration: 300 });
 
-  // // Public Goods
+  empirica.on("stage", "start", (ctx, { stage }) => {
+    console.log("stage start");
+  });
 
-  // const round3 = game.addRound({
-  //   name: "Round 3 - Public Goods",
-  //   task: "publicgoods",
-  // });
-  // round3.addStage({ name: "Answer", duration: 300 });
-  // round3.addStage({ name: "Result", duration: 120 });
+  empirica.on("stage", "ended", (ctx, { stage }) => {
+    console.log("stage end");
+    calculateJellyBeansScore(stage);
+  });
 
-  // Set initial player scores to 0
+  empirica.on("round", "ended", (ctx, { round }) => {});
 
-  for (const player of game.players) {
-    player.set("score", 0);
-  }
-
-  console.log("game start done");
-});
-
-Empirica.onRoundStart(function ({ round }) {
-  console.log("round start");
-});
-
-Empirica.onStageStart(function ({ stage }) {
-  console.log("stage start");
-});
-
-Empirica.onStageEnd(function ({ stage }) {
-  console.log("stage end");
-  calculateJellyBeansScore(stage);
-});
-
-Empirica.onRoundEnd(function ({ round }) {});
-
-Empirica.onGameEnd(function ({ game }) {
-  console.log("game end");
-});
+  empirica.on("game", "ended", (ctx, { game }) => {
+    console.log("game end");
+  });
+}
 
 const jellyBeansCount = 1623;
 
@@ -70,7 +56,7 @@ function calculateJellyBeansScore(stage) {
     return;
   }
 
-  for (const player of stage.round.game.players) {
+  for (const player of stage.currentGame.players) {
     let roundScore = 0;
 
     const playerGuess = player.round.get("guess");

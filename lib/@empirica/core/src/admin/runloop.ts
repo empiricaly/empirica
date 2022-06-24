@@ -129,6 +129,8 @@ export class Runloop<
       await this.processNewSub(subs);
     }
 
+    await layer.ready();
+
     layer.postCallback = this.postCallback.bind(this);
   }
 

@@ -4,6 +4,7 @@ import { ScopeConstructor } from "../shared/scopes";
 import { error } from "../utils/console";
 import { EventContext, ListenersCollector, TajribaEvent } from "./events";
 import { Participant } from "./participants";
+import { debug } from "console";
 
 export class Layer<
   Context,
@@ -21,13 +22,22 @@ export class Layer<
     private participants: Map<string, Participant>
   ) {}
 
+  async ready() {
+    for (const start of this.listeners.readys) {
+      debug("ready callback");
+      await start.callback(this.evtctx);
+    }
+  }
+
   async start() {
     for (const start of this.listeners.starts) {
+      debug("start callback");
       await start.callback(this.evtctx);
     }
 
     for (const kindEvent of this.listeners.kindListeners) {
       for (const [_, scope] of this.scopesByKind(kindEvent.kind)) {
+        debug("initial scope callback", kindEvent.kind);
         await kindEvent.callback(this.evtctx, { [kindEvent.kind]: scope });
         if (this.postCallback) {
           await this.postCallback();
@@ -41,6 +51,11 @@ export class Layer<
         if (!attrib) {
           continue;
         }
+        debug(
+          "initial attribute callback",
+          attributeEvent.kind,
+          attributeEvent.key
+        );
         await attributeEvent.callback(this.evtctx, {
           [attributeEvent.key]: attrib.value,
           attribute: attrib,
@@ -60,6 +75,7 @@ export class Layer<
         }
         case TajribaEvent.ParticipantConnect: {
           for (const [_, participant] of this.participants) {
+            debug(`initial connected callback`);
             await tajEvent.callback(this.evtctx, {
               participant,
             });

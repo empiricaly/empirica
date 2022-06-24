@@ -109,7 +109,10 @@ export class AdminContext<
 
     let globalScopeID: string | undefined;
     try {
-      const scopes = await tajAdmin.scopes({ filter: { names: ["global"] } });
+      const scopes = await tajAdmin.scopes({
+        filter: { kinds: ["global"] },
+        first: 100,
+      });
       globalScopeID = scopes!.edges[0]?.node.id;
       if (!globalScopeID) {
         warn("context: global scopeID not found");
@@ -117,7 +120,7 @@ export class AdminContext<
         return;
       }
     } catch (err) {
-      error(`context: global scopeID not fetch: ${err}`);
+      error(`context: global scopeID not fetched: ${err}`);
 
       return;
     }

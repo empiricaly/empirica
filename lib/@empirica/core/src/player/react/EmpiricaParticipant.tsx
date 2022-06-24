@@ -6,7 +6,7 @@ export const ParticipantCtx = React.createContext<
   ParticipantContext | undefined
 >(undefined);
 
-type EmpiricaParticipantProps = WithChildren<{
+export type EmpiricaParticipantProps = WithChildren<{
   url: string;
   ns: string;
   modeFunc?: Mode<any>;

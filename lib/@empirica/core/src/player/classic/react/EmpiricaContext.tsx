@@ -9,7 +9,7 @@ import {
 } from "../../react/hooks";
 import { Loading } from "../../react/Loading";
 import { NoGames } from "../../react/NoGames";
-import { PlayerCreate, PlayerCreateProps } from "../../react/PlayerID";
+import { PlayerCreate, PlayerCreateProps } from "../../react/PlayerCreate";
 import { useGame, usePlayer, useRound, useStage } from "./hooks";
 import { Lobby as DefaultLobby } from "./Lobby";
 import { Steps } from "./Steps";

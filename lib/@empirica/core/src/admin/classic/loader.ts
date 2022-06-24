@@ -4,7 +4,11 @@ import { ClassicKinds, Context } from "./models";
 
 const string = z.string();
 
-export function ClassicLoader(_: ListenersCollector<Context, ClassicKinds>) {
+/** ClassicLoader loads. */
+export function ClassicLoader(
+  /** This is the listener */
+  _: ListenersCollector<Context, ClassicKinds>
+) {
   _.on("start", function (ctx) {
     ctx.scopeSub({ kinds: ["batch", "player"] });
     ctx.participantsSub();

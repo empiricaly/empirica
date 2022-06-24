@@ -11,7 +11,8 @@
     "npm": "8.10.0"
   },
   "dependencies": {
-    "@empirica/core": "latest"
+    "@empirica/core": "latest",
+    "minimist": "1.2.6"
   },
   "devDependencies": {
     "esbuild": "0.14.47"

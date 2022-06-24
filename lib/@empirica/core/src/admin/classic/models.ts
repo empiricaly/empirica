@@ -1,3 +1,4 @@
+import { AddScopeInput } from "@empirica/tajriba";
 import { z } from "zod";
 import { Constructor } from "../../shared/helpers";
 import { JsonValue } from "../../utils/json";
@@ -160,7 +161,20 @@ export class Game extends BatchOwned {
 
     this.addScopes([scope]);
 
-    return accessors;
+    return {
+      ...accessors,
+      addStage: (
+        attributes: { [key: string]: JsonValue } | AttributeInput[]
+      ) => {
+        addStage(
+          this.addScopes.bind(this),
+          this.id, //! WARNING THIS IS NOT THE ROUND ID...
+          this.id,
+          batchID,
+          attributes
+        );
+      },
+    };
   }
 
   end(reason: string) {
@@ -248,26 +262,70 @@ export class PlayerRound extends GameOwned {}
 
 export class PlayerStage extends GameOwned {}
 
+function addStage(
+  addScopes: (nput: AddScopeInput[]) => void,
+  roundID: string,
+  gameID: string,
+  batchID: string,
+  attributes: { [key: string]: JsonValue } | AttributeInput[]
+) {
+  if (!Array.isArray(attributes)) {
+    const newAttr: AttributeInput[] = [];
+    for (const key in attributes) {
+      newAttr.push({
+        key,
+        value: attributes[key]!,
+      });
+    }
+
+    attributes = newAttr;
+  }
+
+  const durAttr = attributes.find((a) => a.key === "duration");
+  const res = z.number().int().gte(5).safeParse(durAttr?.value);
+  if (!res.success) {
+    throw new Error(`stage duration invalid: ${res.error}`);
+  }
+
+  const [scope, accessors] = scopeConstructor({
+    kind: "stage",
+    attributes: attrs([
+      ...attributes.filter((a) => !reservedKeys.includes(a.key)),
+      {
+        key: "roundID",
+        value: roundID,
+        immutable: true,
+      },
+      {
+        key: "gameID",
+        value: gameID,
+        immutable: true,
+      },
+      {
+        key: "batchID",
+        value: batchID,
+        immutable: true,
+      },
+      {
+        key: "start",
+        value: false,
+        protected: true,
+      },
+      {
+        key: "ended",
+        value: false,
+        protected: true,
+      },
+    ]),
+  });
+
+  addScopes([scope]);
+
+  return accessors;
+}
+
 export class Round extends GameOwned {
   addStage(attributes: { [key: string]: JsonValue } | AttributeInput[]) {
-    if (!Array.isArray(attributes)) {
-      const newAttr: AttributeInput[] = [];
-      for (const key in attributes) {
-        newAttr.push({
-          key,
-          value: attributes[key]!,
-        });
-      }
-
-      attributes = newAttr;
-    }
-
-    const durAttr = attributes.find((a) => a.key === "duration");
-    const res = z.number().int().gte(5).safeParse(durAttr?.value);
-    if (!res.success) {
-      throw new Error(`stage duration invalid: ${res.error}`);
-    }
-
     const batchID = this.get("batchID") as string;
     if (!batchID) {
       throw new Error("missing batch ID on round");
@@ -278,41 +336,7 @@ export class Round extends GameOwned {
       throw new Error("missing game ID on round");
     }
 
-    const [scope, accessors] = scopeConstructor({
-      kind: "stage",
-      attributes: attrs([
-        ...attributes.filter((a) => !reservedKeys.includes(a.key)),
-        {
-          key: "roundID",
-          value: this.id,
-          immutable: true,
-        },
-        {
-          key: "gameID",
-          value: gameID,
-          immutable: true,
-        },
-        {
-          key: "batchID",
-          value: batchID,
-          immutable: true,
-        },
-        {
-          key: "start",
-          value: false,
-          protected: true,
-        },
-        {
-          key: "ended",
-          value: false,
-          protected: true,
-        },
-      ]),
-    });
-
-    this.addScopes([scope]);
-
-    return accessors;
+    addStage(this.addScopes.bind(this), this.id, gameID, batchID, attributes);
   }
 }
 

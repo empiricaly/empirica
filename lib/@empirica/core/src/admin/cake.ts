@@ -1,8 +1,7 @@
 import { Observable } from "rxjs";
 import { Attribute } from "../shared/attributes";
-import { Scope } from "./scopes";
 import { ScopeConstructor } from "../shared/scopes";
-import { error } from "../utils/console";
+import { debug, error } from "../utils/console";
 import {
   AttributeEventListener,
   EventContext,
@@ -14,6 +13,7 @@ import {
   TajribaEvent,
 } from "./events";
 import { Connection } from "./participants";
+import { Scope } from "./scopes";
 import { Transition } from "./transitions";
 
 // Cake triggers callbacks, respecting listener placement
@@ -119,6 +119,7 @@ export class Cake<
         const callbacks = this.kindListeners.get(kind) || [];
 
         for (const callback of callbacks) {
+          debug("scope callback", kind);
           await callback.callback(this.evtctx, { [kind]: scope });
           if (this.postCallback) {
             await this.postCallback();
@@ -154,6 +155,7 @@ export class Cake<
         }
 
         for (const callback of callbacks) {
+          debug("attribute callback", kind, key);
           await callback.callback(this.evtctx, props);
           if (this.postCallback) {
             await this.postCallback();
@@ -168,6 +170,9 @@ export class Cake<
     this.transitions.subscribe({
       next: async (transition) => {
         for (const callback of this.transitionEvents) {
+          debug(
+            `transition callback from '${transition.from}' to '${transition.to}'`
+          );
           await callback.callback(this.evtctx, {
             transition,
             step: transition.step,
@@ -189,6 +194,7 @@ export class Cake<
         }
 
         for (const callback of this.connectedEvents) {
+          debug(`connected callback`);
           await callback.callback(this.evtctx, {
             participant: connection.participant,
           });
@@ -209,6 +215,7 @@ export class Cake<
         }
 
         for (const callback of this.disconnectedEvents) {
+          debug(`disconnected callback`);
           await callback.callback(this.evtctx, {
             participant: connection.participant,
           });

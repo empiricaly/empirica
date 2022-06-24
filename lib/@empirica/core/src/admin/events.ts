@@ -26,7 +26,7 @@ export enum ListernerPlacement {
   After,
 }
 
-export type StartListener<
+export type SimpleListener<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > = {
@@ -63,18 +63,19 @@ export class ListenersCollector<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
-  readonly starts: StartListener<Context, Kinds>[] = [];
+  readonly starts: SimpleListener<Context, Kinds>[] = [];
+  readonly readys: SimpleListener<Context, Kinds>[] = [];
   readonly tajEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
-  readonly kindListeners: KindEventListener<
-    EvtCtxCallback<Context, Kinds>
-  >[] = [];
+  readonly kindListeners: KindEventListener<EvtCtxCallback<Context, Kinds>>[] =
+    [];
   readonly attributeListeners: AttributeEventListener<
     EvtCtxCallback<Context, Kinds>
   >[] = [];
 
-  // First callback called.
+  // start: first callback called.
+  // ready: callback called when initial loading is finished.
   on(
-    kind: "start",
+    kind: "start" | "ready",
     callback: (ctx: EventContext<Context, Kinds>) => void
   ): void;
 
@@ -165,6 +166,25 @@ export class ListenersCollector<
       }
 
       this.starts.push({
+        placement,
+        callback: keyOrNodeIDOrEventOrCallback as (
+          ctx: EventContext<Context, Kinds>
+        ) => void,
+      });
+
+      return;
+    }
+
+    if (kindOrEvent === "ready") {
+      if (callback) {
+        throw new Error("ready event only accepts 2 arguments");
+      }
+
+      if (typeof keyOrNodeIDOrEventOrCallback !== "function") {
+        throw new Error("second argument expected to be a callback");
+      }
+
+      this.readys.push({
         placement,
         callback: keyOrNodeIDOrEventOrCallback as (
           ctx: EventContext<Context, Kinds>
