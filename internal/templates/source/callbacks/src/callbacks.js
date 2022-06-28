@@ -1,64 +1,32 @@
-export default function (empirica) {
-  empirica.on("game", "start", (ctx, { game, start }) => {
-    if (!start) return;
+import { ClassicListenersCollector } from "@empirica/core";
+export const Empirica = new ClassicListenersCollector();
 
-    console.log("game start");
-
-    // Jelly beans
-
-    const round = game.addRound({
-      name: "Round 1 - Jelly Beans",
-      task: "jellybeans",
-    });
-    round.addStage({ name: "Answer", duration: 300 });
-    round.addStage({ name: "Result", duration: 120 });
-
-    // Minesweeper
-
-    const round2 = game.addRound({
-      name: "Round 2 - Minesweeper",
-      task: "minesweeper",
-    });
-    round2.addStage({ name: "Play", duration: 300 });
-
-    for (const player of game.players) {
-      player.set("score", 0);
-    }
-
-    console.log("game start done");
+Empirica.onGameStart(({ game }) => {
+  const round = game.addRound({
+    name: "Round 1 - Jelly Beans",
+    task: "jellybeans",
   });
+  round.addStage({ name: "Answer", duration: 300 });
+  round.addStage({ name: "Result", duration: 120 });
 
-  empirica.on("round", "start", (ctx, { round, start }) => {
-    if (!start) return;
-
-    console.log("round start");
+  const round2 = game.addRound({
+    name: "Round 2 - Minesweeper",
+    task: "minesweeper",
   });
+  round2.addStage({ name: "Play", duration: 300 });
+});
 
-  empirica.on("stage", "start", (ctx, { stage, start }) => {
-    if (!start) return;
+Empirica.onRoundStart(({ round }) => {});
 
-    console.log("stage start");
-  });
+Empirica.onStageStart(({ stage }) => {});
 
-  empirica.on("stage", "ended", (ctx, { stage, ended }) => {
-    if (!ended) return;
+Empirica.onStageEnded(({ stage }) => {
+  calculateJellyBeansScore(stage);
+});
 
-    console.log("stage end");
-    calculateJellyBeansScore(stage);
-  });
+Empirica.onRoundEnded(({ round }) => {});
 
-  empirica.on("round", "ended", (ctx, { round, ended }) => {
-    if (!ended) return;
-
-    console.log("round end");
-  });
-
-  empirica.on("game", "ended", (ctx, { game, ended }) => {
-    if (!ended) return;
-
-    console.log("game end");
-  });
-}
+Empirica.onGameEnded(({ game }) => {});
 
 const jellyBeansCount = 1623;
 
@@ -81,7 +49,9 @@ function calculateJellyBeansScore(stage) {
       roundScore = Math.max(0, score);
     }
 
-    player.round.set("score", player.get("score") + roundScore);
-    player.set("score", player.get("score") + roundScore);
+    player.round.set("score", roundScore);
+
+    const totalScore = player.get("score") || 0;
+    player.set("score", totalScore + roundScore);
   }
 }

@@ -1,5 +1,10 @@
 export { AdminContext, ListenersCollector } from "./admin";
-export { Classic, classicKinds, ClassicLoader } from "./admin/classic";
+export {
+  Classic,
+  classicKinds,
+  ClassicListenersCollector,
+  ClassicLoader,
+} from "./admin/classic";
 export * from "./player/classic";
 export * from "./player/classic/react";
 export * from "./player/react";

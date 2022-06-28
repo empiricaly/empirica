@@ -19,8 +19,6 @@ export default function App() {
     url = "https://" + url + "/query";
   }
 
-  console.log("Hey", EmpiricaClassic);
-
   return (
     <EmpiricaParticipant url={url} ns={playerKey} modeFunc={EmpiricaClassic}>
       <div className="h-screen relative">

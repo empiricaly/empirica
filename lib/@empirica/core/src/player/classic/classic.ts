@@ -123,7 +123,6 @@ export function EmpiricaClassic(
   participantID: string,
   provider: TajribaProvider
 ): EmpiricaClassicContext {
-  info("EmpiricaClassic");
   const attributesDones = new Subject<void>();
   const scopesDones = new Subject<void>();
 
@@ -170,11 +169,7 @@ export function EmpiricaClassic(
   });
 
   provider.dones.subscribe({
-    error: (error) => {
-      info(":ERERERERE", error);
-    },
     next: () => {
-      info("HEREO");
       const current = getCurrent(ret);
       const updated = getMainObjects(participantID, scopes, attributes);
       ctx.game = updated.game;
@@ -228,9 +223,6 @@ export function EmpiricaClassic(
     },
   });
 
-  info("OBSERVED", provider.dones.observed);
-  info("CLOSED", provider.dones.closed);
-
   return ret;
 }
 
@@ -278,15 +270,12 @@ function getMainObjects(
     players: Array.from(players.values()) as Player[],
   };
 
-  info("PLAYERS", players);
-
   if (players.size === 0) {
     return res;
   }
 
   res.player = Array.from(players.values()).find((p) => {
     const pID = attributes.nextAttributeValue(p.id, "participantID") as string;
-    info("PARTICIPANT", pID === participantID, pID, participantID);
     return pID === participantID;
   }) as Player;
 

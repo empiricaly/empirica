@@ -161,12 +161,28 @@ export class Scope<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
+  /**
+   * @internal
+   */
   _deleted = false;
+
+  /**
+   * @internal
+   */
   _updated = false;
 
   constructor(
+    /**
+     * @internal
+     */
     readonly ctx: Context,
+    /**
+     * @internal
+     */
     readonly scope: ScopeIdent,
+    /**
+     * @internal
+     */
     protected attributes: Attributes
   ) {}
 
@@ -174,6 +190,9 @@ export class Scope<
     return this.scope.id;
   }
 
+  /**
+   * @internal
+   */
   get kind() {
     // Using ! because we don't allow scopes without kind
     return this.scope.kind!;
@@ -191,6 +210,9 @@ export class Scope<
     return this.attributes.attribute(this.scope.id, key).set(value, ao);
   }
 
+  /**
+   * @internal
+   */
   hasUpdated() {
     return this._updated || this.attributes.scopeWasUpdated(this.id);
   }

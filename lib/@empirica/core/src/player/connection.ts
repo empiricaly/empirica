@@ -5,6 +5,7 @@ import {
   TajribaConnection,
 } from "../shared/tajriba_connection";
 import { bs, bsu } from "../utils/object";
+import { error } from "../utils/console";
 
 export class ParticipantConnection {
   private _tajribaPart = bsu<TajribaParticipant>();
@@ -55,15 +56,15 @@ export class ParticipantConnection {
             "disconnected",
             this._connected.next.bind(this._connected, false)
           );
-          tajPart.on("error", (error) => {
-            console.log("conn error", error);
+          tajPart.on("error", (err) => {
+            error("conn error", err);
           });
           tajPart.on("accessDenied", () => {
             this.resetSession();
           });
-        } catch (error) {
-          console.log("ERROR HERE", error);
-          if (error !== ErrNotConnected) {
+        } catch (err) {
+          if (err !== ErrNotConnected) {
+            error("conn error", err);
             this.resetSession();
           }
         }

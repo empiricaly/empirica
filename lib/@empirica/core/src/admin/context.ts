@@ -10,7 +10,7 @@ import { ScopeConstructor } from "../shared/scopes";
 import { TajribaConnection } from "../shared/tajriba_connection";
 import { error, warn } from "../utils/console";
 import { AdminConnection } from "./connection";
-import { Subscriber } from "./events";
+import { ListenersCollector, Subscriber } from "./events";
 import { Globals } from "./globals";
 import { Runloop } from "./runloop";
 import { FileTokenStorage, TokenProvider } from "./token_file";
@@ -22,9 +22,14 @@ export class AdminContext<
   readonly tajriba: TajribaConnection;
   public adminConn: AdminConnection | undefined;
   private runloop: Runloop<Context, Kinds> | undefined;
-  private adminSubs = new Subject<Subscriber<Context, Kinds>>();
+  private adminSubs = new Subject<
+    Subscriber<Context, Kinds> | ListenersCollector<Context, Kinds>
+  >();
   private adminStop = new Subject<void>();
-  private subs: Subscriber<Context, Kinds>[] = [];
+  private subs: (
+    | Subscriber<Context, Kinds>
+    | ListenersCollector<Context, Kinds>
+  )[] = [];
 
   private constructor(url: string, private ctx: Context, private kinds: Kinds) {
     this.tajriba = new TajribaConnection(url);
@@ -68,7 +73,9 @@ export class AdminContext<
     return adminContext;
   }
 
-  register(subscriber: Subscriber<Context, Kinds>) {
+  register(
+    subscriber: Subscriber<Context, Kinds> | ListenersCollector<Context, Kinds>
+  ) {
     this.subs.push(subscriber);
     if (this.runloop) {
       this.adminSubs.next(subscriber);

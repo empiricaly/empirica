@@ -15,7 +15,7 @@ import { Attributes } from "./attributes";
 import { Cake } from "./cake";
 import { AdminConnection } from "./connection";
 import { TajribaAdminAccess } from "./context";
-import { EventContext, Subscriber } from "./events";
+import { EventContext, Subscriber, ListenersCollector } from "./events";
 import { Globals } from "./globals";
 import { Layer } from "./layers";
 import { Connection, Participant, participantsSub } from "./participants";
@@ -50,7 +50,9 @@ export class Runloop<
     private ctx: Context,
     private kinds: Kinds,
     globalScopeID: string,
-    subs: Observable<Subscriber<Context, Kinds>>,
+    subs: Observable<
+      Subscriber<Context, Kinds> | ListenersCollector<Context, Kinds>
+    >,
     stop: Observable<void>
   ) {
     this.attributes = new Attributes(
@@ -102,7 +104,13 @@ export class Runloop<
           this.participants
         );
         this.layers.push(layer);
-        subscriber(layer.listeners);
+
+        if (typeof subscriber === "function") {
+          subscriber(layer.listeners);
+        } else {
+          layer.listeners = subscriber;
+        }
+
         await this.cake.add(layer.listeners);
         await this.initLayer(layer);
       },
@@ -297,7 +305,6 @@ export class Runloop<
     }
 
     if (subs.participants) {
-      console.log("PARTICIOANT SUB");
       participantsSub(this.taj, this.connections, this.participants);
     }
 

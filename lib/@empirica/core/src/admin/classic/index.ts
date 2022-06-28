@@ -1,3 +1,5 @@
+export { Classic } from "./classic";
+export { ClassicLoader } from "./loader";
 export {
   Batch,
   classicKinds,
@@ -11,5 +13,4 @@ export {
   Stage,
 } from "./models";
 export type { ClassicKinds } from "./models";
-export { ClassicLoader } from "./loader";
-export { Classic } from "./classic";
+export { ClassicListenersCollector } from "./proxy";

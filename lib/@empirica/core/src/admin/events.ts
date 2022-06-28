@@ -5,8 +5,10 @@ import {
   LinkInput,
   TransitionInput,
 } from "@empirica/tajriba";
+import { Attribute } from "../shared/attributes";
 import { ScopeConstructor } from "../shared/scopes";
 import { TajribaAdminAccess } from "./context";
+import { Scope } from "./scopes";
 import { ScopeSubscriptionInput } from "./subscriptions";
 
 export type Subscriber<
@@ -58,6 +60,24 @@ export type EvtCtxCallback<
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > = (ctx: EventContext<Context, Kinds>, props: any) => void;
 
+function unique<
+  Context,
+  Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> },
+  K extends keyof Kinds
+>(kind: K, callback: EvtCtxCallback<Context, Kinds>) {
+  return async (ctx: EventContext<Context, Kinds>, props: any) => {
+    const attr = props.attribute as Attribute;
+    const scope = props[kind] as Scope<Context, Kinds>;
+    if (!attr.id || scope.get(`ran-${attr.id}`)) {
+      return;
+    }
+
+    await callback(ctx, props);
+
+    scope.set(`ran-${attr.id}`, true);
+  };
+}
+
 // Collects event listeners.
 export class ListenersCollector<
   Context,
@@ -71,6 +91,10 @@ export class ListenersCollector<
   readonly attributeListeners: AttributeEventListener<
     EvtCtxCallback<Context, Kinds>
   >[] = [];
+
+  get unique() {
+    return new ListenersCollectorProxy<Context, Kinds>(this);
+  }
 
   // start: first callback called.
   // ready: callback called when initial loading is finished.
@@ -92,7 +116,8 @@ export class ListenersCollector<
   on<Kind extends keyof Kinds>(
     kind: Kind,
     key: string,
-    callback: EvtCtxCallback<Context, Kinds>
+    callback: EvtCtxCallback<Context, Kinds>,
+    uniqueCall?: boolean
   ): void;
 
   on(
@@ -119,13 +144,15 @@ export class ListenersCollector<
       | TajribaEvent
       | EvtCtxCallback<Context, Kinds>
       | ((ctx: EventContext<Context, Kinds>) => void),
-    callback?: EvtCtxCallback<Context, Kinds>
+    callback?: EvtCtxCallback<Context, Kinds>,
+    uniqueCall?: boolean
   ): void {
     this.registerListerner(
       ListernerPlacement.Before,
       kindOrEvent,
       keyOrNodeIDOrEventOrCallback,
-      callback
+      callback,
+      uniqueCall
     );
   }
 
@@ -136,17 +163,19 @@ export class ListenersCollector<
       | TajribaEvent
       | EvtCtxCallback<Context, Kinds>
       | ((ctx: EventContext<Context, Kinds>) => void),
-    callback?: EvtCtxCallback<Context, Kinds>
+    callback?: EvtCtxCallback<Context, Kinds>,
+    uniqueCall?: boolean
   ): void {
     this.registerListerner(
       ListernerPlacement.After,
       kindOrEvent,
       keyOrNodeIDOrEventOrCallback,
-      callback
+      callback,
+      uniqueCall
     );
   }
 
-  private registerListerner(
+  protected registerListerner(
     placement: ListernerPlacement,
     kindOrEvent: string,
     keyOrNodeIDOrEventOrCallback?:
@@ -154,7 +183,8 @@ export class ListenersCollector<
       | TajribaEvent
       | EvtCtxCallback<Context, Kinds>
       | ((ctx: EventContext<Context, Kinds>) => void),
-    callback?: EvtCtxCallback<Context, Kinds>
+    callback?: EvtCtxCallback<Context, Kinds>,
+    uniqueCall = false
   ): void {
     if (kindOrEvent === "start") {
       if (callback) {
@@ -222,12 +252,63 @@ export class ListenersCollector<
         throw new Error("third argument expected to be a callback");
       }
 
+      if (uniqueCall) {
+        callback = unique(kindOrEvent, callback);
+      }
+
       this.attributeListeners.push({
         placement,
         kind: kindOrEvent,
         key: keyOrNodeIDOrEventOrCallback,
         callback,
       });
+    }
+  }
+}
+
+// Collects event listeners.
+class ListenersCollectorProxy<
+  Context,
+  Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
+> extends ListenersCollector<Context, Kinds> {
+  constructor(private coll: ListenersCollector<Context, Kinds>) {
+    super();
+  }
+
+  protected registerListerner(
+    placement: ListernerPlacement,
+    kindOrEvent: string,
+    keyOrNodeIDOrEventOrCallback?:
+      | string
+      | TajribaEvent
+      | EvtCtxCallback<Context, Kinds>
+      | ((ctx: EventContext<Context, Kinds>) => void),
+    callback?: EvtCtxCallback<Context, Kinds>
+  ): void {
+    if (
+      kindOrEvent === "start" ||
+      kindOrEvent === "ready" ||
+      Object.values(TajribaEvent).includes(kindOrEvent as any) ||
+      typeof keyOrNodeIDOrEventOrCallback === "function"
+    ) {
+      throw new Error("only attribute listeners can be unique");
+    }
+
+    super.registerListerner(
+      placement,
+      kindOrEvent,
+      keyOrNodeIDOrEventOrCallback,
+      callback,
+      true
+    );
+
+    while (true) {
+      const listener = this.attributeListeners.pop();
+      if (!listener) {
+        break;
+      }
+
+      this.coll.attributeListeners.push(listener);
     }
   }
 }

@@ -19,7 +19,7 @@ export function EmpiricaParticipant({
   children,
 }: EmpiricaParticipantProps) {
   let partCtx: ParticipantContext;
-  console.log(modeFunc);
+
   if (modeFunc) {
     partCtx = new ParticipantModeContext(url, ns, modeFunc);
   } else {

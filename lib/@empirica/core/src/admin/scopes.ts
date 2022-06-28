@@ -70,6 +70,9 @@ export class Scope<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > extends SharedScope<Context, Kinds> {
+  /**
+   * @internal
+   */
   readonly taj: TajribaAdminAccess;
 
   constructor(
@@ -82,7 +85,7 @@ export class Scope<
     this.taj = scopes.taj;
   }
 
-  scopeByKey(key: string) {
+  protected scopeByKey(key: string) {
     const id = this.get(key);
     if (!id || typeof id !== "string") {
       return;
@@ -91,7 +94,7 @@ export class Scope<
     return this.scopes.scope(id);
   }
 
-  scopesByKind(kind: keyof Kinds) {
+  protected scopesByKind(kind: keyof Kinds) {
     return this.scopes.byKind(kind);
   }
 
@@ -115,6 +118,9 @@ export class Scope<
     this.taj.addTransitions(input);
   }
 
+  /**
+   * @internal
+   */
   get globals() {
     return this.taj.globals;
   }

@@ -1,5 +1,4 @@
 import React from "react";
-import { info } from "../../../utils/console";
 import { Consent, ConsentProps } from "../../react/Consent";
 import { Finished } from "../../react/Finished";
 import {
@@ -47,23 +46,17 @@ export function EmpiricaContext({
   const [connecting, hasPlayer, onPlayerID] = usePlayerID();
   const [consented, onConsent] = useConsent();
 
-  info(`Connected:`, tajribaConnected);
-
   if (!tajribaConnected) {
     return <ConnectingComp />;
   }
 
-  info(`1`);
-
   if (!game && (!globals || !globals.get("experimentOpen"))) {
     return <NoGamesComp />;
   }
-  info(`2`);
 
   if (!consented) {
     return <ConsentComp onConsent={onConsent!} />;
   }
-  info(`3`);
 
   if (!hasPlayer || connecting) {
     return (
@@ -71,11 +64,9 @@ export function EmpiricaContext({
     );
   }
 
-  info(`4`);
   if (!player) {
     return <LoadingComp />;
   }
-  info(`5`, player);
 
   return (
     <Steps progressKey="intro" doneKey="introDone" steps={introSteps}>

@@ -1,18 +1,11 @@
 import { AddScopeInput, State } from "@empirica/tajriba";
 import { z } from "zod";
 import { PlayerGame } from "../../player/classic";
-import { Attribute } from "../../shared/attributes";
 import { error, info, warn } from "../../utils/console";
 import { deepEqual } from "../../utils/object";
 import { StepPayload } from "../context";
-import {
-  EventContext,
-  EvtCtxCallback,
-  ListenersCollector,
-  TajribaEvent,
-} from "../events";
+import { EventContext, ListenersCollector, TajribaEvent } from "../events";
 import { Participant } from "../participants";
-import { Scope } from "../scopes";
 import { Step, Transition } from "../transitions";
 import { attrs } from "./helpers";
 import {
@@ -71,23 +64,6 @@ export function shuffle(a: Array<any>) {
 
 export function selectRandom(arr: Array<any>, num: number) {
   return shuffle(arr.slice()).slice(0, num);
-}
-
-function unique<K extends keyof ClassicKinds>(
-  kind: K,
-  callback: EvtCtxCallback<Context, ClassicKinds>
-) {
-  return async (ctx: EventContext<Context, ClassicKinds>, props: any) => {
-    const attr = props.attribute as Attribute;
-    const scope = props[kind] as Scope<Context, ClassicKinds>;
-    if (!attr.id || scope.get(`ran-${attr.id}`)) {
-      return;
-    }
-
-    await callback(ctx, props);
-
-    scope.set(`ran-${attr.id}`, true);
-  };
 }
 
 function addMissingStages(
@@ -323,7 +299,7 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
   _.on(
     "batch",
     "status",
-    unique("batch", function (ctx, { batch, status }: BatchStatus) {
+    function (ctx, { batch, status }: BatchStatus) {
       switch (status) {
         case "running": {
           for (const [_, player] of playersForParticipant) {
@@ -352,14 +328,15 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
 
           break;
       }
-    })
+    },
+    true
   );
 
   type GameStatus = { game: Game; status: string };
   _.on(
     "game",
     "status",
-    unique("game", function (ctx, { game, status }: GameStatus) {
+    function (ctx, { game, status }: GameStatus) {
       console.log("GAME STATUS", status);
 
       switch (status) {
@@ -390,7 +367,8 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
 
           break;
       }
-    })
+    },
+    true
   );
 
   _.on("game", function (ctx, { game }) {
@@ -585,7 +563,7 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     }
   );
 
-  _.on("player", "introDone", function (ctx, { player }: { player: Player }) {
+  _.on("player", "introDone", function (_, { player }: { player: Player }) {
     if (!player.currentGame) {
       warn("callbacks: introDone without game");
 
@@ -620,7 +598,7 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
   _.before(
     "game",
     "start",
-    unique("game", function (ctx, { game, start }: BeforeGameStart) {
+    function (ctx, { game, start }: BeforeGameStart) {
       if (!start) {
         return;
       }
@@ -658,14 +636,15 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
           },
         ]);
       }
-    })
+    },
+    true
   );
 
   type AfterGameStart = { game: Game; start: boolean };
-  _.after(
+  _.unique.after(
     "game",
     "start",
-    unique("game", function (ctx, { game, start }: AfterGameStart) {
+    function (ctx, { game, start }: AfterGameStart) {
       if (!start) {
         return;
       }
@@ -716,14 +695,14 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
       game.set("stageID", stage.id);
 
       round.set("start", true);
-    })
+    }
   );
 
   type BeforeRoundStart = { round: Round; start: boolean };
   _.before(
     "round",
     "start",
-    unique("round", function (ctx, { round, start }: BeforeRoundStart) {
+    function (ctx, { round, start }: BeforeRoundStart) {
       if (!start) {
         return;
       }
@@ -773,14 +752,15 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
           },
         ]);
       }
-    })
+    },
+    true
   );
 
   type AfterRoundStart = { round: Round; start: boolean };
   _.after(
     "round",
     "start",
-    unique("round", function (ctx, { round, start }: AfterRoundStart) {
+    function (ctx, { round, start }: AfterRoundStart) {
       if (!start) {
         return;
       }
@@ -830,14 +810,15 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
       ctx.addLinks([{ link: true, participantIDs, nodeIDs }]);
 
       stage.set("start", true);
-    })
+    },
+    true
   );
 
   type BeforeStageStart = { stage: Stage; start: boolean };
   _.before(
     "stage",
     "start",
-    unique("stage", async function (ctx, { stage, start }: BeforeStageStart) {
+    async function (ctx, { stage, start }: BeforeStageStart) {
       if (!start) {
         return;
       }
@@ -899,14 +880,15 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
           },
         ]);
       }
-    })
+    },
+    true
   );
 
   type AfterStageStart = { stage: Stage; start: boolean };
   _.after(
     "stage",
     "start",
-    unique("stage", function (ctx, { stage, start }: AfterStageStart) {
+    function (ctx, { stage, start }: AfterStageStart) {
       if (!start) {
         return;
       }
@@ -953,14 +935,15 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
           cause: "stage start",
         },
       ]);
-    })
+    },
+    true
   );
 
   type AfterStageEnded = { stage: Stage; ended: boolean };
   _.after(
     "stage",
     "ended",
-    unique("stage", function (ctx, { stage, ended }: AfterStageEnded) {
+    function (ctx, { stage, ended }: AfterStageEnded) {
       if (!ended) {
         return;
       }
@@ -1016,14 +999,15 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
 
       game.set("stageID", nextStage!.id);
       nextStage!.set("start", true);
-    })
+    },
+    true
   );
 
   type AfterRoundEnded = { round: Round; ended: boolean };
   _.after(
     "round",
     "ended",
-    unique("round", (ctx, { round, ended }: AfterRoundEnded) => {
+    (ctx, { round, ended }: AfterRoundEnded) => {
       if (!ended) {
         return;
       }
@@ -1072,14 +1056,15 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
       }
 
       nextRound!.set("start", true);
-    })
+    },
+    true
   );
 
   type AfterGameEnded = { game: Game; ended: boolean };
   _.after(
     "game",
     "ended",
-    unique("game", function (ctx, { game, ended }: AfterGameEnded) {
+    function (ctx, { game, ended }: AfterGameEnded) {
       if (!ended) {
         return;
       }
@@ -1117,7 +1102,8 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
       }
 
       game.end("end of game");
-    })
+    },
+    true
   );
 
   type TransitionAdd = { step: Step; transition: Transition };

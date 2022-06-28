@@ -9,7 +9,7 @@ export class Layer<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
-  readonly listeners = new ListenersCollector<Context, Kinds>();
+  listeners = new ListenersCollector<Context, Kinds>();
   postCallback: (() => Promise<void>) | undefined;
 
   constructor(

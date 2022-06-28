@@ -8,7 +8,6 @@ require (
 	github.com/briandowns/spinner v1.18.1
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/cortesi/moddwatch v0.0.0-20210323234936-df014e95c743
-	github.com/davecgh/go-spew v1.1.1
 	github.com/empiricaly/tajriba v1.0.0-alpha.2
 	github.com/jpillora/backoff v1.0.0
 	github.com/julienschmidt/httprouter v1.3.0
@@ -32,6 +31,7 @@ require (
 require (
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
