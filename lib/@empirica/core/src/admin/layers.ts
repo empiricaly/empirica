@@ -1,153 +1,61 @@
-import { Observable } from "rxjs";
 import { Attribute } from "../shared/attributes";
-import { Scope, ScopeConstructor } from "../shared/scopes";
-import { error } from "../utils/console";
+import { ScopeConstructor } from "../shared/scopes";
+import { debug, error } from "../utils/console";
 import { EventContext, ListenersCollector, TajribaEvent } from "./events";
-import { Connection, Participant } from "./participants";
-import { Transition } from "./transitions";
+import { Participant } from "./participants";
+import { Scope } from "./scopes";
 
 export class Layer<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
-  readonly listeners = new ListenersCollector<Context, Kinds>();
+  listeners = new ListenersCollector<Context, Kinds>();
   postCallback: (() => Promise<void>) | undefined;
 
   constructor(
     private evtctx: EventContext<Context, Kinds>,
-    private scope: (id: string) => Scope<Context, Kinds> | undefined,
     private scopesByKind: (
       kind: keyof Kinds
     ) => Map<string, Scope<Context, Kinds>>,
     private attribute: (scopeID: string, key: string) => Attribute | undefined,
-    private kindSubscription: (
-      kind: keyof Kinds
-    ) => Observable<Scope<Context, Kinds>>,
-    private attributeSubscription: (
-      kind: string,
-      key: string
-    ) => Observable<Attribute>,
-    private participants: Map<string, Participant>,
-    private connections: Observable<Connection>,
-    private transitions: Observable<Transition>
+    private participants: Map<string, Participant>
   ) {}
 
+  async ready() {
+    for (const start of this.listeners.readys) {
+      debug("ready callback");
+      await start.callback(this.evtctx);
+    }
+  }
+
   async start() {
-    for (const kindEvent of this.listeners.kindEvents) {
-      this.kindSubscription(kindEvent.kind).subscribe({
-        next: async (scope) => {
-          kindEvent.callback(this.evtctx, { [kindEvent.kind]: scope });
-          if (this.postCallback) {
-            await this.postCallback();
-          }
-        },
-      });
-    }
-
-    for (const attributeEvent of this.listeners.attributeEvents) {
-      this.attributeSubscription(
-        attributeEvent.kind,
-        attributeEvent.key
-      ).subscribe({
-        next: async (attribute) => {
-          const props: { [key: string]: any } = {
-            [attributeEvent.key]: attribute.value,
-            attribute,
-          };
-
-          if (attribute.nodeID) {
-            const scope = this.scope(attribute.nodeID);
-            if (scope) {
-              props[attributeEvent.kind] = scope;
-            }
-          }
-
-          attributeEvent.callback(this.evtctx, props);
-          if (this.postCallback) {
-            await this.postCallback();
-          }
-        },
-      });
-    }
-
-    for (const tajEvent of this.listeners.tajEvents) {
-      switch (tajEvent.event) {
-        case TajribaEvent.TransitionAdd: {
-          this.transitions.subscribe({
-            next: async (transition) => {
-              tajEvent.callback(this.evtctx, {
-                transition,
-                step: transition.step,
-              });
-              if (this.postCallback) {
-                await this.postCallback();
-              }
-            },
-          });
-          break;
-        }
-        case TajribaEvent.ParticipantConnect: {
-          this.connections.subscribe({
-            next: async (connection) => {
-              if (!connection.connected) {
-                return;
-              }
-
-              tajEvent.callback(this.evtctx, {
-                participant: connection.participant,
-              });
-              if (this.postCallback) {
-                await this.postCallback();
-              }
-            },
-          });
-          break;
-        }
-        case TajribaEvent.ParticipantDisconnect: {
-          this.connections.subscribe({
-            next: async (connection) => {
-              if (connection.connected) {
-                return;
-              }
-
-              tajEvent.callback(this.evtctx, {
-                participant: connection.participant,
-              });
-              if (this.postCallback) {
-                await this.postCallback();
-              }
-            },
-          });
-          break;
-        }
-        // This is difficult to simulate
-        /* c8 ignore next 3 */
-        default: {
-          error(`unsupported tajriba event listener: ${tajEvent.event}`);
-        }
-      }
-    }
-
     for (const start of this.listeners.starts) {
-      await start(this.evtctx);
+      debug("start callback");
+      await start.callback(this.evtctx);
     }
 
-    for (const kindEvent of this.listeners.kindEvents) {
+    for (const kindEvent of this.listeners.kindListeners) {
       for (const [_, scope] of this.scopesByKind(kindEvent.kind)) {
-        kindEvent.callback(this.evtctx, { [kindEvent.kind]: scope });
+        debug("initial scope callback", kindEvent.kind);
+        await kindEvent.callback(this.evtctx, { [kindEvent.kind]: scope });
         if (this.postCallback) {
           await this.postCallback();
         }
       }
     }
 
-    for (const attributeEvent of this.listeners.attributeEvents) {
+    for (const attributeEvent of this.listeners.attributeListeners) {
       for (const [scopeID, scope] of this.scopesByKind(attributeEvent.kind)) {
         const attrib = this.attribute(scopeID, attributeEvent.key);
         if (!attrib) {
           continue;
         }
-        attributeEvent.callback(this.evtctx, {
+        debug(
+          "initial attribute callback",
+          attributeEvent.kind,
+          attributeEvent.key
+        );
+        await attributeEvent.callback(this.evtctx, {
           [attributeEvent.key]: attrib.value,
           attribute: attrib,
           [attributeEvent.kind]: scope,
@@ -166,7 +74,8 @@ export class Layer<
         }
         case TajribaEvent.ParticipantConnect: {
           for (const [_, participant] of this.participants) {
-            tajEvent.callback(this.evtctx, {
+            debug(`initial connected callback`);
+            await tajEvent.callback(this.evtctx, {
               participant,
             });
             if (this.postCallback) {

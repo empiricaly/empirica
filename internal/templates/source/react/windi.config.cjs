@@ -16,8 +16,8 @@ module.exports = {
     include: [
       "./index.html",
       "./src/**/*.{js,ts,jsx,tsx,css}",
-      "./node_modules/@empirica/player/dist/**/*.{js,ts,jsx,tsx}",
-      "./node_modules/@empirica/player/assets/**/*.css",
+      "./node_modules/@empirica/core/dist/**/*.{js,ts,jsx,tsx}",
+      "./node_modules/@empirica/core/assets/**/*.css",
     ],
   },
   theme: {

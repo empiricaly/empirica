@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable } from "rxjs";
 import { JsonValue } from "../utils/json";
 
 export class Globals {
-  private attrs = new Map<string, BehaviorSubject<JsonValue | undefined>>();
+  protected attrs = new Map<string, BehaviorSubject<JsonValue | undefined>>();
   private updates = new Map<string, JsonValue | undefined>();
   public self: BehaviorSubject<Globals>;
 

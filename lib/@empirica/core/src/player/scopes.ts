@@ -1,4 +1,3 @@
-import { ScopeChange as TScope } from "@empirica/tajriba";
 import { Observable } from "rxjs";
 import { Attributes } from "../shared/attributes";
 import {
@@ -13,7 +12,7 @@ import { Steps } from "./steps";
 export class Scopes<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
-> extends SharedScopes<Context, Kinds> {
+> extends SharedScopes<Context, Kinds, Scope<Context, Kinds>> {
   constructor(
     scopesObs: Observable<ScopeUpdate>,
     donesObs: Observable<void>,
@@ -29,7 +28,13 @@ export class Scopes<
     scopeClass: ScopeConstructor<Context, Kinds>,
     scope: ScopeIdent
   ) {
-    return new scopeClass!(this.ctx, scope, this, this.attributes, this.steps);
+    return new scopeClass!(
+      this.ctx,
+      scope,
+      this,
+      this.attributes,
+      this.steps
+    ) as Scope<Context, Kinds>;
   }
 }
 
@@ -37,17 +42,23 @@ export class Scope<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > extends SharedScope<Context, Kinds> {
-  _deleted = false;
-  _updated = false;
-
   constructor(
     ctx: Context,
-    scope: TScope,
-    scopes: Scopes<Context, Kinds>,
+    scope: ScopeIdent,
+    readonly scopes: Scopes<Context, Kinds>,
     attributes: Attributes,
     private steps: Steps
   ) {
-    super(ctx, scope, scopes, attributes);
+    super(ctx, scope, attributes);
+  }
+
+  scopeByKey(key: string) {
+    const id = this.get(key);
+    if (!id || typeof id !== "string") {
+      return;
+    }
+
+    return this.scopes.scope(id);
   }
 
   protected ticker(id: string) {

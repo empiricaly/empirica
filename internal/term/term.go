@@ -38,24 +38,38 @@ func (ui *UI) Stop() {
 	close(ui.updates)
 }
 
+func init() {
+	lipgloss.SetColorProfile(termenv.TrueColor)
+	lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
+	// lipgloss.SetHasDarkBackground(true)
+}
+
 func (ui *UI) printClean() {
 	doc := strings.Builder{}
 
 	columnWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
 
-	// fmt.Println(columnWidth)
-	termenv.ClearScreen()
-	termenv.MoveCursor(1, 1)
-	fmt.Print("\n")
-	lipgloss.SetColorProfile(termenv.TrueColor)
-	// lipgloss.SetHasDarkBackground(false)
-
-	columnWidth -= 20
+	if columnWidth < 0 {
+		return
+	}
 
 	subtle := lipgloss.AdaptiveColor{Light: "#555", Dark: "#aaaaaa"}
 	highConstrast := lipgloss.AdaptiveColor{Light: "#222222", Dark: "#ccc"}
 	highlight := lipgloss.AdaptiveColor{Light: "#227DE1", Dark: "#227DE1"}
 	// special := lipgloss.AdaptiveColor{Light: "#43BF6D", Dark: "#73F59F"}
+
+	myCuteBorder := lipgloss.Border{
+		Top:         "\u2500",
+		Bottom:      "",
+		Left:        "",
+		Right:       "",
+		TopLeft:     "",
+		TopRight:    "",
+		BottomLeft:  "",
+		BottomRight: "",
+	}
+
+	columnWidth -= 20
 
 	list := lipgloss.NewStyle().
 		MarginRight(2).
@@ -112,6 +126,14 @@ func (ui *UI) printClean() {
 	doc.WriteString(lists)
 
 	docStyle := lipgloss.NewStyle().Padding(0, 2, 2, 2)
+
+	border := lipgloss.NewStyle().
+		Border(myCuteBorder, true, false, false, false).
+		BorderForeground(subtle).
+		Render(strings.Repeat(" ", columnWidth))
+
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, border)
 	fmt.Fprintln(os.Stderr, docStyle.Render(doc.String()))
 }
 

@@ -1,4 +1,3 @@
-import { ScopeChange as TScope } from "@empirica/tajriba";
 import { BehaviorSubject, Observable } from "rxjs";
 import { AttributeOptions, Attributes } from "../shared/attributes";
 import { Constructor } from "../shared/helpers";
@@ -27,13 +26,11 @@ export type ScopeConstructor<
 
 export class Scopes<
   Context,
-  Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
+  Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> },
+  Skope extends Scope<Context, Kinds> = Scope<Context, Kinds>
 > {
-  protected scopes = new Map<string, BehaviorSubject<Scope<Context, Kinds>>>();
-  protected scopesByKind = new Map<
-    keyof Kinds,
-    Map<string, Scope<Context, Kinds>>
-  >();
+  protected scopes = new Map<string, BehaviorSubject<Skope>>();
+  protected scopesByKind = new Map<keyof Kinds, Map<string, Skope>>();
   protected kindUpdated = new Set<keyof Kinds>();
 
   constructor(
@@ -54,11 +51,11 @@ export class Scopes<
     });
   }
 
-  scope(id: string): Scope<Context, Kinds> | undefined {
+  scope(id: string): Skope | undefined {
     return this.scopes.get(id)?.getValue();
   }
 
-  scopeObs(id: string): Observable<Scope<Context, Kinds>> | undefined {
+  scopeObs(id: string): Observable<Skope> | undefined {
     return this.scopes.get(id);
   }
 
@@ -156,7 +153,7 @@ export class Scopes<
     scopeClass: ScopeConstructor<Context, Kinds>,
     scope: ScopeIdent
   ) {
-    return new scopeClass!(this.ctx, scope, this, this.attributes);
+    return new scopeClass!(this.ctx, scope, this.attributes) as Skope;
   }
 }
 
@@ -164,13 +161,28 @@ export class Scope<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
+  /**
+   * @internal
+   */
   _deleted = false;
+
+  /**
+   * @internal
+   */
   _updated = false;
 
   constructor(
+    /**
+     * @internal
+     */
     readonly ctx: Context,
-    readonly scope: TScope,
-    protected scopes: Scopes<Context, Kinds>,
+    /**
+     * @internal
+     */
+    readonly scope: ScopeIdent,
+    /**
+     * @internal
+     */
     protected attributes: Attributes
   ) {}
 
@@ -178,6 +190,9 @@ export class Scope<
     return this.scope.id;
   }
 
+  /**
+   * @internal
+   */
   get kind() {
     // Using ! because we don't allow scopes without kind
     return this.scope.kind!;
@@ -195,15 +210,9 @@ export class Scope<
     return this.attributes.attribute(this.scope.id, key).set(value, ao);
   }
 
-  scopeByKey(key: string) {
-    const id = this.get(key);
-    if (!id || typeof id !== "string") {
-      return;
-    }
-
-    return this.scopes.scope(id);
-  }
-
+  /**
+   * @internal
+   */
   hasUpdated() {
     return this._updated || this.attributes.scopeWasUpdated(this.id);
   }

@@ -1,9 +1,9 @@
 import { BehaviorSubject, Subject } from "rxjs";
 import { Attributes } from "../../shared/attributes";
+import { Globals } from "../../shared/globals";
 import { Constructor } from "../../shared/helpers";
-import { Scope, Scopes } from "../scopes";
-import { Globals } from "../globals";
 import { TajribaProvider } from "../provider";
+import { Scope, Scopes } from "../scopes";
 import { Steps } from "../steps";
 
 export class Game extends Scope<Context, EmpiricaClassicKinds> {
@@ -287,14 +287,39 @@ function getMainObjects(
     return res;
   }
 
+  for (const player of res.players) {
+    const key = `playerGameID-${res.game.id}`;
+    if (!nextScopeByKey(scopes, attributes, player, key)) {
+      delete res.game;
+      return res;
+    }
+  }
+
   res.stage = nextScopeByKey(scopes, attributes, res.game, "stageID") as Stage;
   if (!res.stage) {
     return res;
   }
 
+  for (const player of res.players) {
+    const key = `playerStageID-${res.stage.id}`;
+    if (!nextScopeByKey(scopes, attributes, player, key)) {
+      delete res.stage;
+      return res;
+    }
+  }
+
   res.round = nextScopeByKey(scopes, attributes, res.stage, "roundID") as Round;
   if (!res.round) {
     return res;
+  }
+
+  for (const player of res.players) {
+    const key = `playerRoundID-${res.round.id}`;
+    if (!nextScopeByKey(scopes, attributes, player, key)) {
+      delete res.stage;
+      delete res.round;
+      return res;
+    }
   }
 
   return res;

@@ -5,6 +5,7 @@ import {
   TajribaConnection,
 } from "../shared/tajriba_connection";
 import { bs, bsu } from "../utils/object";
+import { error } from "../utils/console";
 
 export class ParticipantConnection {
   private _tajribaPart = bsu<TajribaParticipant>();
@@ -55,8 +56,15 @@ export class ParticipantConnection {
             "disconnected",
             this._connected.next.bind(this._connected, false)
           );
-        } catch (error) {
-          if (error !== ErrNotConnected) {
+          tajPart.on("error", (err) => {
+            error("conn error", err);
+          });
+          tajPart.on("accessDenied", () => {
+            this.resetSession();
+          });
+        } catch (err) {
+          if (err !== ErrNotConnected) {
+            error("conn error", err);
             this.resetSession();
           }
         }
@@ -110,10 +118,25 @@ export interface Session {
   participant: ParticipantIdent;
 }
 
+interface Storage {
+  clear(): void;
+  getItem(key: string): string | null;
+  removeItem(key: string): void;
+  setItem(key: string, value: string): void;
+}
+
+const isBrowser =
+  typeof window !== "undefined" && typeof window.document !== "undefined";
+
+let storage: Storage;
+if (isBrowser) {
+  storage = window.localStorage;
+}
+
 export class ParticipantSession {
   static tokenKey = "empirica:token";
   static partKey = "empirica:participant";
-  static storage: Storage = window.localStorage;
+  static storage: Storage = storage;
 
   private _sessions: BehaviorSubject<Session | undefined>;
   private _token?: string;

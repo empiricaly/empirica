@@ -1,13 +1,7 @@
-import { Callbacks } from "@empirica/admin";
+import { ClassicListenersCollector } from "@empirica/core/admin/classic";
+export const Empirica = new ClassicListenersCollector();
 
-const Empirica = new Callbacks();
-export default Empirica;
-
-Empirica.onGameStart(function ({ game }) {
-  console.log("game start");
-
-  // Jelly beans
-
+Empirica.onGameStart(({ game }) => {
   const round = game.addRound({
     name: "Round 1 - Jelly Beans",
     task: "jellybeans",
@@ -15,50 +9,24 @@ Empirica.onGameStart(function ({ game }) {
   round.addStage({ name: "Answer", duration: 300 });
   round.addStage({ name: "Result", duration: 120 });
 
-  // Minesweeper
-
   const round2 = game.addRound({
     name: "Round 2 - Minesweeper",
     task: "minesweeper",
   });
   round2.addStage({ name: "Play", duration: 300 });
-
-  // // Public Goods
-
-  // const round3 = game.addRound({
-  //   name: "Round 3 - Public Goods",
-  //   task: "publicgoods",
-  // });
-  // round3.addStage({ name: "Answer", duration: 300 });
-  // round3.addStage({ name: "Result", duration: 120 });
-
-  // Set initial player scores to 0
-
-  for (const player of game.players) {
-    player.set("score", 0);
-  }
-
-  console.log("game start done");
 });
 
-Empirica.onRoundStart(function ({ round }) {
-  console.log("round start");
-});
+Empirica.onRoundStart(({ round }) => {});
 
-Empirica.onStageStart(function ({ stage }) {
-  console.log("stage start");
-});
+Empirica.onStageStart(({ stage }) => {});
 
-Empirica.onStageEnd(function ({ stage }) {
-  console.log("stage end");
+Empirica.onStageEnded(({ stage }) => {
   calculateJellyBeansScore(stage);
 });
 
-Empirica.onRoundEnd(function ({ round }) {});
+Empirica.onRoundEnded(({ round }) => {});
 
-Empirica.onGameEnd(function ({ game }) {
-  console.log("game end");
-});
+Empirica.onGameEnded(({ game }) => {});
 
 const jellyBeansCount = 1623;
 
@@ -70,7 +38,7 @@ function calculateJellyBeansScore(stage) {
     return;
   }
 
-  for (const player of stage.round.game.players) {
+  for (const player of stage.currentGame.players) {
     let roundScore = 0;
 
     const playerGuess = player.round.get("guess");
@@ -81,7 +49,9 @@ function calculateJellyBeansScore(stage) {
       roundScore = Math.max(0, score);
     }
 
-    player.round.set("score", player.get("score") + roundScore);
-    player.set("score", player.get("score") + roundScore);
+    player.round.set("score", roundScore);
+
+    const totalScore = player.get("score") || 0;
+    player.set("score", totalScore + roundScore);
   }
 }

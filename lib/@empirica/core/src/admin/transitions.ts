@@ -2,18 +2,21 @@ import { EventType, State, TajribaAdmin } from "@empirica/tajriba";
 import { Subject } from "rxjs";
 import { error } from "../utils/console";
 
+export interface Step {
+  id: string;
+  state: State;
+  duration: number;
+  startedAt?: number;
+  endedAt?: number;
+}
+
 export interface Transition {
   id: string;
   from: State;
   to: State;
-  step: {
-    id: string;
-    state: State;
-    duration: number;
-    startedAt?: number;
-    endedAt?: number;
-  };
+  step: Step;
 }
+
 export function transitionsSub(
   taj: TajribaAdmin,
   transitions: Subject<Transition>,
@@ -28,7 +31,7 @@ export function transitionsSub(
       }
 
       if (node.node.__typename !== "Step") {
-        error(`received non-step transition`);
+        error(`received non-step transition`, node.node);
 
         return;
       }

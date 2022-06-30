@@ -1,4 +1,4 @@
-import { Sweeper, usePlayer } from "@empirica/player";
+import { Sweeper, usePlayer } from "@empirica/core/player/classic/react";
 import React from "react";
 import { Avatar } from "../components/Avatar";
 import { Button } from "../components/Button";

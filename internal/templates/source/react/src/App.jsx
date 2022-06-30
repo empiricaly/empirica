@@ -1,4 +1,6 @@
-import { EmpiricaMenu, EmpiricaPlayer, GameFrame } from "@empirica/player";
+import { EmpiricaClassic } from "@empirica/core/player/classic";
+import { EmpiricaContext } from "@empirica/core/player/classic/react";
+import { EmpiricaMenu, EmpiricaParticipant } from "@empirica/core/player/react";
 import React from "react";
 import "virtual:windi.css";
 import { Game } from "./Game";
@@ -7,18 +9,26 @@ import { Introduction } from "./intro-exit/Introduction";
 
 export default function App() {
   const urlParams = new URLSearchParams(window.location.search);
-  const playerKey = urlParams.get("playerKey") || "";
+  const playerKey = urlParams.get("participantKey") || "";
+
+  let url = window.location.hostname;
+
+  if (url === "localhost") {
+    url = "http://localhost:3000/query";
+  } else {
+    url = "https://" + url + "/query";
+  }
 
   return (
-    <div className="h-screen relative">
-      <EmpiricaMenu />
-      <div className="h-full overflow-auto">
-        <EmpiricaPlayer ns={playerKey}>
-          <GameFrame introSteps={[Introduction]} exitSteps={[ExitSurvey]}>
+    <EmpiricaParticipant url={url} ns={playerKey} modeFunc={EmpiricaClassic}>
+      <div className="h-screen relative">
+        <EmpiricaMenu />
+        <div className="h-full overflow-auto">
+          <EmpiricaContext introSteps={[Introduction]} exitSteps={[ExitSurvey]}>
             <Game />
-          </GameFrame>
-        </EmpiricaPlayer>
+          </EmpiricaContext>
+        </div>
       </div>
-    </div>
+    </EmpiricaParticipant>
   );
 }

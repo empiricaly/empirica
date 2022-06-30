@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { merge, Observable } from "rxjs";
 import { TajribaConnection } from "../../shared/tajriba_connection";
-import { Globals } from "../globals";
+import { Globals } from "../../shared/globals";
 import { ParticipantContext } from "../context";
 import { ParticipantCtx } from "./EmpiricaParticipant";
 import { Session } from "../connection";
@@ -24,7 +24,24 @@ export function useTajriba() {
 }
 
 export function useGlobal() {
-  return usePartCtxKey<Globals, "globals">("globals");
+  const ctx = usePartCtxKey<Globals, "globals">("globals");
+  const [val, setVal] = useState<{ g: Globals | undefined }>({ g: undefined });
+
+  useEffect(() => {
+    if (!ctx || !ctx.self) {
+      return;
+    }
+
+    const sub = ctx.self.subscribe({
+      next(g) {
+        setVal({ g });
+      },
+    });
+
+    return sub.unsubscribe.bind(sub);
+  }, [ctx]);
+
+  return val.g;
 }
 
 const defaultConsentKey = "empirica:consent";

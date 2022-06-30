@@ -1,4 +1,9 @@
-import { Slider, usePlayer, usePlayers, useStage } from "@empirica/player";
+import {
+  Slider,
+  usePlayer,
+  usePlayers,
+  useStage,
+} from "@empirica/core/player/classic/react";
 import React from "react";
 import { Avatar } from "../components/Avatar";
 import { Button } from "../components/Button";

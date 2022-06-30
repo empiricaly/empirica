@@ -1,17 +1,25 @@
 import {
+  AddGroupInput,
+  AddScopeInput,
+  AddStepInput,
   ChangePayload,
+  LinkInput,
   ParticipantIdent,
+  ScopesQueryVariables,
   SetAttributeInput,
   State,
   SubAttributesPayload,
   Tajriba,
   TajribaAdmin,
   TajribaParticipant,
+  TransitionInput,
 } from "@empirica/tajriba";
 import { ExecutionContext } from "ava";
 import { Observable, Subject } from "rxjs";
 import { fake, replace, SinonSpy } from "sinon";
+import { Finalizer, TajribaAdminAccess } from "../admin/context";
 import { EventContext } from "../admin/events";
+import { Globals } from "../admin/globals";
 import { ScopeSubscriptionInput } from "../admin/subscriptions";
 import { TokenProvider } from "../admin/token_file";
 import { TajribaProvider } from "../player/provider";
@@ -40,6 +48,10 @@ const fakeTajribaConnectDefaults = {
 
   failRegisterService: false,
   serviceToken: "abc",
+
+  failAddScope: false,
+  failScopes: false,
+  noScopes: false,
 };
 
 export function fakeTajribaConnect(
@@ -53,6 +65,9 @@ export function fakeTajribaConnect(
     invalidRegister,
     failRegisterService,
     serviceToken,
+    failAddScope,
+    failScopes,
+    noScopes,
   } = {
     ...fakeTajribaConnectDefaults,
     ...props,
@@ -64,6 +79,21 @@ export function fakeTajribaConnect(
   let tajAdmin: TajribaAdmin;
   const scopedAttributesSub = new Subject();
   const onEventSub = new Subject();
+  const called: {
+    setAttributes: SetAttributeInput[][];
+    addScopes: AddScopeInput[][];
+    addGroups: AddGroupInput[][];
+    addTransitions: TransitionInput[][];
+    addLink: LinkInput[][];
+    addSteps: AddStepInput[][];
+  } = {
+    setAttributes: [],
+    addScopes: [],
+    addGroups: [],
+    addTransitions: [],
+    addLink: [],
+    addSteps: [],
+  };
   const taj = <unknown>(<unknown>{
     id,
     connected,
@@ -74,7 +104,56 @@ export function fakeTajribaConnect(
       return changes;
     },
     /* c8 ignore next */
-    setAttributes(_: SetAttributeInput[]) {},
+    setAttributes: async (input: SetAttributeInput[]) => {
+      called.setAttributes.push(input);
+    },
+    addScopes: async (input: AddScopeInput[]) => {
+      if (failAddScope) {
+        throw new Error("failing scopes");
+      }
+      called.addScopes.push(input);
+    },
+    scopes: async (_: ScopesQueryVariables) => {
+      if (failScopes) {
+        throw new Error("failing scopes");
+      }
+
+      if (noScopes) {
+        return {
+          __typename: "ScopeConnection",
+          edges: [],
+        };
+      }
+
+      return {
+        __typename: "ScopeConnection",
+        edges: [
+          {
+            __typename: "ScopeEdge",
+            cursor: "123",
+            node: {
+              __typename: "Scope",
+              id: "globals",
+              /** kind is an optional type name. */
+              kind: "globals",
+              name: "globals",
+            },
+          },
+        ],
+      };
+    },
+    addGroups: async (input: AddGroupInput[]) => {
+      called.addGroups.push(input);
+    },
+    transition: async (input: TransitionInput[]) => {
+      called.addTransitions.push(input);
+    },
+    addLink: async (input: LinkInput[]) => {
+      called.addLink.push(input);
+    },
+    addSteps: async (input: AddStepInput[]) => {
+      called.addSteps.push(input);
+    },
     removeAllListeners() {},
     scopedAttributes() {
       return scopedAttributesSub;
@@ -146,6 +225,7 @@ export function fakeTajribaConnect(
     cbs,
     scopedAttributesSub,
     onEventSub,
+    called,
   };
 }
 
@@ -329,23 +409,7 @@ export class Context {
   public hello?: string;
 }
 export class Stage extends Scope<Context, TestKinds> {}
-export class Game extends Scope<Context, TestKinds> {
-  get stage() {
-    return this.scopeByKey("stageID") as Stage | undefined;
-  }
-
-  get badStage() {
-    return this.scopeByKey("noStageID") as Stage | undefined;
-  }
-
-  // get timer() {
-  //   return this.tickerByKey("stepID");
-  // }
-
-  // get badTimer() {
-  //   return this.tickerByKey("notTickerID");
-  // }
-}
+export class Game extends Scope<Context, TestKinds> {}
 
 type TestKinds = {
   game: Constructor<Game>;
@@ -373,6 +437,9 @@ const setupTokenProviderDefaults = {
   failRegisterService: false,
   failSession: false,
   connectEarly: false,
+  failAddScope: false,
+  failScopes: false,
+  noScopes: false,
 };
 
 type setupTokenProviderProps = {
@@ -380,12 +447,23 @@ type setupTokenProviderProps = {
   failRegisterService?: boolean;
   failSession?: boolean;
   connectEarly?: boolean;
+  failAddScope?: boolean;
+  failScopes?: boolean;
+  noScopes?: boolean;
 };
 
 export function setupTokenProvider(
   props: setupTokenProviderProps = setupTokenProviderDefaults
 ) {
-  const { initToken, failRegisterService, failSession, connectEarly } = {
+  const {
+    initToken,
+    failRegisterService,
+    failSession,
+    connectEarly,
+    failAddScope,
+    failScopes,
+    noScopes,
+  } = {
     ...setupTokenProviderDefaults,
     ...props,
   };
@@ -393,9 +471,12 @@ export function setupTokenProvider(
   const serviceName = "callbacks";
   const serviceRegistrationToken = "d6w54q3d51qw3";
 
-  const { cbs, scopedAttributesSub, onEventSub } = fakeTajribaConnect({
+  const { cbs, scopedAttributesSub, onEventSub, called } = fakeTajribaConnect({
     failRegisterService,
     failSession,
+    failAddScope,
+    failScopes,
+    noScopes,
   });
 
   const taj = new TajribaConnection("someurl");
@@ -436,6 +517,7 @@ export function setupTokenProvider(
     resetToken,
     scopedAttributesSub,
     onEventSub,
+    called,
     get tokenReset() {
       return tokenReset;
     },
@@ -464,6 +546,7 @@ export function setupEventContext() {
     participantsSub: 0,
     transitionsSub: [],
   };
+
   const coll = {
     scopeSub: (...inputs: Partial<ScopeSubscriptionInput>[]) => {
       for (const input of inputs) {
@@ -478,7 +561,63 @@ export function setupEventContext() {
     },
   };
 
-  const ctx = new EventContext<Context, AdminKinds>(coll);
+  const called: {
+    finalizers: Finalizer[];
+    addScopes: AddScopeInput[][];
+    addGroups: AddGroupInput[][];
+    addLinks: LinkInput[][];
+    addSteps: AddStepInput[][];
+    addTransitions: TransitionInput[][];
+    setAttributes: SetAttributeInput[][];
+  } = {
+    finalizers: [],
+    addScopes: [],
+    addGroups: [],
+    addLinks: [],
+    addSteps: [],
+    addTransitions: [],
+    setAttributes: [],
+  };
 
-  return { coll, res, ctx };
+  const globals = new Subject<SubAttributesPayload>();
+
+  const mut = new TajribaAdminAccess(
+    (cb: Finalizer) => {
+      /* c8 ignore next 2 */
+      called.finalizers.push(cb);
+    },
+    async (inputs: AddScopeInput[]) => {
+      called.addScopes.push(inputs);
+      return [];
+    },
+    async (inputs: AddGroupInput[]) => {
+      /* c8 ignore next 2 */
+      called.addGroups.push(inputs);
+      return [];
+    },
+    async (inputs: LinkInput[]) => {
+      /* c8 ignore next 2 */
+      called.addLinks.push(inputs);
+      return [];
+    },
+    async (inputs: AddStepInput[]) => {
+      /* c8 ignore next 3 */
+      called.addSteps.push(inputs);
+
+      return [{ id: "123", duration: inputs[0]!.duration }];
+    },
+    async (inputs: TransitionInput[]) => {
+      /* c8 ignore next 3 */
+      called.addTransitions.push(inputs);
+      return [];
+    },
+    new Globals(globals, "globals", async (input: SetAttributeInput[]) => {
+      /* c8 ignore next 2 */
+      called.setAttributes.push(input);
+    })
+  );
+
+  const ctx = new EventContext<Context, AdminKinds>(coll, mut);
+
+  return { coll, res, ctx, called, globals };
 }

@@ -12,7 +12,6 @@ import {
   partChange,
   scopeChange,
   setupProvider,
-  Stage,
   stepChange,
   textHasLog,
 } from "./test_helpers";
@@ -473,42 +472,4 @@ test("Scope sub works", (t) => {
   );
 
   t.deepEqual(vals, [undefined, 0, "pancake"]);
-});
-
-test("Scope should get other scope by key", (t) => {
-  const { changes, scopes } = setupScopes();
-
-  changes.next(
-    scopeChange({ id: "abc", kind: "game", done: true, removed: false })
-  );
-
-  changes.next(
-    scopeChange({ id: "efg", kind: "stage", done: true, removed: false })
-  );
-
-  changes.next(
-    attrChange({
-      key: "stageID",
-      val: `"efg"`,
-      nodeID: "abc",
-      done: true,
-      removed: false,
-    })
-  );
-
-  changes.next(
-    attrChange({
-      key: "noStageID",
-      val: `"efg"`,
-      nodeID: "0",
-      done: true,
-      removed: false,
-    })
-  );
-
-  const scope = scopes.scope("abc") as Game;
-  t.truthy(scope);
-  t.truthy(scope.stage);
-  t.truthy(scope.stage instanceof Stage);
-  t.falsy(scope.badStage);
 });

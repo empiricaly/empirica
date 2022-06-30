@@ -1,4 +1,8 @@
-import { usePlayer, useRound, useStage } from "@empirica/player";
+import {
+  usePlayer,
+  useRound,
+  useStage,
+} from "@empirica/core/player/classic/react";
 import React from "react";
 import { Avatar } from "./components/Avatar";
 import { Timer } from "./components/Timer";
@@ -17,7 +21,7 @@ export function Profile() {
           {round ? round.get("name") : ""}
         </div>
         <div className="text-empirica-400">
-          {stage ? stage.get("name") : stage}
+          {stage ? stage.get("name") : ""}
         </div>
       </div>
 
