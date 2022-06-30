@@ -17,7 +17,7 @@ import {
 import { ExecutionContext } from "ava";
 import { Observable, Subject } from "rxjs";
 import { fake, replace, SinonSpy } from "sinon";
-import { TajribaAdminAccess } from "../admin/context";
+import { Finalizer, TajribaAdminAccess } from "../admin/context";
 import { EventContext } from "../admin/events";
 import { Globals } from "../admin/globals";
 import { ScopeSubscriptionInput } from "../admin/subscriptions";
@@ -562,6 +562,7 @@ export function setupEventContext() {
   };
 
   const called: {
+    finalizers: Finalizer[];
     addScopes: AddScopeInput[][];
     addGroups: AddGroupInput[][];
     addLinks: LinkInput[][];
@@ -569,6 +570,7 @@ export function setupEventContext() {
     addTransitions: TransitionInput[][];
     setAttributes: SetAttributeInput[][];
   } = {
+    finalizers: [],
     addScopes: [],
     addGroups: [],
     addLinks: [],
@@ -580,17 +582,23 @@ export function setupEventContext() {
   const globals = new Subject<SubAttributesPayload>();
 
   const mut = new TajribaAdminAccess(
-    (inputs: AddScopeInput[]) => {
-      /* c8 ignore next */
+    (cb: Finalizer) => {
+      /* c8 ignore next 2 */
+      called.finalizers.push(cb);
+    },
+    async (inputs: AddScopeInput[]) => {
       called.addScopes.push(inputs);
+      return [];
     },
-    (inputs: AddGroupInput[]) => {
-      /* c8 ignore next */
+    async (inputs: AddGroupInput[]) => {
+      /* c8 ignore next 2 */
       called.addGroups.push(inputs);
+      return [];
     },
-    (inputs: LinkInput[]) => {
-      /* c8 ignore next */
+    async (inputs: LinkInput[]) => {
+      /* c8 ignore next 2 */
       called.addLinks.push(inputs);
+      return [];
     },
     async (inputs: AddStepInput[]) => {
       /* c8 ignore next 3 */
@@ -598,9 +606,10 @@ export function setupEventContext() {
 
       return [{ id: "123", duration: inputs[0]!.duration }];
     },
-    (inputs: TransitionInput[]) => {
-      /* c8 ignore next 2 */
+    async (inputs: TransitionInput[]) => {
+      /* c8 ignore next 3 */
       called.addTransitions.push(inputs);
+      return [];
     },
     new Globals(globals, "globals", async (input: SetAttributeInput[]) => {
       /* c8 ignore next 2 */

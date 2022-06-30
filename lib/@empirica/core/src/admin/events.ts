@@ -7,7 +7,7 @@ import {
 } from "@empirica/tajriba";
 import { Attribute } from "../shared/attributes";
 import { ScopeConstructor } from "../shared/scopes";
-import { TajribaAdminAccess } from "./context";
+import { Finalizer, TajribaAdminAccess } from "./context";
 import { Scope } from "./scopes";
 import { ScopeSubscriptionInput } from "./subscriptions";
 
@@ -26,6 +26,15 @@ export enum ListernerPlacement {
   Before,
   None, // Not before or after
   After,
+}
+
+const placementString = new Map<ListernerPlacement, string>();
+placementString.set(ListernerPlacement.Before, "before");
+placementString.set(ListernerPlacement.None, "on");
+placementString.set(ListernerPlacement.After, "after");
+
+export function PlacementString(placement: ListernerPlacement): string {
+  return placementString.get(placement)!;
 }
 
 export type SimpleListener<
@@ -64,7 +73,11 @@ function unique<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> },
   K extends keyof Kinds
->(kind: K, callback: EvtCtxCallback<Context, Kinds>) {
+>(
+  kind: K,
+  placement: ListernerPlacement,
+  callback: EvtCtxCallback<Context, Kinds>
+) {
   return async (ctx: EventContext<Context, Kinds>, props: any) => {
     const attr = props.attribute as Attribute;
     const scope = props[kind] as Scope<Context, Kinds>;
@@ -74,7 +87,7 @@ function unique<
 
     await callback(ctx, props);
 
-    scope.set(`ran-${attr.id}`, true);
+    scope.set(`ran-${PlacementString(placement)}-${attr.id}`, true);
   };
 }
 
@@ -253,7 +266,7 @@ export class ListenersCollector<
       }
 
       if (uniqueCall) {
-        callback = unique(kindOrEvent, callback);
+        callback = unique(kindOrEvent, placement, callback);
       }
 
       this.attributeListeners.push({
@@ -349,17 +362,17 @@ export class EventContext<
   // c8 ignore: the TajribaAdminAccess proxy functions are tested elswhere
   /* c8 ignore next 3 */
   addScopes(input: AddScopeInput[]) {
-    this.taj.addScopes(input);
+    return this.taj.addScopes(input);
   }
 
   /* c8 ignore next 3 */
   addGroups(input: AddGroupInput[]) {
-    this.taj.addGroups(input);
+    return this.taj.addGroups(input);
   }
 
   /* c8 ignore next 3 */
   addLinks(input: LinkInput[]) {
-    this.taj.addLinks(input);
+    return this.taj.addLinks(input);
   }
 
   /* c8 ignore next 3 */
@@ -369,7 +382,11 @@ export class EventContext<
 
   /* c8 ignore next 3 */
   addTransitions(input: TransitionInput[]) {
-    this.taj.addTransitions(input);
+    return this.taj.addTransitions(input);
+  }
+
+  protected addFinalizer(cb: Finalizer) {
+    this.taj.addFinalizer(cb);
   }
 
   /* c8 ignore next 3 */

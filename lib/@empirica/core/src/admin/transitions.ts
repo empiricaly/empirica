@@ -31,7 +31,7 @@ export function transitionsSub(
       }
 
       if (node.node.__typename !== "Step") {
-        error(`received non-step transition`);
+        error(`received non-step transition`, node.node);
 
         return;
       }

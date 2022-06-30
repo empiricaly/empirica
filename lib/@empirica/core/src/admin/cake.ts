@@ -120,7 +120,12 @@ export class Cake<
 
         for (const callback of callbacks) {
           debug("scope callback", kind);
-          await callback.callback(this.evtctx, { [kind]: scope });
+
+          try {
+            await callback.callback(this.evtctx, { [kind]: scope });
+          } catch (err) {
+            error(err);
+          }
           if (this.postCallback) {
             await this.postCallback();
           }
@@ -155,10 +160,25 @@ export class Cake<
         }
 
         for (const callback of callbacks) {
-          debug("attribute callback", kind, key);
-          await callback.callback(this.evtctx, props);
+          // const p = callback.placement;
+          // const traceKey = `${PlacementString(p)} ${<string>kind} ${key} ${
+          //   attribute.value
+          // } ${attribute.id}`;
+
+          // trace(`${traceKey}: starting`);
+
+          try {
+            await callback.callback(this.evtctx, props);
+          } catch (err) {
+            error(err);
+          }
+
+          // trace(`${traceKey}: ended`);
+
           if (this.postCallback) {
             await this.postCallback();
+
+            // trace(`${traceKey}: finished`);
           }
         }
       },
@@ -173,10 +193,16 @@ export class Cake<
           debug(
             `transition callback from '${transition.from}' to '${transition.to}'`
           );
-          await callback.callback(this.evtctx, {
-            transition,
-            step: transition.step,
-          });
+
+          try {
+            await callback.callback(this.evtctx, {
+              transition,
+              step: transition.step,
+            });
+          } catch (err) {
+            error(err);
+          }
+
           if (this.postCallback) {
             await this.postCallback();
           }
@@ -195,9 +221,15 @@ export class Cake<
 
         for (const callback of this.connectedEvents) {
           debug(`connected callback`);
-          await callback.callback(this.evtctx, {
-            participant: connection.participant,
-          });
+
+          try {
+            await callback.callback(this.evtctx, {
+              participant: connection.participant,
+            });
+          } catch (err) {
+            error(err);
+          }
+
           if (this.postCallback) {
             await this.postCallback();
           }
@@ -216,9 +248,15 @@ export class Cake<
 
         for (const callback of this.disconnectedEvents) {
           debug(`disconnected callback`);
-          await callback.callback(this.evtctx, {
-            participant: connection.participant,
-          });
+
+          try {
+            await callback.callback(this.evtctx, {
+              participant: connection.participant,
+            });
+          } catch (err) {
+            error(err);
+          }
+
           if (this.postCallback) {
             await this.postCallback();
           }

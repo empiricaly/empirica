@@ -9,7 +9,7 @@ import { Introduction } from "./intro-exit/Introduction";
 
 export default function App() {
   const urlParams = new URLSearchParams(window.location.search);
-  const playerKey = urlParams.get("playerKey") || "";
+  const playerKey = urlParams.get("participantKey") || "";
 
   let url = window.location.hostname;
 

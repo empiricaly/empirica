@@ -10,12 +10,19 @@ import {
 import { Observable, Subject, Subscription } from "rxjs";
 import { AttributeChange, AttributeUpdate } from "../shared/attributes";
 import { ScopeConstructor, ScopeIdent, ScopeUpdate } from "../shared/scopes";
-import { error, warn } from "../utils/console";
+import { error, info, trace, warn } from "../utils/console";
 import { Attributes } from "./attributes";
 import { Cake } from "./cake";
 import { AdminConnection } from "./connection";
-import { TajribaAdminAccess } from "./context";
-import { EventContext, Subscriber, ListenersCollector } from "./events";
+import {
+  AddLinkPayload,
+  AddScopePayload,
+  AddTransitionPayload,
+  Finalizer,
+  StepPayload,
+  TajribaAdminAccess,
+} from "./context";
+import { EventContext, ListenersCollector, Subscriber } from "./events";
 import { Globals } from "./globals";
 import { Layer } from "./layers";
 import { Connection, Participant, participantsSub } from "./participants";
@@ -37,10 +44,13 @@ export class Runloop<
   private attributesSub = new Subject<AttributeUpdate>();
   private donesSub = new Subject<void>();
   private attributes: Attributes;
-  private scopeInputs: AddScopeInput[] = [];
-  private addGroupsInputs: AddGroupInput[] = [];
-  private addLinksInputs: LinkInput[] = [];
-  private addTransitionsInputs: TransitionInput[] = [];
+  private finalizers: Finalizer[] = [];
+  private groupPromises: Promise<{ id: string }[]>[] = [];
+  private stepPromises: Promise<StepPayload[]>[] = [];
+  private scopePromises: Promise<AddScopePayload[]>[] = [];
+  private linkPromises: Promise<AddLinkPayload>[] = [];
+  private transitionPromises: Promise<AddTransitionPayload>[] = [];
+  // private addTransitionsInputs: TransitionInput[] = [];
   private attributeInputs: SetAttributeInput[] = [];
   private scopes: Scopes<Context, Kinds>;
   private cake: Cake<Context, Kinds>;
@@ -62,6 +72,7 @@ export class Runloop<
     );
 
     const mut = new TajribaAdminAccess(
+      this.addFinalizer.bind(this),
       this.addScopes.bind(this),
       this.addGroups.bind(this),
       this.addLinks.bind(this),
@@ -147,8 +158,6 @@ export class Runloop<
       await this.processNewSub(subs);
     }
 
-    // await new Promise((r) => setTimeout(r, 200));
-
     layer.postCallback = this.postCallback.bind(this);
   }
 
@@ -160,32 +169,34 @@ export class Runloop<
       promises.push(this.processNewSub(subs));
     }
 
-    if (this.scopeInputs.length > 0) {
-      promises.push(this.taj.addScopes(this.scopeInputs));
-      this.scopeInputs = [];
-    }
-
-    if (this.addGroupsInputs.length > 0) {
-      promises.push(this.taj.addGroups(this.addGroupsInputs));
-      this.addGroupsInputs = [];
-    }
-
-    if (this.addLinksInputs.length > 0) {
-      for (const linkInput of this.addLinksInputs) {
-        promises.push(this.taj.addLink(linkInput));
-      }
-      this.addLinksInputs = [];
-    }
-
-    if (this.addTransitionsInputs.length > 0) {
-      for (const transition of this.addTransitionsInputs) {
-        promises.push(this.taj.transition(transition));
-      }
-      this.addTransitionsInputs = [];
-    }
+    promises.push(...this.groupPromises);
+    this.groupPromises = [];
+    promises.push(...this.stepPromises);
+    this.stepPromises = [];
+    promises.push(...this.scopePromises);
+    this.scopePromises = [];
+    promises.push(...this.linkPromises);
+    this.linkPromises = [];
+    promises.push(...this.transitionPromises);
+    this.transitionPromises = [];
 
     if (this.attributeInputs.length > 0) {
-      promises.push(this.taj.setAttributes(this.attributeInputs));
+      // If the same key is set twice within the same loop, only send 1
+      // setAttribute update.
+      const uniqueAttrs: { [key: string]: SetAttributeInput } = {};
+      for (const attr of this.attributeInputs) {
+        if (!attr.nodeID) {
+          error(`runloop: attribute without nodeID: ${JSON.stringify(attr)}`);
+          continue;
+        }
+
+        uniqueAttrs[`${attr.nodeID}-${attr.key}`] = attr;
+      }
+
+      const attrs = Object.values(uniqueAttrs);
+      trace(`setting attributes: ${JSON.stringify(attrs)}`);
+
+      promises.push(this.taj.setAttributes(attrs));
       this.attributeInputs = [];
     }
 
@@ -195,26 +206,78 @@ export class Runloop<
         warn(`failed load: ${r.reason}`);
       }
     }
+
+    const finalizer = this.finalizers.shift();
+    if (finalizer) {
+      await finalizer();
+      await this.postCallback();
+    }
+  }
+
+  addFinalizer(cb: Finalizer) {
+    this.finalizers.push(cb);
   }
 
   async addScopes(inputs: AddScopeInput[]) {
-    this.scopeInputs.push(...inputs);
+    const addScopes = this.taj.addScopes(inputs);
+    this.scopePromises.push(
+      addScopes.then((scopes) => {
+        for (const scope of scopes) {
+          for (const attrEdge of scope.attributes.edges) {
+            this.attributesSub.next({
+              attribute: attrEdge.node as AttributeChange,
+              removed: false,
+            });
+          }
+
+          this.scopesSub.next({
+            scope: scope as ScopeIdent,
+            removed: false,
+          });
+        }
+
+        this.donesSub.next();
+        info("DID FINISH");
+
+        return scopes;
+      })
+    );
+
+    return addScopes;
   }
 
   async addGroups(inputs: AddGroupInput[]) {
-    this.addGroupsInputs.push(...inputs);
+    const addGroups = this.taj.addGroups(inputs);
+    this.groupPromises.push(addGroups);
+    return addGroups;
   }
 
   async addLinks(inputs: LinkInput[]) {
-    this.addLinksInputs.push(...inputs);
+    const proms: Promise<AddLinkPayload>[] = [];
+    for (const input of inputs) {
+      const linkPromise = this.taj.addLink(input);
+      this.linkPromises.push(linkPromise);
+      proms.push(linkPromise);
+    }
+
+    return Promise.all(proms);
   }
 
   async addSteps(inputs: AddStepInput[]) {
-    return this.taj.addSteps(inputs);
+    const addSteps = this.taj.addSteps(inputs);
+    this.stepPromises.push(addSteps);
+    return addSteps;
   }
 
   async addTransitions(inputs: TransitionInput[]) {
-    this.addTransitionsInputs.push(...inputs);
+    const proms: Promise<AddTransitionPayload>[] = [];
+    for (const input of inputs) {
+      const transitionPromise = this.taj.transition(input);
+      this.transitionPromises.push(transitionPromise);
+      proms.push(transitionPromise);
+    }
+
+    return Promise.all(proms);
   }
 
   async setAttributes(inputs: SetAttributeInput[]) {
@@ -224,6 +287,7 @@ export class Runloop<
   // TODO ADD iteration attributes per scope, only first 100...
   private loadAllScopes(filters: ScopedAttributesInput[], after?: any) {
     this.taj.scopes({ filter: filters, first: 100, after }).then((conn) => {
+      const scopes: { [key: string]: ScopeIdent } = {};
       for (const edge of conn?.edges || []) {
         for (const attrEdge of edge.node.attributes.edges || []) {
           this.attributesSub.next({
@@ -232,8 +296,12 @@ export class Runloop<
           });
         }
 
+        scopes[edge.node.id] = edge.node as ScopeIdent;
+      }
+
+      for (const scope of Object.values(scopes)) {
         this.scopesSub.next({
-          scope: edge.node as ScopeIdent,
+          scope,
           removed: false,
         });
       }

@@ -14,7 +14,7 @@ import {
   ScopeUpdate,
 } from "../shared/scopes";
 import { Attributes } from "./attributes";
-import { TajribaAdminAccess } from "./context";
+import { Finalizer, TajribaAdminAccess } from "./context";
 
 export class Scopes<
   Context,
@@ -85,29 +85,40 @@ export class Scope<
     this.taj = scopes.taj;
   }
 
-  protected scopeByKey(key: string) {
+  protected scopeByKey<T extends Scope<Context, Kinds>>(
+    key: string
+  ): T | undefined {
     const id = this.get(key);
     if (!id || typeof id !== "string") {
       return;
     }
 
-    return this.scopes.scope(id);
+    return this.scopes.scope(id) as T | undefined;
   }
 
   protected scopesByKind(kind: keyof Kinds) {
     return this.scopes.byKind(kind);
   }
 
+  protected scopesByKindMatching<T extends Scope<Context, Kinds>>(
+    kind: keyof Kinds,
+    key: string,
+    val: string
+  ): T[] {
+    const scopes = Array.from(this.scopes.byKind(kind).values());
+    return scopes.filter((s) => s.get(key) === val) as T[];
+  }
+
   protected addScopes(input: AddScopeInput[]) {
-    this.taj.addScopes(input);
+    return this.taj.addScopes(input);
   }
 
   protected addGroups(input: AddGroupInput[]) {
-    this.taj.addGroups(input);
+    return this.taj.addGroups(input);
   }
 
   protected addLinks(input: LinkInput[]) {
-    this.taj.addLinks(input);
+    return this.taj.addLinks(input);
   }
 
   protected addSteps(input: AddStepInput[]) {
@@ -115,7 +126,11 @@ export class Scope<
   }
 
   protected addTransitions(input: TransitionInput[]) {
-    this.taj.addTransitions(input);
+    return this.taj.addTransitions(input);
+  }
+
+  protected addFinalizer(cb: Finalizer) {
+    this.taj.addFinalizer(cb);
   }
 
   /**

@@ -16,7 +16,7 @@ import {
   setupProvider,
 } from "../shared/test_helpers";
 import { Attributes } from "./attributes";
-import { TajribaAdminAccess } from "./context";
+import { Finalizer, TajribaAdminAccess } from "./context";
 import { Globals } from "./globals";
 import { Scope, Scopes } from "./scopes";
 
@@ -59,12 +59,14 @@ function setupScopes() {
   );
 
   const called: {
+    finalizers: Finalizer[];
     addScopes: AddScopeInput[][];
     addGroups: AddGroupInput[][];
     addLinks: LinkInput[][];
     addSteps: AddStepInput[][];
     addTransitions: TransitionInput[][];
   } = {
+    finalizers: [],
     addScopes: [],
     addGroups: [],
     addLinks: [],
@@ -77,16 +79,23 @@ function setupScopes() {
   const globals = new Subject<SubAttributesPayload>();
 
   const mut = new TajribaAdminAccess(
-    (inputs: AddScopeInput[]) => {
+    (cb: Finalizer) => {
+      /* c8 ignore next 2 */
+      called.finalizers.push(cb);
+    },
+    async (inputs: AddScopeInput[]) => {
       called.addScopes.push(inputs);
+      return [];
     },
-    (inputs: AddGroupInput[]) => {
-      /* c8 ignore next */
+    async (inputs: AddGroupInput[]) => {
+      /* c8 ignore next 2 */
       called.addGroups.push(inputs);
+      return [];
     },
-    (inputs: LinkInput[]) => {
-      /* c8 ignore next */
+    async (inputs: LinkInput[]) => {
+      /* c8 ignore next 2 */
       called.addLinks.push(inputs);
+      return [];
     },
     async (inputs: AddStepInput[]) => {
       /* c8 ignore next 3 */
@@ -94,9 +103,10 @@ function setupScopes() {
 
       return [{ id: "123", duration: inputs[0]!.duration }];
     },
-    (inputs: TransitionInput[]) => {
-      /* c8 ignore next 2 */
+    async (inputs: TransitionInput[]) => {
+      /* c8 ignore next 3 */
       called.addTransitions.push(inputs);
+      return [];
     },
     new Globals(globals, "globals", provider.setAttributes)
   );

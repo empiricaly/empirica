@@ -105,7 +105,7 @@ function EmpiricaInnerContext({
     return <Lobby />;
   }
 
-  if (game.get("state") === "ended") {
+  if (game.get("status") === "ended") {
     return (
       <Steps progressKey="exitStep" doneKey="exitStepDone" steps={exitSteps}>
         <Finished />

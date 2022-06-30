@@ -1,9 +1,8 @@
-import { AddScopeInput, State } from "@empirica/tajriba";
+import { State } from "@empirica/tajriba";
 import { z } from "zod";
-import { PlayerGame } from "../../player/classic";
-import { error, info, warn } from "../../utils/console";
+import { debug, error, info, trace, warn } from "../../utils/console";
 import { deepEqual } from "../../utils/object";
-import { StepPayload } from "../context";
+import { pickRandom, selectRandom } from "../../utils/random";
 import { EventContext, ListenersCollector, TajribaEvent } from "../events";
 import { Participant } from "../participants";
 import { Step, Transition } from "../transitions";
@@ -14,7 +13,6 @@ import {
   Context,
   Game,
   Player,
-  PlayerRound,
   PlayerStage,
   Round,
   Stage,
@@ -49,56 +47,16 @@ const batchConfigSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
-function pickRandom<T>(items: T[]): T {
-  const random = Math.floor(Math.random() * items.length);
-  return items[random] as T;
-}
+const isBatch = z.instanceof(Batch).parse;
+const isGame = z.instanceof(Game).parse;
+const isRound = z.instanceof(Round).parse;
+const isStage = z.instanceof(Stage).parse;
 
-export function shuffle(a: Array<any>) {
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-export function selectRandom(arr: Array<any>, num: number) {
-  return shuffle(arr.slice()).slice(0, num);
-}
-
-function addMissingStages(
-  ctx: EventContext<Context, ClassicKinds>,
-  stages: Stage[]
-) {
-  for (const stage of stages) {
-    if (!stage.round) {
-      error(`stage without round on game init: ${stage.id}`);
-
-      continue;
-    }
-
-    const newStages = stage.round.get("newStages") as AddScopeInput[];
-    for (const newStage of newStages) {
-      newStage.attributes!.push({
-        key: "roundID",
-        val: `"${stage.round.id}"`,
-        immutable: true,
-      });
-      ctx.addScopes([newStage]);
-    }
-    stage.round.set("newStages", []);
-  }
-}
+const isString = z.string().parse;
 
 export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
-  // _.on("start", function (_) {});
-
   const online = new Map<string, Participant>();
   const playersForParticipant = new Map<string, Player>();
-  const playersByGame = new Map<string, Player[]>();
-  const playersByID = new Map<string, Player>();
-  const gamesByBatch = new Map<string, Game[]>();
-  const stagesByGame = new Map<string, Stage[]>();
   const stageForStepID = new Map<string, Stage>();
   const batches: Batch[] = [];
 
@@ -114,8 +72,7 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
 
       let availableGames = [];
 
-      const games = gamesByBatch.get(batch.id) || [];
-      for (const game of games) {
+      for (const game of batch.games) {
         if (game.hasNotStarted) {
           availableGames.push(game);
         }
@@ -151,13 +108,13 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
 
   function checkShouldOpenExperiment(ctx: EventContext<Context, ClassicKinds>) {
     let shouldOpenExperiment = false;
+
     LOOP: for (const batch of batches) {
       if (!batch.isRunning) {
         continue;
       }
 
-      const games = gamesByBatch.get(batch.id) || [];
-      for (const game of games) {
+      for (const game of batch.games) {
         if (game.hasNotStarted) {
           shouldOpenExperiment = true;
           break LOOP;
@@ -168,13 +125,42 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     ctx.globals.set("experimentOpen", shouldOpenExperiment);
   }
 
-  _.on(TajribaEvent.ParticipantConnect, function (ctx, { participant }) {
+  function tryToStartGame(
+    ctx: EventContext<Context, ClassicKinds>,
+    game: Game
+  ) {
+    if (game.get("stageID")) return;
+
+    if (game.stages.length === 0) {
+      return;
+    }
+
+    const groupID = isString(game.get("groupID"));
+
+    const participantIDs: string[] = [];
+    const nodeIDs = [game.id, groupID];
+    for (const player of game.players) {
+      nodeIDs.push(player.id);
+      participantIDs.push(player.participantID!);
+      nodeIDs.push(isString(player.get(`playerGameID-${game.id}`)));
+    }
+
+    ctx.addLinks([{ link: true, participantIDs, nodeIDs }]);
+
+    const stage = isStage(game.stages[0]);
+    const round = isRound(stage.round);
+
+    game.set("stageID", stage.id);
+
+    round.set("start", true);
+  }
+
+  _.on(TajribaEvent.ParticipantConnect, (ctx, { participant }) => {
     online.set(participant.id, participant);
 
     const player = playersForParticipant.get(participant.id);
-    info("HAS PLAYER", Boolean(player));
+
     if (!player) {
-      info("ADDING PLAYER", participant.id);
       ctx.addScopes([
         {
           attributes: attrs([
@@ -192,21 +178,15 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     }
   });
 
-  _.on(TajribaEvent.ParticipantConnect, function (_, { participant }) {
+  _.on(TajribaEvent.ParticipantConnect, (_, { participant }) => {
     online.delete(participant.id);
   });
 
-  _.on("player", function (ctx, { player }: { player: Player }) {
-    const participantID = player.get("participantID") as string;
-    if (!participantID) {
-      warn(`player without participant id: ${player.id}`);
-    }
-    playersByID.set(player.id, player);
+  _.on("player", (ctx, { player }: { player: Player }) => {
+    const participantID = isString(player.get("participantID"));
 
     player.participantID = participantID;
     playersForParticipant.set(participantID, player);
-
-    info("ADDING PLAYER LINK", player.id, participantID);
 
     ctx.addLinks([
       {
@@ -221,44 +201,10 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     }
   });
 
-  type PlayerGameID = { player: Player; gameID: string };
-  _.on("player", "gameID", function (_, { player, gameID }: PlayerGameID) {
-    // if (!player.participantID) {
-    //   error(`game player without participant id: ${player.id}`);
-    //   return;
-    // }
-
-    let players = playersByGame.get(gameID);
-    if (!players) {
-      players = [];
-      playersByGame.set(gameID, players);
-    }
-
-    players.push(player);
-  });
-
-  type GameBatchID = { game: Game; batchID: string };
-  _.on("game", "batchID", function (_, { game, batchID }: GameBatchID) {
-    let games = gamesByBatch.get(batchID);
-    if (!games) {
-      games = [];
-      gamesByBatch.set(batchID, games);
-    }
-
-    games.push(game);
-  });
-
-  _.on("batch", function (_, { batch }: { batch: Batch }) {
+  _.on("batch", (_, { batch }: { batch: Batch }) => {
     batches.push(batch);
 
-    const res = batchConfigSchema.safeParse(batch.get("config"));
-    if (!res.success) {
-      warn("batch created without a config");
-
-      return;
-    }
-
-    const config = res.data;
+    const config = batchConfigSchema.parse(batch.get("config"));
 
     switch (config.kind) {
       case "simple":
@@ -296,324 +242,163 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
   });
 
   type BatchStatus = { batch: Batch; status: string };
-  _.on(
-    "batch",
-    "status",
-    function (ctx, { batch, status }: BatchStatus) {
-      switch (status) {
-        case "running": {
-          for (const [_, player] of playersForParticipant) {
-            const idRes = z.string().safeParse(player.get("participantID"));
-            if (idRes.success && online.has(idRes.data)) {
-              assignplayer(player);
-            }
+  _.unique.on("batch", "status", (ctx, { batch, status }: BatchStatus) => {
+    switch (status) {
+      case "running": {
+        for (const [_, player] of playersForParticipant) {
+          if (player.participantID) {
+            assignplayer(player);
           }
-
-          checkShouldOpenExperiment(ctx);
-          break;
         }
-        case "ended":
-          console.debug("callbacks: batch ended");
-          for (const game of gamesByBatch.get(batch.id) || []) {
-            const status = game.get("status") as string;
-            if (["failed", "ended", "terminated"].includes(status)) {
-              game.end("batch ended");
-            }
-          }
 
-          break;
-
-        default:
-          warn(`unkown batch status: ${status}`);
-
-          break;
+        checkShouldOpenExperiment(ctx);
+        break;
       }
-    },
-    true
-  );
+      case "ended":
+        console.debug("callbacks: batch ended");
+        for (const game of batch.games) {
+          const status = isString(game.get("status"));
+          if (["failed", "ended", "terminated"].includes(status)) {
+            game.end("batch ended");
+          }
+        }
+
+        break;
+
+      default:
+        warn(`unkown batch status: ${status}`);
+
+        break;
+    }
+  });
 
   type GameStatus = { game: Game; status: string };
-  _.on(
-    "game",
-    "status",
-    function (ctx, { game, status }: GameStatus) {
-      console.log("GAME STATUS", status);
+  _.unique.on("game", "status", (ctx, { game, status }: GameStatus) => {
+    console.log("GAME STATUS", status);
 
-      switch (status) {
-        case "running": {
-          game.set("start", true);
+    switch (status) {
+      case "running": {
+        tryToStartGame(ctx, game);
+        checkShouldOpenExperiment(ctx);
 
-          checkShouldOpenExperiment(ctx);
+        break;
+      }
 
-          break;
+      case "ended":
+        const batch = isBatch(game.batch);
+
+        const finishedBatch = !batch.games.some((g) => !g.hasEnded);
+        if (finishedBatch) {
+          batch.end("all games finished");
         }
 
-        case "ended":
-          if (!game.batch) {
-            error(`batch is missing on ending game: ${game.id}`);
+        break;
+      default:
+        warn(`unkown batch status: ${status}`);
 
-            return;
-          }
+        break;
+    }
+  });
 
-          const games = gamesByBatch.get(game.batch.id) || [];
-          const finishedBatch = !games.some((g) => !g.hasEnded);
-          if (finishedBatch) {
-            game.batch.end("all games finished");
-          }
-
-          break;
-        default:
-          warn(`unkown batch status: ${status}`);
-
-          break;
-      }
-    },
-    true
-  );
-
-  _.on("game", function (ctx, { game }) {
+  _.on("game", async (ctx, { game }) => {
     if (game.get("groupID")) {
       return;
     }
 
     // Create empty group for now, add players as assigned
-    ctx.addGroups([{ participantIDs: [] }]);
+
+    let groups: { id: string }[];
+    try {
+      groups = await ctx.addGroups([{ participantIDs: [] }]);
+    } catch (err) {
+      error(`failed to create game group: ${err}`);
+
+      return;
+    }
+
+    if (groups.length < 1) {
+      error(`failed to create game groups`);
+
+      return;
+    }
+
+    const groupID = groups[0]!.id;
+
+    game.set("groupID", groupID);
   });
 
-  _.on("stage", async function (ctx, { stage }: { stage: Stage }) {
-    if (!stage.currentGame) {
-      error(`stage without game: ${stage.id}`);
-
-      return;
-    }
-
-    let stages = stagesByGame.get(stage.currentGame.id);
-    if (!stages) {
-      stages = [];
-      stagesByGame.set(stage.currentGame.id, stages);
-    }
-
-    if (typeof stage.get("index") !== "number") {
-      error(`stage without index: ${stage.id}`);
-
-      return;
-    }
-
-    const res = z.number().int().gte(5).safeParse(stage.get("duration"));
-    if (!res.success) {
-      error(`stage start without duration: ${stage.id}: ${res.error}`);
-
-      return;
-    }
-
-    const duration = res.data;
-
-    const timerID = stage.get("timerID");
-    if (!timerID || typeof timerID !== "string") {
-      let steps: StepPayload[];
-      try {
-        steps = await ctx.addSteps([{ duration }]);
-      } catch (err) {
-        error(`failed to create steps: ${err}`);
-
-        return;
-      }
-
-      if (steps.length < 1) {
-        error(`failed to create steps`);
-
-        return;
-      }
-
-      const stepID = steps[0]!.id;
-
-      stage.set("timerID", stepID);
-
-      return;
-    } else {
-      stageForStepID.set(timerID, stage);
-    }
-
-    stages.push(stage);
-    stages.sort(
-      (a, b) => (a.get("index") as number) - (b.get("index") as number)
-    );
+  _.on("stage", "gameID", async (ctx, { stage }: { stage: Stage }) => {
+    tryToStartGame(ctx, isGame(stage.currentGame));
   });
 
   type StageTimerID = { stage: Stage; timerID: string };
-  _.after("stage", "timerID", function (_, { stage, timerID }: StageTimerID) {
+  _.after("stage", "timerID", (_, { stage, timerID }: StageTimerID) => {
     stageForStepID.set(timerID, stage);
   });
 
-  function getNextStage(stage: Stage, game: Game) {
-    const stages = stagesByGame.get(game.id);
-    if (!stages) {
-      error(`running game without stages: ${game.id}`);
-
-      return { stop: true };
-    }
-
-    const currentIndex = stages.findIndex((s) => s.id === stage.id);
-    const nextStage = stages[currentIndex + 1];
+  function getNextStage(
+    stage: Stage,
+    game: Game
+  ):
+    | { stop: true; nextStage: undefined; nextRound: undefined }
+    | { stop: false; nextStage: Stage; nextRound: Round } {
+    const currentIndex = game.stages.findIndex((s) => s.id === stage.id);
+    const nextStage = game.stages[currentIndex + 1];
 
     if (!nextStage) {
-      game.set("stageID", null);
-      // game.end("stages finished");
-
-      return { stop: true };
+      return { stop: true, nextStage: undefined, nextRound: undefined };
     }
 
-    const nextRound = nextStage.round;
-    if (!nextRound) {
-      error(`next stage without round`);
-
-      return { stop: true };
-    }
-
-    return { nextStage, nextRound };
+    return { nextStage, nextRound: isRound(nextStage.round), stop: false };
   }
 
-  _.on("playerGame", function (_, { playerGame }: { playerGame: PlayerGame }) {
-    const playerID = playerGame.get("playerID") as string;
-    if (!playerID) {
-      error(`playerGame without player ID: ${playerGame.id}`);
-
-      return;
-    }
-
-    const gameID = playerGame.get("gameID") as string;
-    if (!gameID) {
-      error(`playerGame without game ID: ${playerGame.id}`);
-
-      return;
-    }
-
-    const player = playersByID.get(playerID);
-    if (!player) {
-      error(`playerGame without player: ${playerGame.id}`);
-
-      return;
-    }
-
-    const key = `playerGameID-${gameID}`;
-    if (player.get(key)) {
-      player.set(key, playerGame.id);
-    }
-  });
-
-  _.on(
-    "playerRound",
-    function (_, { playerRound }: { playerRound: PlayerRound }) {
-      const playerID = playerRound.get("playerID") as string;
-      if (!playerID) {
-        error(`playerRound without player ID: ${playerRound.id}`);
-
-        return;
-      }
-
-      const roundID = playerRound.get("roundID") as string;
-      if (!roundID) {
-        error(`playerRound without round ID: ${playerRound.id}`);
-
-        return;
-      }
-
-      const player = playersByID.get(playerID);
-      if (!player) {
-        error(`playerRound without player: ${playerRound.id}`);
-
-        return;
-      }
-
-      const key = `playerRoundID-${roundID}`;
-      if (player.get(key)) {
-        player.set(key, playerRound.id);
-      }
-    }
-  );
-
-  _.on(
-    "playerStage",
-    function (_, { playerStage }: { playerStage: PlayerStage }) {
-      const playerID = playerStage.get("playerID") as string;
-      if (!playerID) {
-        error(`playerStage without player ID: ${playerStage.id}`);
-
-        return;
-      }
-
-      const stageID = playerStage.get("stageID") as string;
-      if (!stageID) {
-        error(`playerStage without round ID: ${playerStage.id}`);
-
-        return;
-      }
-
-      const player = playersByID.get(playerID);
-      if (!player) {
-        error(`playerStage without player: ${playerStage.id}`);
-
-        return;
-      }
-
-      const key = `playerStageID-${stageID}`;
-      if (player.get(key)) {
-        player.set(key, playerStage.id);
-      }
-    }
-  );
-
-  _.on("player", "introDone", function (_, { player }: { player: Player }) {
-    if (!player.currentGame) {
-      warn("callbacks: introDone without game");
-
-      return;
-    }
-
-    const game = player.currentGame;
+  _.on("player", "introDone", (_, { player }: { player: Player }) => {
+    const game = isGame(player.currentGame);
     const treatment = treatmentSchema.parse(game.get("treatment"));
     const playerCount = treatment["playerCount"] as number;
-
-    const gamePlayers = playersByGame.get(game.id) || [];
-    const readyPlayers = gamePlayers.filter((p) => p.get("introDone"));
+    const readyPlayers = game.players.filter((p) => p.get("introDone"));
 
     if (readyPlayers.length < playerCount) {
-      console.debug("callbacks: not enough players ready yet");
+      trace("introDone: not enough players ready yet");
 
       return;
     }
 
     const players = selectRandom(readyPlayers, playerCount);
-    for (const plyr of gamePlayers) {
+    for (const plyr of game.players) {
       if (!players.some((p) => p.id === plyr.id)) {
         player.set("gameID", null);
         assignplayer(player);
       }
     }
 
-    game.set("start", true);
+    if (!game.get("start")) {
+      trace("introDone: starting game");
+      game.set("start", true);
+    } else {
+      trace("introDone: game already started");
+    }
   });
 
   type BeforeGameStart = { game: Game; start: boolean };
-  _.before(
+  _.unique.before(
     "game",
     "start",
-    function (ctx, { game, start }: BeforeGameStart) {
+    async (ctx, { game, start }: BeforeGameStart) => {
       if (!start) {
         return;
       }
+      trace("game start: HERE");
 
-      const batchID = game.get("batchID") as string;
-      if (!batchID) {
-        error(`game without batch ID: ${game.id}`);
+      const batchID = isString(game.get("batchID"));
 
-        return;
-      }
+      trace(
+        "game start: players: ",
+        game.players.map((p) => p.id)
+      );
 
-      const players = playersByGame.get(game.id) || [];
-
-      for (const player of players) {
-        ctx.addScopes([
+      for (const player of game.players) {
+        const playerGames = await ctx.addScopes([
           {
             kind: "playerGame",
             attributes: attrs([
@@ -635,96 +420,45 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
             ]),
           },
         ]);
-      }
-    },
-    true
-  );
 
-  type AfterGameStart = { game: Game; start: boolean };
-  _.unique.after(
-    "game",
-    "start",
-    function (ctx, { game, start }: AfterGameStart) {
-      if (!start) {
-        return;
-      }
+        if (playerGames.length < 1) {
+          error(`failed to create playerGame`);
 
-      const groupID = game.get("groupID") as string;
-      if (!groupID) {
-        error(`start game missing group ID: ${game.id}`);
+          return;
+        }
 
-        return;
-      }
-
-      const players = playersByGame.get(game.id) || [];
-
-      const participantIDs: string[] = [];
-      const nodeIDs = [game.id, groupID];
-      for (const player of players) {
-        nodeIDs.push(player.id);
-        participantIDs.push(player.participantID!);
-        const playerGameID = player.get(`playerGameID-${game.id}`) as string;
-        if (playerGameID) {
-          nodeIDs.push(playerGameID);
-        } else {
-          error(`game player without playerGameID: ${game.id}, ${player.id}`);
+        const key = `playerGameID-${game.id}`;
+        if (!player.get(key)) {
+          player.set(key, playerGames[0]!.id);
         }
       }
-
-      ctx.addLinks([{ link: true, participantIDs, nodeIDs }]);
-
-      const stages = stagesByGame.get(game.id);
-      if (!stages || stages.length === 0) {
-        error(`running game without stages: ${game.id}`);
-
-        return;
-      }
-
-      addMissingStages(ctx, stages);
-
-      // Checked length > 0 above
-      const stage = stages[0]!;
-
-      const round = stage.round;
-      if (!round) {
-        error(`first stage without round: ${game.id}, ${stage.id}`);
-
-        return;
-      }
-
-      game.set("stageID", stage.id);
-
-      round.set("start", true);
     }
   );
 
+  type AfterGameStart = { game: Game; start: boolean };
+  _.unique.after("game", "start", (_, { game, start }: AfterGameStart) => {
+    if (!start) {
+      return;
+    }
+
+    game.set("status", "running");
+  });
+
   type BeforeRoundStart = { round: Round; start: boolean };
-  _.before(
+  _.unique.before(
     "round",
     "start",
-    function (ctx, { round, start }: BeforeRoundStart) {
+    async (ctx, { round, start }: BeforeRoundStart) => {
       if (!start) {
         return;
       }
 
-      const gameID = round.get("gameID") as string;
-      if (!gameID) {
-        error(`round start without game: ${round.id}`);
+      const gameID = isString(round.get("gameID"));
+      const batchID = isString(round.get("batchID"));
+      const game = isGame(round.currentGame);
 
-        return;
-      }
-
-      const batchID = round.get("batchID") as string;
-      if (!batchID) {
-        error(`round without batch ID: ${round.id}`);
-
-        return;
-      }
-
-      const players = playersByGame.get(gameID) || [];
-
-      for (const player of players) {
-        ctx.addScopes([
+      for (const player of game.players) {
+        const playerRounds = await ctx.addScopes([
           {
             kind: "playerRound",
             attributes: attrs([
@@ -751,103 +485,55 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
             ]),
           },
         ]);
+
+        if (playerRounds.length < 1) {
+          error(`failed to create playerRound`);
+          return;
+        }
+
+        const key = `playerRoundID-${round.id}`;
+        if (!player.get(key)) {
+          player.set(key, playerRounds[0]!.id);
+        }
       }
-    },
-    true
+    }
   );
 
   type AfterRoundStart = { round: Round; start: boolean };
-  _.after(
-    "round",
-    "start",
-    function (ctx, { round, start }: AfterRoundStart) {
-      if (!start) {
-        return;
-      }
+  _.unique.after("round", "start", (ctx, { round, start }: AfterRoundStart) => {
+    if (!start) return;
 
-      const game = round.currentGame;
-      if (!game) {
-        error(`round start without game: ${round.id}`);
+    const game = isGame(round.currentGame);
+    const stageID = isString(game.get("stageID"));
 
-        return;
-      }
+    const stage = isStage(game.stages.find((s) => s.id === stageID));
 
-      const gameID = game.id;
+    const participantIDs: string[] = [];
+    const nodeIDs = [round.id];
+    for (const player of game.players) {
+      participantIDs.push(player.participantID!);
+      nodeIDs.push(isString(player.get(`playerRoundID-${round.id}`)));
+    }
 
-      const stageID = game.get("stageID") as string;
-      if (!stageID) {
-        error(`round start without stageID: ${round.id}`);
+    ctx.addLinks([{ link: true, participantIDs, nodeIDs }]);
 
-        return;
-      }
-
-      const stages = stagesByGame.get(gameID) || [];
-      const stage = stages.find((s) => s.id === stageID);
-      if (!stage) {
-        error(`round start without stage: ${round.id}`);
-
-        return;
-      }
-
-      addMissingStages(ctx, stages);
-
-      const players = playersByGame.get(gameID) || [];
-
-      const participantIDs: string[] = [];
-      const nodeIDs = [round.id];
-      for (const player of players) {
-        participantIDs.push(player.participantID!);
-        const playerRoundID = player.get(`playerRoundID-${round.id}`) as string;
-        if (playerRoundID) {
-          nodeIDs.push(playerRoundID);
-        } else {
-          error(
-            `round player without playerRoundID: ${round.id}, ${player.id}`
-          );
-        }
-      }
-
-      ctx.addLinks([{ link: true, participantIDs, nodeIDs }]);
-
-      stage.set("start", true);
-    },
-    true
-  );
+    stage.set("start", true);
+  });
 
   type BeforeStageStart = { stage: Stage; start: boolean };
-  _.before(
+  _.unique.before(
     "stage",
     "start",
-    async function (ctx, { stage, start }: BeforeStageStart) {
-      if (!start) {
-        return;
-      }
+    async (ctx, { stage, start }: BeforeStageStart) => {
+      if (!start) return;
 
-      const roundID = stage.get("roundID") as string;
-      if (!roundID) {
-        error(`stage start without round ID: ${stage.id}`);
+      const roundID = isString(stage.get("roundID"));
+      const gameID = isString(stage.get("gameID"));
+      const batchID = isString(stage.get("batchID"));
+      const game = isGame(stage.currentGame);
 
-        return;
-      }
-
-      const gameID = stage.get("gameID") as string;
-      if (!gameID) {
-        error(`stage start without game ID: ${stage.id}`);
-
-        return;
-      }
-
-      const batchID = stage.get("batchID") as string;
-      if (!batchID) {
-        error(`stage without batch ID: ${stage.id}`);
-
-        return;
-      }
-
-      const players = playersByGame.get(gameID) || [];
-
-      for (const player of players) {
-        ctx.addScopes([
+      for (const player of game.players) {
+        const playerStages = await ctx.addScopes([
           {
             kind: "playerStage",
             attributes: attrs([
@@ -879,245 +565,171 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
             ]),
           },
         ]);
+
+        if (playerStages.length < 1) {
+          error(`failed to create playerStage`);
+
+          return;
+        }
+
+        const key = `playerStageID-${stage.id}`;
+        if (!player.get(key)) {
+          player.set(key, playerStages[0]!.id);
+        }
       }
-    },
-    true
+    }
   );
 
   type AfterStageStart = { stage: Stage; start: boolean };
+  _.unique.after("stage", "start", (ctx, { stage, start }: AfterStageStart) => {
+    if (!start) return;
+
+    const game = isGame(stage.currentGame);
+
+    const timerID = isString(stage.get("timerID"));
+
+    const participantIDs: string[] = [];
+    const nodeIDs = [stage.id, timerID];
+    for (const player of game.players) {
+      participantIDs.push(player.participantID!);
+      nodeIDs.push(isString(player.get(`playerStageID-${stage.id}`)));
+    }
+
+    ctx.addLinks([{ link: true, participantIDs, nodeIDs }]);
+
+    ctx.addTransitions([
+      {
+        from: State.Created,
+        to: State.Running,
+        nodeID: timerID,
+        cause: "stage start",
+      },
+    ]);
+  });
+
+  type PlayerStageSubmit = { playerStage: PlayerStage; submit: boolean };
   _.after(
-    "stage",
-    "start",
-    function (ctx, { stage, start }: AfterStageStart) {
-      if (!start) {
+    "playerStage",
+    "submit",
+    (ctx, { playerStage, submit }: PlayerStageSubmit) => {
+      if (!submit) return;
+
+      const players = playerStage.player!.currentGame!.players;
+      if (players.length === 0) {
+        console.warn("callbacks: no players onSubmit");
         return;
       }
 
-      const game = stage.currentGame;
-      if (!game) {
-        error(`stage start without game: ${stage.id}`);
+      info(
+        "SUBMIT",
+        players.map((p) => [p.id, Boolean(p.stage!), p.stage!.get("submit")])
+      );
 
-        return;
+      if (players.every((p) => p.stage!.get("submit"))) {
+        ctx.addTransitions([
+          {
+            from: State.Running,
+            to: State.Ended,
+            nodeID: isString(playerStage.stage!.get("timerID")),
+            cause: "players submitted",
+          },
+        ]);
+        debug(`all player submitted, transitioning`);
+      } else {
+        debug(`not all player submitted`);
       }
-
-      const gameID = game.id;
-
-      const timerID = stage.get("timerID") as string;
-      if (!timerID) {
-        error(`stage start without timerID: ${stage.id}`);
-
-        return;
-      }
-
-      const players = playersByGame.get(gameID) || [];
-
-      const participantIDs: string[] = [];
-      const nodeIDs = [stage.id, timerID];
-      for (const player of players) {
-        participantIDs.push(player.participantID!);
-        const playerStageID = player.get(`playerGameID-${stage.id}`) as string;
-        if (playerStageID) {
-          nodeIDs.push(playerStageID);
-        } else {
-          error(
-            `stage player without playerStageID: ${stage.id}, ${player.id}`
-          );
-        }
-      }
-
-      ctx.addLinks([{ link: true, participantIDs, nodeIDs }]);
-
-      ctx.addTransitions([
-        {
-          from: State.Created,
-          to: State.Running,
-          nodeID: timerID,
-          cause: "stage start",
-        },
-      ]);
-    },
-    true
+    }
   );
 
   type AfterStageEnded = { stage: Stage; ended: boolean };
-  _.after(
-    "stage",
-    "ended",
-    function (ctx, { stage, ended }: AfterStageEnded) {
-      if (!ended) {
-        return;
-      }
+  _.unique.after("stage", "ended", (ctx, { stage, ended }: AfterStageEnded) => {
+    if (!ended) return;
 
-      const game = stage.currentGame;
-      if (!game) {
-        error(`stage ended without game: ${stage.id}`);
+    const game = isGame(stage.currentGame);
+    const timerID = isString(stage.get("timerID"));
+    const round = isRound(stage.round);
 
-        return;
-      }
+    const participantIDs: string[] = [];
+    const nodeIDs: string[] = [stage.id, timerID!];
+    for (const player of game.players) {
+      participantIDs.push(player.participantID!);
+      nodeIDs.push(isString(player.get(`playerStageID-${stage.id}`)));
+    }
 
-      const timerID = stage.get("timerID") as string;
-      if (!timerID) {
-        error(`stage ended without timer: ${stage.id}`);
+    ctx.addLinks([{ link: false, participantIDs, nodeIDs }]);
 
-        return;
-      }
+    const { stop, nextRound, nextStage } = getNextStage(stage, game);
 
-      const round = stage.round;
-      if (!round) {
-        error(`stage ended without round: ${stage.id}`);
+    if (stop) {
+      round.set("ended", true);
 
-        return;
-      }
+      return;
+    }
 
-      const players = playersByGame.get(game.id) || [];
-
-      if (game.hasEnded) {
-        // unlink everything
-        return;
-      }
-
-      const participantIDs: string[] = [];
-      const nodeIDs: string[] = [stage.id, timerID!];
-      for (const player of players) {
-        participantIDs.push(player.participantID!);
-        nodeIDs.push(player.get(`playerStageID-${stage.id}`) as string);
-      }
-
-      ctx.addLinks([{ link: false, participantIDs, nodeIDs }]);
-
-      const { stop, nextRound, nextStage } = getNextStage(stage, game);
-
-      if (stop) {
-        return;
-      }
-
-      if (round.id !== nextRound!.id) {
-        round.set("ended", true);
-
-        return;
-      }
-
-      game.set("stageID", nextStage!.id);
-      nextStage!.set("start", true);
-    },
-    true
-  );
+    if (round.id !== nextRound.id) {
+      round.set("ended", true);
+    } else {
+      game.set("stageID", nextStage.id);
+      nextStage.set("start", true);
+    }
+  });
 
   type AfterRoundEnded = { round: Round; ended: boolean };
-  _.after(
-    "round",
-    "ended",
-    (ctx, { round, ended }: AfterRoundEnded) => {
-      if (!ended) {
-        return;
-      }
+  _.unique.after("round", "ended", (ctx, { round, ended }: AfterRoundEnded) => {
+    if (!ended) return;
 
-      const game = round.currentGame;
-      if (!game) {
-        error(`round ended without game: ${round.id}`);
+    const game = isGame(round.currentGame);
+    const stage = isStage(game.currentStage);
 
-        return;
-      }
+    const participantIDs: string[] = [];
+    const nodeIDs: string[] = [round.id];
+    for (const player of game.players) {
+      participantIDs.push(player.participantID!);
+      nodeIDs.push(isString(player.get(`playerRoundID-${round.id}`)));
+    }
 
-      const stage = game.currentStage;
-      if (!stage) {
-        error(`round ended without stage: ${round.id}`);
+    ctx.addLinks([{ link: false, participantIDs, nodeIDs }]);
 
-        return;
-      }
+    const { stop, nextRound, nextStage } = getNextStage(stage, game);
 
-      const currentRound = game.currentRound;
-      if (!currentRound || round.id !== currentRound.id) {
-        error(`round ended without being current: ${round.id}`);
+    if (stop) {
+      game.set("stageID", null);
+      game.set("ended", true);
 
-        return;
-      }
+      return;
+    }
 
-      const players = playersByGame.get(game.id) || [];
-
-      if (game.hasEnded) {
-        // unlink everything
-        return;
-      }
-
-      const participantIDs: string[] = [];
-      const nodeIDs: string[] = [round.id];
-      for (const player of players) {
-        participantIDs.push(player.participantID!);
-        nodeIDs.push(player.get(`playerRoundID-${round.id}`) as string);
-      }
-
-      ctx.addLinks([{ link: false, participantIDs, nodeIDs }]);
-
-      const { stop, nextRound } = getNextStage(stage, game);
-
-      if (stop) {
-        return;
-      }
-
-      nextRound!.set("start", true);
-    },
-    true
-  );
+    game.set("stageID", nextStage.id);
+    nextRound.set("start", true);
+  });
 
   type AfterGameEnded = { game: Game; ended: boolean };
-  _.after(
-    "game",
-    "ended",
-    function (ctx, { game, ended }: AfterGameEnded) {
-      if (!ended) {
-        return;
-      }
+  _.unique.after("game", "ended", (_, { game, ended }: AfterGameEnded) => {
+    if (!ended) return;
 
-      const groupID = game.get("groupID") as string;
-      if (!groupID) {
-        error(`start game missing group ID: ${game.id}`);
+    // const groupID = isString(game.get("groupID"));
 
-        return;
-      }
+    // const participantIDs: string[] = [];
+    // const nodeIDs = [game.id, groupID];
+    // for (const player of game.players) {
+    //   participantIDs.push(player.participantID!);
+    //   nodeIDs.push(isString(player.get(`playerGameID-${game.id}`)));
+    // }
 
-      const players = playersByGame.get(game.id) || [];
+    // ctx.addLinks([{ link: false, participantIDs, nodeIDs }]);
 
-      const participantIDs: string[] = [];
-      const nodeIDs = [game.id, groupID];
-      for (const player of players) {
-        participantIDs.push(player.participantID!);
-        const playerGameID = player.get(`playerGameID-${game.id}`) as string;
-        if (playerGameID) {
-          nodeIDs.push(playerGameID);
-        } else {
-          error(`game player without playerGameID: ${game.id}, ${player.id}`);
-        }
-      }
-
-      ctx.addLinks([{ link: false, participantIDs, nodeIDs }]);
-
-      // Unlink Game
-      // Check if batch ended
-
-      if (!game.batch) {
-        error(`game ended without batch: ${game.id}`);
-
-        return;
-      }
-
-      game.end("end of game");
-    },
-    true
-  );
+    game.end("end of game");
+  });
 
   type TransitionAdd = { step: Step; transition: Transition };
   _.on(
     TajribaEvent.TransitionAdd,
-    function (_, { step, transition }: TransitionAdd) {
-      const stage = stageForStepID.get(step.id);
-      info("transition =>", step, transition, stage);
-      if (transition.from === State.Running && transition.to === State.Ended) {
-        if (!stage) {
-          error(`step ending without stage: ${step.id}`);
+    (_, { step, transition: { from, to } }: TransitionAdd) => {
+      const hasStage = Boolean(stageForStepID.get(step.id));
+      debug(`transition: ${from} => ${to} (has stage: ${hasStage})`);
 
-          return;
-        }
+      if (from === State.Running && to === State.Ended) {
+        const stage = isStage(stageForStepID.get(step.id));
 
         if (!stage.get("ended")) {
           stage.set("ended", true);

@@ -3,6 +3,7 @@ import {
   AddScopeInput,
   AddStepInput,
   LinkInput,
+  State,
   TransitionInput,
 } from "@empirica/tajriba";
 import { merge, Subject } from "rxjs";
@@ -157,13 +158,48 @@ export interface StepPayload {
   duration: number;
 }
 
+export interface AddLinkPayload {
+  nodes: { id: string }[];
+  participants: { id: string }[];
+}
+
+export interface AddTransitionPayload {
+  id: string;
+  from: State;
+  to: State;
+}
+
+export interface AddScopePayload {
+  id: string;
+  name?: string | null | undefined;
+  kind?: string | null | undefined;
+  attributes: {
+    edges: {
+      node: {
+        id: string;
+        private: boolean;
+        protected: boolean;
+        immutable: boolean;
+        key: string;
+        val?: string | null | undefined;
+        index?: number | null | undefined;
+      };
+    }[];
+  };
+}
+
+export type Finalizer = () => Promise<void>;
+
 export class TajribaAdminAccess {
   constructor(
-    readonly addScopes: (input: AddScopeInput[]) => void,
-    readonly addGroups: (input: AddGroupInput[]) => void,
-    readonly addLinks: (input: LinkInput[]) => void,
+    readonly addFinalizer: (cb: Finalizer) => void,
+    readonly addScopes: (input: AddScopeInput[]) => Promise<AddScopePayload[]>,
+    readonly addGroups: (input: AddGroupInput[]) => Promise<{ id: string }[]>,
+    readonly addLinks: (input: LinkInput[]) => Promise<AddLinkPayload[]>,
     readonly addSteps: (input: AddStepInput[]) => Promise<StepPayload[]>,
-    readonly addTransitions: (input: TransitionInput[]) => void,
+    readonly addTransitions: (
+      input: TransitionInput[]
+    ) => Promise<AddTransitionPayload[]>,
     readonly globals: Globals
   ) {}
 }

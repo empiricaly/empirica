@@ -41,6 +41,7 @@ func (ui *UI) Stop() {
 func init() {
 	lipgloss.SetColorProfile(termenv.TrueColor)
 	lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
+	// lipgloss.SetHasDarkBackground(true)
 }
 
 func (ui *UI) printClean() {

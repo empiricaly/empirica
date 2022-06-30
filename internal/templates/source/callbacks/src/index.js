@@ -1,18 +1,18 @@
+import { AdminContext } from "@empirica/core/admin";
+import { info, setLogLevel } from "@empirica/core/console";
 import {
-  AdminContext,
   Classic,
   classicKinds,
   ClassicLoader,
-  info,
-  setLogLevel,
-} from "@empirica/core";
+} from "@empirica/core/admin/classic";
 import minimist from "minimist";
 import process from "process";
 import { Empirica } from "./callbacks";
 
 const argv = minimist(process.argv.slice(2), { string: ["token"] });
 
-setLogLevel(argv["logLevel"] || "info");
+setLogLevel(argv["loglevel"] || "info");
+setLogLevel("trace");
 
 (async () => {
   const ctx = await AdminContext.init(

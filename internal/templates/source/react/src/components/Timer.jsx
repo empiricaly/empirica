@@ -7,7 +7,7 @@ export function Timer() {
   return (
     <div className="flex flex-col items-center">
       <h1 className="font-mono text-3xl text-gray-500 font-semibold">
-        {humanTimer(timer?.remaining)}
+        {humanTimer(Math.round(timer?.remaining / 1000))}
       </h1>
     </div>
   );

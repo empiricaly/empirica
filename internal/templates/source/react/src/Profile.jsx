@@ -21,7 +21,7 @@ export function Profile() {
           {round ? round.get("name") : ""}
         </div>
         <div className="text-empirica-400">
-          {stage ? stage.get("name") : stage}
+          {stage ? stage.get("name") : ""}
         </div>
       </div>
 

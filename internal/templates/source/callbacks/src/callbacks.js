@@ -1,4 +1,4 @@
-import { ClassicListenersCollector } from "@empirica/core";
+import { ClassicListenersCollector } from "@empirica/core/admin/classic";
 export const Empirica = new ClassicListenersCollector();
 
 Empirica.onGameStart(({ game }) => {
