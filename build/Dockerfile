@@ -32,7 +32,7 @@ WORKDIR /build
 COPY ./lib/admin-ui ./lib/admin-ui
 
 WORKDIR /build/lib/admin-ui
-RUN npm install && npm build
+RUN npm install && npm run build
 
 WORKDIR /build
 
