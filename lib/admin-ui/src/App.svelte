@@ -1,5 +1,5 @@
 <script>
-  import { Empirica } from "@empirica/admin";
+  import { TajribaConnection } from "@empirica/core/user";
   import { onMount } from "svelte";
   import Router from "svelte-spa-router";
   import Loading from "./components/common/Loading.svelte";
@@ -9,22 +9,58 @@
   import { routes } from "./routes";
   import { setCurrentAdmin } from "./utils/auth";
 
+  const queryURL = `${URL}/query`;
+
   let loggedIn = false;
   let loaded = false;
 
   const token = window.localStorage.getItem(DEFAULT_TOKEN_KEY);
 
-  onMount(async function () {
+  async function initLogin() {
     await sessionLogin();
     loaded = true;
-  });
+  }
+  onMount(initLogin);
+
+  async function sessionAdmin(t) {
+    const tajriba = new TajribaConnection(queryURL);
+
+    let resolve;
+    const prom = new Promise((r) => (resolve = r));
+    const sub = tajriba.connected.subscribe({
+      next: (connected) => {
+        if (connected) {
+          resolve();
+        }
+      },
+    });
+    await prom;
+    sub.unsubscribe();
+
+    let sub2;
+    sub2 = tajriba.connected.subscribe({
+      next: (connected) => {
+        if (!connected) {
+          console.info("Disconnected");
+          setCurrentAdmin(null);
+          sub2.unsubscribe();
+          loggedIn = false;
+          loaded = false;
+          initLogin();
+        }
+      },
+    });
+
+    const admin = await tajriba.sessionAdmin(t);
+    setCurrentAdmin(admin);
+    loggedIn = true;
+    console.info("Connected");
+  }
 
   async function sessionLogin() {
     if (token) {
       try {
-        const admin = await Empirica.sessionLogin(`${URL}/query`, token);
-        setCurrentAdmin(admin);
-        loggedIn = true;
+        await sessionAdmin(token);
       } catch (e) {
         console.info("Failed to reconnect", e);
         await checkDev();
@@ -40,12 +76,24 @@
       return;
     }
 
-    try {
-      const res = await fetch(`${URL}/dev`);
-      await setDevToken(res.status === 200);
-    } catch (err) {
-      await setDevToken(false);
-      console.error("fetch dev status", err);
+    while (true) {
+      try {
+        const res = await fetch(`${URL}/dev`, { cache: "reload" });
+        await setDevToken(res.status === 200);
+      } catch (err) {
+        if (err instanceof TypeError && err.message === "Load failed") {
+          await new Promise((r) => setTimeout(r, 1000));
+          if (loaded) {
+            return;
+          }
+          console.log("Tajriba down. Retrying in 1s...");
+          continue;
+        }
+        await setDevToken(false);
+        console.error("fetch dev status", err);
+      }
+
+      break;
     }
   }
 
@@ -53,9 +101,7 @@
     dev = isDev;
 
     if (isDev) {
-      const admin = await Empirica.devLogin(`${URL}/query`);
-      setCurrentAdmin(admin);
-      loggedIn = true;
+      await sessionAdmin("123456789");
     }
   }
 </script>

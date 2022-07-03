@@ -46,13 +46,13 @@ export class TajribaProvider {
             break;
           case "AttributeChange":
             group.subscribe({
-              next: (scope) => {
+              next: (attribute) => {
                 this.attributes.next({
-                  attribute: <AttributeChange>scope.change,
-                  removed: scope.removed,
+                  attribute: <AttributeChange>attribute.change,
+                  removed: attribute.removed,
                 });
 
-                if (scope.done) {
+                if (attribute.done) {
                   this.dones.next();
                 }
               },

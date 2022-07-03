@@ -1,6 +1,5 @@
-import useMouse from "@react-hook/mouse-position";
-import React, { useEffect, useRef } from "react";
-import { usePlayer, usePlayers, useRound } from "../hooks";
+import React, { useEffect } from "react";
+import { usePlayer, useRound } from "../hooks";
 
 const buttonStyle = {
   width: 40,
@@ -33,13 +32,7 @@ type cell = number | string;
 type row = [cell, cell, cell, cell, cell, cell, cell, cell, cell, cell];
 type grid = [row, row, row, row, row, row, row, row, row, row];
 
-export function Sweeper({ avatar: Avatar }: { avatar: React.ElementType }) {
-  const ref = useRef(null);
-  const mouse = useMouse(ref, {
-    enterDelay: 100,
-    leaveDelay: 100,
-  });
-
+export function Sweeper() {
   const round = useRound();
   if (!round) {
     return null;
@@ -48,7 +41,6 @@ export function Sweeper({ avatar: Avatar }: { avatar: React.ElementType }) {
   if (!player) {
     return null;
   }
-  const players = (usePlayers() || []).filter((p) => p.id !== player.id);
 
   const visited = round.get("visited") as Array<Array<number>>;
   const bombs = round.get("bombs") as Array<Array<number | "X">>;
@@ -57,17 +49,6 @@ export function Sweeper({ avatar: Avatar }: { avatar: React.ElementType }) {
   useEffect(function () {
     generateBombs();
   }, []);
-
-  useEffect(
-    function () {
-      if (!mouse.x) {
-        player.round!.set("position", null);
-      } else {
-        player.round!.set("position", [mouse.x, mouse.y]);
-      }
-    },
-    [mouse]
-  );
 
   function generateBombs() {
     if (bombs || !round) {
@@ -163,7 +144,7 @@ export function Sweeper({ avatar: Avatar }: { avatar: React.ElementType }) {
   }
 
   return (
-    <div className="text-sm relative" ref={ref}>
+    <div className="text-sm relative">
       {lost ? (
         <>
           <div className="absolute h-full w-full flex items-center justify-center text-6xl white font-black bg-opacity-50 bg-gray-300">
@@ -174,36 +155,7 @@ export function Sweeper({ avatar: Avatar }: { avatar: React.ElementType }) {
           </div>
         </>
       ) : (
-        <div className="absolute h-full w-full text-white text-2xl pointer-events-none">
-          {players.map((p) => {
-            const m = p.round!.get("position") as [number, number];
-            if (!m) {
-              return null;
-            }
-
-            return (
-              <div
-                key={p.id}
-                className="absolute"
-                style={{ left: m[0], top: m[1] }}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 320 512"
-                  className="mx-auto h-6 w-6 text-gray-900"
-                  stroke="white"
-                  fill="currentColor"
-                  aria-hidden="true"
-                >
-                  <path d="M302.189 329.126H196.105l55.831 135.993c3.889 9.428-.555 19.999-9.444 23.999l-49.165 21.427c-9.165 4-19.443-.571-23.332-9.714l-53.053-129.136-86.664 89.138C18.729 472.71 0 463.554 0 447.977V18.299C0 1.899 19.921-6.096 30.277 5.443l284.412 292.542c11.472 11.179 3.007 31.141-12.5 31.141z" />
-                </svg>
-                <div className="absolute left-6 top-6 h-12 w-12">
-                  <Avatar player={p} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        ""
       )}
 
       {bombs.map((arr, index) => (

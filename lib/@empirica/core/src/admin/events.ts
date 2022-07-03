@@ -1,4 +1,14 @@
+import {
+  AddGroupInput,
+  AddScopeInput,
+  AddStepInput,
+  LinkInput,
+  TransitionInput,
+} from "@empirica/tajriba";
+import { Attribute } from "../shared/attributes";
 import { ScopeConstructor } from "../shared/scopes";
+import { Finalizer, TajribaAdminAccess } from "./context";
+import { Scope } from "./scopes";
 import { ScopeSubscriptionInput } from "./subscriptions";
 
 export type Subscriber<
@@ -12,42 +22,97 @@ export enum TajribaEvent {
   ParticipantDisconnect = "PARTICIPANT_DISCONNECT",
 }
 
-type TajEventSub<Callback extends Function> = {
+export enum ListernerPlacement {
+  Before,
+  None, // Not before or after
+  After,
+}
+
+const placementString = new Map<ListernerPlacement, string>();
+placementString.set(ListernerPlacement.Before, "before");
+placementString.set(ListernerPlacement.None, "on");
+placementString.set(ListernerPlacement.After, "after");
+
+export function PlacementString(placement: ListernerPlacement): string {
+  return placementString.get(placement)!;
+}
+
+export type SimpleListener<
+  Context,
+  Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
+> = {
+  placement: ListernerPlacement;
+  callback: (ctx: EventContext<Context, Kinds>) => void;
+};
+
+export type TajEventListener<Callback extends Function> = {
+  placement: ListernerPlacement;
   event: TajribaEvent;
   callback: Callback;
 };
 
-type KindEventSub<Callback extends Function> = {
+export type KindEventListener<Callback extends Function> = {
+  placement: ListernerPlacement;
   kind: string;
   callback: Callback;
 };
 
-type AttributeEventSub<Callback extends Function> = {
+export type AttributeEventListener<Callback extends Function> = {
+  placement: ListernerPlacement;
   kind: string;
   key: string;
   callback: Callback;
 };
 
-type EvtCtxCallback<
+export type EvtCtxCallback<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > = (ctx: EventContext<Context, Kinds>, props: any) => void;
+
+function unique<
+  Context,
+  Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> },
+  K extends keyof Kinds
+>(
+  kind: K,
+  placement: ListernerPlacement,
+  callback: EvtCtxCallback<Context, Kinds>
+) {
+  return async (ctx: EventContext<Context, Kinds>, props: any) => {
+    const attr = props.attribute as Attribute;
+    const scope = props[kind] as Scope<Context, Kinds>;
+    if (!attr.id || scope.get(`ran-${attr.id}`)) {
+      return;
+    }
+
+    await callback(ctx, props);
+
+    scope.set(`ran-${PlacementString(placement)}-${attr.id}`, true);
+  };
+}
 
 // Collects event listeners.
 export class ListenersCollector<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
-  readonly starts: ((ctx: EventContext<Context, Kinds>) => void)[] = [];
-  readonly tajEvents: TajEventSub<EvtCtxCallback<Context, Kinds>>[] = [];
-  readonly kindEvents: KindEventSub<EvtCtxCallback<Context, Kinds>>[] = [];
-  readonly attributeEvents: AttributeEventSub<
+  readonly starts: SimpleListener<Context, Kinds>[] = [];
+  readonly readys: SimpleListener<Context, Kinds>[] = [];
+  readonly tajEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
+  readonly kindListeners: KindEventListener<EvtCtxCallback<Context, Kinds>>[] =
+    [];
+  readonly attributeListeners: AttributeEventListener<
     EvtCtxCallback<Context, Kinds>
   >[] = [];
 
-  // First callback called.
+  get unique() {
+    return new ListenersCollectorProxy<Context, Kinds>(this);
+  }
+
+  // start: first callback called.
+  // ready: callback called when initial loading is finished.
   on(
-    kind: "start",
+    kind: "start" | "ready",
     callback: (ctx: EventContext<Context, Kinds>) => void
   ): void;
 
@@ -64,7 +129,8 @@ export class ListenersCollector<
   on<Kind extends keyof Kinds>(
     kind: Kind,
     key: string,
-    callback: EvtCtxCallback<Context, Kinds>
+    callback: EvtCtxCallback<Context, Kinds>,
+    uniqueCall?: boolean
   ): void;
 
   on(
@@ -76,6 +142,63 @@ export class ListenersCollector<
       | ((ctx: EventContext<Context, Kinds>) => void),
     callback?: EvtCtxCallback<Context, Kinds>
   ): void {
+    this.registerListerner(
+      ListernerPlacement.None,
+      kindOrEvent,
+      keyOrNodeIDOrEventOrCallback,
+      callback
+    );
+  }
+
+  before(
+    kindOrEvent: string,
+    keyOrNodeIDOrEventOrCallback?:
+      | string
+      | TajribaEvent
+      | EvtCtxCallback<Context, Kinds>
+      | ((ctx: EventContext<Context, Kinds>) => void),
+    callback?: EvtCtxCallback<Context, Kinds>,
+    uniqueCall?: boolean
+  ): void {
+    this.registerListerner(
+      ListernerPlacement.Before,
+      kindOrEvent,
+      keyOrNodeIDOrEventOrCallback,
+      callback,
+      uniqueCall
+    );
+  }
+
+  after(
+    kindOrEvent: string,
+    keyOrNodeIDOrEventOrCallback?:
+      | string
+      | TajribaEvent
+      | EvtCtxCallback<Context, Kinds>
+      | ((ctx: EventContext<Context, Kinds>) => void),
+    callback?: EvtCtxCallback<Context, Kinds>,
+    uniqueCall?: boolean
+  ): void {
+    this.registerListerner(
+      ListernerPlacement.After,
+      kindOrEvent,
+      keyOrNodeIDOrEventOrCallback,
+      callback,
+      uniqueCall
+    );
+  }
+
+  protected registerListerner(
+    placement: ListernerPlacement,
+    kindOrEvent: string,
+    keyOrNodeIDOrEventOrCallback?:
+      | string
+      | TajribaEvent
+      | EvtCtxCallback<Context, Kinds>
+      | ((ctx: EventContext<Context, Kinds>) => void),
+    callback?: EvtCtxCallback<Context, Kinds>,
+    uniqueCall = false
+  ): void {
     if (kindOrEvent === "start") {
       if (callback) {
         throw new Error("start event only accepts 2 arguments");
@@ -85,11 +208,31 @@ export class ListenersCollector<
         throw new Error("second argument expected to be a callback");
       }
 
-      this.starts.push(
-        keyOrNodeIDOrEventOrCallback as (
+      this.starts.push({
+        placement,
+        callback: keyOrNodeIDOrEventOrCallback as (
           ctx: EventContext<Context, Kinds>
-        ) => void
-      );
+        ) => void,
+      });
+
+      return;
+    }
+
+    if (kindOrEvent === "ready") {
+      if (callback) {
+        throw new Error("ready event only accepts 2 arguments");
+      }
+
+      if (typeof keyOrNodeIDOrEventOrCallback !== "function") {
+        throw new Error("second argument expected to be a callback");
+      }
+
+      this.readys.push({
+        placement,
+        callback: keyOrNodeIDOrEventOrCallback as (
+          ctx: EventContext<Context, Kinds>
+        ) => void,
+      });
 
       return;
     }
@@ -100,6 +243,7 @@ export class ListenersCollector<
       }
 
       this.tajEvents.push({
+        placement,
         event: <TajribaEvent>kindOrEvent,
         callback: keyOrNodeIDOrEventOrCallback,
       });
@@ -108,7 +252,8 @@ export class ListenersCollector<
     }
 
     if (typeof keyOrNodeIDOrEventOrCallback === "function") {
-      this.kindEvents.push({
+      this.kindListeners.push({
+        placement,
         kind: kindOrEvent,
         callback: keyOrNodeIDOrEventOrCallback,
       });
@@ -120,11 +265,63 @@ export class ListenersCollector<
         throw new Error("third argument expected to be a callback");
       }
 
-      this.attributeEvents.push({
+      if (uniqueCall) {
+        callback = unique(kindOrEvent, placement, callback);
+      }
+
+      this.attributeListeners.push({
+        placement,
         kind: kindOrEvent,
         key: keyOrNodeIDOrEventOrCallback,
         callback,
       });
+    }
+  }
+}
+
+// Collects event listeners.
+class ListenersCollectorProxy<
+  Context,
+  Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
+> extends ListenersCollector<Context, Kinds> {
+  constructor(private coll: ListenersCollector<Context, Kinds>) {
+    super();
+  }
+
+  protected registerListerner(
+    placement: ListernerPlacement,
+    kindOrEvent: string,
+    keyOrNodeIDOrEventOrCallback?:
+      | string
+      | TajribaEvent
+      | EvtCtxCallback<Context, Kinds>
+      | ((ctx: EventContext<Context, Kinds>) => void),
+    callback?: EvtCtxCallback<Context, Kinds>
+  ): void {
+    if (
+      kindOrEvent === "start" ||
+      kindOrEvent === "ready" ||
+      Object.values(TajribaEvent).includes(kindOrEvent as any) ||
+      typeof keyOrNodeIDOrEventOrCallback === "function"
+    ) {
+      throw new Error("only attribute listeners can be unique");
+    }
+
+    super.registerListerner(
+      placement,
+      kindOrEvent,
+      keyOrNodeIDOrEventOrCallback,
+      callback,
+      true
+    );
+
+    while (true) {
+      const listener = this.attributeListeners.pop();
+      if (!listener) {
+        break;
+      }
+
+      this.coll.attributeListeners.push(listener);
     }
   }
 }
@@ -143,7 +340,10 @@ export class EventContext<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
-  constructor(private subs: SubscriptionCollector) {}
+  constructor(
+    private subs: SubscriptionCollector,
+    private taj: TajribaAdminAccess
+  ) {}
 
   scopeSub(...inputs: Partial<ScopeSubscriptionInput>[]) {
     for (const input of inputs) {
@@ -157,5 +357,40 @@ export class EventContext<
 
   transitionsSub(stepID: string) {
     this.subs.transitionsSub(stepID);
+  }
+
+  // c8 ignore: the TajribaAdminAccess proxy functions are tested elswhere
+  /* c8 ignore next 3 */
+  addScopes(input: AddScopeInput[]) {
+    return this.taj.addScopes(input);
+  }
+
+  /* c8 ignore next 3 */
+  addGroups(input: AddGroupInput[]) {
+    return this.taj.addGroups(input);
+  }
+
+  /* c8 ignore next 3 */
+  addLinks(input: LinkInput[]) {
+    return this.taj.addLinks(input);
+  }
+
+  /* c8 ignore next 3 */
+  addSteps(input: AddStepInput[]) {
+    return this.taj.addSteps(input);
+  }
+
+  /* c8 ignore next 3 */
+  addTransitions(input: TransitionInput[]) {
+    return this.taj.addTransitions(input);
+  }
+
+  protected addFinalizer(cb: Finalizer) {
+    this.taj.addFinalizer(cb);
+  }
+
+  /* c8 ignore next 3 */
+  get globals() {
+    return this.taj.globals;
   }
 }

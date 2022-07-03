@@ -7,7 +7,7 @@ import windi from "vite-plugin-windicss";
 // https://vitejs.dev/config/
 export default defineConfig({
   optimizeDeps: {
-    exclude: ["@empirica/tajriba", "@empirica/player"],
+    exclude: ["@empirica/tajriba", "@empirica/core"],
   },
   server: {
     port: 8844,
@@ -19,8 +19,8 @@ export default defineConfig({
         // search up for workspace root
         searchForWorkspaceRoot(process.cwd()),
         // @empirica/player lookup for windi
-        "./node_modules/@empirica/player/dist-src/**/*.{js,ts,jsx,tsx}",
-        "./node_modules/@empirica/player/assets/**/*.css",
+        "./node_modules/@empirica/core/dist/**/*.{js,ts,jsx,tsx}",
+        "./node_modules/@empirica/core/assets/**/*.css",
       ],
     },
   },
@@ -39,8 +39,8 @@ export default defineConfig({
     restart({
       restart: [
         "./windi.config.cjs",
-        "./node_modules/@empirica/player/dist-src/**/*.{js,ts,jsx,tsx}",
-        "./node_modules/@empirica/player/assets/**/*.css",
+        "./node_modules/@empirica/core/dist/**/*.{js,ts,jsx,tsx}",
+        "./node_modules/@empirica/core/assets/**/*.css",
       ],
     }),
     windi(),

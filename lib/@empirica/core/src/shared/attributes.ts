@@ -1,6 +1,6 @@
 import { SetAttributeInput } from "@empirica/tajriba";
 import { BehaviorSubject, Observable } from "rxjs";
-import { error } from "../utils/console";
+import { error, trace } from "../utils/console";
 import { JsonValue } from "../utils/json";
 
 export interface AttributeChange {
@@ -216,6 +216,10 @@ export class Attribute {
     readonly key: string
   ) {}
 
+  get id() {
+    return this.attr?.id;
+  }
+
   get obs(): Observable<JsonValue | undefined> {
     return this.val;
   }
@@ -249,6 +253,7 @@ export class Attribute {
     }
 
     this.setAttributes([attrProps]);
+    trace(`SET ${this.key} = ${value}`);
   }
 
   // internal only

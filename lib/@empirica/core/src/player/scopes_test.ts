@@ -14,6 +14,14 @@ import { Constructor } from "../shared/helpers";
 
 export class Stage extends Scope<Context, TestKinds> {}
 export class Game extends Scope<Context, TestKinds> {
+  get stage() {
+    return this.scopeByKey("stageID") as Stage | undefined;
+  }
+
+  get badStage() {
+    return this.scopeByKey("noStageID") as Stage | undefined;
+  }
+
   get timer() {
     return this.tickerByKey("stepID");
   }
@@ -102,4 +110,42 @@ test("Scope should get ticker by key", (t) => {
   );
 
   t.falsy(scope.badTimer);
+});
+
+test("Scope should get other scope by key", (t) => {
+  const { changes, scopes } = setupScopes();
+
+  changes.next(
+    scopeChange({ id: "abc", kind: "game", done: true, removed: false })
+  );
+
+  changes.next(
+    scopeChange({ id: "efg", kind: "stage", done: true, removed: false })
+  );
+
+  changes.next(
+    attrChange({
+      key: "stageID",
+      val: `"efg"`,
+      nodeID: "abc",
+      done: true,
+      removed: false,
+    })
+  );
+
+  changes.next(
+    attrChange({
+      key: "noStageID",
+      val: `"efg"`,
+      nodeID: "0",
+      done: true,
+      removed: false,
+    })
+  );
+
+  const scope = scopes.scope("abc") as Game;
+  t.truthy(scope);
+  t.truthy(scope.stage);
+  t.truthy(scope.stage instanceof Stage);
+  t.falsy(scope.badStage);
 });

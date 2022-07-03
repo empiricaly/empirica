@@ -12,7 +12,7 @@ import React from "react";
 import { Subject } from "rxjs";
 import { restore } from "sinon";
 import { TajribaConnection } from "../../shared/tajriba_connection";
-import { Globals } from "../globals";
+import { Globals } from "../../shared/globals";
 import { ParticipantContext } from "../context";
 import { fakeTajribaConnect, nextTick } from "../../shared/test_helpers";
 import { ParticipantCtx } from "./EmpiricaParticipant";
@@ -222,7 +222,7 @@ test.serial("usePlayerID no session", async (t) => {
   await result[2]("hey");
 
   // Wait for session establishement
-  await nextTick(10);
+  await nextTick(25);
 
   t.is(result[0], false);
   t.is(result[1], "hey");

@@ -1,4 +1,6 @@
 <script>
+  import { onMount } from "svelte";
+  import { writable } from "svelte/store";
   import { currentAdmin } from "../../utils/auth";
   import EmptyState from "../common/EmptyState.svelte";
   import Page from "../common/Page.svelte";
@@ -16,7 +18,35 @@
     },
   ];
 
-  const batches = $currentAdmin.batchesSub;
+  const batches = writable([]);
+
+  const batchesMap = new Map();
+  onMount(async function () {
+    const obs = $currentAdmin.scopedAttributes([{ kinds: ["batch"] }]);
+    obs.subscribe({
+      next({ attribute }) {
+        if (!attribute) {
+          return;
+        }
+
+        console.log(attribute);
+        let batch = batchesMap.get(attribute.node.id);
+        if (!batch) {
+          batch = { id: attribute.node.id, attributes: {} };
+          batchesMap.set(attribute.node.id, batch);
+          batches.set(Array.from(batchesMap.values()));
+        }
+
+        let val;
+        if (attribute.val) {
+          val = JSON.parse(attribute.val);
+        }
+
+        batch.attributes[attribute.key] = val;
+        batches.set(Array.from(batchesMap.values()));
+      },
+    });
+  });
 </script>
 
 <Page title="Batches" {actions}>
@@ -35,9 +65,7 @@
     </div>
   {:else}
     <!-- Projects table (small breakpoint and up) -->
-    <table
-      class="w-full max-w-full table-auto bg-white shadow sm:rounded-md"
-    >
+    <table class="w-full max-w-full table-auto bg-white shadow sm:rounded-md">
       <thead>
         <tr class="">
           <th
@@ -73,7 +101,9 @@
       </thead>
       <tbody class="bg-white divide-y divide-gray-100">
         {#each $batches as batch}
-          <BatchLine {batch} />
+          {#if batch.attributes["config"]}
+            <BatchLine {batch} />
+          {/if}
         {/each}
       </tbody>
     </table>

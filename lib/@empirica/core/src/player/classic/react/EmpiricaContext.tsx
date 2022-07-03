@@ -9,7 +9,7 @@ import {
 } from "../../react/hooks";
 import { Loading } from "../../react/Loading";
 import { NoGames } from "../../react/NoGames";
-import { PlayerCreate, PlayerCreateProps } from "../../react/PlayerID";
+import { PlayerCreate, PlayerCreateProps } from "../../react/PlayerCreate";
 import { useGame, usePlayer, useRound, useStage } from "./hooks";
 import { Lobby as DefaultLobby } from "./Lobby";
 import { Steps } from "./Steps";
@@ -105,7 +105,7 @@ function EmpiricaInnerContext({
     return <Lobby />;
   }
 
-  if (game.get("state") === "ended") {
+  if (game.get("status") === "ended") {
     return (
       <Steps progressKey="exitStep" doneKey="exitStepDone" steps={exitSteps}>
         <Finished />

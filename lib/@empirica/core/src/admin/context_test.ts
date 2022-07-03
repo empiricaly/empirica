@@ -2,15 +2,17 @@ import test from "ava";
 import fs from "fs/promises";
 import { fake, replace, restore } from "sinon";
 import { Constructor } from "../shared/helpers";
-import { Scope } from "../shared/scopes";
 import {
   Context,
   ErrnoException,
   fakeTajribaConnect,
   nextTick,
+  textHasLog,
 } from "../shared/test_helpers";
+import { captureLogsAsync } from "../utils/console";
 import { AdminContext } from "./context";
 import { ListenersCollector } from "./events";
+import { Scope } from "./scopes";
 
 export class Batch extends Scope<Context, Kinds> {}
 export class Game extends Scope<Context, Kinds> {}
@@ -56,6 +58,56 @@ test.serial("AdminContext init admin connection", async (t) => {
   cbs["connected"]![0]!();
 
   t.true(admin.adminConn!.connected.getValue());
+});
+
+test.serial("AdminContext failed global scopes", async (t) => {
+  const { cbs } = fakeTajribaConnect({ failScopes: true });
+
+  const ctx = new Context();
+
+  const readFile = fake.resolves("123");
+  replace(fs, "readFile", readFile);
+
+  await AdminContext.init(
+    "url",
+    "/some/file",
+    "callbacks",
+    "token",
+    ctx,
+    kinds
+  );
+
+  const logs = await captureLogsAsync(async () => {
+    cbs["connected"]![0]!();
+    await nextTick();
+  });
+
+  textHasLog(t, logs, "error", "global scopeID not fetch");
+});
+
+test.serial("AdminContext no global scopes", async (t) => {
+  const { cbs } = fakeTajribaConnect({ noScopes: true });
+
+  const ctx = new Context();
+
+  const readFile = fake.resolves("123");
+  replace(fs, "readFile", readFile);
+
+  await AdminContext.init(
+    "url",
+    "/some/file",
+    "callbacks",
+    "token",
+    ctx,
+    kinds
+  );
+
+  const logs = await captureLogsAsync(async () => {
+    cbs["connected"]![0]!();
+    await nextTick();
+  });
+
+  textHasLog(t, logs, "warn", "global scopeID not found");
 });
 
 test.serial("AdminContext late admin connection", async (t) => {

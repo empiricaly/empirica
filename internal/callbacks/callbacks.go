@@ -337,7 +337,7 @@ func (c *callbacksWriter) Write(p []byte) (n int, err error) {
 		if c.startedOnce {
 			go func() {
 				time.Sleep(100 * time.Millisecond)
-				log.Info().Msg("callbacks: restarted")
+				log.Debug().Msg("callbacks: restarted")
 			}()
 		}
 

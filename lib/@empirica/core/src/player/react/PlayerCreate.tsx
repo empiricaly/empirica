@@ -5,10 +5,7 @@ export interface PlayerCreateProps {
   connecting: boolean;
 }
 
-export const PlayerCreate: React.FC<PlayerCreateProps> = ({
-  onPlayerID,
-  connecting,
-}) => {
+export function PlayerCreate({ onPlayerID, connecting }: PlayerCreateProps) {
   const [playerID, setPlayerID] = useState("");
 
   const handleSubmit = (evt: FormEvent) => {
@@ -83,4 +80,4 @@ export const PlayerCreate: React.FC<PlayerCreateProps> = ({
       </div>
     </div>
   );
-};
+}

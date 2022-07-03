@@ -1,6 +1,9 @@
+export { Classic } from "./classic";
+export { ClassicLoader } from "./loader";
 export {
   Batch,
-  ClassicLoader,
+  classicKinds,
+  Context,
   Game,
   Player,
   PlayerGame,
@@ -8,6 +11,6 @@ export {
   PlayerStage,
   Round,
   Stage,
-  classicKinds,
-} from "./classic";
-export type { ClassicKinds } from "./classic";
+} from "./models";
+export type { ClassicKinds } from "./models";
+export { ClassicListenersCollector } from "./proxy";

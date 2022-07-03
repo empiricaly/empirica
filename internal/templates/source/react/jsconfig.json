@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
-    "jsx": "react",
-    "paths": {
-      "*": ["*", "src/*"]
-    }
+    "module": "node16",
+    "moduleResolution": "nodenext",
+    "jsx": "react"
   }
 }

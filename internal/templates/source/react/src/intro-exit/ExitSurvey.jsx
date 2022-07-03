@@ -1,4 +1,4 @@
-import { usePlayer } from "@empirica/player";
+import { usePlayer } from "@empirica/core/player/classic/react";
 import React, { useState } from "react";
 import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";

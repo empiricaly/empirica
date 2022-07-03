@@ -1,14 +1,12 @@
-import "global-jsdom/register";
-
 import { TajribaParticipant } from "@empirica/tajriba";
 import { BehaviorSubject, Subject } from "rxjs";
+import { Globals } from "../shared/globals";
 import {
   ErrNotConnected,
   TajribaConnection,
 } from "../shared/tajriba_connection";
 import { bsu } from "../utils/object";
 import { ParticipantConnection, ParticipantSession } from "./connection";
-import { Globals } from "./globals";
 import { TajribaProvider } from "./provider";
 
 export class ParticipantContext {
@@ -104,6 +102,9 @@ export class ParticipantMode<T> {
     provider.subscribe({
       next: async (provider) => {
         const id = participant.getValue()?.id;
+
+        console.log("id && provider", id, provider, id && provider);
+
         if (id && provider) {
           this._mode.next(modeFunc(id, provider));
         } else {

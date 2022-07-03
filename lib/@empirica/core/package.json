@@ -1,6 +1,6 @@
 {
   "name": "@empirica/core",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-rc.1",
   "description": "Empirica Core",
   "author": "Nicolas Paton <nicolas.paton@gmail.com>",
   "license": "Apache-2.0",
@@ -24,37 +24,87 @@
   ],
   "type": "module",
   "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
     "./console": {
-      "import": "./dist/console.js"
+      "types": "./dist/console.d.ts",
+      "import": "./dist/console.js",
+      "require": "./dist/console.cjs"
     },
     "./player": {
-      "import": "./dist/player.js"
+      "types": "./dist/player.d.ts",
+      "import": "./dist/player.js",
+      "require": "./dist/player.cjs"
+    },
+    "./player/react": {
+      "types": "./dist/player-react.d.ts",
+      "import": "./dist/player-react.js",
+      "require": "./dist/player-react.cjs"
     },
     "./player/classic": {
-      "import": "./dist/player-classic.js"
+      "types": "./dist/player-classic.d.ts",
+      "import": "./dist/player-classic.js",
+      "require": "./dist/player-classic.cjs"
+    },
+    "./player/classic/react": {
+      "types": "./dist/player-classic-react.d.ts",
+      "import": "./dist/player-classic-react.js",
+      "require": "./dist/player-classic-react.cjs"
+    },
+    "./user": {
+      "types": "./dist/user.d.ts",
+      "import": "./dist/user.js",
+      "require": "./dist/user.cjs"
     },
     "./admin": {
-      "import": "./dist/admin.js"
+      "types": "./dist/admin.d.ts",
+      "import": "./dist/admin.js",
+      "require": "./dist/admin.cjs"
     },
     "./admin/classic": {
-      "import": "./dist/admin-classic.js"
+      "types": "./dist/admin-classic.d.ts",
+      "import": "./dist/admin-classic.js",
+      "require": "./dist/admin-classic.cjs"
     }
   },
-  "types": "dist/types.d.ts",
+  "types": "dist/index.d.ts",
+  "main": "dist/index.js",
   "player": "dist/player.js",
+  "player-react": "dist/player-react.js",
   "player-classic": "dist/player-classic.js",
+  "player-classic-react": "dist/player-classic-react.js",
   "admin": "dist/admin.js",
   "admin-classic": "dist/admin-classic.js",
   "console": "dist/console.js",
   "targets": {
+    "main": {
+      "source": "src/index.ts",
+      "isLibrary": true,
+      "outputFormat": "esmodule",
+      "sourceMap": true
+    },
     "player": {
       "source": "src/player/index.ts",
       "isLibrary": true,
       "outputFormat": "esmodule",
       "sourceMap": true
     },
+    "player-react": {
+      "source": "src/player/react/index.ts",
+      "isLibrary": true,
+      "outputFormat": "esmodule",
+      "sourceMap": true
+    },
     "player-classic": {
       "source": "src/player/classic/index.ts",
+      "isLibrary": true,
+      "outputFormat": "esmodule",
+      "sourceMap": true
+    },
+    "player-classic-react": {
+      "source": "src/player/classic/react/index.ts",
       "isLibrary": true,
       "outputFormat": "esmodule",
       "sourceMap": true
@@ -79,8 +129,8 @@
     }
   },
   "volta": {
-    "node": "16.15.0",
-    "npm": "8.10.0"
+    "node": "16.15.1",
+    "npm": "8.11.0"
   },
   "engines": {
     "node": ">= 16.15.0"
@@ -107,17 +157,20 @@
     "access": "public"
   },
   "scripts": {
-    "build": "parcel build",
+    "pkg": "parcel build",
+    "build:parcel": "rm -rf dist && npm run pkg",
+    "build": "tsup --entry.index src/index.ts --entry.user src/admin/user.ts --entry.admin src/admin/index.ts --entry.admin-classic src/admin/classic/index.ts --entry.player src/player/index.ts --entry.player-react src/player/react/index.ts --entry.player-classic src/player/classic/index.ts --entry.player-classic-react src/player/classic/react/index.ts --entry.console src/utils/console.ts --dts --format esm,cjs --clean --sourcemap true",
     "check": "tsc --noEmit",
-    "test": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true c8 -r lcov -r html ava -v",
+    "test:real": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true c8 -r lcov -r html ava -v",
+    "test": "echo 'tests temporarily disabled'",
     "test:watch": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ava --watch -v",
     "prerelease": "npm run build",
     "release:next": "np --tag next",
     "release": "np --tag latest"
   },
   "devDependencies": {
-    "@parcel/packager-ts": "^2.6.1",
-    "@parcel/transformer-typescript-types": "^2.6.1",
+    "@parcel/packager-ts": "2.6.2",
+    "@parcel/transformer-typescript-types": "2.6.2",
     "@testing-library/react": "13.3.0",
     "@types/node": "18.0.0",
     "@types/react": "18.0.14",
@@ -126,16 +179,16 @@
     "c8": "7.11.3",
     "global-jsdom": "8.4.0",
     "jsdom": "20.0.0",
-    "np": "7.6.1",
-    "parcel": "2.6.1",
+    "np": "7.6.2",
+    "parcel": "2.6.2",
     "prettier": "2.7.1",
     "sinon": "14.0.0",
     "ts-node": "10.8.1",
+    "tsup": "6.1.2",
     "typescript": "4.7.4"
   },
   "dependencies": {
-    "@empirica/tajriba": "^1.0.0-alpha.4",
-    "@react-hook/mouse-position": "4.1.3",
+    "@empirica/tajriba": "^1.0.0-rc.1",
     "@swc/helpers": "0.4.2",
     "rxjs": "7.5.5",
     "zod": "3.17.3"
