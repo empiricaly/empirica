@@ -29,6 +29,7 @@ export class ParticipantContext {
 
     this.participant.connected.subscribe({
       next: async (connected) => {
+        console.log("CONNECTED");
         const part = this.participant.participant.getValue();
         if (connected && part) {
           if (!this.provider.getValue()) {

@@ -22,6 +22,15 @@
   }
   onMount(initLogin);
 
+  let admin;
+
+  // This is a hack. Each time Tajriba disconnects, it will keep the old
+  // connection around, and it will reconnect, even though we closed it, and
+  // connections will accumulate, eventually exhausting the connections on the
+  // Empirica server. If we did disconnect once, on next connection, we just
+  // reload the entire page. Not ideal, should fix the disconnection logic.
+  let wasDisconnected = false;
+
   async function sessionAdmin(t) {
     const tajriba = new TajribaConnection(queryURL);
 
@@ -30,6 +39,9 @@
     const sub = tajriba.connected.subscribe({
       next: (connected) => {
         if (connected) {
+          if (wasDisconnected) {
+            window.location.reload();
+          }
           resolve();
         }
       },
@@ -42,16 +54,22 @@
       next: (connected) => {
         if (!connected) {
           console.info("Disconnected");
+          wasDisconnected = true;
+          if (admin) {
+            admin.stop();
+            admin = null;
+          }
           setCurrentAdmin(null);
           sub2.unsubscribe();
           loggedIn = false;
           loaded = false;
           initLogin();
+          tajriba.stop();
         }
       },
     });
 
-    const admin = await tajriba.sessionAdmin(t);
+    admin = await tajriba.sessionAdmin(t);
     setCurrentAdmin(admin);
     loggedIn = true;
     console.info("Connected");

@@ -1,5 +1,5 @@
 <!-- By Sam Herbert (@sherb), for everyone. More @ http://goo.gl/7AJzbL -->
-<div class="h-full w-full flex items-center justify-center">
+<div class="min-h-[inherit] h-full w-full flex items-center justify-center">
   <svg
     width="44"
     height="44"
