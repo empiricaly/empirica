@@ -3,10 +3,10 @@ name: Build
 on:
   pull_request:
     branches:
-      - main
+      - beta
   push:
     branches:
-      - main
+      - beta
 
 jobs:
   tawonctl:
@@ -23,10 +23,10 @@ jobs:
       - name: Smoke test
         run: ./build/public/empirica-linux-amd64 --help
       - name: Copy download.sh
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/beta'
         run: cp build/download.sh build/public/index.html
       - name: Upload to Firebase Hosting
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/beta'
         uses: w9jds/firebase-action@master
         with:
           args: deploy --only hosting
