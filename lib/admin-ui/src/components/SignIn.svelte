@@ -28,7 +28,6 @@
       alert("Failed to signin");
     } finally {
       signingIn = false;
-      console.log("yup");
     }
   }
 </script>

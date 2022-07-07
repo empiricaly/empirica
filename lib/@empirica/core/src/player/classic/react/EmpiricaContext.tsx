@@ -12,7 +12,7 @@ import { NoGames } from "../../react/NoGames";
 import { PlayerCreate, PlayerCreateProps } from "../../react/PlayerCreate";
 import { useGame, usePlayer, useRound, useStage } from "./hooks";
 import { Lobby as DefaultLobby } from "./Lobby";
-import { Steps } from "./Steps";
+import { Steps, StepsFunc } from "./Steps";
 
 export interface EmpiricaContextProps {
   children: React.ReactNode;
@@ -20,8 +20,8 @@ export interface EmpiricaContextProps {
   consent?: React.ElementType<ConsentProps>;
   playerCreate?: React.ElementType<PlayerCreateProps>;
   lobby?: React.ElementType;
-  introSteps: React.ElementType[];
-  exitSteps: React.ElementType[];
+  introSteps: React.ElementType[] | StepsFunc;
+  exitSteps: React.ElementType[] | StepsFunc;
   finished?: React.ElementType;
   loading?: React.ElementType;
   connecting?: React.ElementType;
@@ -34,7 +34,7 @@ export function EmpiricaContext({
   introSteps = [],
   lobby = DefaultLobby,
   exitSteps = [],
-  finished: FinishedComp = Finished,
+  finished = Finished,
   loading: LoadingComp = Loading,
   connecting: ConnectingComp = Loading,
   children,
@@ -48,6 +48,10 @@ export function EmpiricaContext({
 
   if (!tajribaConnected) {
     return <ConnectingComp />;
+  }
+
+  if (player && player.get("ended")) {
+    return <Exit exitSteps={exitSteps} finished={finished} />;
   }
 
   if (!game && (!globals || !globals.get("experimentOpen"))) {
@@ -64,6 +68,10 @@ export function EmpiricaContext({
     );
   }
 
+  if (game && game.hasEnded) {
+    return <Exit exitSteps={exitSteps} finished={finished} />;
+  }
+
   if (!player) {
     return <LoadingComp />;
   }
@@ -73,7 +81,7 @@ export function EmpiricaContext({
       <EmpiricaInnerContext
         exitSteps={exitSteps}
         lobby={lobby}
-        finished={FinishedComp}
+        finished={finished}
         loading={LoadingComp}
       >
         {children}
@@ -85,7 +93,7 @@ export function EmpiricaContext({
 interface EmpiricaInnerContextProps {
   children: React.ReactNode;
   lobby: React.ElementType;
-  exitSteps: React.ElementType[];
+  exitSteps: React.ElementType[] | StepsFunc;
   finished: React.ElementType;
   loading: React.ElementType;
 }
@@ -93,7 +101,7 @@ interface EmpiricaInnerContextProps {
 function EmpiricaInnerContext({
   children,
   lobby: Lobby,
-  finished: Finished,
+  finished,
   exitSteps,
   loading: LoadingComp,
 }: EmpiricaInnerContextProps) {
@@ -105,12 +113,8 @@ function EmpiricaInnerContext({
     return <Lobby />;
   }
 
-  if (game.get("status") === "ended") {
-    return (
-      <Steps progressKey="exitStep" doneKey="exitStepDone" steps={exitSteps}>
-        <Finished />
-      </Steps>
-    );
+  if (game.hasEnded) {
+    return <Exit exitSteps={exitSteps} finished={finished} />;
   }
 
   if (!stage || !round) {
@@ -118,4 +122,18 @@ function EmpiricaInnerContext({
   }
 
   return <>{children}</>;
+}
+
+function Exit({
+  exitSteps,
+  finished: Finished,
+}: {
+  exitSteps: React.ElementType[] | StepsFunc;
+  finished: React.ElementType;
+}) {
+  return (
+    <Steps progressKey="exitStep" doneKey="exitStepDone" steps={exitSteps}>
+      <Finished />
+    </Steps>
+  );
 }

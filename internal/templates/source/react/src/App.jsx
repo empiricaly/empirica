@@ -11,12 +11,15 @@ export default function App() {
   const urlParams = new URLSearchParams(window.location.search);
   const playerKey = urlParams.get("participantKey") || "";
 
-  let url = window.location.hostname;
+  const { protocol, host } = window.location;
+  const url = `${protocol}//${host}/query`;
 
-  if (url === "localhost") {
-    url = "http://localhost:3000/query";
-  } else {
-    url = "https://" + url + "/query";
+  function introSteps({ game, player }) {
+    return [Introduction];
+  }
+
+  function exitSteps({ game, player }) {
+    return [ExitSurvey];
   }
 
   return (
@@ -24,7 +27,7 @@ export default function App() {
       <div className="h-screen relative">
         <EmpiricaMenu />
         <div className="h-full overflow-auto">
-          <EmpiricaContext introSteps={[Introduction]} exitSteps={[ExitSurvey]}>
+          <EmpiricaContext introSteps={introSteps} exitSteps={exitSteps}>
             <Game />
           </EmpiricaContext>
         </div>

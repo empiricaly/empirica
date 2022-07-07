@@ -1,13 +1,16 @@
+import { State } from "@empirica/tajriba";
 import { z } from "zod";
 import { Constructor } from "../../shared/helpers";
 import { Attributable } from "../../shared/scopes";
-import { error } from "../../utils/console";
+import { error, warn } from "../../utils/console";
 import { JsonValue } from "../../utils/json";
 import { AddScopePayload, StepPayload } from "../context";
 import { Scope } from "../scopes";
 import { AttributeInput, attrs, scopeConstructor } from "./helpers";
 
-const endedStatuses = ["ended", "terminated", "failed"];
+export const endedStatuses = ["ended", "terminated", "failed"];
+export type EndedStatuses = typeof endedStatuses[number];
+
 const reservedKeys = [
   "batchID",
   "gameID",
@@ -80,7 +83,7 @@ export class Batch extends Scope<Context, ClassicKinds> {
   }
 
   get hasEnded() {
-    return endedStatuses.includes(this.get("status") as string);
+    return endedStatuses.includes(this.get("status") as EndedStatuses);
   }
 }
 
@@ -94,11 +97,6 @@ export class Game extends BatchOwned {
   get stages() {
     const stages = this.scopesByKindMatching<Stage>("stage", "gameID", this.id);
     stages.sort(indexSortable);
-    console.log(
-      "STAGES",
-      stages.length,
-      JSON.stringify(stages.map((s) => s.get("index")))
-    );
     return stages;
   }
 
@@ -115,7 +113,7 @@ export class Game extends BatchOwned {
   }
 
   get hasEnded() {
-    return endedStatuses.includes(this.get("status") as string);
+    return endedStatuses.includes(this.get("status") as EndedStatuses);
   }
 
   get hasNotStarted() {
@@ -298,12 +296,18 @@ export class Game extends BatchOwned {
     };
   }
 
-  end(reason: string) {
+  end(status: EndedStatuses, reason: string) {
     if (this.hasEnded) {
       return;
     }
 
-    this.set("status", "ended");
+    if (!endedStatuses.includes(status)) {
+      warn(`game: attempting to end game with wrong status`);
+
+      return;
+    }
+
+    this.set("status", status);
     this.set("endedReason", reason);
 
     const stage = this.currentStage;
@@ -311,7 +315,7 @@ export class Game extends BatchOwned {
       return;
     }
 
-    stage.set("ended", true);
+    stage.end("ended", reason);
   }
 }
 
@@ -464,11 +468,22 @@ export class Stage extends GameOwned {
     return this.scopeByKey<Round>("roundID");
   }
 
-  end(reason: string) {
-    if (!this.get("ended")) {
-      this.set("ended", true);
-      this.set("endedReason", reason);
+  end(status: EndedStatuses, reason: string) {
+    if (this.get("ended")) {
+      return;
     }
+
+    this.set("status", status);
+    this.set("endedReason", reason);
+
+    this.addTransitions([
+      {
+        from: State.Running,
+        to: State.Ended,
+        nodeID: this.get("timerID") as string,
+        cause: reason,
+      },
+    ]);
   }
 }
 

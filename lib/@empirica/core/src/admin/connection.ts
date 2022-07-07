@@ -52,6 +52,12 @@ export class AdminConnection {
             "disconnected",
             this._connected.next.bind(this._connected, false)
           );
+          tajAdmin.on("accessDenied", () => {
+            if (this._connected.getValue()) {
+              this._connected.next(false);
+            }
+            this.resetToken();
+          });
         } catch (error) {
           if (error !== ErrNotConnected) {
             this.resetToken();

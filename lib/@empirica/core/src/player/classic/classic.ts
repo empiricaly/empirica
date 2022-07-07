@@ -6,7 +6,14 @@ import { TajribaProvider } from "../provider";
 import { Scope, Scopes } from "../scopes";
 import { Steps } from "../steps";
 
+export const endedStatuses = ["ended", "terminated", "failed"];
+export type EndedStatuses = typeof endedStatuses[number];
+
 export class Game extends Scope<Context, EmpiricaClassicKinds> {
+  get hasEnded() {
+    return endedStatuses.includes(this.get("status") as EndedStatuses);
+  }
+
   get stage() {
     return this.scopeByKey("stageID") as Stage | undefined;
   }

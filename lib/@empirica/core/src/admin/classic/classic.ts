@@ -1,6 +1,6 @@
 import { State } from "@empirica/tajriba";
 import { z } from "zod";
-import { debug, error, info, trace, warn } from "../../utils/console";
+import { debug, error, trace, warn } from "../../utils/console";
 import { deepEqual } from "../../utils/object";
 import { pickRandom, selectRandom } from "../../utils/random";
 import { EventContext, ListenersCollector, TajribaEvent } from "../events";
@@ -47,7 +47,7 @@ const batchConfigSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
-const isBatch = z.instanceof(Batch).parse;
+// const isBatch = z.instanceof(Batch).parse;
 const isGame = z.instanceof(Game).parse;
 const isRound = z.instanceof(Round).parse;
 const isStage = z.instanceof(Stage).parse;
@@ -60,7 +60,7 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
   const stageForStepID = new Map<string, Stage>();
   const batches: Batch[] = [];
 
-  function assignplayer(player: Player) {
+  function assignplayer(player: Player, skipGameIDs?: string[]) {
     if (player.get("gameID")) {
       return;
     }
@@ -73,9 +73,16 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
       let availableGames = [];
 
       for (const game of batch.games) {
-        if (game.hasNotStarted) {
+        if (
+          game.hasNotStarted &&
+          (!skipGameIDs || !skipGameIDs?.includes(game.id))
+        ) {
           availableGames.push(game);
         }
+      }
+
+      if (availableGames.length === 0) {
+        continue;
       }
 
       if (player.get("treatment")) {
@@ -254,17 +261,19 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
         checkShouldOpenExperiment(ctx);
         break;
       }
-      case "ended":
-        console.debug("callbacks: batch ended");
+      case "terminated":
         for (const game of batch.games) {
-          const status = isString(game.get("status"));
-          if (["failed", "ended", "terminated"].includes(status)) {
-            game.end("batch ended");
-          }
+          game.end(status, "batch ended");
         }
+
+        checkShouldOpenExperiment(ctx);
 
         break;
 
+      case "ended":
+        checkShouldOpenExperiment(ctx);
+
+        break;
       default:
         warn(`unkown batch status: ${status}`);
 
@@ -274,8 +283,6 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
 
   type GameStatus = { game: Game; status: string };
   _.unique.on("game", "status", (ctx, { game, status }: GameStatus) => {
-    console.log("GAME STATUS", status);
-
     switch (status) {
       case "running": {
         tryToStartGame(ctx, game);
@@ -285,16 +292,22 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
       }
 
       case "ended":
-        const batch = isBatch(game.batch);
-
-        const finishedBatch = !batch.games.some((g) => !g.hasEnded);
-        if (finishedBatch) {
-          batch.end("all games finished");
+      case "terminated":
+        for (const player of game.players) {
+          player.set("gameID", null);
+          player.set("ended", `game ${status}`);
         }
+
+        const finishedBatch = game.batch!.games.every((g) => g.hasEnded);
+        if (finishedBatch) {
+          game.batch!.end("all games finished");
+        }
+
+        checkShouldOpenExperiment(ctx);
 
         break;
       default:
-        warn(`unkown batch status: ${status}`);
+        warn(`unkown game status: ${status}`);
 
         break;
     }
@@ -342,6 +355,10 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
   ):
     | { stop: true; nextStage: undefined; nextRound: undefined }
     | { stop: false; nextStage: Stage; nextRound: Round } {
+    if (game.hasEnded) {
+      return { stop: true, nextStage: undefined, nextRound: undefined };
+    }
+
     const currentIndex = game.stages.findIndex((s) => s.id === stage.id);
     const nextStage = game.stages[currentIndex + 1];
 
@@ -353,6 +370,10 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
   }
 
   _.on("player", "introDone", (_, { player }: { player: Player }) => {
+    if (!player.currentGame) {
+      return;
+    }
+
     const game = isGame(player.currentGame);
     const treatment = treatmentSchema.parse(game.get("treatment"));
     const playerCount = treatment["playerCount"] as number;
@@ -367,8 +388,8 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     const players = selectRandom(readyPlayers, playerCount);
     for (const plyr of game.players) {
       if (!players.some((p) => p.id === plyr.id)) {
-        player.set("gameID", null);
-        assignplayer(player);
+        plyr.set("gameID", null);
+        assignplayer(plyr, [game.id]);
       }
     }
 
@@ -488,6 +509,7 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
 
         if (playerRounds.length < 1) {
           error(`failed to create playerRound`);
+
           return;
         }
 
@@ -616,14 +638,9 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
 
       const players = playerStage.player!.currentGame!.players;
       if (players.length === 0) {
-        console.warn("callbacks: no players onSubmit");
+        warn("callbacks: no players onSubmit");
         return;
       }
-
-      info(
-        "SUBMIT",
-        players.map((p) => [p.id, Boolean(p.stage!), p.stage!.get("submit")])
-      );
 
       if (players.every((p) => p.stage!.get("submit"))) {
         ctx.addTransitions([
@@ -634,9 +651,9 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
             cause: "players submitted",
           },
         ]);
-        debug(`all player submitted, transitioning`);
+        trace(`all player submitted, transitioning`);
       } else {
-        debug(`not all player submitted`);
+        trace(`not all player submitted`);
       }
     }
   );
@@ -707,18 +724,7 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
   _.unique.after("game", "ended", (_, { game, ended }: AfterGameEnded) => {
     if (!ended) return;
 
-    // const groupID = isString(game.get("groupID"));
-
-    // const participantIDs: string[] = [];
-    // const nodeIDs = [game.id, groupID];
-    // for (const player of game.players) {
-    //   participantIDs.push(player.participantID!);
-    //   nodeIDs.push(isString(player.get(`playerGameID-${game.id}`)));
-    // }
-
-    // ctx.addLinks([{ link: false, participantIDs, nodeIDs }]);
-
-    game.end("end of game");
+    game.end("ended", "end of game");
   });
 
   type TransitionAdd = { step: Step; transition: Transition };
