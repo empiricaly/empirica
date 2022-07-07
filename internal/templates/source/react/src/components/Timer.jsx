@@ -4,10 +4,15 @@ import React from "react";
 export function Timer() {
   const timer = useStageTimer();
 
+  let remaining;
+  if (timer?.remaining || timer?.remaining === 0) {
+    remaining = Math.round(timer?.remaining / 1000);
+  }
+
   return (
     <div className="flex flex-col items-center">
       <h1 className="font-mono text-3xl text-gray-500 font-semibold">
-        {humanTimer(Math.round(timer?.remaining / 1000))}
+        {humanTimer(remaining)}
       </h1>
     </div>
   );
@@ -15,7 +20,7 @@ export function Timer() {
 
 function humanTimer(seconds) {
   if (seconds === null || seconds === undefined) {
-    return "-";
+    return "--:--";
   }
 
   let out = "";

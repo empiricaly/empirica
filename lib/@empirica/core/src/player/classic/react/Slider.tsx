@@ -17,8 +17,9 @@ export function Slider({
   stepSize = 1,
   disabled = false,
 }: SliderProps) {
-  const val = value === null || value === undefined ? (max - min) / 2 : value;
-  const cls = value === null ? "slider-thumb-zero" : "slider-thumb";
+  const noVal = value === null || value === undefined;
+  const val = noVal ? (max - min) / 2 : value;
+  const cls = noVal ? "slider-thumb-zero" : "slider-thumb";
   const ref: RefObject<HTMLOutputElement> = useRef(null);
 
   if (value !== null && ref.current) {
@@ -41,7 +42,7 @@ export function Slider({
         onChange={onChange}
         disabled={disabled}
       />
-      {value === null ? (
+      {noVal ? (
         ""
       ) : (
         <output

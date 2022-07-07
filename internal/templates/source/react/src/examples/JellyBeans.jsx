@@ -21,7 +21,7 @@ export function JellyBeans() {
     player.stage.set("submit", true);
   }
 
-  let jelly = <JellyBeanJar />;
+  let jelly = <JellyBeanPile />;
 
   const isResultStage = stage.get("name") === "Result";
 
@@ -60,7 +60,7 @@ export function JellyBeans() {
       <p>
         {isResultStage
           ? "Result"
-          : "Guess how many Jelly Beans are in the jar below."}
+          : "Guess how many Jelly Beans are in the pile below."}
       </p>
 
       {jelly}
@@ -70,7 +70,7 @@ export function JellyBeans() {
           value={player.round.get("guess")}
           onChange={handleChange}
           disabled={stage.get("name") !== "Answer"}
-          max={5000}
+          max={2000}
         />
       ) : null}
 
@@ -81,16 +81,16 @@ export function JellyBeans() {
   );
 }
 
-function JellyBeanJar() {
+function JellyBeanPile() {
   return (
     <div className="h-96 w-96 pb-6">
       <div
         className="h-full w-full bg-contain bg-center bg-no-repeat"
         style={{
           backgroundImage:
-            "url(https://i.ibb.co/nDQ2nL2/jellybeans-e1557719791368.jpg)",
+            "url(https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Gimbals-Jellybeans-Pile.jpg/512px-Gimbals-Jellybeans-Pile.jpg)",
         }}
-        alt="Jelly Beans Jar"
+        alt="Jelly Beans Pile"
       />
     </div>
   );
@@ -107,7 +107,7 @@ function PlayerScore(player, onChange, isResultStage) {
           value={player.round.get("guess")}
           onChange={onChange}
           disabled={true}
-          max={5000}
+          max={2000}
         />
         {isResultStage ? (
           <div className="flex flex-col items-center space-y-0.5">

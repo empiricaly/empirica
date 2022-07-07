@@ -10,7 +10,7 @@ import {
 import { Observable, Subject, Subscription } from "rxjs";
 import { AttributeChange, AttributeUpdate } from "../shared/attributes";
 import { ScopeConstructor, ScopeIdent, ScopeUpdate } from "../shared/scopes";
-import { error, info, trace, warn } from "../utils/console";
+import { error, trace, warn } from "../utils/console";
 import { Attributes } from "./attributes";
 import { Cake } from "./cake";
 import { AdminConnection } from "./connection";
@@ -237,7 +237,6 @@ export class Runloop<
         }
 
         this.donesSub.next();
-        info("DID FINISH");
 
         return scopes;
       })

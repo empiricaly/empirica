@@ -5,6 +5,7 @@ import {
   ErrNotConnected,
   TajribaConnection,
 } from "../shared/tajriba_connection";
+import { warn } from "../utils/console";
 import { bsu } from "../utils/object";
 import { ParticipantConnection, ParticipantSession } from "./connection";
 import { TajribaProvider } from "./provider";
@@ -29,7 +30,6 @@ export class ParticipantContext {
 
     this.participant.connected.subscribe({
       next: async (connected) => {
-        console.log("CONNECTED");
         const part = this.participant.participant.getValue();
         if (connected && part) {
           if (!this.provider.getValue()) {
@@ -104,7 +104,14 @@ export class ParticipantMode<T> {
       next: async (provider) => {
         const id = participant.getValue()?.id;
 
-        console.log("id && provider", id, provider, id && provider);
+        // TODO Fix! Hack. If we detect this condition, reload
+        // We are getting a new provider while we already had one. Presumably
+        // the player is gone (tajriba reset), but we're still getting a
+        // provider, while we shouldn't.
+        if (id && provider && this._mode.getValue()) {
+          warn("spurious provider condition");
+          window.location.reload();
+        }
 
         if (id && provider) {
           this._mode.next(modeFunc(id, provider));

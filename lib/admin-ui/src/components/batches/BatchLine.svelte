@@ -78,11 +78,13 @@
 
   function stop() {
     if (status === "Running") {
-      $currentAdmin.setAttribute({
-        key: "status",
-        val: JSON.stringify("ended"),
-        nodeID: batch.id,
-      });
+      if (confirm("Are you sure?")) {
+        $currentAdmin.setAttribute({
+          key: "status",
+          val: JSON.stringify("terminated"),
+          nodeID: batch.id,
+        });
+      }
     }
   }
 </script>

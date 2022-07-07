@@ -1,4 +1,5 @@
 import React from "react";
+import { warn } from "../../../utils/console";
 import { Loading } from "../../react/Loading";
 import { usePlayer } from "./hooks";
 
@@ -12,7 +13,7 @@ export function Lobby() {
   const treatment = player.get("treatment") as { playerCount: number };
 
   if (!treatment || !treatment.playerCount) {
-    console.warn("lobby: no treatment found on player");
+    warn("lobby: no treatment found on player");
 
     return <Loading />;
   }
