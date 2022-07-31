@@ -3,6 +3,7 @@ package bundle
 import (
 	"archive/tar"
 	"context"
+	"fmt"
 	"io"
 	"io/fs"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"github.com/empiricaly/empirica"
 	"github.com/empiricaly/empirica/internal/callbacks"
 	"github.com/empiricaly/empirica/internal/player"
+	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/klauspost/compress/gzip"
 	"github.com/klauspost/compress/zstd"
 	"github.com/pkg/errors"
@@ -83,12 +85,12 @@ func Bundle(ctx context.Context, conf *empirica.Config, out string, useGzip bool
 	tarWriter := tar.NewWriter(compressor)
 	defer tarWriter.Close()
 
-	emppath := fpath.Join(dir, ".empirica")
+	emppath := fpath.Join(dir, settings.EmpiricaDir)
 	log.Debug().
 		Str("path", emppath).
-		Msg("bundle: bundling .empirica")
-	tarDir(tarWriter, emppath, ".empirica", func(p string) bool {
-		return strings.HasPrefix(p, ".empirica/local/")
+		Msgf("bundle: bundling %s", settings.EmpiricaDir)
+	tarDir(tarWriter, emppath, settings.EmpiricaDir, func(p string) bool {
+		return strings.HasPrefix(p, fmt.Sprintf("%s/local/", settings.EmpiricaDir))
 	})
 
 	callbackpath := callbacks.BuildDir(conf.Callbacks)

@@ -3,7 +3,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net"
@@ -16,13 +15,18 @@ import (
 	"time"
 
 	"github.com/empiricaly/empirica/internal/templates"
+	"github.com/empiricaly/empirica/internal/treatments"
+	"github.com/go-playground/validator/v10"
 	"github.com/jpillora/backoff"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // Server holds the server state.
 type Server struct {
@@ -262,14 +266,23 @@ func ReadTreatments(p string) httprouter.Handle {
 			log.Error().Err(err).Msg("Failed to open yaml")
 		}
 
-		c := make(map[string]interface{})
+		t := &treatments.Treatments{}
 
-		err = yaml.Unmarshal(content, &c)
+		err = yaml.Unmarshal(content, &t)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed read yaml")
 		}
 
-		contentJSON, err := json.Marshal(c)
+		if err := validator.New().Struct(t); err != nil {
+			log.Error().Err(err).Msg("Failed to parse treatments.yaml")
+
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			_, _ = w.Write([]byte(err.Error()))
+
+			return
+		}
+
+		contentJSON, err := json.Marshal(t)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed write json")
 		}
@@ -287,15 +300,24 @@ func WriteTreatments(p string) httprouter.Handle {
 		if err != nil {
 			log.Error().Err(err).Msg("Failed read json")
 		}
+
 		r.Body.Close()
 
-		c := make(map[string]interface{})
-		err = json.Unmarshal(b, &c)
-		if err != nil {
+		t := &treatments.Treatments{}
+		if err := json.Unmarshal(b, &t); err != nil {
 			log.Error().Err(err).Msg("Failed write json")
 		}
 
-		content, err := yaml.Marshal(c)
+		if err := validator.New().Struct(t); err != nil {
+			log.Error().Err(err).Msg("Failed to parse treatments.yaml")
+
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			_, _ = w.Write([]byte(err.Error()))
+
+			return
+		}
+
+		content, err := yaml.Marshal(t)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed write yaml")
 		}

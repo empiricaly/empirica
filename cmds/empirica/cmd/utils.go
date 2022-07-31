@@ -3,6 +3,7 @@ package cmd
 import (
 	"io/ioutil"
 
+	"github.com/empiricaly/empirica/internal/treatments"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 	"github.com/spf13/cobra"
@@ -118,28 +119,6 @@ type TreatmentsV1 struct {
 //       playerCount: 2
 //     name: Two Players
 
-type FactorValueV2 struct {
-	Name  string      `yaml:"name,omitempty"`
-	Value interface{} `yaml:"value"`
-}
-
-type FactorV2 struct {
-	Name   string           `yaml:"name"`
-	Desc   string           `yaml:"desc,omitempty"`
-	Values []*FactorValueV2 `yaml:"values"`
-}
-
-type TreatmentV2 struct {
-	Name    string                 `yaml:"name,omitempty"`
-	Desc    string                 `yaml:"desc,omitempty"`
-	Factors map[string]interface{} `yaml:"factors"`
-}
-
-type TreatmentsV2 struct {
-	Factors    []*FactorV2    `yaml:"factors"`
-	Treatments []*TreatmentV2 `yaml:"treatments"`
-}
-
 func addUtilsTreatmentsConvertCommand(parent *cobra.Command) error {
 	cmd := &cobra.Command{
 		Use:           "convert",
@@ -161,16 +140,16 @@ func addUtilsTreatmentsConvertCommand(parent *cobra.Command) error {
 				log.Error().Err(err).Msg("Failed read yaml")
 			}
 
-			v2 := &TreatmentsV2{}
+			v2 := &treatments.Treatments{}
 
 			for _, t := range v1.FactorTypes {
-				fact := &FactorV2{
+				fact := &treatments.Factor{
 					Name: t.Name,
 					Desc: t.Description,
 				}
 				for _, f := range v1.Factors {
 					if f.FactorTypeId == t.ID {
-						fact.Values = append(fact.Values, &FactorValueV2{
+						fact.Values = append(fact.Values, &treatments.FactorValue{
 							Name:  t.Name,
 							Value: f.Value,
 						})
@@ -181,7 +160,7 @@ func addUtilsTreatmentsConvertCommand(parent *cobra.Command) error {
 			}
 
 			for _, t := range v1.Treatments {
-				treat := &TreatmentV2{
+				treat := &treatments.Treatment{
 					Name:    t.Name,
 					Desc:    t.Description,
 					Factors: make(map[string]interface{}),
@@ -215,28 +194,6 @@ func addUtilsTreatmentsConvertCommand(parent *cobra.Command) error {
 			if err != nil {
 				return errors.Wrap(err, "write treatment v2")
 			}
-
-			// v2 := &TreatmentsV2{
-			// 	Factors: []FactorV2{
-			// 		{
-			// 			Name: "",
-			// 			Desc: "",
-			// 			Values: []FactorValueV2{
-			// 				{
-			// 					Name:  "",
-			// 					Value: "",
-			// 				},
-			// 			},
-			// 		},
-			// 	},
-			// 	Treatments: []TreatmentV2{
-			// 		{
-			// 			Name:    "string",
-			// 			Desc:    "",
-			// 			Factors: nil,
-			// 		},
-			// 	},
-			// }
 
 			return nil
 		},

@@ -13,7 +13,7 @@ import (
 )
 
 func Init(name, dir string) error {
-	return errors.Wrap(CreateEmpiricaDir(name, dir), "setup .empirica")
+	return errors.Wrapf(CreateEmpiricaDir(name, dir), "setup %s", EmpiricaDir)
 }
 
 const (
@@ -73,7 +73,7 @@ func CreateEmpiricaDir(name, dir string) error {
 	localDir := path.Join(empDir, LocalDir)
 
 	if err := createDir(empDir); err != nil {
-		return errors.Wrap(err, ".empirica dir")
+		return errors.Wrapf(err, "%s dir", EmpiricaDir)
 	}
 
 	giti := path.Join(empDir, ".gitignore")

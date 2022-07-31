@@ -1,8 +1,10 @@
 package server
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 
+	"github.com/empiricaly/empirica/internal/settings"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -38,7 +40,7 @@ func ConfigFlags(cmd *cobra.Command, prefix string) error {
 	viper.SetDefault(flag, sval)
 
 	flag = prefix + ".treatments"
-	sval = ".empirica/treatments.yaml"
+	sval = fmt.Sprintf("%s/treatments.yaml", settings.EmpiricaDir)
 	cmd.Flags().String(flag, sval, "Treatments config file")
 	viper.SetDefault(flag, sval)
 

@@ -1,4 +1,5 @@
 .DS_Store
+*.code-workspace
 *.db
 *.tgz
 *.tar.zst

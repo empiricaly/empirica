@@ -1,25 +1,20 @@
-name: Build
+name: Build Proxy
 
 on:
   pull_request:
-    paths-ignore:
+    paths:
       - "cmds/proxy/**"
-      - "**.md"
       - ".github/workflows/on_push_proxy.yaml"
+      - ".github/actions/upload-empirica-cli/**"
   push:
-    paths-ignore:
+    paths:
       - "cmds/proxy/**"
-      - "**.md"
       - ".github/workflows/on_push_proxy.yaml"
-  create: # New tag (or branch)
-    paths-ignore:
-      - "cmds/proxy/**"
-      - "**.md"
-      - ".github/workflows/on_push_proxy.yaml"
+      - ".github/actions/upload-empirica-cli/**"
 
 jobs:
-  empirica:
-    name: Build and upload cli
+  proxy:
+    name: Build and upload proxy
     runs-on: ubuntu-latest
     if: github.repository == 'empiricaly/empirica' && github.event.pull_request.draft == false
     steps:
@@ -41,7 +36,7 @@ jobs:
         with:
           push: false
           tags: empirica-tmp
-          file: ./build/Dockerfile
+          file: ./build/Dockerfile.proxy
           build-args: |
             BUILD_DATE=${{ env.BUILD_DATE }}
             BUILD_SHA=${{ env.BUILD_SHA_SHORT }}
@@ -57,6 +52,6 @@ jobs:
         with:
           # NOTE Bucket name might not correspond to final domain name
           bucket: get.empirica.dev
-          root: empirica
+          root: proxy
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

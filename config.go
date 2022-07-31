@@ -1,15 +1,20 @@
 package empirica
 
 import (
+	"github.com/empiricaly/empirica/internal/build"
 	"github.com/empiricaly/empirica/internal/callbacks"
 	"github.com/empiricaly/empirica/internal/player"
 	"github.com/empiricaly/empirica/internal/server"
+	"github.com/empiricaly/empirica/internal/settings"
 	logger "github.com/empiricaly/empirica/internal/utils/log"
 	"github.com/empiricaly/tajriba"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // Config is server configuration.
 type Config struct {
@@ -40,6 +45,13 @@ func (c *Config) Validate() error {
 		return errors.Wrap(err, "validate tajriba configuration")
 	}
 
+	b, err := json.Marshal(build.Current())
+	if err != nil {
+		return errors.Wrap(err, "get build version")
+	}
+
+	c.Tajriba.Store.Metadata = b
+
 	if err := c.Log.Validate(); err != nil {
 		return errors.Wrap(err, "validate log configuration")
 	}
@@ -47,7 +59,7 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-const DefaultStoreFile = ".empirica/local/tajriba.json"
+const DefaultStoreFile = settings.EmpiricaDir + "/local/tajriba.json"
 
 // ConfigFlags helps configure cobra and viper flags.
 func ConfigFlags(cmd *cobra.Command) error {
