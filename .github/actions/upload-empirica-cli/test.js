@@ -1,25 +1,6 @@
 const test = require("ava");
 const action = require("./action");
 
-function fakeCore(kv) {
-  const kvs = {
-    AWS_ACCESS_KEY_ID: "AWS_ACCESS_KEY_ID",
-    AWS_SECRET_ACCESS_KEY: "AWS_SECRET_ACCESS_KEY",
-    ...kv,
-  };
-  return {
-    getInput(key) {
-      return kvs[key];
-    },
-    info(str) {
-      console.info(str);
-    },
-    error(str) {
-      console.error(str);
-    },
-  };
-}
-
 test("createVariantUploads", (t) => {
   const fileName = "xyz";
   const files = [`${fileName}-linux-amd64`];
