@@ -47,8 +47,6 @@ jobs:
         run: |
           mkdir out
           docker run --rm empirica-tmp tar -cC /out . | tar -xC $(pwd)/out
-      - name: Smoke test
-        run: ./out/empirica-linux-amd64 --help
       - name: Upload binaries to S3
         uses: ./.github/actions/upload-empirica-cli
         with:
