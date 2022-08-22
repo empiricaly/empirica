@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/empiricaly/empirica"
+	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/klauspost/compress/gzip"
 	"github.com/klauspost/compress/zstd"
 	cp "github.com/otiai10/copy"
@@ -28,13 +29,13 @@ func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, err
 		return nil, errors.Wrap(err, "get working dir")
 	}
 
-	dst := path.Join(wd, ".empirica")
-	src := path.Join(dir, ".empirica")
+	dst := path.Join(wd, settings.EmpiricaDir)
+	src := path.Join(dir, settings.EmpiricaDir)
 
 	_, err = os.Stat(dst)
 
 	if err != nil && !os.IsNotExist(err) {
-		return nil, errors.Wrap(err, "check .empirica already exists")
+		return nil, errors.Wrapf(err, "check %s already exists", settings.EmpiricaDir)
 	}
 
 	if !os.IsNotExist(err) {
@@ -51,7 +52,7 @@ func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, err
 		}
 	} else {
 		if err := cp.Copy(src, dst); err != nil {
-			return nil, errors.Wrap(err, "copy .empirica")
+			return nil, errors.Wrapf(err, "copy %s", settings.EmpiricaDir)
 		}
 	}
 
@@ -152,7 +153,7 @@ func Unbundle(_ context.Context, config *empirica.Config, in string, clean bool)
 		} else {
 			conf, err := prepDotEmpirica(config, dir)
 			if err != nil {
-				return "", nil, errors.Wrap(err, "copy .empirica")
+				return "", nil, errors.Wrapf(err, "copy %s", settings.EmpiricaDir)
 			}
 
 			return dir, conf, nil
@@ -195,7 +196,7 @@ func Unbundle(_ context.Context, config *empirica.Config, in string, clean bool)
 		case errors.Is(err, io.EOF):
 			conf, err := prepDotEmpirica(config, dir)
 			if err != nil {
-				return "", nil, errors.Wrap(err, "copy .empirica")
+				return "", nil, errors.Wrapf(err, "copy %s", settings.EmpiricaDir)
 			}
 
 			return dir, conf, nil

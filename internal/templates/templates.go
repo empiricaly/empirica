@@ -1,14 +1,16 @@
 package templates
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 //go:generate go-bindata -ignore=node_modules|trigger|yarn-error.log|.DS_Store -pkg templates -prefix source -debug source/...
 

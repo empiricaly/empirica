@@ -1,0 +1,26 @@
+name: "Upload empirica CLI"
+description: "Uploads empirica CLI to S3"
+inputs:
+  withVariants:
+    description: "Upload variants"
+    required: false
+    default: "true"
+  fileName:
+    description: "Binary file name"
+    required: false
+    default: "empirica"
+  bucket:
+    description: "S3 Bucket"
+    required: true
+  root:
+    description: "Root path in bucket"
+    required: true
+  AWS_ACCESS_KEY_ID:
+    description: "AWS Acces Key ID"
+    required: true
+  AWS_SECRET_ACCESS_KEY:
+    description: "AWS Secret Access Key"
+    required: true
+runs:
+  using: "node12"
+  main: "dist/index.js"

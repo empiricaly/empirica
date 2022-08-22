@@ -1,4 +1,5 @@
 .DS_Store
+*.code-workspace
 *.db
 *.tgz
 *.tar.zst
@@ -9,3 +10,4 @@ yarn-error.log
 node_modules
 go.work
 no.work
+go.work.sum

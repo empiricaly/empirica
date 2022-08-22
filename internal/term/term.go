@@ -69,7 +69,7 @@ func (ui *UI) printClean() {
 		BottomRight: "",
 	}
 
-	columnWidth -= 20
+	// columnWidth -= 20
 
 	list := lipgloss.NewStyle().
 		MarginRight(2).

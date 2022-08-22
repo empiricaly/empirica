@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -39,7 +40,7 @@ func defineRoot() (*cobra.Command, *bool, error) {
 		return nil, nil, errors.Wrap(err, "define flags")
 	}
 
-	cmd.PersistentFlags().String("config", "", "config file (default is .empirica/empirica.toml)")
+	cmd.PersistentFlags().String("config", "", fmt.Sprintf("config file (default is %s/empirica.toml)", settings.EmpiricaDir))
 
 	err = viper.BindPFlags(cmd.Flags())
 	if err != nil {
@@ -106,6 +107,7 @@ func Execute() {
 	failedStart(addNodeCommand(rootCmd))
 	failedStart(addYarnCommand(rootCmd))
 	failedStart(addUpgradeCommand(rootCmd))
+	failedStart(addVersionCommand(rootCmd))
 
 	failedStart(addUtilsCommands(rootCmd))
 
@@ -128,18 +130,7 @@ func initConfig(rootCmd *cobra.Command, usingConfigFile *bool) func() {
 			// Use config file from the flag.
 			viper.SetConfigFile(cfgFile)
 		} else {
-			// Find home directory.
-			// home, err := homedir.Dir()
-			// if err != nil {
-			// 	log.Error().Err(err).Msg("Getting $HOME dir")
-			// 	os.Exit(1)
-			// }
-
-			// Search config in home directory with name ".empirica" (without extension).
-			// viper.AddConfigPath(".")
-			// viper.AddConfigPath("./empirica")
-			viper.AddConfigPath("./.empirica")
-			// viper.AddConfigPath(home)
+			viper.AddConfigPath(fmt.Sprintf("./%s", settings.EmpiricaDir))
 			viper.SetConfigName("empirica")
 		}
 
