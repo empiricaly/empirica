@@ -30,6 +30,50 @@ test.serial("useParticipantContext", (t) => {
   t.is(connect.callCount, 1);
 });
 
+test.serial("useParticipantContext reuses namespaced context", (t) => {
+  fakeTajribaConnect();
+
+  const { result } = renderHook(useParticipantContext, {
+    wrapper: ({ children }) => (
+      <EmpiricaParticipant url="" ns="1">
+        {children}
+      </EmpiricaParticipant>
+    ),
+  });
+
+  const { result: result2 } = renderHook(useParticipantContext, {
+    wrapper: ({ children }) => (
+      <EmpiricaParticipant url="" ns="1">
+        {children}
+      </EmpiricaParticipant>
+    ),
+  });
+
+  t.deepEqual(result, result2);
+});
+
+test.serial("useParticipantContext namespaces context", (t) => {
+  fakeTajribaConnect();
+
+  const { result } = renderHook(useParticipantContext, {
+    wrapper: ({ children }) => (
+      <EmpiricaParticipant url="" ns="a">
+        {children}
+      </EmpiricaParticipant>
+    ),
+  });
+
+  const { result: result2 } = renderHook(useParticipantContext, {
+    wrapper: ({ children }) => (
+      <EmpiricaParticipant url="" ns="b">
+        {children}
+      </EmpiricaParticipant>
+    ),
+  });
+
+  t.notDeepEqual(result, result2);
+});
+
 /* c8 ignore next 3 */
 const myMode = () => {
   return { something: "here" };
@@ -40,7 +84,7 @@ test.serial("useParticipantContext mode", (t) => {
 
   const { result } = renderHook(useParticipantContext, {
     wrapper: ({ children }) => (
-      <EmpiricaParticipant url="" ns="" modeFunc={myMode}>
+      <EmpiricaParticipant url="" ns="withModeFunc" modeFunc={myMode}>
         {children}
       </EmpiricaParticipant>
     ),

@@ -109,7 +109,7 @@ export function fakeTajribaConnect(
     },
     addScopes: async (input: AddScopeInput[]) => {
       if (failAddScope) {
-        throw new Error("failing scopes");
+        throw new Error("failing add scopes");
       }
       called.addScopes.push(input);
     },
@@ -127,6 +127,9 @@ export function fakeTajribaConnect(
 
       return {
         __typename: "ScopeConnection",
+        pageInfo: {
+          hasNextPage: false,
+        },
         edges: [
           {
             __typename: "ScopeEdge",
@@ -137,6 +140,7 @@ export function fakeTajribaConnect(
               /** kind is an optional type name. */
               kind: "globals",
               name: "globals",
+              attributes: {},
             },
           },
         ],

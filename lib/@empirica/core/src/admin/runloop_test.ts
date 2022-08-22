@@ -15,6 +15,7 @@ import { ListenersCollector, Subscriber } from "./events";
 import { Runloop } from "./runloop";
 import { Scope } from "./scopes";
 
+export class AdminGlobals extends Scope<Context, AdminKinds> {}
 export class AdminBatch extends Scope<Context, AdminKinds> {}
 export class AdminGame extends Scope<Context, AdminKinds> {
   addBatch(props: AddScopeInput[]) {
@@ -22,11 +23,13 @@ export class AdminGame extends Scope<Context, AdminKinds> {
   }
 }
 export type AdminKinds = {
+  globals: Constructor<AdminGlobals>;
   batch: Constructor<AdminBatch>;
   game: Constructor<AdminGame>;
 };
 
 export const adminKinds = {
+  globals: AdminGlobals,
   batch: AdminBatch,
   game: AdminGame,
 };
@@ -283,12 +286,8 @@ test.serial("Runloop adds new layer", async (t) => {
 });
 
 test.serial("Runloop stops", async (t) => {
-  const {
-    adminSubs,
-    adminStop,
-    scopedAttributesSub,
-    called,
-  } = await setupRunloop();
+  const { adminSubs, adminStop, scopedAttributesSub, called } =
+    await setupRunloop();
 
   t.is(called.subscriber, 1);
   t.is(called.startCalled, 1);
@@ -436,29 +435,21 @@ test.serial("Runloop failed resource creation", async (t) => {
     failAddScope: true,
   });
 
-  await nextTick();
-
-  scopedAttributesSub.next({
-    done: true,
-  });
-
-  await nextTick();
   const logs = await captureLogsAsync(async function () {
     scopedAttributesSub.next({
-      attribute: attrib(),
       done: true,
     });
 
     await nextTick();
 
     scopedAttributesSub.next({
+      attribute: attrib(),
       done: true,
     });
-
     await nextTick();
   });
 
   t.deepEqual(called.tajCalled.addScopes, []);
 
-  textHasLog(t, logs, "warn", "failing scopes");
+  textHasLog(t, logs, "warn", "failing add scopes");
 });

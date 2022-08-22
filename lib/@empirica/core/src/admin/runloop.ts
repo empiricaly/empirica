@@ -219,7 +219,10 @@ export class Runloop<
   }
 
   async addScopes(inputs: AddScopeInput[]) {
-    const addScopes = this.taj.addScopes(inputs);
+    const addScopes = this.taj.addScopes(inputs).catch((err) => {
+      warn(err.message);
+      return [];
+    });
     this.scopePromises.push(
       addScopes.then((scopes) => {
         for (const scope of scopes) {

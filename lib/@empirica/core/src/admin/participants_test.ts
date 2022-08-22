@@ -8,6 +8,7 @@ import { Connection, participantsSub } from "./participants";
 function setupParticipant() {
   const eventSubs = {
     [EventType.ParticipantConnected]: new Subject<any>(),
+    [EventType.ParticipantConnect]: new Subject<any>(),
     [EventType.ParticipantDisconnect]: new Subject<any>(),
   };
   const taj = <TajribaAdmin>(<unknown>{
@@ -16,6 +17,7 @@ function setupParticipant() {
     }: {
       eventTypes: (
         | EventType.ParticipantConnected
+        | EventType.ParticipantConnect
         | EventType.ParticipantDisconnect
       )[];
     }) => {
