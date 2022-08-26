@@ -45,7 +45,6 @@ export class TokenProvider {
 
           if (t) {
             storage.updateToken(t);
-            this.tokens.next(t);
           }
         } catch (err) {
           error(`token: register service ${(err as Error).message}`);
@@ -83,10 +82,22 @@ export class TokenProvider {
 //   tp.tokens;
 // }
 
-interface SavedTokenStorage {
+export interface SavedTokenStorage {
   tokens: BehaviorSubject<string | null | undefined>;
   updateToken: (token: string) => Promise<void>;
   clearToken: () => Promise<void>;
+}
+
+export class MemTokenStorage {
+  tokens = new BehaviorSubject<string | null | undefined>(null);
+
+  async updateToken(token: string) {
+    this.tokens.next(token);
+  }
+
+  async clearToken() {
+    this.tokens.next(undefined);
+  }
 }
 
 export class FileTokenStorage {

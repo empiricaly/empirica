@@ -4,8 +4,8 @@ import {
   ErrNotConnected,
   TajribaConnection,
 } from "../shared/tajriba_connection";
-import { bs, bsu } from "../utils/object";
 import { error } from "../utils/console";
+import { bs, bsu } from "../utils/object";
 
 export class ParticipantConnection {
   private _tajribaPart = bsu<TajribaParticipant>();
@@ -64,7 +64,7 @@ export class ParticipantConnection {
           });
         } catch (err) {
           if (err !== ErrNotConnected) {
-            error("conn error", err);
+            error("new conn error", err);
             this.resetSession();
           }
         }
@@ -123,6 +123,22 @@ interface Storage {
   getItem(key: string): string | null;
   removeItem(key: string): void;
   setItem(key: string, value: string): void;
+}
+
+export class MemStorage {
+  static vals: { [key: string]: any } = {};
+  static clear(): void {
+    this.vals = {};
+  }
+  static getItem(key: string): string | null {
+    return this.vals[key];
+  }
+  static removeItem(key: string): void {
+    delete this.vals[key];
+  }
+  static setItem(key: string, value: string): void {
+    this.vals[key] = value;
+  }
 }
 
 const isBrowser =

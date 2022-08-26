@@ -23,6 +23,7 @@ export class Cake<
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
   postCallback: (() => Promise<void>) | undefined;
+  private stopped = false;
 
   constructor(
     private evtctx: EventContext<Context, Kinds>,
@@ -37,6 +38,10 @@ export class Cake<
     private connections: Observable<Connection>,
     private transitions: Observable<Transition>
   ) {}
+
+  async stop() {
+    this.stopped = true;
+  }
 
   add(listeners: ListenersCollector<Context, Kinds>) {
     for (const listener of listeners.kindListeners) {
@@ -114,6 +119,9 @@ export class Cake<
   startKind(kind: keyof Kinds) {
     this.kindSubscription(kind).subscribe({
       next: async (scope) => {
+        if (this.stopped) {
+          return;
+        }
         // ignore the || [] since it's difficult to simulate
         /* c8 ignore next */
         const callbacks = this.kindListeners.get(kind) || [];
@@ -141,6 +149,10 @@ export class Cake<
   startAttribute(kind: keyof Kinds, key: string) {
     this.attributeSubscription(kind, key).subscribe({
       next: async (attribute) => {
+        if (this.stopped) {
+          return;
+        }
+
         const k = <string>kind + "-" + key;
 
         // ignore the || [] since it's difficult to simulate
@@ -190,6 +202,10 @@ export class Cake<
     this.transitions.subscribe({
       next: async (transition) => {
         for (const callback of this.transitionEvents) {
+          if (this.stopped) {
+            return;
+          }
+
           debug(
             `transition callback from '${transition.from}' to '${transition.to}'`
           );
@@ -215,6 +231,10 @@ export class Cake<
   startConnected() {
     this.connections.subscribe({
       next: async (connection) => {
+        if (this.stopped) {
+          return;
+        }
+
         if (!connection.connected) {
           return;
         }
@@ -242,6 +262,10 @@ export class Cake<
   startDisconnected() {
     this.connections.subscribe({
       next: async (connection) => {
+        if (this.stopped) {
+          return;
+        }
+
         if (connection.connected) {
           return;
         }

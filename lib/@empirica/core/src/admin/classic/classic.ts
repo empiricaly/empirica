@@ -1,5 +1,4 @@
 import { State } from "@empirica/tajriba";
-import { z } from "zod";
 import { debug, error, trace, warn } from "../../utils/console";
 import { deepEqual } from "../../utils/object";
 import { pickRandom, selectRandom } from "../../utils/random";
@@ -17,42 +16,14 @@ import {
   Round,
   Stage,
 } from "./models";
-
-const treatmentSchema = z.record(z.string().min(1), z.any());
-
-const batchConfigSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("simple"),
-    config: z.object({
-      count: z.number().int().positive(),
-      treatments: z
-        .object({
-          factors: treatmentSchema,
-        })
-        .array(),
-    }),
-  }),
-  z.object({
-    kind: z.literal("complete"),
-    config: z.object({
-      treatments: z
-        .object({
-          count: z.number().int().positive(),
-          treatment: z.object({
-            factors: treatmentSchema,
-          }),
-        })
-        .array(),
-    }),
-  }),
-]);
-
-// const isBatch = z.instanceof(Batch).parse;
-const isGame = z.instanceof(Game).parse;
-const isRound = z.instanceof(Round).parse;
-const isStage = z.instanceof(Stage).parse;
-
-const isString = z.string().parse;
+import {
+  batchConfigSchema,
+  isGame,
+  isRound,
+  isStage,
+  isString,
+  treatmentSchema,
+} from "./schemas";
 
 export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
   const online = new Map<string, Participant>();

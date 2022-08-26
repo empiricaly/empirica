@@ -7,7 +7,7 @@ import {
   SetAttributeInput,
   TransitionInput,
 } from "@empirica/tajriba";
-import { Observable, Subject, Subscription } from "rxjs";
+import { BehaviorSubject, Observable, Subject, Subscription } from "rxjs";
 import { AttributeChange, AttributeUpdate } from "../shared/attributes";
 import { ScopeConstructor, ScopeIdent, ScopeUpdate } from "../shared/scopes";
 import { error, trace, warn } from "../utils/console";
@@ -25,6 +25,7 @@ import {
 import { EventContext, ListenersCollector, Subscriber } from "./events";
 import { Globals } from "./globals";
 import { Layer } from "./layers";
+import { awaitObsValue } from "./observables";
 import { Connection, Participant, participantsSub } from "./participants";
 import { Scopes } from "./scopes";
 import { Subs, Subscriptions } from "./subscriptions";
@@ -54,6 +55,8 @@ export class Runloop<
   private attributeInputs: SetAttributeInput[] = [];
   private scopes: Scopes<Context, Kinds>;
   private cake: Cake<Context, Kinds>;
+  private running = new BehaviorSubject<boolean>(false);
+  private stopped = false;
 
   constructor(
     private conn: AdminConnection,
@@ -104,7 +107,7 @@ export class Runloop<
       this.connections,
       this.transitions
     );
-    this.cake.postCallback = this.postCallback.bind(this);
+    this.cake.postCallback = this.postCallback.bind(this, true);
 
     const subsSub = subs.subscribe({
       next: async (subscriber) => {
@@ -158,10 +161,16 @@ export class Runloop<
       await this.processNewSub(subs);
     }
 
-    layer.postCallback = this.postCallback.bind(this);
+    layer.postCallback = this.postCallback.bind(this, true);
   }
 
-  private async postCallback() {
+  private async postCallback(final: boolean) {
+    if (this.stopped) {
+      return;
+    }
+
+    this.running.next(true);
+
     const promises: Promise<any>[] = [];
 
     const subs = this.subs.newSubs();
@@ -210,8 +219,18 @@ export class Runloop<
     const finalizer = this.finalizers.shift();
     if (finalizer) {
       await finalizer();
-      await this.postCallback();
+      await this.postCallback(false);
     }
+
+    if (final) {
+      this.running.next(false);
+    }
+  }
+
+  async stop() {
+    await this.cake.stop();
+    await awaitObsValue(this.running, false);
+    this.stopped = true;
   }
 
   addFinalizer(cb: Finalizer) {
@@ -321,7 +340,7 @@ export class Runloop<
 
     const initProm = this.loadAllScopes(filters);
 
-    let resolve: (value: unknown) => void;
+    let resolve: (value: void) => void;
     const prom = new Promise((r) => (resolve = r));
     this.taj.scopedAttributes(filters).subscribe({
       next: ({ attribute, done }) => {
@@ -343,7 +362,7 @@ export class Runloop<
         }
 
         if (done) {
-          resolve(null);
+          resolve();
           this.donesSub.next();
         }
       },

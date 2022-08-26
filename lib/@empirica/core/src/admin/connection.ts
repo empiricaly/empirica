@@ -20,6 +20,7 @@ export class AdminConnection {
   ) {
     let token: string | null | undefined;
     let connected = false;
+
     this.sub = merge(taj.connected, tokens).subscribe({
       next: async (tokenOrConnected) => {
         if (typeof tokenOrConnected === "boolean") {
@@ -44,14 +45,16 @@ export class AdminConnection {
           this._tajriba.next(tajAdmin);
           this._connected.next(true);
 
-          tajAdmin.on(
-            "connected",
-            this._connected.next.bind(this._connected, true)
-          );
-          tajAdmin.on(
-            "disconnected",
-            this._connected.next.bind(this._connected, false)
-          );
+          tajAdmin.on("connected", () => {
+            if (!this._connected.getValue()) {
+              this._connected.next(true);
+            }
+          });
+          tajAdmin.on("disconnected", () => {
+            if (this._connected.getValue()) {
+              this._connected.next(false);
+            }
+          });
           tajAdmin.on("accessDenied", () => {
             if (this._connected.getValue()) {
               this._connected.next(false);

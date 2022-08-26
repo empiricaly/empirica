@@ -1,7 +1,6 @@
 import test from "ava";
 import {
   attrChange,
-  nextTick,
   partChange,
   scopeChange,
   stepChange,
