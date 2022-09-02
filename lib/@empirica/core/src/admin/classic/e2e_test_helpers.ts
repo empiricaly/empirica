@@ -19,10 +19,18 @@ import {
 import { promiseHandle } from "../promises";
 import { Classic } from "./classic";
 import { ClassicLoader } from "./loader";
-import { ClassicKinds, classicKinds, Context, Game } from "./models";
+import {
+  ClassicKinds,
+  classicKinds,
+  Context,
+  EndedStatuses,
+  Game,
+} from "./models";
 import { treatmentSchema } from "./schemas";
 
 const VERBOSE = false;
+
+// setLogLevel("trace");
 
 const configFile = "/tmp/.tajriba.toml";
 const username = "username";
@@ -186,7 +194,7 @@ class Admn {
           )
         );
 
-        return games?.map((g) => new Gam(g.node));
+        return games?.map((g) => new Gam(this.admin, g.node));
       },
     };
   }
@@ -197,10 +205,25 @@ interface Scopy {
 }
 
 export class Gam {
-  constructor(private scope: Scopy) {}
+  constructor(private admin: TajribaAdmin, private scope: Scopy) {}
 
   get id() {
     return this.scope.id;
+  }
+
+  async end(status: EndedStatuses, reason: string) {
+    await this.admin.setAttributes([
+      {
+        key: "status",
+        val: JSON.stringify(status),
+        nodeID: this.id,
+      },
+      {
+        key: "endedReason",
+        val: JSON.stringify(reason),
+        nodeID: this.id,
+      },
+    ]);
   }
 }
 
@@ -268,12 +291,20 @@ export class Playrs {
     return await Promise.all(this.playrs.map((p) => p.awaitRound()));
   }
 
+  async awaitRoundExist() {
+    return await Promise.all(this.playrs.map((p) => p.awaitRoundExist()));
+  }
+
   get stage() {
     return this.playrs.map((p) => p.stage);
   }
 
   async awaitStage() {
     return await Promise.all(this.playrs.map((p) => p.awaitStage()));
+  }
+
+  async awaitStageExist() {
+    return await Promise.all(this.playrs.map((p) => p.awaitStageExist()));
   }
 
   get players() {
@@ -362,12 +393,20 @@ export class Playr {
     return await awaitObsValueChange(this.mode!.round);
   }
 
+  async awaitRoundExist() {
+    return await awaitObsValueExist(this.mode!.round);
+  }
+
   get stage() {
     return this.mode!.stage.getValue();
   }
 
   async awaitStage() {
     return await awaitObsValueChange(this.mode!.stage);
+  }
+
+  async awaitStageExist() {
+    return await awaitObsValueExist(this.mode!.stage);
   }
 
   get players() {

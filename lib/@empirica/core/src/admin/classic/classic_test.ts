@@ -96,7 +96,7 @@ t("experimentOpen is false on batch terminated", async (t) => {
   await withContext(2, async ({ players, admin }) => {
     const batch = await admin.createBatch(completeBatchConfig(1));
     await batch.running();
-    await sleep(100);
+    await players.awaitGlobals("experimentOpen");
     await batch.terminated();
     await players.awaitGlobals("experimentOpen");
     await sleep(200);
@@ -241,7 +241,7 @@ t("when solo player introDone, game starts", async (t) => {
       }
       await sleep(100); // game start
       const games = await players.awaitGameExist();
-      t.truthy(games);
+      t.truthy(games[0]);
     },
     {
       listeners: gameInitCallbacks(),
@@ -262,7 +262,7 @@ t("when enough player introDone, game starts", async (t) => {
       }
       await sleep(100); // game start
       const games = await players.awaitGameExist();
-      t.truthy(games);
+      t.truthy(games[0]);
     },
     {
       listeners: gameInitCallbacks(),
@@ -336,7 +336,7 @@ t(
         const player1 = players.get(0)!;
         player1.player!.set("introDone", true);
 
-        await sleep(200); // game start, reassign
+        await sleep(300); // game start, reassign
 
         distribution.clear();
         for (const player of players) {
@@ -383,6 +383,7 @@ t("when the game starts, players are kicked if no other game", async (t) => {
       const player1 = players.get(0)!;
       player1.player!.set("introDone", true);
 
+      await player1.awaitGame();
       await sleep(200); // game start, reassign
 
       for (const player of players) {
@@ -432,6 +433,7 @@ t(
         const player1gameID = player1.player?.get("gameID") as string;
         player1.player!.set("introDone", true);
 
+        await player1.awaitGame();
         await sleep(200); // game start, reassign
 
         let endedPlayersCount = 0;
@@ -504,7 +506,7 @@ t("when all games started, experiment closes", async (t) => {
   );
 });
 
-to("when running game terminated, players are kicked", async (t) => {
+t("when game terminated, players are kicked", async (t) => {
   await withContext(
     2,
     async ({ admin, players }) => {
@@ -516,13 +518,127 @@ to("when running game terminated, players are kicked", async (t) => {
         player.player!.set("introDone", true);
       }
       await sleep(100); // game start
-      const games = await players.awaitGameExist();
-      t.truthy(games);
+      await players.awaitGameExist();
 
-      console.log(games);
+      for (const player of players) {
+        t.truthy(player.game);
+      }
+
+      const games = await batch.games();
+      const game = games![0]!;
+      t.truthy(game);
+
+      await game.end("terminated", "testing");
+
+      await players.awaitGame();
+
+      for (const player of players) {
+        t.falsy(player.game);
+      }
     },
     {
       listeners: gameInitCallbacks(),
+    }
+  );
+});
+
+t("when last game terminated, batch ends", async (t) => {
+  await withContext(
+    2,
+    async ({ admin, players }) => {
+      const batch = await admin.createBatch(completeBatchConfig(2));
+      await sleep(100); // games get created
+      batch.running();
+      await players.awaitPlayerKeyExist("gameID");
+      for (const player of players) {
+        player.player!.set("introDone", true);
+      }
+      await sleep(100); // game start
+      await players.awaitGameExist();
+
+      for (const player of players) {
+        t.truthy(player.game);
+      }
+
+      const games = await batch.games();
+      const game = games![0]!;
+      t.truthy(game);
+
+      await game.end("terminated", "testing");
+
+      await players.awaitGame();
+
+      for (const player of players) {
+        t.falsy(player.game);
+      }
+    },
+    {
+      listeners: gameInitCallbacks(),
+    }
+  );
+});
+
+t("on game start, players get game, round, stange and playerX", async (t) => {
+  await withContext(
+    2,
+    async ({ admin, players }) => {
+      const batch = await admin.createBatch(completeBatchConfig(2));
+      await sleep(100); // games get created
+      batch.running();
+
+      await players.awaitPlayerKeyExist("gameID");
+      for (const player of players) {
+        player.player!.set("introDone", true);
+      }
+
+      await players.awaitGameExist();
+      await players.awaitRoundExist();
+      await players.awaitStageExist();
+
+      for (const player of players) {
+        t.truthy(player.game);
+        t.truthy(player.player?.game);
+        t.truthy(player.round);
+        t.truthy(player.player?.round);
+        t.truthy(player.stage);
+        t.truthy(player.player?.stage);
+      }
+    },
+    {
+      listeners: gameInitCallbacks(),
+    }
+  );
+});
+
+t("on stage submit, if all players submit, stage ends", async (t) => {
+  await withContext(
+    2,
+    async ({ admin, players }) => {
+      const batch = await admin.createBatch(completeBatchConfig(2));
+      await sleep(100); // games get created
+      batch.running();
+      await players.awaitPlayerKeyExist("gameID");
+      for (const player of players) {
+        player.player!.set("introDone", true);
+      }
+      await players.awaitGameExist();
+      await players.awaitRoundExist();
+      const stages = await players.awaitStageExist();
+      const stage1 = stages![0]!;
+
+      for (const player of players) {
+        player.player!.stage!.set("submit", true);
+      }
+      await players.awaitStage(); // stage1 goes away
+      await players.awaitStage(); // stage2 comes in
+      const stage2 = players.stage![0]!;
+
+      t.truthy(stage1);
+      t.truthy(stage2);
+      t.not(stage1.id, stage2.id);
+    },
+    {
+      listeners: gameInitCallbacks(1, 2),
     }
   );
 });

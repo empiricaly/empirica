@@ -46,12 +46,14 @@ export async function awaitObsValueChange<T>(obs: Observable<T>): Promise<T> {
     res = r;
   });
 
-  let count = 0;
+  let once = false;
+  let v: T;
   const unsub = obs.subscribe((val) => {
-    if (count === 1) {
+    if (once && val !== v) {
       res(val);
     }
-    count++;
+    once = true;
+    v = val;
   });
 
   const val = await prom;
