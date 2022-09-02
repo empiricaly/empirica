@@ -1,6 +1,7 @@
 import { EventType, TajribaAdmin } from "@empirica/tajriba";
 import { Subject } from "rxjs";
 import { error } from "../utils/console";
+import { PromiseHandle, promiseHandle } from "./promises";
 
 export interface Participant {
   id: string;
@@ -12,13 +13,18 @@ export interface Connection {
   connected: boolean;
 }
 
-export function participantsSub(
+export async function participantsSub(
   taj: TajribaAdmin,
   connections: Subject<Connection>,
   participants: Map<string, Participant>
 ) {
+  let handle: PromiseHandle | undefined = promiseHandle();
   taj.onEvent({ eventTypes: [EventType.ParticipantConnected] }).subscribe({
-    next({ node }) {
+    next({ node, done }) {
+      if (!node && done) {
+        handle?.result();
+        return;
+      }
       if (node.__typename !== "Participant") {
         error(`received non-participant`);
 
@@ -35,29 +41,36 @@ export function participantsSub(
         participant: part,
         connected: true,
       });
-    },
-  });
 
-  taj.onEvent({ eventTypes: [EventType.ParticipantConnect] }).subscribe({
-    next({ node }) {
-      if (node.__typename !== "Participant") {
-        error(`received non-participant`);
-
-        return;
+      if (handle && done) {
+        handle.result();
       }
-      const part = {
-        id: node.id,
-        identifier: node.identifier,
-      };
-
-      participants.set(node.id, part);
-
-      connections.next({
-        participant: part,
-        connected: true,
-      });
     },
   });
+
+  await handle.promise;
+  handle = undefined;
+
+  // taj.onEvent({ eventTypes: [EventType.ParticipantConnect] }).subscribe({
+  //   next({ node }) {
+  //     if (node.__typename !== "Participant") {
+  //       error(`received non-participant`);
+
+  //       return;
+  //     }
+  //     const part = {
+  //       id: node.id,
+  //       identifier: node.identifier,
+  //     };
+
+  //     participants.set(node.id, part);
+
+  //     connections.next({
+  //       participant: part,
+  //       connected: true,
+  //     });
+  //   },
+  // });
 
   taj.onEvent({ eventTypes: [EventType.ParticipantDisconnect] }).subscribe({
     next({ node }) {

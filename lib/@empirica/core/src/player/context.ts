@@ -1,5 +1,6 @@
 import { TajribaParticipant } from "@empirica/tajriba";
 import { BehaviorSubject, Subject } from "rxjs";
+import { subscribeAsync } from "../admin/observables";
 import { Globals } from "../shared/globals";
 import {
   ErrNotConnected,
@@ -28,42 +29,36 @@ export class ParticipantContext {
       this.resetSession.next.bind(this.resetSession)
     );
 
-    this.participant.connected.subscribe({
-      next: async (connected) => {
-        const part = this.participant.participant.getValue();
+    subscribeAsync(this.participant.connected, async (connected) => {
+      const part = this.participant.participant.getValue();
 
-        if (connected && part) {
-          if (!this.provider.getValue()) {
-            this.provider.next(
-              new TajribaProvider(
-                part.changes(),
-                this.tajriba.tajriba.globalAttributes(),
-                this.tajriba.tajriba.setAttributes.bind(this.tajriba.tajriba)
-              )
-            );
-          }
-        } else {
-          const provider = this.provider.getValue();
-          if (provider) {
-            this.provider.next(undefined);
-          }
+      if (connected && part) {
+        if (!this.provider.getValue()) {
+          this.provider.next(
+            new TajribaProvider(
+              part.changes(),
+              this.tajriba.tajriba.globalAttributes(),
+              part.setAttributes.bind(part)
+            )
+          );
         }
-      },
+      } else {
+        const provider = this.provider.getValue();
+        if (provider) {
+          this.provider.next(undefined);
+        }
+      }
     });
 
-    this.tajriba.connected.subscribe({
-      next: async (connected) => {
-        if (connected) {
-          this.globals.next(
-            new Globals(this.tajriba.tajriba.globalAttributes())
-          );
-        } else {
-          const glob = this.globals.getValue();
-          if (glob) {
-            this.globals.next(undefined);
-          }
+    subscribeAsync(this.tajriba.connected, async (connected) => {
+      if (connected) {
+        this.globals.next(new Globals(this.tajriba.tajriba.globalAttributes()));
+      } else {
+        const glob = this.globals.getValue();
+        if (glob) {
+          this.globals.next(undefined);
         }
-      },
+      }
     });
   }
 
@@ -101,28 +96,26 @@ export class ParticipantMode<T> {
     provider: BehaviorSubject<TajribaProvider | undefined>,
     modeFunc: Mode<T>
   ) {
-    provider.subscribe({
-      next: async (provider) => {
-        const id = participant.getValue()?.id;
+    subscribeAsync(provider, async (provider) => {
+      const id = participant.getValue()?.id;
 
-        // TODO Fix! Hack. If we detect this condition, reload
-        // We are getting a new provider while we already had one. Presumably
-        // the player is gone (tajriba reset), but we're still getting a
-        // provider, while we shouldn't.
-        if (id && provider && this._mode.getValue()) {
-          warn("spurious provider condition");
-          window.location.reload();
-        }
+      // TODO Fix! Hack. If we detect this condition, reload
+      // We are getting a new provider while we already had one. Presumably
+      // the player is gone (tajriba reset), but we're still getting a
+      // provider, while we shouldn't.
+      if (id && provider && this._mode.getValue()) {
+        warn("spurious provider condition");
+        window.location.reload();
+      }
 
-        if (id && provider) {
-          this._mode.next(modeFunc(id, provider));
-        } else {
-          const mode = this._mode.getValue();
-          if (mode) {
-            this._mode.next(undefined);
-          }
+      if (id && provider) {
+        this._mode.next(modeFunc(id, provider));
+      } else {
+        const mode = this._mode.getValue();
+        if (mode) {
+          this._mode.next(undefined);
         }
-      },
+      }
     });
   }
 

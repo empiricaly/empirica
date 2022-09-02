@@ -1,17 +1,18 @@
 import { TajribaAdmin } from "@empirica/tajriba";
-import { BehaviorSubject, merge, Subscription } from "rxjs";
+import { BehaviorSubject, merge, SubscriptionLike } from "rxjs";
 import {
   ErrNotConnected,
   TajribaConnection,
 } from "../shared/tajriba_connection";
 import { bs, bsu } from "../utils/object";
+import { subscribeAsync } from "./observables";
 
 export class AdminConnection {
   private _tajriba = bsu<TajribaAdmin>();
   private _connected = bs(false);
   private _connecting = bs(false);
   private _stopped = bs(false);
-  private sub: Subscription;
+  private sub: SubscriptionLike;
 
   constructor(
     taj: TajribaConnection,
@@ -21,8 +22,9 @@ export class AdminConnection {
     let token: string | null | undefined;
     let connected = false;
 
-    this.sub = merge(taj.connected, tokens).subscribe({
-      next: async (tokenOrConnected) => {
+    this.sub = subscribeAsync(
+      merge(taj.connected, tokens),
+      async (tokenOrConnected) => {
         if (typeof tokenOrConnected === "boolean") {
           connected = tokenOrConnected;
         } else {
@@ -68,8 +70,8 @@ export class AdminConnection {
         }
 
         this._connecting.next(false);
-      },
-    });
+      }
+    );
   }
 
   stop() {

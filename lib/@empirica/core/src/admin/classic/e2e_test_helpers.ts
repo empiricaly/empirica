@@ -1,7 +1,7 @@
+import { TajribaAdmin } from "@empirica/tajriba";
 import { spawn } from "child_process";
 import fs from "fs";
 import readline from "readline";
-import { Observable } from "rxjs";
 import { z } from "zod";
 // import { Globals as PlayerGlobals } from "../../player";
 import { EmpiricaClassic, EmpiricaClassicContext } from "../../player/classic";
@@ -16,10 +16,13 @@ import {
   awaitObsValueChange,
   awaitObsValueExist,
 } from "../observables";
+import { promiseHandle } from "../promises";
 import { Classic } from "./classic";
 import { ClassicLoader } from "./loader";
-import { ClassicKinds, classicKinds, Context } from "./models";
+import { ClassicKinds, classicKinds, Context, Game } from "./models";
 import { treatmentSchema } from "./schemas";
+
+const VERBOSE = false;
 
 const configFile = "/tmp/.tajriba.toml";
 const username = "username";
@@ -75,7 +78,7 @@ export async function startTajriba(): Promise<TajServer> {
   ]);
 
   readline.createInterface({ input: taj.stdout! }).on("line", (data) => {
-    console.log(`stdout:\n${data}`);
+    console.log(`stdout: ${data}`);
   });
 
   let portRes: (value: number) => void;
@@ -92,6 +95,10 @@ export async function startTajriba(): Promise<TajServer> {
         dat["message"] === "Started Tajriba server"
       ) {
         portRes(dat["port"] as number);
+      }
+
+      if (VERBOSE || (dat["level"] && dat["level"] === "error")) {
+        console.log(`stderr: ${data}`);
       }
     } catch (e) {
       console.error(data.toString());
@@ -123,17 +130,92 @@ export async function startTajriba(): Promise<TajServer> {
   };
 }
 
-interface Adm {
-  createBatch: (config: any) => Promise<{
-    running: () => void;
-    terminated: () => void;
-  }>;
+class Admn {
+  constructor(private taj: TajribaConnection, private admin: TajribaAdmin) {}
+
+  stop() {
+    this.taj.stop();
+    this.admin.stop();
+  }
+
+  async getGames() {
+    const scopes = await this.admin.scopes({
+      filter: [{ kinds: ["game"] }],
+      first: 100,
+    });
+
+    return scopes?.edges.map((e) => e.node);
+  }
+
+  async createBatch(config: any) {
+    const batch = await this.admin.addScope({
+      kind: "batch",
+      attributes: [
+        { key: "config", val: JSON.stringify(config), immutable: true },
+      ],
+    });
+
+    if (!batch) {
+      throw "failed to create batch";
+    }
+
+    return {
+      running: async () => {
+        return await this.admin.setAttribute({
+          key: "status",
+          val: JSON.stringify("running"),
+          nodeID: batch.id,
+        });
+      },
+      terminated: async () => {
+        return await this.admin.setAttribute({
+          key: "status",
+          val: JSON.stringify("terminated"),
+          nodeID: batch.id,
+        });
+      },
+      games: async () => {
+        const allGames = await this.admin.scopes({
+          first: 100,
+          filter: [{ kinds: ["game"] }],
+        });
+        const batchID = JSON.stringify(batch.id);
+        const games = allGames?.edges.filter((game) =>
+          game.node.attributes.edges.find(
+            (attr) => attr.node.key === "batchID" && attr.node.val === batchID
+          )
+        );
+
+        return games?.map((g) => new Gam(g.node));
+      },
+    };
+  }
 }
 
-class Playrs {
+interface Scopy {
+  id: string;
+}
+
+export class Gam {
+  constructor(private scope: Scopy) {}
+
+  get id() {
+    return this.scope.id;
+  }
+}
+
+export class Playrs {
   constructor(private playrs: Playr[]) {}
   [Symbol.iterator]() {
     return this.playrs.values();
+  }
+
+  get(index: number) {
+    return this.playrs[index];
+  }
+
+  get length() {
+    return this.playrs.length;
   }
 
   get globals() {
@@ -154,12 +236,28 @@ class Playrs {
     return await Promise.all(this.playrs.map((p) => p.awaitPlayer()));
   }
 
+  async awaitPlayerExist() {
+    return await Promise.all(this.playrs.map((p) => p.awaitPlayerExists()));
+  }
+
+  async awaitPlayerKey(key: string) {
+    await Promise.all(this.playrs.map((p) => p.awaitPlayerKey(key)));
+  }
+
+  async awaitPlayerKeyExist(key: string) {
+    await Promise.all(this.playrs.map((p) => p.awaitPlayerKeyExist(key)));
+  }
+
   get game() {
     return this.playrs.map((p) => p.game);
   }
 
   async awaitGame() {
     return await Promise.all(this.playrs.map((p) => p.awaitGame()));
+  }
+
+  async awaitGameExist() {
+    return await Promise.all(this.playrs.map((p) => p.awaitGameExist()));
   }
 
   get round() {
@@ -187,14 +285,17 @@ class Playrs {
   }
 }
 
-class Playr {
+export class Playr {
   private mode?: EmpiricaClassicContext;
   constructor(
-    private partCtx: ParticipantModeContext<EmpiricaClassicContext>
+    private partCtx: ParticipantModeContext<EmpiricaClassicContext>,
+    public ns: string,
+    public port: number
   ) {}
 
-  async register(playerIdentifier: string) {
-    await this.partCtx.register(playerIdentifier);
+  async register(playerIdentifier?: string) {
+    this.ns = playerIdentifier || this.ns;
+    await this.partCtx.register(this.ns);
     this.mode = await awaitObsValueExist(this.partCtx.mode);
 
     if (!this.mode) {
@@ -208,7 +309,11 @@ class Playr {
   }
 
   get globals() {
-    return this.mode!.globals.getValue();
+    return this.partCtx.globals.getValue()!;
+  }
+
+  async awaitNextDone() {
+    return await awaitObsValueChange(this.partCtx.provider.getValue()!.dones);
   }
 
   async awaitGlobal(key: string) {
@@ -219,8 +324,22 @@ class Playr {
     return this.mode!.player.getValue();
   }
 
+  async awaitPlayerExists() {
+    return await awaitObsValueExist(this.mode!.player);
+  }
+
   async awaitPlayer() {
     return await awaitObsValueChange(this.mode!.player);
+  }
+
+  async awaitPlayerKey(key: string) {
+    const player = await awaitObsValueExist(this.mode!.player);
+    return await awaitObsValueChange(player!.obs(key));
+  }
+
+  async awaitPlayerKeyExist(key: string) {
+    const player = await awaitObsValueExist(this.mode!.player);
+    return await awaitObsValueExist(player!.obs(key));
   }
 
   get game() {
@@ -229,6 +348,10 @@ class Playr {
 
   async awaitGame() {
     return await awaitObsValueChange(this.mode!.game);
+  }
+
+  async awaitGameExist() {
+    return await awaitObsValueExist(this.mode!.game);
   }
 
   get round() {
@@ -257,9 +380,28 @@ class Playr {
 }
 
 interface testContext {
+  port: number;
   players: Playrs;
-  admin: Adm;
+  admin: Admn;
   callbacks: AdminContext<Context, ClassicKinds>;
+  makePlayer: (ns: string, doNotRegister?: boolean) => Promise<Playr>;
+  makeAdmin: () => Promise<Admn>;
+  makeCallbacks: (
+    listeners?:
+      | Subscriber<Context, ClassicKinds>
+      | ListenersCollector<Context, ClassicKinds>
+  ) => Promise<AdminContext<Context, ClassicKinds>>;
+}
+
+const pastNSs: { [key: string]: boolean } = {};
+export function getUniqueNS(): string {
+  const num = Math.round(Math.random() * 100000).toString();
+  if (pastNSs[num]) {
+    return getUniqueNS();
+  }
+  pastNSs[num] = true;
+
+  return num;
 }
 
 export async function withContext(
@@ -273,12 +415,11 @@ export async function withContext(
   }
 ) {
   await withTajriba(async (port: number) => {
-    // console.log("CONN", port, playerCount);
     const playersProms: Promise<Playr>[] = [];
 
     for (let i = 0; i < playerCount; i++) {
       playersProms.push(
-        makePlayer(port, i.toString(), options?.doNotRegisterPlayers)
+        makePlayer(port, getUniqueNS(), options?.doNotRegisterPlayers)
       );
     }
 
@@ -294,7 +435,17 @@ export async function withContext(
     const admin = await makeAdmin(port);
     const callbacks = await makeCallbacks(port, options?.listeners);
 
-    await fn({ players: new Playrs(players), admin, callbacks });
+    // await sleep(1000);
+
+    await fn({
+      port,
+      players: new Playrs(players),
+      admin,
+      callbacks,
+      makeAdmin: makeAdmin.bind(null, port),
+      makeCallbacks: makeCallbacks.bind(null, port),
+      makePlayer: makePlayer.bind(null, port),
+    });
 
     await callbacks.stop();
     admin.stop();
@@ -305,12 +456,11 @@ export async function withContext(
   });
 }
 
-async function makeCallbacks(
+export async function makeCallbacks(
   port: number,
-  listeners:
+  listeners?:
     | Subscriber<Context, ClassicKinds>
     | ListenersCollector<Context, ClassicKinds>
-    | undefined
 ): Promise<AdminContext<Context, ClassicKinds>> {
   const ctx = await AdminContext.init(
     `http://localhost:${port}/query`,
@@ -327,71 +477,29 @@ async function makeCallbacks(
     ctx.register(listeners);
   }
 
-  let res: (value: boolean) => void;
-  const prom = new Promise<boolean>((r) => {
-    res = r;
-  });
+  const prom = promiseHandle();
 
   ctx.register(function (_) {
     _.on("ready", function () {
-      res(true);
+      prom.result();
     });
   });
 
-  await prom;
+  await prom.promise;
 
   return ctx;
 }
 
-async function makeAdmin(port: number) {
+export async function makeAdmin(port: number) {
   const taj = new TajribaConnection(`http://localhost:${port}/query`);
   await awaitObsValue(taj.connected, true);
   const token = await taj.tajriba.registerService("tests", srtoken);
   const admin = await taj.tajriba.sessionAdmin(token);
 
-  return {
-    stop() {
-      taj.stop();
-      admin.stop();
-    },
-    createBatch: async (config: any) => {
-      let batch: any;
-      try {
-        batch = await admin!.addScope({
-          kind: "batch",
-          attributes: [
-            { key: "config", val: JSON.stringify(config), immutable: true },
-          ],
-        });
-      } catch (e) {
-        console.error("HERE", e);
-      }
-
-      if (!batch) {
-        throw "failed to create batch";
-      }
-
-      return {
-        async running() {
-          return await admin!.setAttribute({
-            key: "status",
-            val: JSON.stringify("running"),
-            nodeID: batch.id,
-          });
-        },
-        async terminated() {
-          return await admin!.setAttribute({
-            key: "status",
-            val: JSON.stringify("terminated"),
-            nodeID: batch.id,
-          });
-        },
-      };
-    },
-  };
+  return new Admn(taj, admin);
 }
 
-async function makePlayer(
+export async function makePlayer(
   port: number,
   ns: string,
   doNotRegisterPlayer?: boolean
@@ -405,7 +513,7 @@ async function makePlayer(
   await awaitObsValue(partCtx.tajriba.connected, true);
   await awaitObsValue(partCtx.tajriba.connecting, false);
 
-  const plyr = new Playr(partCtx);
+  const plyr = new Playr(partCtx, ns, port);
 
   if (!doNotRegisterPlayer) {
     await plyr.register(ns);
@@ -417,22 +525,45 @@ async function makePlayer(
 type TreatmentSchema = z.infer<typeof treatmentSchema>;
 export function completeBatchConfig(
   playerCount: number,
-  treatments: TreatmentSchema = {}
+  games: number = 1,
+  treatments: TreatmentSchema[] = [{}]
 ) {
   return {
     kind: "complete",
     config: {
-      treatments: [
-        {
-          count: 1,
-          treatment: {
-            factors: {
-              playerCount: playerCount,
-              ...treatments,
-            },
+      treatments: treatments.map((t) => ({
+        count: games,
+        treatment: {
+          factors: {
+            playerCount: playerCount,
+            ...t,
           },
         },
-      ],
+      })),
     },
+  };
+}
+
+export function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+export function gameInitCallbacks(
+  rounds: number = 1,
+  stages: number = 1,
+  duration: number = 10000
+) {
+  return function (_: ListenersCollector<Context, ClassicKinds>) {
+    _.unique.on("game", "start", (ctx, { game }: { game: Game }) => {
+      if (!game.get("start")) {
+        return;
+      }
+      for (let i = 0; i < rounds; i++) {
+        const round = game.addRound({});
+        for (let i = 0; i < stages; i++) {
+          round.addStage({ duration });
+        }
+      }
+    });
   };
 }

@@ -12,6 +12,7 @@ import {
   TajEventListener,
   TajribaEvent,
 } from "./events";
+import { subscribeAsync } from "./observables";
 import { Connection } from "./participants";
 import { Scope } from "./scopes";
 import { Transition } from "./transitions";
@@ -117,28 +118,26 @@ export class Cake<
     KindEventListener<EvtCtxCallback<Context, Kinds>>[]
   >();
   startKind(kind: keyof Kinds) {
-    this.kindSubscription(kind).subscribe({
-      next: async (scope) => {
-        if (this.stopped) {
-          return;
-        }
-        // ignore the || [] since it's difficult to simulate
-        /* c8 ignore next */
-        const callbacks = this.kindListeners.get(kind) || [];
+    subscribeAsync(this.kindSubscription(kind), async (scope) => {
+      if (this.stopped) {
+        return;
+      }
+      // ignore the || [] since it's difficult to simulate
+      /* c8 ignore next */
+      const callbacks = this.kindListeners.get(kind) || [];
 
-        for (const callback of callbacks) {
-          debug("scope callback", kind);
+      for (const callback of callbacks) {
+        debug("scope callback", kind);
 
-          try {
-            await callback.callback(this.evtctx, { [kind]: scope });
-          } catch (err) {
-            error(err);
-          }
-          if (this.postCallback) {
-            await this.postCallback();
-          }
+        try {
+          await callback.callback(this.evtctx, { [kind]: scope });
+        } catch (err) {
+          error(err);
         }
-      },
+        if (this.postCallback) {
+          await this.postCallback();
+        }
+      }
     });
   }
 
@@ -147,148 +146,141 @@ export class Cake<
     AttributeEventListener<EvtCtxCallback<Context, Kinds>>[]
   >();
   startAttribute(kind: keyof Kinds, key: string) {
-    this.attributeSubscription(kind, key).subscribe({
-      next: async (attribute) => {
-        if (this.stopped) {
-          return;
+    subscribeAsync(this.attributeSubscription(kind, key), async (attribute) => {
+      if (this.stopped) {
+        return;
+      }
+
+      const k = <string>kind + "-" + key;
+
+      // ignore the || [] since it's difficult to simulate
+      /* c8 ignore next */
+      const callbacks = this.attributeListeners.get(k) || [];
+
+      const props: { [key: string]: any } = {
+        [key]: attribute.value,
+        attribute,
+      };
+
+      if (attribute.nodeID) {
+        const scope = this.scope(attribute.nodeID);
+        if (scope) {
+          props[<string>kind] = scope;
+        }
+      }
+
+      for (const callback of callbacks) {
+        // const p = callback.placement;
+        // const traceKey = `${PlacementString(p)} ${<string>kind} ${key} ${
+        //   attribute.value
+        // } ${attribute.id}`;
+
+        // trace(`${traceKey}: starting`);
+
+        try {
+          await callback.callback(this.evtctx, props);
+        } catch (err) {
+          error(err);
         }
 
-        const k = <string>kind + "-" + key;
+        // trace(`${traceKey}: ended`);
 
-        // ignore the || [] since it's difficult to simulate
-        /* c8 ignore next */
-        const callbacks = this.attributeListeners.get(k) || [];
+        if (this.postCallback) {
+          await this.postCallback();
 
-        const props: { [key: string]: any } = {
-          [key]: attribute.value,
-          attribute,
-        };
-
-        if (attribute.nodeID) {
-          const scope = this.scope(attribute.nodeID);
-          if (scope) {
-            props[<string>kind] = scope;
-          }
+          // trace(`${traceKey}: finished`);
         }
-
-        for (const callback of callbacks) {
-          // const p = callback.placement;
-          // const traceKey = `${PlacementString(p)} ${<string>kind} ${key} ${
-          //   attribute.value
-          // } ${attribute.id}`;
-
-          // trace(`${traceKey}: starting`);
-
-          try {
-            await callback.callback(this.evtctx, props);
-          } catch (err) {
-            error(err);
-          }
-
-          // trace(`${traceKey}: ended`);
-
-          if (this.postCallback) {
-            await this.postCallback();
-
-            // trace(`${traceKey}: finished`);
-          }
-        }
-      },
+      }
     });
   }
 
   transitionEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
   startTransitionAdd() {
-    this.transitions.subscribe({
-      next: async (transition) => {
-        for (const callback of this.transitionEvents) {
-          if (this.stopped) {
-            return;
-          }
-
-          debug(
-            `transition callback from '${transition.from}' to '${transition.to}'`
-          );
-
-          try {
-            await callback.callback(this.evtctx, {
-              transition,
-              step: transition.step,
-            });
-          } catch (err) {
-            error(err);
-          }
-
-          if (this.postCallback) {
-            await this.postCallback();
-          }
+    subscribeAsync(this.transitions, async (transition) => {
+      for (const callback of this.transitionEvents) {
+        if (this.stopped) {
+          return;
         }
-      },
+
+        debug(
+          `transition callback from '${transition.from}' to '${transition.to}'`
+        );
+
+        try {
+          await callback.callback(this.evtctx, {
+            transition,
+            step: transition.step,
+          });
+        } catch (err) {
+          error(err);
+        }
+
+        if (this.postCallback) {
+          await this.postCallback();
+        }
+      }
     });
   }
 
   connectedEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
   startConnected() {
-    this.connections.subscribe({
-      next: async (connection) => {
-        if (this.stopped) {
-          return;
+    subscribeAsync(this.connections, async (connection) => {
+      if (this.stopped) {
+        return;
+      }
+
+      if (!connection.connected) {
+        return;
+      }
+
+      for (const callback of this.connectedEvents) {
+        debug(`connected callback`);
+
+        try {
+          await callback.callback(this.evtctx, {
+            participant: connection.participant,
+          });
+        } catch (err) {
+          error(err);
         }
 
-        if (!connection.connected) {
-          return;
+        if (this.postCallback) {
+          await this.postCallback();
         }
-
-        for (const callback of this.connectedEvents) {
-          debug(`connected callback`);
-
-          try {
-            await callback.callback(this.evtctx, {
-              participant: connection.participant,
-            });
-          } catch (err) {
-            error(err);
-          }
-
-          if (this.postCallback) {
-            await this.postCallback();
-          }
-        }
-      },
+      }
     });
   }
 
   disconnectedEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
   startDisconnected() {
-    this.connections.subscribe({
-      next: async (connection) => {
-        if (this.stopped) {
-          return;
+    subscribeAsync(this.connections, async (connection) => {
+      if (this.stopped) {
+        return;
+      }
+
+      if (connection.connected) {
+        return;
+      }
+
+      for (const callback of this.disconnectedEvents) {
+        debug(`disconnected callback`);
+
+        try {
+          await callback.callback(this.evtctx, {
+            participant: connection.participant,
+          });
+        } catch (err) {
+          error(err);
         }
 
-        if (connection.connected) {
-          return;
+        if (this.postCallback) {
+          await this.postCallback();
         }
-
-        for (const callback of this.disconnectedEvents) {
-          debug(`disconnected callback`);
-
-          try {
-            await callback.callback(this.evtctx, {
-              participant: connection.participant,
-            });
-          } catch (err) {
-            error(err);
-          }
-
-          if (this.postCallback) {
-            await this.postCallback();
-          }
-        }
-      },
+      }
     });
   }
 }
+
 type HasPlacement = { placement: ListernerPlacement };
 const comparePlacement = (a: HasPlacement, b: HasPlacement) =>
   a.placement - b.placement;

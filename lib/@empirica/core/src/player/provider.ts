@@ -37,6 +37,12 @@ export class TajribaProvider {
                   removed: scope.removed,
                 });
 
+                // console.log(
+                //   "ScopeChange",
+                //   (<ScopeIdent>scope.change).kind,
+                //   scope.done
+                // );
+
                 if (scope.done) {
                   this.dones.next();
                 }
@@ -51,6 +57,12 @@ export class TajribaProvider {
                   attribute: <AttributeChange>attribute.change,
                   removed: attribute.removed,
                 });
+
+                // console.log(
+                //   "AttributeChange",
+                //   (<AttributeChange>attribute.change).key,
+                //   attribute.done
+                // );
 
                 if (attribute.done) {
                   this.dones.next();

@@ -32,6 +32,9 @@ export class Layer<
     for (const start of this.listeners.starts) {
       debug("start callback");
       await start.callback(this.evtctx);
+      if (this.postCallback) {
+        await this.postCallback();
+      }
     }
 
     for (const kindEvent of this.listeners.kindListeners) {

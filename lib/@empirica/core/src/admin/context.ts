@@ -6,13 +6,14 @@ import {
   State,
   TransitionInput,
 } from "@empirica/tajriba";
-import { merge, Subject, Subscription } from "rxjs";
+import { merge, Subject, SubscriptionLike } from "rxjs";
 import { ScopeConstructor } from "../shared/scopes";
 import { TajribaConnection } from "../shared/tajriba_connection";
 import { error, warn } from "../utils/console";
 import { AdminConnection } from "./connection";
 import { ListenersCollector, Subscriber } from "./events";
 import { Globals } from "./globals";
+import { subscribeAsync } from "./observables";
 import { Runloop } from "./runloop";
 import {
   FileTokenStorage,
@@ -27,7 +28,7 @@ export class AdminContext<
 > {
   readonly tajriba: TajribaConnection;
   public adminConn: AdminConnection | undefined;
-  private sub?: Subscription;
+  private sub?: SubscriptionLike;
   private runloop: Runloop<Context, Kinds> | undefined;
   private adminSubs = new Subject<
     Subscriber<Context, Kinds> | ListenersCollector<Context, Kinds>
@@ -74,14 +75,12 @@ export class AdminContext<
       reset.next.bind(reset)
     );
 
-    adminContext.sub = merge(
-      adminContext.tajriba.connected,
-      adminContext.adminConn.connected
-    ).subscribe({
-      next: async () => {
+    adminContext.sub = subscribeAsync(
+      merge(adminContext.tajriba.connected, adminContext.adminConn.connected),
+      async () => {
         await adminContext.initOrStop();
-      },
-    });
+      }
+    );
 
     return adminContext;
   }

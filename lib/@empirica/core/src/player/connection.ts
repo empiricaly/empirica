@@ -1,5 +1,6 @@
 import { ParticipantIdent, TajribaParticipant } from "@empirica/tajriba";
-import { BehaviorSubject, merge, Observable } from "rxjs";
+import { BehaviorSubject, merge, Observable, SubscriptionLike } from "rxjs";
+import { subscribeAsync } from "../admin/observables";
 import {
   ErrNotConnected,
   TajribaConnection,
@@ -12,7 +13,7 @@ export class ParticipantConnection {
   private _connected = bs(false);
   private _connecting = bs(false);
   private _stopped = bs(false);
-  private _sessionsUnsub: () => void;
+  private _sessionsSub: SubscriptionLike;
 
   constructor(
     taj: TajribaConnection,
@@ -21,8 +22,9 @@ export class ParticipantConnection {
   ) {
     let session: Session | undefined;
     let connected = false;
-    const { unsubscribe } = merge(taj.connected, sessions).subscribe({
-      next: async (sessionOrConnected) => {
+    this._sessionsSub = subscribeAsync(
+      merge(taj.connected, sessions),
+      async (sessionOrConnected) => {
         if (typeof sessionOrConnected === "boolean") {
           connected = sessionOrConnected;
         } else {
@@ -46,20 +48,32 @@ export class ParticipantConnection {
           );
 
           this._tajribaPart.next(tajPart);
-          this._connected.next(true);
+          if (tajPart.connected) {
+            this._connected.next(true);
+          }
 
-          tajPart.on(
-            "connected",
-            this._connected.next.bind(this._connected, true)
-          );
-          tajPart.on(
-            "disconnected",
-            this._connected.next.bind(this._connected, false)
-          );
+          tajPart.on("connected", () => {
+            if (!this._connected.getValue()) {
+              this._connected.next(true);
+            }
+          });
+          tajPart.on("disconnected", () => {
+            if (this._connected.getValue()) {
+              this._connected.next(false);
+            }
+          });
           tajPart.on("error", (err) => {
             error("conn error", err);
           });
           tajPart.on("accessDenied", () => {
+            if (this._connected.getValue()) {
+              this._connected.next(false);
+            }
+            console.log(
+              "accessDenied",
+              session?.participant.id,
+              session?.token
+            );
             this.resetSession();
           });
         } catch (err) {
@@ -70,10 +84,8 @@ export class ParticipantConnection {
         }
 
         this._connecting.next(false);
-      },
-    });
-
-    this._sessionsUnsub = unsubscribe;
+      }
+    );
   }
 
   stop() {
@@ -89,7 +101,7 @@ export class ParticipantConnection {
       this._tajribaPart.next(undefined);
     }
 
-    this._sessionsUnsub();
+    this._sessionsSub.unsubscribe();
 
     this._connecting.next(false);
     this._connected.next(false);
