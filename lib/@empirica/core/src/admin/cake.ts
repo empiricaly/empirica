@@ -21,12 +21,17 @@ import { Transition } from "./transitions";
 
 // Cake triggers callbacks, respecting listener placement
 
+interface unsuber {
+  unsubscribe(): void;
+}
+
 export class Cake<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
   postCallback: (() => Promise<void>) | undefined;
   private stopped = false;
+  private unsubs: unsuber[] = [];
 
   constructor(
     private evtctx: EventContext<Context, Kinds>,
@@ -44,6 +49,9 @@ export class Cake<
 
   async stop() {
     this.stopped = true;
+    for (const unsub of this.unsubs) {
+      unsub.unsubscribe();
+    }
   }
 
   async add(listeners: ListenersCollector<Context, Kinds>) {
@@ -192,10 +200,6 @@ export class Cake<
     callbacks: () => KindEventListener<EvtCtxCallback<Context, Kinds>>[],
     until?: Scope<Context, Kinds>
   ) {
-    if (until) {
-      console.log("HAS UNTIL ATTR");
-    }
-
     let handle: PromiseHandle | undefined = promiseHandle();
     const unsub = subscribeAsync(
       this.kindSubscription(kind),
@@ -249,6 +253,8 @@ export class Cake<
 
     if (until) {
       unsub.unsubscribe();
+    } else {
+      this.unsubs.push(unsub);
     }
   }
 
@@ -263,10 +269,6 @@ export class Cake<
     callbacks: () => AttributeEventListener<EvtCtxCallback<Context, Kinds>>[],
     until?: Attribute
   ) {
-    if (until) {
-      console.log("HAS UNTIL ATTR");
-    }
-
     let handle: PromiseHandle | undefined = promiseHandle();
     const unsub = subscribeAsync(
       this.attributeSubscription(kind, key),
@@ -333,12 +335,14 @@ export class Cake<
 
     if (until) {
       unsub.unsubscribe();
+    } else {
+      this.unsubs.push(unsub);
     }
   }
 
   transitionEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
   startTransitionAdd() {
-    subscribeAsync(this.transitions, async (transition) => {
+    const unsub = subscribeAsync(this.transitions, async (transition) => {
       for (const callback of this.transitionEvents) {
         if (this.stopped) {
           return;
@@ -362,59 +366,66 @@ export class Cake<
         }
       }
     });
+
+    this.unsubs.push(unsub);
   }
 
   connectedEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
   connectionsMap = new Map<string, Connection>();
   async startConnected() {
     let handle: PromiseHandle | undefined = promiseHandle();
-    subscribeAsync(this.connections, async ({ connection, done }) => {
-      if (this.stopped) {
-        if (handle) {
-          handle.result();
-        }
+    const unsub = subscribeAsync(
+      this.connections,
+      async ({ connection, done }) => {
+        if (this.stopped) {
+          if (handle) {
+            handle.result();
+          }
 
-        return;
-      }
-
-      if (connection) {
-        if (!connection.connected) {
           return;
         }
 
-        this.connectionsMap.set(connection.participant.id, connection);
-
-        for (const callback of this.connectedEvents) {
-          debug(`connected callback`);
-
-          try {
-            await callback.callback(this.evtctx, {
-              participant: connection.participant,
-            });
-          } catch (err) {
-            error(err);
+        if (connection) {
+          if (!connection.connected) {
+            return;
           }
 
-          if (this.postCallback) {
-            await this.postCallback();
+          this.connectionsMap.set(connection.participant.id, connection);
+
+          for (const callback of this.connectedEvents) {
+            debug(`connected callback`);
+
+            try {
+              await callback.callback(this.evtctx, {
+                participant: connection.participant,
+              });
+            } catch (err) {
+              error(err);
+            }
+
+            if (this.postCallback) {
+              await this.postCallback();
+            }
           }
         }
-      }
 
-      if (done && handle) {
-        handle.result();
-        handle = undefined;
+        if (done && handle) {
+          handle.result();
+          handle = undefined;
+        }
       }
-    });
+    );
 
     if (handle) {
       await handle.promise;
     }
+
+    this.unsubs.push(unsub);
   }
 
   disconnectedEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
   startDisconnected() {
-    subscribeAsync(this.connections, async ({ connection }) => {
+    const unsub = subscribeAsync(this.connections, async ({ connection }) => {
       if (this.stopped) {
         return;
       }
@@ -441,6 +452,8 @@ export class Cake<
         }
       }
     });
+
+    this.unsubs.push(unsub);
   }
 }
 

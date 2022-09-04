@@ -54,7 +54,11 @@ async function setupModeCtx(t: ExecutionContext<unknown>) {
   const ctx = new ParticipantModeContext("", "somens", EmpiricaClassic);
   cbs["connected"]![0]!();
 
-  await nextTick();
+  await nextTick(10);
+
+  cbs["connected"]![1]!();
+
+  await nextTick(10);
 
   setupPlayer(changes);
   setupGame(changes);

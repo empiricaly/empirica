@@ -11,10 +11,11 @@ import test from "ava";
 import React from "react";
 import { Subject } from "rxjs";
 import { restore } from "sinon";
-import { TajribaConnection } from "../../shared/tajriba_connection";
 import { Globals } from "../../shared/globals";
-import { ParticipantContext } from "../context";
+import { TajribaConnection } from "../../shared/tajriba_connection";
 import { fakeTajribaConnect, nextTick } from "../../shared/test_helpers";
+import { ParticipantSession } from "../connection";
+import { ParticipantContext } from "../context";
 import { ParticipantCtx } from "./EmpiricaParticipant";
 import {
   useConsent,
@@ -25,7 +26,6 @@ import {
   useTajribaConnected,
   useTajribaConnecting,
 } from "./hooks";
-import { ParticipantSession } from "../connection";
 
 test.serial.afterEach.always(() => {
   cleanup();
@@ -222,7 +222,9 @@ test.serial("usePlayerID no session", async (t) => {
   await result[2]("hey");
 
   // Wait for session establishement
-  await nextTick(25);
+  await nextTick();
+  cbs["connected"]![1]!();
+  await nextTick();
 
   t.is(result[0], false);
   t.is(result[1], "hey");
@@ -252,12 +254,15 @@ test.serial("usePlayerID session", async (t) => {
     </ParticipantCtx.Provider>
   );
 
+  await nextTick(50);
+
   t.is(result[0], true);
   t.is(result[1], undefined);
   t.is(result[2], undefined);
 
   // Wait for session establishement
-  await nextTick(10);
+  cbs["connected"]![1]!();
+  await nextTick(50);
 
   t.is(result[0], false);
   t.is(result[1], "567");

@@ -20,8 +20,8 @@ test("Attributes should be subscribable", (t) => {
 
   const vals: Attribute[] = [];
   attributes.subscribeAttribute("game", "a").subscribe({
-    next: (attribute) => {
-      vals.push(attribute);
+    next: ({ attribute }) => {
+      vals.push(attribute!);
     },
   });
 
@@ -74,8 +74,8 @@ test("Attributes subscriptions should ignore deletes", (t) => {
 
   const vals: Attribute[] = [];
   attributes.subscribeAttribute("game", "a").subscribe({
-    next: (attribute) => {
-      vals.push(attribute);
+    next: ({ attribute }) => {
+      vals.push(attribute!);
     },
   });
 
@@ -126,8 +126,8 @@ test("Attributes with missing node fail gracefully", (t) => {
 
   const vals: Attribute[] = [];
   attributes.subscribeAttribute("game", "a").subscribe({
-    next: (attribute) => {
-      vals.push(attribute);
+    next: ({ attribute }) => {
+      vals.push(attribute!);
     },
   });
 
@@ -179,8 +179,8 @@ test("Attributes with node and no nodeID", (t) => {
 
   const vals: Attribute[] = [];
   attributes.subscribeAttribute("game", "a").subscribe({
-    next: (attribute) => {
-      vals.push(attribute);
+    next: ({ attribute }) => {
+      vals.push(attribute!);
     },
   });
 

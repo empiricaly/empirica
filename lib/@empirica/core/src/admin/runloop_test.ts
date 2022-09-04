@@ -170,6 +170,7 @@ test.serial("Runloop triggers kinds", async (t) => {
   });
 
   await nextTick();
+  await nextTick();
 
   t.is(called.subscriber, 1);
   t.is(called.startCalled, 1);
@@ -279,7 +280,7 @@ test.serial("Runloop adds new layer", async (t) => {
     });
   });
 
-  await nextTick();
+  await nextTick(100);
 
   t.is(called.subscriber, 2);
   t.is(called.startCalled, 2);
@@ -322,7 +323,7 @@ test.serial("Runloop creates scopes", async (t) => {
     done: true,
   });
 
-  await nextTick();
+  await nextTick(10);
 
   t.deepEqual(called.tajCalled.addScopes, [
     [
@@ -343,7 +344,7 @@ test.serial("Runloop creates attributes", async (t) => {
     done: true,
   });
 
-  await nextTick();
+  await nextTick(10);
 
   t.deepEqual(called.tajCalled.setAttributes, [
     [
@@ -366,7 +367,7 @@ test.serial("Runloop creates groups", async (t) => {
     done: true,
   });
 
-  await nextTick();
+  await nextTick(10);
 
   t.deepEqual(called.tajCalled.addGroups, [
     [
@@ -387,7 +388,7 @@ test.serial("Runloop creates links", async (t) => {
     done: true,
   });
 
-  await nextTick();
+  await nextTick(10);
 
   t.deepEqual(called.tajCalled.addLink, [
     { link: true, nodeIDs: ["abc"], participantIDs: ["123"] },
@@ -404,7 +405,7 @@ test.serial("Runloop creates steps", async (t) => {
     done: true,
   });
 
-  await nextTick();
+  await nextTick(10);
 
   t.deepEqual(called.tajCalled.addSteps, [[{ duration: 123 }]]);
 });
@@ -419,7 +420,7 @@ test.serial("Runloop creates transitions", async (t) => {
     done: true,
   });
 
-  await nextTick();
+  await nextTick(10);
 
   t.deepEqual(called.tajCalled.addTransitions, [
     {

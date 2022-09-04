@@ -1,5 +1,6 @@
 import test from "ava";
 import sinon from "sinon";
+import { ListenersCollector } from "../events";
 import {
   completeBatchConfig,
   Gam,
@@ -13,6 +14,7 @@ import {
   withContext,
   withTajriba,
 } from "./e2e_test_helpers";
+import { ClassicKinds, Context } from "./models";
 import { ClassicListenersCollector } from "./proxy";
 
 const t = test;
@@ -55,9 +57,6 @@ t("experimentOpen starts undefined", async (t) => {
 
   // Also checking ready is only called once
   var ready = sinon.fake();
-  Empirica.on("ready", () => {
-    ready();
-  });
 
   await withContext(
     t,
@@ -66,8 +65,19 @@ t("experimentOpen starts undefined", async (t) => {
       for (const player of players) {
         t.is(player.globals.get("experimentOpen"), undefined);
       }
+
+      // NOTE: Sleeping a bit so we don't hit an closed connection
+      // error. We should not get that error if we were closing properly, but it
+      // only happens in this extreme case, so skipping for now.
+      await sleep(200);
     },
-    { listeners: Empirica }
+    {
+      listeners: function (_: ListenersCollector<Context, ClassicKinds>) {
+        _.on("ready", () => {
+          ready();
+        });
+      },
+    }
   );
 
   t.assert(ready.calledOnce);

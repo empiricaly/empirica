@@ -18,7 +18,7 @@ import {
 import { Attributes } from "./attributes";
 import { Finalizer, TajribaAdminAccess } from "./context";
 import { Globals } from "./globals";
-import { Scope, Scopes } from "./scopes";
+import { Scope, ScopeMsg, Scopes } from "./scopes";
 
 export class AdminBatch extends Scope<Context, AdminKinds> {}
 export class AdminGame extends Scope<Context, AdminKinds> {
@@ -135,7 +135,7 @@ test("Scopes should be observable by kind", (t) => {
 
   const scopeObs = scopes.subscribeKind("game");
 
-  const vals: Scope<Context, AdminKinds>[] = [];
+  const vals: ScopeMsg<Context, AdminKinds>[] = [];
   scopeObs.subscribe({
     next(scope) {
       vals.push(scope);
@@ -149,8 +149,8 @@ test("Scopes should be observable by kind", (t) => {
   );
 
   t.is(vals.length, 1);
-  t.is(vals[0]!.id, "abc");
-  t.is(vals[0]!.kind, "game");
+  t.is(vals[0]!.scope!.id, "abc");
+  t.is(vals[0]!.scope!.kind, "game");
 
   changes.next(
     attrChange({
@@ -178,7 +178,7 @@ test("Scopes observable by kind should respect done", (t) => {
 
   const scopeObs = scopes.subscribeKind("game");
 
-  const vals: Scope<Context, AdminKinds>[] = [];
+  const vals: ScopeMsg<Context, AdminKinds>[] = [];
   scopeObs.subscribe({
     next(scope) {
       vals.push(scope);
@@ -206,8 +206,8 @@ test("Scopes observable by kind should respect done", (t) => {
   );
 
   t.is(vals.length, 1);
-  t.is(vals[0]!.id, "xyz");
-  t.is(vals[0]!.kind, "game");
+  t.is(vals[0]!.scope!.id, "xyz");
+  t.is(vals[0]!.scope!.kind, "game");
 });
 
 test("Scopes observable by kind should respect kind", (t) => {
@@ -215,7 +215,7 @@ test("Scopes observable by kind should respect kind", (t) => {
 
   const scopeObs = scopes.subscribeKind("game");
 
-  const vals: Scope<Context, AdminKinds>[] = [];
+  const vals: ScopeMsg<Context, AdminKinds>[] = [];
   scopeObs.subscribe({
     next(scope) {
       vals.push(scope);
@@ -229,8 +229,8 @@ test("Scopes observable by kind should respect kind", (t) => {
   );
 
   t.is(vals.length, 1);
-  t.is(vals[0]!.id, "abc");
-  t.is(vals[0]!.kind, "game");
+  t.is(vals[0]!.scope!.id, "abc");
+  t.is(vals[0]!.scope!.kind, "game");
 
   changes.next(
     attrChange({
