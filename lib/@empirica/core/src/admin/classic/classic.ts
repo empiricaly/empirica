@@ -179,7 +179,7 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
   });
 
   _.on("player", (ctx, { player }: { player: Player }) => {
-    // console.log("ON PLAYER");
+    // console.log("ON PLAYER", player.id);
     const participantID = isString(player.get("participantID"));
 
     player.participantID = participantID;

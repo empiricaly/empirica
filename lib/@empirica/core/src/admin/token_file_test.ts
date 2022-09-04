@@ -165,6 +165,8 @@ test.serial("FileTokenStorage fail to clear token", async (t) => {
 test.serial("TokenProvider with existing token", async (t) => {
   const { tp } = setupTokenProvider();
 
+  await nextTick();
+
   t.is(tp.tokens.getValue(), "123");
 });
 
@@ -224,10 +226,13 @@ test.serial("TokenProvider stop", async (t) => {
 });
 
 test.serial("TokenProvider no token, taj connected early", async (t) => {
-  const { tp, strg } = setupTokenProvider({
+  const { tp, strg, cbs } = setupTokenProvider({
     initToken: undefined,
-    connectEarly: true,
   });
+
+  cbs["connected"]![0]!();
+
+  await nextTick();
 
   t.is(tp.token, undefined);
 

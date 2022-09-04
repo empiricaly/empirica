@@ -66,14 +66,12 @@ export class ParticipantContext {
     if (!this.tajriba.connected.getValue()) {
       throw ErrNotConnected;
     }
-    this.participant.connecting.next(true);
 
     const [token, participant] = await this.tajriba.tajriba.registerParticipant(
       playerIdentifier
     );
 
     if (!token) {
-      this.participant.connecting.next(false);
       throw new Error("invalid registration");
     }
 

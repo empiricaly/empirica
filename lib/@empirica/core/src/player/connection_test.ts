@@ -4,12 +4,17 @@ import test from "ava";
 import { Subject } from "rxjs";
 import { restore } from "sinon";
 import { TajribaConnection } from "../shared/tajriba_connection";
-import { fakeTajribaConnect, nextTick } from "../shared/test_helpers";
+import {
+  fakeTajribaConnect,
+  nextTick,
+  textHasLog,
+} from "../shared/test_helpers";
 import {
   ParticipantConnection,
   ParticipantSession,
   Session,
 } from "./connection";
+import { captureLogsAsync } from "../utils/console";
 
 test.serial.afterEach(() => {
   restore();
@@ -132,7 +137,7 @@ test.serial("ParticipantConnection existing conn and session", async (t) => {
     window.localStorage.clear();
   });
 
-  const { cbs } = fakeTajribaConnect();
+  const { cbs } = fakeTajribaConnect({ connected: false });
 
   const conn = new TajribaConnection("someurl");
 
@@ -149,10 +154,14 @@ test.serial("ParticipantConnection existing conn and session", async (t) => {
     resetSession.next.bind(resetSession)
   );
 
+  await nextTick();
+
   t.is(participant.connecting.getValue(), true);
 
+  cbs["connected"]![1]!();
+
   // Wait for session establishement
-  await nextTick();
+  await nextTick(10);
 
   t.is(conn.connected.getValue(), true);
   t.not(session.session, undefined);
@@ -194,7 +203,11 @@ test.serial("ParticipantConnection existing conn and no session", async (t) => {
 
   session.updateSession("123", { id: "345", identifier: "567" });
 
+  await nextTick();
+
   t.is(participant.connecting.getValue(), true);
+
+  cbs["connected"]![1]!();
 
   // Wait for session establishement
   await nextTick();
@@ -247,6 +260,10 @@ test.serial("ParticipantConnection no conn and no session", async (t) => {
 
   cbs["connected"]![0]!();
 
+  await nextTick();
+
+  cbs["connected"]![1]!();
+
   // Wait for session establishement
   await nextTick();
 
@@ -293,18 +310,22 @@ test.serial("ParticipantConnection reset session", async (t) => {
 
   session.updateSession("123", { id: "345", identifier: "567" });
 
-  const participant = new ParticipantConnection(
-    conn,
-    session.sessions,
-    resetSession.next.bind(resetSession)
-  );
+  const logs = await captureLogsAsync(async function () {
+    const participant = new ParticipantConnection(
+      conn,
+      session.sessions,
+      resetSession.next.bind(resetSession)
+    );
 
-  // Wait for session establishement
-  await nextTick();
+    // Wait for session establishement
+    await nextTick();
 
-  t.is(conn.connected.getValue(), true);
-  t.is(participant.connected.getValue(), false);
-  t.is(session.session, undefined);
+    t.is(conn.connected.getValue(), true);
+    t.is(participant.connected.getValue(), false);
+    t.is(session.session, undefined);
+  });
+
+  textHasLog(t, logs, "error", "new conn error");
 });
 
 test.serial("ParticipantConnection repeating conn", async (t) => {
@@ -337,6 +358,10 @@ test.serial("ParticipantConnection repeating conn", async (t) => {
   });
 
   t.deepEqual(vals, [false]);
+
+  await nextTick();
+
+  cbs["connected"]![1]!();
 
   // Wait for session establishement
   await nextTick();

@@ -7,10 +7,16 @@ import {
   SetAttributeInput,
   TransitionInput,
 } from "@empirica/tajriba";
-import { BehaviorSubject, Observable, Subject, Subscription } from "rxjs";
+import {
+  BehaviorSubject,
+  Observable,
+  ReplaySubject,
+  Subject,
+  Subscription,
+} from "rxjs";
 import { AttributeChange, AttributeUpdate } from "../shared/attributes";
 import { ScopeConstructor, ScopeIdent, ScopeUpdate } from "../shared/scopes";
-import { error, trace, warn } from "../utils/console";
+import { error, warn } from "../utils/console";
 import { Attributes } from "./attributes";
 import { Cake } from "./cake";
 import { AdminConnection } from "./connection";
@@ -24,9 +30,8 @@ import {
 } from "./context";
 import { EventContext, ListenersCollector, Subscriber } from "./events";
 import { Globals } from "./globals";
-import { Layer } from "./layers";
 import { awaitObsValue, subscribeAsync } from "./observables";
-import { Connection, Participant, participantsSub } from "./participants";
+import { ConnectionMsg, Participant, participantsSub } from "./participants";
 import { Scopes } from "./scopes";
 import { Subs, Subscriptions } from "./subscriptions";
 import { Transition, transitionsSub } from "./transitions";
@@ -35,11 +40,10 @@ export class Runloop<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
-  private layers: Layer<Context, Kinds>[] = [];
   private subs = new Subscriptions<Context, Kinds>();
   private evtctx: EventContext<Context, Kinds>;
   private participants = new Map<string, Participant>();
-  private connections = new Subject<Connection>();
+  private connections = new ReplaySubject<ConnectionMsg>();
   private transitions = new Subject<Transition>();
   private scopesSub = new Subject<ScopeUpdate>();
   private attributesSub = new Subject<AttributeUpdate>();
@@ -109,45 +113,16 @@ export class Runloop<
     );
     this.cake.postCallback = this.postCallback.bind(this, true);
 
-    // const subsSub = subs
-    //   .pipe(
-    //     concatMap(async (subscriber) => {
-    //       const layer = new Layer(
-    //         this.evtctx,
-    //         this.scopes.byKind.bind(this.scopes),
-    //         this.attributes.attributePeek.bind(this.attributes),
-    //         this.participants
-    //       );
-    //       this.layers.push(layer);
-
-    //       if (typeof subscriber === "function") {
-    //         subscriber(layer.listeners);
-    //       } else {
-    //         layer.listeners = subscriber;
-    //       }
-
-    //       await this.cake.add(layer.listeners);
-    //       await this.initLayer(layer);
-    //     })
-    //   )
-    //   .subscribe();
     const subsSub = subscribeAsync(subs, async (subscriber) => {
-      const layer = new Layer(
-        this.evtctx,
-        this.scopes.byKind.bind(this.scopes),
-        this.attributes.attributePeek.bind(this.attributes),
-        this.participants
-      );
-      this.layers.push(layer);
-
+      let listeners: ListenersCollector<Context, Kinds>;
       if (typeof subscriber === "function") {
-        subscriber(layer.listeners);
+        listeners = new ListenersCollector<Context, Kinds>();
+        subscriber(listeners);
       } else {
-        layer.listeners = subscriber;
+        listeners = subscriber;
       }
 
-      await this.cake.add(layer.listeners);
-      await this.initLayer(layer);
+      await this.cake.add(listeners);
     });
 
     let stopSub: Subscription;
@@ -157,34 +132,6 @@ export class Runloop<
         stopSub.unsubscribe();
       },
     });
-  }
-
-  private async initLayer(layer: Layer<Context, Kinds>) {
-    // TODO check is setting postCallback up front is correct, why was it
-    // working the other way around last time.
-    layer.postCallback = this.postCallback.bind(this, true);
-    await layer.start();
-
-    // // Keep loading until no more subs
-    // while (true) {
-    //   const subs = this.subs.newSubs();
-    //   if (!subs) {
-    //     break;
-    //   }
-    //   await this.processNewSub(subs);
-    // }
-
-    // while (true) {
-    //   const subs = this.subs.newSubs();
-    //   if (!subs) {
-    //     break;
-    //   }
-    //   await this.processNewSub(subs);
-    // }
-
-    // layer.postCallback = this.postCallback.bind(this, true);
-
-    await layer.ready();
   }
 
   private async postCallback(final: boolean) {
@@ -392,6 +339,7 @@ export class Runloop<
     }
 
     // const initProm = this.loadAllScopes(filters);
+    // console.log("SUB", filters);
 
     let resolve: (value: void) => void;
     const prom = new Promise((r) => (resolve = r));

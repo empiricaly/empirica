@@ -32,6 +32,11 @@ test.serial("ParticipantContext with session", async (t) => {
   // Wait for session establishement
   await nextTick();
 
+  cbs["connected"]![1]!();
+
+  // Wait for session establishement
+  await nextTick();
+
   t.not(conn.provider.getValue(), undefined);
   t.not(conn.globals.getValue(), undefined);
 
@@ -69,13 +74,22 @@ test.serial("ParticipantContext register", async (t) => {
   // Connect
   cbs["connected"]![0]!();
 
+  await nextTick();
+
   t.is(conn.provider.getValue(), undefined);
   t.not(conn.globals.getValue(), undefined);
 
   await conn.register("123");
 
+  await nextTick();
+
   t.is(conn.participant.connected.getValue(), false);
   t.is(conn.participant.connecting.getValue(), true);
+
+  // Wait for session establishement
+  await nextTick();
+
+  cbs["connected"]![1]!();
 
   // Wait for session establishement
   await nextTick();
@@ -120,6 +134,9 @@ test.serial("ParticipantContext invalid register", async (t) => {
   // Connect
   cbs["connected"]![0]!();
 
+  // Wait for session establishement
+  await nextTick();
+
   t.is(conn.provider.getValue(), undefined);
   t.not(conn.globals.getValue(), undefined);
 
@@ -144,6 +161,9 @@ test.serial("ParticipantContext failed register", async (t) => {
 
   // Connect
   cbs["connected"]![0]!();
+
+  // Wait for session establishement
+  await nextTick();
 
   t.is(conn.provider.getValue(), undefined);
   t.not(conn.globals.getValue(), undefined);
@@ -178,6 +198,12 @@ test.serial("ParticipantModeContext success", async (t) => {
 
   // Connect
   cbs["connected"]![0]!();
+
+  // Wait for session establishement
+  await nextTick();
+
+  // Connect
+  cbs["connected"]![1]!();
 
   // Wait for session establishement
   await nextTick();

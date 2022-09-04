@@ -1,4 +1,5 @@
 import { TajribaAdmin } from "@empirica/tajriba";
+import { ExecutionContext } from "ava";
 import { spawn } from "child_process";
 import fs from "fs";
 import readline from "readline";
@@ -29,6 +30,7 @@ import {
 import { treatmentSchema } from "./schemas";
 
 const VERBOSE = false;
+const INVERTED = false;
 
 // setLogLevel("trace");
 
@@ -66,8 +68,12 @@ interface TajServer {
   port: number;
 }
 
-export async function withTajriba(fn: (port: number) => void) {
+export async function withTajriba(
+  t: ExecutionContext,
+  fn: (port: number) => void
+) {
   const srv = await startTajriba();
+  t.log(srv.port);
   await fn(srv.port);
   srv.stop();
 }
@@ -444,17 +450,31 @@ export function getUniqueNS(): string {
 }
 
 export async function withContext(
+  t: ExecutionContext,
   playerCount: number,
   fn: (res: testContext) => Promise<void>,
   options?: {
+    inverted?: boolean;
     doNotRegisterPlayers?: boolean;
     listeners?:
       | Subscriber<Context, ClassicKinds>
       | ListenersCollector<Context, ClassicKinds>;
   }
 ) {
-  await withTajriba(async (port: number) => {
+  await withTajriba(t, async (port: number) => {
     const playersProms: Promise<Playr>[] = [];
+
+    let admin: Admn;
+    let callbacks: AdminContext<Context, ClassicKinds>;
+
+    const initAdmins = async () => {
+      admin = await makeAdmin(port);
+      callbacks = await makeCallbacks(port, options?.listeners);
+    };
+
+    if (!options?.inverted && !INVERTED) {
+      await initAdmins();
+    }
 
     for (let i = 0; i < playerCount; i++) {
       playersProms.push(
@@ -471,10 +491,12 @@ export async function withContext(
       }
     });
 
-    const admin = await makeAdmin(port);
-    const callbacks = await makeCallbacks(port, options?.listeners);
+    if (options?.inverted || INVERTED) {
+      await initAdmins();
+    }
 
-    // await sleep(1000);
+    admin = admin!;
+    callbacks = callbacks!;
 
     await fn({
       port,

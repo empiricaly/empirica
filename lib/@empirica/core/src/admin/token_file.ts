@@ -67,23 +67,6 @@ export class TokenProvider {
   }
 }
 
-// async function example() {
-//   const tokenFile = "/dsd/dsa";
-//   const serviceName = "callbacks";
-//   const serviceRegistrationToken = "d6w54q3d51qw3";
-
-//   let taj = <TajribaConnection>{};
-//   const reset = new Subject<void>();
-//   const strg = await FileTokenStorage.init(tokenFile, reset);
-//   const tp = new TokenProvider(
-//     taj,
-//     strg,
-//     serviceName,
-//     serviceRegistrationToken
-//   );
-//   tp.tokens;
-// }
-
 export interface SavedTokenStorage {
   tokens: BehaviorSubject<string | null | undefined>;
   updateToken: (token: string) => Promise<void>;

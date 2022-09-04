@@ -138,9 +138,8 @@
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "ava": {
     "files": [
-      "src/admin/classic/*_test.ts",
-      "src/**/*_test.ts nope",
-      "src/**/*_test.tsx nope"
+      "src/**/admin/**/classic_test.ts",
+      "src/**/admin/**/classic_test.tsx"
     ],
     "extensions": {
       "ts": "module",
@@ -189,7 +188,7 @@
     "typescript": "4.7.4"
   },
   "dependencies": {
-    "@empirica/tajriba": "^1.0.0-rc.1",
+    "@empirica/tajriba": "^1.0.0-rc.3",
     "@swc/helpers": "0.4.2",
     "rxjs": "7.5.5",
     "zod": "3.17.3"

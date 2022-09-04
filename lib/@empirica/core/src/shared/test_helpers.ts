@@ -190,7 +190,7 @@ export function fakeTajribaConnect(
     sessionParticipant(_: string, __: ParticipantIdent) {
       return new Promise<TajribaParticipant>((resolve, reject) => {
         if (failSession) {
-          reject();
+          reject("failed");
         } else {
           resolve(tajParticipant);
         }
@@ -429,9 +429,13 @@ export function textHasLog(
   t: ExecutionContext<unknown>,
   logs: LogLine[],
   level: string,
-  log: string
+  log: string,
+  len: number = 1
 ) {
-  t.is(logs.length, 1);
+  if (logs.length > len) {
+    console.log(logs);
+  }
+  t.is(logs.length, len);
   t.regex(logs[0]!.args[0], new RegExp(log));
   t.is(logs[0]!.level, level);
 }
@@ -440,7 +444,6 @@ const setupTokenProviderDefaults = {
   initToken: "123",
   failRegisterService: false,
   failSession: false,
-  connectEarly: false,
   failAddScope: false,
   failScopes: false,
   noScopes: false,
@@ -450,7 +453,6 @@ type setupTokenProviderProps = {
   initToken?: string | null;
   failRegisterService?: boolean;
   failSession?: boolean;
-  connectEarly?: boolean;
   failAddScope?: boolean;
   failScopes?: boolean;
   noScopes?: boolean;
@@ -463,7 +465,6 @@ export function setupTokenProvider(
     initToken,
     failRegisterService,
     failSession,
-    connectEarly,
     failAddScope,
     failScopes,
     noScopes,
@@ -495,10 +496,6 @@ export function setupTokenProvider(
     /* c8 ignore next */
     clearToken: async () => {},
   };
-
-  if (connectEarly) {
-    cbs["connected"]![0]!();
-  }
 
   let tokenReset = 0;
   const resetToken = () => {

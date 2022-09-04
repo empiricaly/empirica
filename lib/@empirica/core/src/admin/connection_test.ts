@@ -8,15 +8,19 @@ test.serial.afterEach(() => {
 });
 
 test.serial("ParticipantConnection existing conn and token", async (t) => {
-  const { cbs, tp, taj, strg, resetToken } = setupTokenProvider();
+  const { cbs, tp, taj, strg, resetToken } = setupTokenProvider({
+    initToken: "hey",
+  });
 
   cbs["connected"]![0]!();
 
-  t.is(tp.tokens.getValue(), "123");
+  await nextTick();
+
+  t.is(tp.tokens.getValue(), "hey");
 
   const admin = new AdminConnection(taj, strg.tokens, resetToken);
 
-  t.is(admin.connecting.getValue(), true);
+  t.is(admin.connecting.getValue(), false);
   t.is(admin.admin.getValue(), undefined);
 
   // Wait for session establishement
@@ -91,13 +95,17 @@ test.serial(
     const props = setupTokenProvider({ failSession: true });
     const { cbs, tp, taj, strg, resetToken } = props;
 
+    await nextTick();
+
     t.is(tp.tokens.getValue(), "123");
 
     cbs["connected"]![0]!();
 
+    await nextTick();
+
     const admin = new AdminConnection(taj, strg.tokens, resetToken);
 
-    t.is(admin.connecting.getValue(), true);
+    t.is(admin.connecting.getValue(), false);
 
     // Wait for session establishement
     await nextTick(10);

@@ -20,7 +20,7 @@ const t = test;
 const to = test.only;
 
 t("ready called when ready", async (t) => {
-  await withTajriba(async (port: number) => {
+  await withTajriba(t, async (port: number) => {
     const playersProms: Promise<Playr>[] = [];
 
     const playerCount = 2;
@@ -60,6 +60,7 @@ t("experimentOpen starts undefined", async (t) => {
   });
 
   await withContext(
+    t,
     2,
     async ({ players }) => {
       for (const player of players) {
@@ -73,7 +74,7 @@ t("experimentOpen starts undefined", async (t) => {
 });
 
 t("experimentOpen is undefined on new batch", async (t) => {
-  await withContext(2, async ({ players, admin }) => {
+  await withContext(t, 2, async ({ players, admin }) => {
     await admin.createBatch(completeBatchConfig(1));
     for (const player of players) {
       t.is(player.globals.get("experimentOpen"), undefined);
@@ -82,7 +83,7 @@ t("experimentOpen is undefined on new batch", async (t) => {
 });
 
 t("experimentOpen is true on batch started", async (t) => {
-  await withContext(2, async ({ players, admin }) => {
+  await withContext(t, 2, async ({ players, admin }) => {
     const batch = await admin.createBatch(completeBatchConfig(1));
     await batch.running();
     await players.awaitGlobals("experimentOpen");
@@ -93,13 +94,16 @@ t("experimentOpen is true on batch started", async (t) => {
 });
 
 t("experimentOpen is false on batch terminated", async (t) => {
-  await withContext(2, async ({ players, admin }) => {
+  await withContext(t, 2, async ({ players, admin }) => {
     const batch = await admin.createBatch(completeBatchConfig(1));
     await batch.running();
     await players.awaitGlobals("experimentOpen");
+    for (const player of players) {
+      t.is(player.globals.get("experimentOpen"), true);
+    }
     await batch.terminated();
     await players.awaitGlobals("experimentOpen");
-    await sleep(200);
+    // await sleep(200);
     for (const player of players) {
       t.is(player.globals.get("experimentOpen"), false);
     }
@@ -107,7 +111,7 @@ t("experimentOpen is false on batch terminated", async (t) => {
 });
 
 t("new participants get new Player", async (t) => {
-  await withContext(2, async ({ players }) => {
+  await withContext(t, 2, async ({ players }) => {
     await players.awaitPlayerExist();
     for (const player of players) {
       t.truthy(player.player);
@@ -116,7 +120,7 @@ t("new participants get new Player", async (t) => {
 });
 
 t("games get created on new batch once", async (t) => {
-  await withContext(2, async ({ admin, players, makeCallbacks }) => {
+  await withContext(t, 2, async ({ admin, players, makeCallbacks }) => {
     await players.awaitPlayerExist();
     await admin.createBatch(completeBatchConfig(1));
     await sleep(100);
@@ -130,7 +134,7 @@ t("games get created on new batch once", async (t) => {
 });
 
 t("existing player connecting get assigned", async (t) => {
-  await withContext(1, async ({ admin, players }) => {
+  await withContext(t, 1, async ({ admin, players }) => {
     const batch = await admin.createBatch(completeBatchConfig(1));
     await sleep(100); // games get created
     batch.running();
@@ -142,7 +146,7 @@ t("existing player connecting get assigned", async (t) => {
 });
 
 t("new player gets assigned if still online", async (t) => {
-  await withContext(1, async ({ admin, makePlayer, players }) => {
+  await withContext(t, 1, async ({ admin, makePlayer, players }) => {
     if (players.length !== 1) {
       throw "wrong amount of players";
     }
@@ -169,7 +173,7 @@ t("new player gets assigned if still online", async (t) => {
 });
 
 t("players are randomly assigned to unstarted games", async (t) => {
-  await withContext(10, async ({ admin, players }) => {
+  await withContext(t, 10, async ({ admin, players }) => {
     const batch = await admin.createBatch(completeBatchConfig(2, 2));
     await sleep(100); // games get created
     batch.running();
@@ -192,6 +196,7 @@ t(
   "if 2 batch running, players are randomly assigned to first started batch",
   async (t) => {
     await withContext(
+      t,
       0,
       async ({ admin, makePlayer }) => {
         const batch = await admin.createBatch(completeBatchConfig(2, 2));
@@ -230,6 +235,7 @@ t(
 
 t("when solo player introDone, game starts", async (t) => {
   await withContext(
+    t,
     1,
     async ({ admin, players }) => {
       const batch = await admin.createBatch(completeBatchConfig(1));
@@ -251,6 +257,7 @@ t("when solo player introDone, game starts", async (t) => {
 
 t("when enough player introDone, game starts", async (t) => {
   await withContext(
+    t,
     2,
     async ({ admin, players }) => {
       const batch = await admin.createBatch(completeBatchConfig(2));
@@ -274,6 +281,7 @@ t(
   "when the first game starts, players are reassigned to other games with same treatment",
   async (t) => {
     await withContext(
+      t,
       2,
       async ({ admin, players }) => {
         const batch = await admin.createBatch(completeBatchConfig(1));
@@ -310,6 +318,7 @@ t(
   "when the first game starts, players are reassigned to games in currnet batch",
   async (t) => {
     await withContext(
+      t,
       10,
       async ({ admin, players }) => {
         const batch = await admin.createBatch(completeBatchConfig(1, 2));
@@ -363,6 +372,7 @@ t(
 
 t("when the game starts, players are kicked if no other game", async (t) => {
   await withContext(
+    t,
     10,
     async ({ admin, players }) => {
       const batch = await admin.createBatch(completeBatchConfig(1));
@@ -405,6 +415,7 @@ t(
   "when the game starts, players are kicked if no other game with same treatment",
   async (t) => {
     await withContext(
+      t,
       10,
       async ({ admin, players }) => {
         const batch = await admin.createBatch(
@@ -465,6 +476,7 @@ t(
 
 t("when all games started, experiment closes", async (t) => {
   await withContext(
+    t,
     2,
     async ({ players, admin }) => {
       t.is(players.length, 2);
@@ -481,19 +493,17 @@ t("when all games started, experiment closes", async (t) => {
       const player1 = players.get(0)!;
 
       await player1?.register();
-      await sleep(100); // assignment
+      await player1.awaitPlayer();
 
       for (const player of players) {
         t.is(player.globals.get("experimentOpen"), true);
       }
 
-      await player1.awaitPlayer();
-
       player1.player!.set("introDone", true);
 
       await player1.awaitGame();
 
-      await sleep(100); // experiment closing
+      await sleep(200); // experiment closing
 
       for (const player of players) {
         t.is(player.globals.get("experimentOpen"), false);
@@ -508,6 +518,7 @@ t("when all games started, experiment closes", async (t) => {
 
 t("when game terminated, players are kicked", async (t) => {
   await withContext(
+    t,
     2,
     async ({ admin, players }) => {
       const batch = await admin.createBatch(completeBatchConfig(2));
@@ -544,6 +555,7 @@ t("when game terminated, players are kicked", async (t) => {
 
 t("when last game terminated, batch ends", async (t) => {
   await withContext(
+    t,
     2,
     async ({ admin, players }) => {
       const batch = await admin.createBatch(completeBatchConfig(2));
@@ -580,6 +592,7 @@ t("when last game terminated, batch ends", async (t) => {
 
 t("on game start, players get game, round, stange and playerX", async (t) => {
   await withContext(
+    t,
     2,
     async ({ admin, players }) => {
       const batch = await admin.createBatch(completeBatchConfig(2));
@@ -612,6 +625,7 @@ t("on game start, players get game, round, stange and playerX", async (t) => {
 
 t("on stage submit, if all players submit, stage ends", async (t) => {
   await withContext(
+    t,
     2,
     async ({ admin, players }) => {
       const batch = await admin.createBatch(completeBatchConfig(2));
@@ -629,8 +643,11 @@ t("on stage submit, if all players submit, stage ends", async (t) => {
       for (const player of players) {
         player.player!.stage!.set("submit", true);
       }
+
       await players.awaitStage(); // stage1 goes away
       await players.awaitStage(); // stage2 comes in
+      await sleep(100); // games get created
+
       const stage2 = players.stage![0]!;
 
       t.truthy(stage1);

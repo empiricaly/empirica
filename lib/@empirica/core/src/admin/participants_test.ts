@@ -8,7 +8,6 @@ import { Connection, participantsSub } from "./participants";
 function setupParticipant() {
   const eventSubs = {
     [EventType.ParticipantConnected]: new Subject<any>(),
-    [EventType.ParticipantConnect]: new Subject<any>(),
     [EventType.ParticipantDisconnect]: new Subject<any>(),
   };
   const taj = <TajribaAdmin>(<unknown>{
@@ -17,7 +16,6 @@ function setupParticipant() {
     }: {
       eventTypes: (
         | EventType.ParticipantConnected
-        | EventType.ParticipantConnect
         | EventType.ParticipantDisconnect
       )[];
     }) => {
@@ -43,6 +41,7 @@ test.serial("participantsSub tracks connected participants", async (t) => {
       identifier: "abc",
       id: "123",
     },
+    done: true,
   });
 
   t.is(participants.size, 1);
@@ -53,6 +52,7 @@ test.serial("participantsSub tracks connected participants", async (t) => {
       identifier: "abc",
       id: "123",
     },
+    done: true,
   });
 
   t.is(participants.size, 1);
@@ -69,6 +69,7 @@ test.serial("participantsSub tracks disconnected participants", async (t) => {
       identifier: "abc",
       id: "123",
     },
+    done: true,
   });
 
   t.is(participants.size, 1);
@@ -102,6 +103,7 @@ test.serial("participantsSub emits connections", async (t) => {
       identifier: "abc",
       id: "123",
     },
+    done: true,
   });
 
   t.deepEqual(vals, [
@@ -184,6 +186,7 @@ test.serial("participantsSub ignores invalid input", async (t) => {
         identifier: "abc",
         id: "123",
       },
+      done: true,
     });
   });
 
@@ -197,6 +200,7 @@ test.serial("participantsSub ignores invalid input", async (t) => {
       identifier: "abc",
       id: "123",
     },
+    done: true,
   });
 
   t.is(participants.size, 1);

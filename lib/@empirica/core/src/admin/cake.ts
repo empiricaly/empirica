@@ -1,7 +1,8 @@
 import { Observable } from "rxjs";
 import { Attribute } from "../shared/attributes";
 import { ScopeConstructor } from "../shared/scopes";
-import { debug, error } from "../utils/console";
+import { debug, error, warn } from "../utils/console";
+import { AttributeMsg } from "./attributes";
 import {
   AttributeEventListener,
   EventContext,
@@ -13,8 +14,9 @@ import {
   TajribaEvent,
 } from "./events";
 import { subscribeAsync } from "./observables";
-import { Connection } from "./participants";
-import { Scope } from "./scopes";
+import { Connection, ConnectionMsg } from "./participants";
+import { promiseHandle, PromiseHandle } from "./promises";
+import { Scope, ScopeMsg } from "./scopes";
 import { Transition } from "./transitions";
 
 // Cake triggers callbacks, respecting listener placement
@@ -31,12 +33,12 @@ export class Cake<
     private scope: (id: string) => Scope<Context, Kinds> | undefined,
     private kindSubscription: (
       kind: keyof Kinds
-    ) => Observable<Scope<Context, Kinds>>,
+    ) => Observable<ScopeMsg<Context, Kinds>>,
     private attributeSubscription: (
       kind: keyof Kinds,
       key: string
-    ) => Observable<Attribute>,
-    private connections: Observable<Connection>,
+    ) => Observable<AttributeMsg>,
+    private connections: Observable<ConnectionMsg>,
     private transitions: Observable<Transition>
   ) {}
 
@@ -44,32 +46,80 @@ export class Cake<
     this.stopped = true;
   }
 
-  add(listeners: ListenersCollector<Context, Kinds>) {
-    for (const listener of listeners.kindListeners) {
-      if (!this.kindListeners.has(listener.kind)) {
-        this.startKind(listener.kind);
+  async add(listeners: ListenersCollector<Context, Kinds>) {
+    for (const start of listeners.starts) {
+      debug("start callback");
+      await start.callback(this.evtctx);
+      if (this.postCallback) {
+        await this.postCallback();
       }
-
-      const callbacks = this.kindListeners.get(listener.kind) || [];
-      callbacks.push(listener);
-
-      callbacks.sort(comparePlacement);
-
-      this.kindListeners.set(listener.kind, callbacks);
     }
 
-    for (const listener of listeners.attributeListeners) {
-      const key = listener.kind + "-" + listener.key;
-      if (!this.attributeListeners.has(key)) {
-        this.startAttribute(listener.kind, listener.key);
+    if (listeners.kindListeners.length > 0) {
+      const kindListeners = new Map<
+        keyof Kinds,
+        KindEventListener<EvtCtxCallback<Context, Kinds>>[]
+      >();
+
+      for (const listener of listeners.kindListeners) {
+        const callbacks = kindListeners.get(listener.kind) || [];
+        callbacks.push(listener);
+        callbacks.sort(comparePlacement);
+        kindListeners.set(listener.kind, callbacks);
       }
 
-      const callbacks = this.attributeListeners.get(key) || [];
-      callbacks.push(listener);
+      for (const [kind, listeners] of kindListeners) {
+        let kl = this.kindListeners.get(kind) || [];
+        if (this.kindListeners.has(kind)) {
+          const until = this.kindLast.get(kind);
+          if (until) {
+            await this.startKind(kind, () => listeners, until);
+          }
+          kl.push(...listeners);
+          kl.sort(comparePlacement);
+          this.kindListeners.set(kind, kl);
+        } else {
+          this.kindListeners.set(kind, listeners);
+          await this.startKind(kind, () => this.kindListeners.get(kind) || []);
+        }
+      }
+    }
 
-      callbacks.sort(comparePlacement);
+    if (listeners.attributeListeners.length > 0) {
+      const attributeListeners = new Map<
+        string,
+        AttributeEventListener<EvtCtxCallback<Context, Kinds>>[]
+      >();
 
-      this.attributeListeners.set(key, callbacks);
+      for (const listener of listeners.attributeListeners) {
+        const key = listener.kind + "-" + listener.key;
+        const callbacks = attributeListeners.get(key) || [];
+        callbacks.push(listener);
+        callbacks.sort(comparePlacement);
+        attributeListeners.set(key, callbacks);
+      }
+
+      for (const [kkey, listeners] of attributeListeners) {
+        const kind = listeners[0]!.kind;
+        const key = listeners[0]!.key;
+        let kl = this.attributeListeners.get(kkey) || [];
+        if (this.attributeListeners.has(kkey)) {
+          const until = this.attributeLast.get(kkey);
+          if (until) {
+            await this.startAttribute(kind, key, () => listeners, until);
+          }
+          kl.push(...listeners);
+          kl.sort(comparePlacement);
+          this.attributeListeners.set(kkey, kl);
+        } else {
+          this.attributeListeners.set(kkey, listeners);
+          await this.startAttribute(
+            kind,
+            key,
+            () => this.attributeListeners.get(kkey) || []
+          );
+        }
+      }
     }
 
     for (const listener of listeners.tajEvents) {
@@ -87,6 +137,20 @@ export class Cake<
         case TajribaEvent.ParticipantConnect: {
           if (this.connectedEvents.length == 0) {
             this.startConnected();
+          }
+
+          for (const [_, conn] of this.connectionsMap) {
+            try {
+              await listener.callback(this.evtctx, {
+                participant: conn.participant,
+              });
+            } catch (err) {
+              error(err);
+            }
+
+            if (this.postCallback) {
+              await this.postCallback();
+            }
           }
 
           this.connectedEvents.push(listener);
@@ -111,87 +175,165 @@ export class Cake<
         }
       }
     }
+
+    for (const start of listeners.readys) {
+      debug("ready callback");
+      await start.callback(this.evtctx);
+    }
   }
 
   kindListeners = new Map<
     keyof Kinds,
     KindEventListener<EvtCtxCallback<Context, Kinds>>[]
   >();
-  startKind(kind: keyof Kinds) {
-    subscribeAsync(this.kindSubscription(kind), async (scope) => {
-      if (this.stopped) {
-        return;
-      }
-      // ignore the || [] since it's difficult to simulate
-      /* c8 ignore next */
-      const callbacks = this.kindListeners.get(kind) || [];
+  kindLast = new Map<keyof Kinds, Scope<Context, Kinds>>();
+  async startKind(
+    kind: keyof Kinds,
+    callbacks: () => KindEventListener<EvtCtxCallback<Context, Kinds>>[],
+    until?: Scope<Context, Kinds>
+  ) {
+    if (until) {
+      console.log("HAS UNTIL ATTR");
+    }
 
-      for (const callback of callbacks) {
-        debug("scope callback", kind);
+    let handle: PromiseHandle | undefined = promiseHandle();
+    const unsub = subscribeAsync(
+      this.kindSubscription(kind),
+      async ({ scope, done }) => {
+        if (this.stopped) {
+          if (handle) {
+            handle.result();
+          }
 
-        try {
-          await callback.callback(this.evtctx, { [kind]: scope });
-        } catch (err) {
-          error(err);
+          return;
         }
-        if (this.postCallback) {
-          await this.postCallback();
+
+        if (scope) {
+          for (const callback of callbacks()) {
+            debug("scope callback", kind);
+
+            try {
+              await callback.callback(this.evtctx, { [kind]: scope });
+            } catch (err) {
+              error(err);
+            }
+            if (this.postCallback) {
+              await this.postCallback();
+            }
+          }
+
+          if (until) {
+            if (scope === until) {
+              if (handle) {
+                handle.result();
+                handle = undefined;
+              } else {
+                warn(`until kind without handle`);
+              }
+            }
+          } else {
+            this.kindLast.set(kind, scope);
+          }
+        }
+
+        if (!until && done && handle) {
+          handle.result();
+          handle = undefined;
         }
       }
-    });
+    );
+
+    if (handle) {
+      await handle.promise;
+    }
+
+    if (until) {
+      unsub.unsubscribe();
+    }
   }
 
   attributeListeners = new Map<
     string,
     AttributeEventListener<EvtCtxCallback<Context, Kinds>>[]
   >();
-  startAttribute(kind: keyof Kinds, key: string) {
-    subscribeAsync(this.attributeSubscription(kind, key), async (attribute) => {
-      if (this.stopped) {
-        return;
-      }
+  attributeLast = new Map<string, Attribute>();
+  async startAttribute(
+    kind: keyof Kinds,
+    key: string,
+    callbacks: () => AttributeEventListener<EvtCtxCallback<Context, Kinds>>[],
+    until?: Attribute
+  ) {
+    if (until) {
+      console.log("HAS UNTIL ATTR");
+    }
 
-      const k = <string>kind + "-" + key;
+    let handle: PromiseHandle | undefined = promiseHandle();
+    const unsub = subscribeAsync(
+      this.attributeSubscription(kind, key),
+      async ({ attribute, done }) => {
+        if (this.stopped) {
+          if (handle) {
+            handle.result();
+          }
 
-      // ignore the || [] since it's difficult to simulate
-      /* c8 ignore next */
-      const callbacks = this.attributeListeners.get(k) || [];
-
-      const props: { [key: string]: any } = {
-        [key]: attribute.value,
-        attribute,
-      };
-
-      if (attribute.nodeID) {
-        const scope = this.scope(attribute.nodeID);
-        if (scope) {
-          props[<string>kind] = scope;
-        }
-      }
-
-      for (const callback of callbacks) {
-        // const p = callback.placement;
-        // const traceKey = `${PlacementString(p)} ${<string>kind} ${key} ${
-        //   attribute.value
-        // } ${attribute.id}`;
-
-        // trace(`${traceKey}: starting`);
-
-        try {
-          await callback.callback(this.evtctx, props);
-        } catch (err) {
-          error(err);
+          return;
         }
 
-        // trace(`${traceKey}: ended`);
+        if (attribute) {
+          const k = <string>kind + "-" + key;
 
-        if (this.postCallback) {
-          await this.postCallback();
+          const props: { [key: string]: any } = {
+            [key]: attribute.value,
+            attribute,
+          };
 
-          // trace(`${traceKey}: finished`);
+          if (attribute.nodeID) {
+            const scope = this.scope(attribute.nodeID);
+            if (scope) {
+              props[<string>kind] = scope;
+            }
+          }
+
+          for (const callback of callbacks()) {
+            try {
+              await callback.callback(this.evtctx, props);
+            } catch (err) {
+              error(err);
+            }
+
+            if (this.postCallback) {
+              await this.postCallback();
+            }
+          }
+
+          if (until) {
+            if (attribute === until) {
+              if (handle) {
+                handle.result();
+                handle = undefined;
+              } else {
+                warn(`until attribute without handle`);
+              }
+            }
+          } else {
+            this.attributeLast.set(k, attribute);
+          }
+        }
+
+        if (!until && done && handle) {
+          handle.result();
+          handle = undefined;
         }
       }
-    });
+    );
+
+    if (handle) {
+      await handle.promise;
+    }
+
+    if (until) {
+      unsub.unsubscribe();
+    }
   }
 
   transitionEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
@@ -223,44 +365,65 @@ export class Cake<
   }
 
   connectedEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
-  startConnected() {
-    subscribeAsync(this.connections, async (connection) => {
+  connectionsMap = new Map<string, Connection>();
+  async startConnected() {
+    let handle: PromiseHandle | undefined = promiseHandle();
+    subscribeAsync(this.connections, async ({ connection, done }) => {
       if (this.stopped) {
+        if (handle) {
+          handle.result();
+        }
+
         return;
       }
 
-      if (!connection.connected) {
-        return;
+      if (connection) {
+        if (!connection.connected) {
+          return;
+        }
+
+        this.connectionsMap.set(connection.participant.id, connection);
+
+        for (const callback of this.connectedEvents) {
+          debug(`connected callback`);
+
+          try {
+            await callback.callback(this.evtctx, {
+              participant: connection.participant,
+            });
+          } catch (err) {
+            error(err);
+          }
+
+          if (this.postCallback) {
+            await this.postCallback();
+          }
+        }
       }
 
-      for (const callback of this.connectedEvents) {
-        debug(`connected callback`);
-
-        try {
-          await callback.callback(this.evtctx, {
-            participant: connection.participant,
-          });
-        } catch (err) {
-          error(err);
-        }
-
-        if (this.postCallback) {
-          await this.postCallback();
-        }
+      if (done && handle) {
+        handle.result();
+        handle = undefined;
       }
     });
+
+    if (handle) {
+      await handle.promise;
+    }
   }
 
   disconnectedEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
   startDisconnected() {
-    subscribeAsync(this.connections, async (connection) => {
+    subscribeAsync(this.connections, async ({ connection }) => {
       if (this.stopped) {
         return;
       }
 
-      if (connection.connected) {
+      if (!connection || connection.connected) {
         return;
       }
+
+      this.connectionsMap.delete(connection.participant.id);
 
       for (const callback of this.disconnectedEvents) {
         debug(`disconnected callback`);

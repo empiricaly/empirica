@@ -35,7 +35,7 @@ export class ParticipantConnection {
           return;
         }
 
-        if (this._connected.getValue()) {
+        if (this._connected.getValue() || this._connecting.getValue()) {
           return;
         }
 
@@ -50,24 +50,29 @@ export class ParticipantConnection {
           this._tajribaPart.next(tajPart);
           if (tajPart.connected) {
             this._connected.next(true);
+            this._connecting.next(false);
           }
 
           tajPart.on("connected", () => {
             if (!this._connected.getValue()) {
               this._connected.next(true);
+              this._connecting.next(false);
             }
           });
           tajPart.on("disconnected", () => {
             if (this._connected.getValue()) {
               this._connected.next(false);
+              this._connecting.next(false);
             }
           });
           tajPart.on("error", (err) => {
+            this._connecting.next(false);
             error("conn error", err);
           });
           tajPart.on("accessDenied", () => {
             if (this._connected.getValue()) {
               this._connected.next(false);
+              this._connecting.next(false);
             }
             console.log(
               "accessDenied",
@@ -82,8 +87,6 @@ export class ParticipantConnection {
             this.resetSession();
           }
         }
-
-        this._connecting.next(false);
       }
     );
   }
