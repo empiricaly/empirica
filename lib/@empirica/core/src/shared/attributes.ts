@@ -253,7 +253,7 @@ export class Attribute {
     }
 
     this.setAttributes([attrProps]);
-    trace(`SET ${this.key} = ${value}`);
+    trace(`SET ${this.key} = ${value} (${this.scopeID})`);
   }
 
   // internal only

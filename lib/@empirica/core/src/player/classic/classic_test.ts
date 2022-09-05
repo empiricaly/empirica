@@ -1,11 +1,11 @@
 import test from "ava";
-import { Step } from "../steps";
 import {
   attrChange,
   partChange,
   scopeChange,
   stepChange,
 } from "../../shared/test_helpers";
+import { Step } from "../steps";
 import {
   Game,
   Player,
@@ -18,7 +18,10 @@ import {
   setupClassic,
   setupGame,
   setupPlayer,
+  setupPlayerGame,
   setupPlayerGameRoundStage,
+  setupPlayerRound,
+  setupPlayerStage,
   setupStage,
 } from "./test_helpers";
 
@@ -47,6 +50,7 @@ test("ClassicMode should return game", (t) => {
   const { ctx, changes } = setupClassic();
   setupPlayer(changes);
   setupGame(changes);
+  setupPlayerGame(changes);
 
   t.truthy(ctx.player.getValue());
   t.truthy(ctx.game.getValue());
@@ -58,7 +62,10 @@ test("ClassicMode should return stage and round", (t) => {
   const { ctx, changes } = setupClassic();
   setupPlayer(changes);
   setupGame(changes);
+  setupPlayerGame(changes);
   setupStage(changes);
+  setupPlayerRound(changes);
+  setupPlayerStage(changes);
 
   t.truthy(ctx.player.getValue());
   t.truthy(ctx.game.getValue());
@@ -128,12 +135,14 @@ test("ClassicMode should update game", (t) => {
 
   setupPlayer(changes);
   setupGame(changes);
+  setupPlayerGame(changes);
 
   t.is(vals.length, 2);
   t.true(vals[1] instanceof Game);
   t.is(vals[1]!.id, "game1");
 
   changes.next(scopeChange({ id: "game2", kind: "game" }));
+  setupPlayerGame(changes, "player1", "game2");
 
   t.is(vals.length, 2);
   t.true(vals[1] instanceof Game);
@@ -166,17 +175,21 @@ test("ClassicMode should update stage", (t) => {
 
   setupPlayer(changes);
   setupGame(changes);
+  setupPlayerGame(changes);
   setupStage(changes);
+  setupPlayerRound(changes);
+  setupPlayerStage(changes);
 
-  t.is(vals.length, 3);
+  t.is(vals.length, 2);
   t.true(vals[1] instanceof Stage);
   t.is(vals[1]!.id, "stage1");
 
   changes.next(scopeChange({ id: "stage2", kind: "stage" }));
+  setupPlayerStage(changes, "player1", "stage2");
 
-  t.is(vals.length, 3);
-  t.true(vals[2] instanceof Stage);
-  t.is(vals[2]!.id, "stage1");
+  t.is(vals.length, 2);
+  t.true(vals[1] instanceof Stage);
+  t.is(vals[1]!.id, "stage1");
 
   changes.next(
     attrChange({
@@ -186,9 +199,9 @@ test("ClassicMode should update stage", (t) => {
     })
   );
 
-  t.is(vals.length, 4);
-  t.true(vals[3] instanceof Stage);
-  t.is(vals[3]!.id, "stage2");
+  t.is(vals.length, 3);
+  t.true(vals[2] instanceof Stage);
+  t.is(vals[2]!.id, "stage2");
   t.true(ctx.round.getValue() === undefined);
 
   changes.next(scopeChange({ id: "round2", kind: "round" }));
@@ -207,7 +220,10 @@ test("ClassicMode game should have stage and round", (t) => {
   const { ctx, changes } = setupClassic();
   setupPlayer(changes);
   setupGame(changes);
+  setupPlayerGame(changes);
   setupStage(changes);
+  setupPlayerRound(changes);
+  setupPlayerStage(changes);
 
   const game = ctx.game.getValue()!;
   t.is(game.stage, ctx.stage.getValue());
@@ -218,6 +234,7 @@ test("ClassicMode game should not have stage and round", (t) => {
   const { ctx, changes } = setupClassic();
   setupPlayer(changes);
   setupGame(changes);
+  setupPlayerGame(changes);
 
   const game = ctx.game.getValue()!;
   t.true(!game.stage);
@@ -230,7 +247,10 @@ test("ClassicMode stage can have timer", (t) => {
   const { ctx, changes } = setupClassic();
   setupPlayer(changes);
   setupGame(changes);
+  setupPlayerGame(changes);
   setupStage(changes);
+  setupPlayerRound(changes);
+  setupPlayerStage(changes);
 
   changes.next(
     stepChange({
@@ -261,6 +281,7 @@ test("ClassicMode game should update on attribute change", (t) => {
   const { ctx, changes } = setupClassic();
   setupPlayer(changes);
   setupGame(changes);
+  setupPlayerGame(changes);
 
   const vals: (Game | undefined)[] = [];
   ctx.game.subscribe({

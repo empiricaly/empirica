@@ -15,6 +15,7 @@ import { ListenersCollector, Subscriber } from "./events";
 import { Runloop } from "./runloop";
 import { Scope } from "./scopes";
 
+export class AdminGlobals extends Scope<Context, AdminKinds> {}
 export class AdminBatch extends Scope<Context, AdminKinds> {}
 export class AdminGame extends Scope<Context, AdminKinds> {
   addBatch(props: AddScopeInput[]) {
@@ -22,11 +23,13 @@ export class AdminGame extends Scope<Context, AdminKinds> {
   }
 }
 export type AdminKinds = {
+  globals: Constructor<AdminGlobals>;
   batch: Constructor<AdminBatch>;
   game: Constructor<AdminGame>;
 };
 
 export const adminKinds = {
+  globals: AdminGlobals,
   batch: AdminBatch,
   game: AdminGame,
 };
@@ -167,6 +170,7 @@ test.serial("Runloop triggers kinds", async (t) => {
   });
 
   await nextTick();
+  await nextTick();
 
   t.is(called.subscriber, 1);
   t.is(called.startCalled, 1);
@@ -276,19 +280,15 @@ test.serial("Runloop adds new layer", async (t) => {
     });
   });
 
-  await nextTick();
+  await nextTick(100);
 
   t.is(called.subscriber, 2);
   t.is(called.startCalled, 2);
 });
 
 test.serial("Runloop stops", async (t) => {
-  const {
-    adminSubs,
-    adminStop,
-    scopedAttributesSub,
-    called,
-  } = await setupRunloop();
+  const { adminSubs, adminStop, scopedAttributesSub, called } =
+    await setupRunloop();
 
   t.is(called.subscriber, 1);
   t.is(called.startCalled, 1);
@@ -323,7 +323,7 @@ test.serial("Runloop creates scopes", async (t) => {
     done: true,
   });
 
-  await nextTick();
+  await nextTick(10);
 
   t.deepEqual(called.tajCalled.addScopes, [
     [
@@ -344,7 +344,7 @@ test.serial("Runloop creates attributes", async (t) => {
     done: true,
   });
 
-  await nextTick();
+  await nextTick(10);
 
   t.deepEqual(called.tajCalled.setAttributes, [
     [
@@ -367,7 +367,7 @@ test.serial("Runloop creates groups", async (t) => {
     done: true,
   });
 
-  await nextTick();
+  await nextTick(10);
 
   t.deepEqual(called.tajCalled.addGroups, [
     [
@@ -388,7 +388,7 @@ test.serial("Runloop creates links", async (t) => {
     done: true,
   });
 
-  await nextTick();
+  await nextTick(10);
 
   t.deepEqual(called.tajCalled.addLink, [
     { link: true, nodeIDs: ["abc"], participantIDs: ["123"] },
@@ -405,7 +405,7 @@ test.serial("Runloop creates steps", async (t) => {
     done: true,
   });
 
-  await nextTick();
+  await nextTick(10);
 
   t.deepEqual(called.tajCalled.addSteps, [[{ duration: 123 }]]);
 });
@@ -420,7 +420,7 @@ test.serial("Runloop creates transitions", async (t) => {
     done: true,
   });
 
-  await nextTick();
+  await nextTick(10);
 
   t.deepEqual(called.tajCalled.addTransitions, [
     {
@@ -436,29 +436,21 @@ test.serial("Runloop failed resource creation", async (t) => {
     failAddScope: true,
   });
 
-  await nextTick();
-
-  scopedAttributesSub.next({
-    done: true,
-  });
-
-  await nextTick();
   const logs = await captureLogsAsync(async function () {
     scopedAttributesSub.next({
-      attribute: attrib(),
       done: true,
     });
 
     await nextTick();
 
     scopedAttributesSub.next({
+      attribute: attrib(),
       done: true,
     });
-
     await nextTick();
   });
 
   t.deepEqual(called.tajCalled.addScopes, []);
 
-  textHasLog(t, logs, "warn", "failing scopes");
+  textHasLog(t, logs, "warn", "failing add scopes");
 });

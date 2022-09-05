@@ -1,11 +1,12 @@
 import fs from "fs/promises";
-import { BehaviorSubject, merge, Observable, Subscription } from "rxjs";
+import { BehaviorSubject, merge, Observable, SubscriptionLike } from "rxjs";
 import { TajribaConnection } from "../shared/tajriba_connection";
 import { error } from "../utils/console";
 import { bsu } from "../utils/object";
+import { subscribeAsync } from "./observables";
 
 export class TokenProvider {
-  private sub: Subscription | undefined;
+  private sub: SubscriptionLike | undefined;
   readonly tokens = bsu<string | null>(undefined);
 
   constructor(
@@ -16,8 +17,9 @@ export class TokenProvider {
   ) {
     let connected = false;
     let token: string | null | undefined;
-    this.sub = merge(taj.connected, storage.tokens).subscribe({
-      next: async (tokenOrConnected) => {
+    this.sub = subscribeAsync(
+      merge(taj.connected, storage.tokens),
+      async (tokenOrConnected) => {
         if (typeof tokenOrConnected === "boolean") {
           connected = tokenOrConnected;
         } else {
@@ -45,14 +47,13 @@ export class TokenProvider {
 
           if (t) {
             storage.updateToken(t);
-            this.tokens.next(t);
           }
         } catch (err) {
           error(`token: register service ${(err as Error).message}`);
           return;
         }
-      },
-    });
+      }
+    );
   }
 
   get token() {
@@ -66,27 +67,22 @@ export class TokenProvider {
   }
 }
 
-// async function example() {
-//   const tokenFile = "/dsd/dsa";
-//   const serviceName = "callbacks";
-//   const serviceRegistrationToken = "d6w54q3d51qw3";
-
-//   let taj = <TajribaConnection>{};
-//   const reset = new Subject<void>();
-//   const strg = await FileTokenStorage.init(tokenFile, reset);
-//   const tp = new TokenProvider(
-//     taj,
-//     strg,
-//     serviceName,
-//     serviceRegistrationToken
-//   );
-//   tp.tokens;
-// }
-
-interface SavedTokenStorage {
+export interface SavedTokenStorage {
   tokens: BehaviorSubject<string | null | undefined>;
   updateToken: (token: string) => Promise<void>;
   clearToken: () => Promise<void>;
+}
+
+export class MemTokenStorage {
+  tokens = new BehaviorSubject<string | null | undefined>(null);
+
+  async updateToken(token: string) {
+    this.tokens.next(token);
+  }
+
+  async clearToken() {
+    this.tokens.next(undefined);
+  }
 }
 
 export class FileTokenStorage {

@@ -9,5 +9,4 @@ internal/vendored/transport
 yarn-error.log
 node_modules
 go.work
-no.work
 go.work.sum

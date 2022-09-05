@@ -129,8 +129,8 @@
     }
   },
   "volta": {
-    "node": "16.15.1",
-    "npm": "8.11.0"
+    "node": "16.17.0",
+    "npm": "8.15.0"
   },
   "engines": {
     "node": ">= 16.15.0"
@@ -188,7 +188,7 @@
     "typescript": "4.7.4"
   },
   "dependencies": {
-    "@empirica/tajriba": "^1.0.0-rc.1",
+    "@empirica/tajriba": "^1.0.0-rc.3",
     "@swc/helpers": "0.4.2",
     "rxjs": "7.5.5",
     "zod": "3.17.3"

@@ -1,6 +1,7 @@
 import { EventType, TajribaAdmin } from "@empirica/tajriba";
 import { Subject } from "rxjs";
 import { error } from "../utils/console";
+import { PromiseHandle, promiseHandle } from "./promises";
 
 export interface Participant {
   id: string;
@@ -12,18 +13,40 @@ export interface Connection {
   connected: boolean;
 }
 
-export function participantsSub(
+export interface ConnectionMsg {
+  connection?: Connection;
+  done: boolean;
+}
+
+export async function participantsSub(
   taj: TajribaAdmin,
-  connections: Subject<Connection>,
+  connections: Subject<ConnectionMsg>,
   participants: Map<string, Participant>
 ) {
+  let handle: PromiseHandle | undefined = promiseHandle();
   taj.onEvent({ eventTypes: [EventType.ParticipantConnected] }).subscribe({
-    next({ node }) {
-      if (node.__typename !== "Participant") {
-        error(`received non-participant`);
+    next({ node, done }) {
+      if (!node) {
+        if (done) {
+          if (handle) {
+            handle?.result();
+
+            connections.next({ done: true });
+          }
+
+          return;
+        }
+        error(`received no participant on connected`);
 
         return;
       }
+
+      if (node.__typename !== "Participant") {
+        error(`received non-participant on connected`);
+
+        return;
+      }
+
       const part = {
         id: node.id,
         identifier: node.identifier,
@@ -32,49 +55,48 @@ export function participantsSub(
       participants.set(node.id, part);
 
       connections.next({
-        participant: part,
-        connected: true,
+        connection: {
+          participant: part,
+          connected: true,
+        },
+        done,
       });
-    },
-  });
 
-  taj.onEvent({ eventTypes: [EventType.ParticipantConnect] }).subscribe({
-    next({ node }) {
-      if (node.__typename !== "Participant") {
-        error(`received non-participant`);
-
-        return;
+      if (handle && done) {
+        handle.result();
       }
-      const part = {
-        id: node.id,
-        identifier: node.identifier,
-      };
-
-      participants.set(node.id, part);
-
-      connections.next({
-        participant: part,
-        connected: true,
-      });
     },
   });
 
   taj.onEvent({ eventTypes: [EventType.ParticipantDisconnect] }).subscribe({
     next({ node }) {
-      if (node.__typename !== "Participant") {
-        error(`received non-participant`);
+      if (!node) {
+        error(`received no participant on disconnect`);
 
         return;
       }
+
+      if (node.__typename !== "Participant") {
+        error(`received non-participant on disconnect`);
+
+        return;
+      }
+
       participants.delete(node.id);
 
       connections.next({
-        participant: {
-          id: node.id,
-          identifier: node.identifier,
+        connection: {
+          participant: {
+            id: node.id,
+            identifier: node.identifier,
+          },
+          connected: false,
         },
-        connected: false,
+        done: true,
       });
     },
   });
+
+  await handle.promise;
+  handle = undefined;
 }

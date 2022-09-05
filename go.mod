@@ -3,12 +3,12 @@ module github.com/empiricaly/empirica
 go 1.18
 
 require (
-	github.com/99designs/gqlgen v0.17.13
+	github.com/99designs/gqlgen v0.17.16
 	github.com/adrg/xdg v0.4.0
 	github.com/briandowns/spinner v1.18.1
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/cortesi/moddwatch v0.0.0-20210323234936-df014e95c743
-	github.com/empiricaly/tajriba v1.0.0-rc.2
+	github.com/empiricaly/tajriba v1.0.0-rc.4
 	github.com/jpillora/backoff v1.0.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/klauspost/compress v1.15.0
@@ -74,12 +74,12 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.4.0 // indirect
-	github.com/urfave/cli/v2 v2.11.1 // indirect
-	github.com/vektah/gqlparser/v2 v2.4.7 // indirect
+	github.com/urfave/cli/v2 v2.11.2 // indirect
+	github.com/vektah/gqlparser/v2 v2.5.0 // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/sys v0.0.0-20220731174439-a90be440212d // indirect
+	golang.org/x/sys v0.0.0-20220825204002-c680a09ffe64 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect

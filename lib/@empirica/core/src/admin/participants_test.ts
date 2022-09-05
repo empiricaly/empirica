@@ -3,7 +3,7 @@ import test from "ava";
 import { Subject } from "rxjs";
 import { textHasLog } from "../shared/test_helpers";
 import { captureLogs } from "../utils/console";
-import { Connection, participantsSub } from "./participants";
+import { ConnectionMsg, participantsSub } from "./participants";
 
 function setupParticipant() {
   const eventSubs = {
@@ -23,7 +23,7 @@ function setupParticipant() {
     },
   });
 
-  const connections = new Subject<Connection>();
+  const connections = new Subject<ConnectionMsg>();
   const participants = new Map<string, Participant>();
   participantsSub(taj, connections, participants);
 
@@ -41,6 +41,7 @@ test.serial("participantsSub tracks connected participants", async (t) => {
       identifier: "abc",
       id: "123",
     },
+    done: true,
   });
 
   t.is(participants.size, 1);
@@ -51,6 +52,7 @@ test.serial("participantsSub tracks connected participants", async (t) => {
       identifier: "abc",
       id: "123",
     },
+    done: true,
   });
 
   t.is(participants.size, 1);
@@ -67,6 +69,7 @@ test.serial("participantsSub tracks disconnected participants", async (t) => {
       identifier: "abc",
       id: "123",
     },
+    done: true,
   });
 
   t.is(participants.size, 1);
@@ -85,10 +88,10 @@ test.serial("participantsSub tracks disconnected participants", async (t) => {
 test.serial("participantsSub emits connections", async (t) => {
   const { eventSubs, connections } = setupParticipant();
 
-  const vals: Connection[] = [];
+  const vals: ConnectionMsg[] = [];
   connections.subscribe({
     next(connection) {
-      vals.push(connection);
+      vals.push(connection!);
     },
   });
 
@@ -100,15 +103,19 @@ test.serial("participantsSub emits connections", async (t) => {
       identifier: "abc",
       id: "123",
     },
+    done: true,
   });
 
   t.deepEqual(vals, [
     {
-      connected: true,
-      participant: {
-        identifier: "abc",
-        id: "123",
+      connection: {
+        connected: true,
+        participant: {
+          identifier: "abc",
+          id: "123",
+        },
       },
+      done: true,
     },
   ]);
 
@@ -122,18 +129,24 @@ test.serial("participantsSub emits connections", async (t) => {
 
   t.deepEqual(vals, [
     {
-      connected: true,
-      participant: {
-        identifier: "abc",
-        id: "123",
+      connection: {
+        connected: true,
+        participant: {
+          identifier: "abc",
+          id: "123",
+        },
       },
+      done: true,
     },
     {
-      connected: false,
-      participant: {
-        identifier: "abc",
-        id: "123",
+      connection: {
+        connected: false,
+        participant: {
+          identifier: "abc",
+          id: "123",
+        },
       },
+      done: true,
     },
   ]);
 
@@ -147,25 +160,34 @@ test.serial("participantsSub emits connections", async (t) => {
 
   t.deepEqual(vals, [
     {
-      connected: true,
-      participant: {
-        identifier: "abc",
-        id: "123",
+      connection: {
+        connected: true,
+        participant: {
+          identifier: "abc",
+          id: "123",
+        },
       },
+      done: true,
     },
     {
-      connected: false,
-      participant: {
-        identifier: "abc",
-        id: "123",
+      connection: {
+        connected: false,
+        participant: {
+          identifier: "abc",
+          id: "123",
+        },
       },
+      done: true,
     },
     {
-      connected: false,
-      participant: {
-        identifier: "abc",
-        id: "123",
+      connection: {
+        connected: false,
+        participant: {
+          identifier: "abc",
+          id: "123",
+        },
       },
+      done: true,
     },
   ]);
 });
@@ -182,6 +204,7 @@ test.serial("participantsSub ignores invalid input", async (t) => {
         identifier: "abc",
         id: "123",
       },
+      done: true,
     });
   });
 
@@ -195,6 +218,7 @@ test.serial("participantsSub ignores invalid input", async (t) => {
       identifier: "abc",
       id: "123",
     },
+    done: true,
   });
 
   t.is(participants.size, 1);

@@ -191,7 +191,7 @@ export class Game extends BatchOwned {
       }
 
       const durAttr = attributes.find((a) => a.key === "duration");
-      const res = z.number().int().gte(5).safeParse(durAttr?.value);
+      const res = z.number().int().gte(1).safeParse(durAttr?.value);
       if (!res.success) {
         throw new Error(`stage duration invalid: ${res.error}`);
       }

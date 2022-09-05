@@ -82,14 +82,18 @@ export function setupPlayerGameRoundStage(
   roundID = "round1",
   stageID = "stage1"
 ) {
+  setupPlayerGame(changes, playerID, gameID);
+  setupPlayerRound(changes, playerID, roundID);
+  setupPlayerStage(changes, playerID, stageID);
+}
+
+export function setupPlayerGame(
+  changes: Subject<ChangePayload>,
+  playerID = "player1",
+  gameID = "game1"
+) {
   changes.next(
     scopeChange({ id: playerID + "-" + gameID, kind: "playerGame" })
-  );
-  changes.next(
-    scopeChange({ id: playerID + "-" + roundID, kind: "playerRound" })
-  );
-  changes.next(
-    scopeChange({ id: playerID + "-" + stageID, kind: "playerStage" })
   );
   changes.next(
     attrChange({
@@ -98,12 +102,32 @@ export function setupPlayerGameRoundStage(
       nodeID: playerID,
     })
   );
+}
+
+export function setupPlayerRound(
+  changes: Subject<ChangePayload>,
+  playerID = "player1",
+  roundID = "round1"
+) {
+  changes.next(
+    scopeChange({ id: playerID + "-" + roundID, kind: "playerRound" })
+  );
   changes.next(
     attrChange({
       key: `playerRoundID-${roundID}`,
       val: `"${playerID + "-" + roundID}"`,
       nodeID: playerID,
     })
+  );
+}
+
+export function setupPlayerStage(
+  changes: Subject<ChangePayload>,
+  playerID = "player1",
+  stageID = "stage1"
+) {
+  changes.next(
+    scopeChange({ id: playerID + "-" + stageID, kind: "playerStage" })
   );
   changes.next(
     attrChange({

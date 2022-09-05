@@ -1,5 +1,5 @@
 import { State } from "@empirica/tajriba";
-import { z } from "zod";
+import { Attribute } from "../../shared/attributes";
 import { debug, error, trace, warn } from "../../utils/console";
 import { deepEqual } from "../../utils/object";
 import { pickRandom, selectRandom } from "../../utils/random";
@@ -17,42 +17,14 @@ import {
   Round,
   Stage,
 } from "./models";
-
-const treatmentSchema = z.record(z.string().min(1), z.any());
-
-const batchConfigSchema = z.discriminatedUnion("kind", [
-  z.object({
-    kind: z.literal("simple"),
-    config: z.object({
-      count: z.number().int().positive(),
-      treatments: z
-        .object({
-          factors: treatmentSchema,
-        })
-        .array(),
-    }),
-  }),
-  z.object({
-    kind: z.literal("complete"),
-    config: z.object({
-      treatments: z
-        .object({
-          count: z.number().int().positive(),
-          treatment: z.object({
-            factors: treatmentSchema,
-          }),
-        })
-        .array(),
-    }),
-  }),
-]);
-
-// const isBatch = z.instanceof(Batch).parse;
-const isGame = z.instanceof(Game).parse;
-const isRound = z.instanceof(Round).parse;
-const isStage = z.instanceof(Stage).parse;
-
-const isString = z.string().parse;
+import {
+  batchConfigSchema,
+  isGame,
+  isRound,
+  isStage,
+  isString,
+  treatmentSchema,
+} from "./schemas";
 
 export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
   const online = new Map<string, Participant>();
@@ -110,7 +82,9 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
       return;
     }
 
-    player.set("ended", "no more games");
+    if (player.get("gameID") !== undefined) {
+      player.set("ended", "no more games");
+    }
   }
 
   function checkShouldOpenExperiment(ctx: EventContext<Context, ClassicKinds>) {
@@ -149,7 +123,19 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     for (const player of game.players) {
       nodeIDs.push(player.id);
       participantIDs.push(player.participantID!);
-      nodeIDs.push(isString(player.get(`playerGameID-${game.id}`)));
+      const playerGameID = player.get(`playerGameID-${game.id}`) as
+        | string
+        | undefined;
+
+      // NOTE: this is not right. This means we're aborting because we're not
+      // ready, but the trigger playerGameID-GAMEID is not a trigger to
+      // attempt starting the game again, so sometimes we might not start the
+      // game. I think. So far, it does not happen in the tests, but it seems
+      // like it could. TBD.
+      if (!playerGameID) {
+        return;
+      }
+      nodeIDs.push(playerGameID);
     }
 
     ctx.addLinks([{ link: true, participantIDs, nodeIDs }]);
@@ -162,13 +148,15 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     round.set("start", true);
   }
 
-  _.on(TajribaEvent.ParticipantConnect, (ctx, { participant }) => {
+  _.on(TajribaEvent.ParticipantConnect, async (ctx, { participant }) => {
+    // console.log("ON PARTICIPANT", participant.id);
     online.set(participant.id, participant);
 
     const player = playersForParticipant.get(participant.id);
 
     if (!player) {
-      ctx.addScopes([
+      // console.log("CREATE PLAYER", participant.id);
+      await ctx.addScopes([
         {
           attributes: attrs([
             {
@@ -181,15 +169,17 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
         },
       ]);
     } else {
+      // console.log("ALREADY", participant.id, player.id);
       assignplayer(player);
     }
   });
 
-  _.on(TajribaEvent.ParticipantConnect, (_, { participant }) => {
+  _.on(TajribaEvent.ParticipantDisconnect, (_, { participant }) => {
     online.delete(participant.id);
   });
 
   _.on("player", (ctx, { player }: { player: Player }) => {
+    // console.log("ON PLAYER", player.id);
     const participantID = isString(player.get("participantID"));
 
     player.participantID = participantID;
@@ -209,7 +199,14 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
   });
 
   _.on("batch", (_, { batch }: { batch: Batch }) => {
+    // console.log("new batch");
     batches.push(batch);
+
+    if (batch.get("initialized")) {
+      return;
+    }
+
+    batch.set("initialized", true);
 
     const config = batchConfigSchema.parse(batch.get("config"));
 
@@ -386,8 +383,9 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     }
 
     const players = selectRandom(readyPlayers, playerCount);
+    const playersIDS = players.map((p) => p.id);
     for (const plyr of game.players) {
-      if (!players.some((p) => p.id === plyr.id)) {
+      if (!playersIDS.includes(plyr.id)) {
         plyr.set("gameID", null);
         assignplayer(plyr, [game.id]);
       }
@@ -409,7 +407,6 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
       if (!start) {
         return;
       }
-      trace("game start: HERE");
 
       const batchID = isString(game.get("batchID"));
 
@@ -521,7 +518,7 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     }
   );
 
-  type AfterRoundStart = { round: Round; start: boolean };
+  type AfterRoundStart = { round: Round; start: boolean; attribute: Attribute };
   _.unique.after("round", "start", (ctx, { round, start }: AfterRoundStart) => {
     if (!start) return;
 
@@ -602,7 +599,7 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     }
   );
 
-  type AfterStageStart = { stage: Stage; start: boolean };
+  type AfterStageStart = { stage: Stage; start: boolean; attribute: Attribute };
   _.unique.after("stage", "start", (ctx, { stage, start }: AfterStageStart) => {
     if (!start) return;
 

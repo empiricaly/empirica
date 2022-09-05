@@ -24,6 +24,10 @@ export function transitionsSub(
 ) {
   taj.onEvent({ eventTypes: [EventType.TransitionAdd], nodeID }).subscribe({
     next({ node }) {
+      if (!node) {
+        return;
+      }
+
       if (node.__typename !== "Transition") {
         error(`received non-transition`);
 
