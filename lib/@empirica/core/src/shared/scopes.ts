@@ -1,5 +1,5 @@
 import { BehaviorSubject, Observable } from "rxjs";
-import { AttributeOptions, Attributes } from "../shared/attributes";
+import { Attribute, AttributeOptions, Attributes } from "../shared/attributes";
 import { Constructor } from "../shared/helpers";
 import { warn } from "../utils/console";
 import { JsonValue } from "../utils/json";
@@ -200,6 +200,10 @@ export class Scope<
 
   get(key: string): JsonValue | undefined {
     return this.attributes.attribute(this.scope.id, key).value;
+  }
+
+  getAttribute(key: string): Attribute | undefined {
+    return this.attributes.attribute(this.scope.id, key);
   }
 
   obs(key: string): Observable<JsonValue | undefined> {

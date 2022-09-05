@@ -19,31 +19,110 @@
   ];
 
   const batches = writable([]);
+  const games = writable([]);
+  const players = writable([]);
 
+  const compareBatches = (a, b) => {
+    if (a.get("status") === "running") {
+      if (b.get("status") === "running") {
+        return (
+          new Date(b.attrs["status"].createdAt) -
+          new Date(a.attrs["status"].createdAt)
+        );
+      } else {
+        return -1;
+      }
+    } else {
+      return 1;
+    }
+  };
   const batchesMap = new Map();
+  const gamesMap = new Map();
+  const playersMap = new Map();
   onMount(async function () {
-    const obs = $currentAdmin.scopedAttributes([{ kinds: ["batch"] }]);
+    const obs = $currentAdmin.scopedAttributes([
+      { kinds: ["batch", "game", "player"] },
+    ]);
     obs.subscribe({
       next({ attribute }) {
         if (!attribute) {
           return;
         }
 
-        console.log(attribute);
-        let batch = batchesMap.get(attribute.node.id);
-        if (!batch) {
-          batch = { id: attribute.node.id, attributes: {} };
-          batchesMap.set(attribute.node.id, batch);
-          batches.set(Array.from(batchesMap.values()));
-        }
+        switch (attribute.node.kind) {
+          case "batch":
+            let batch = batchesMap.get(attribute.node.id);
+            if (!batch) {
+              batch = {
+                id: attribute.node.id,
+                attrs: {},
+                attributes: {},
+                get(key) {
+                  return this.attributes[key];
+                },
+              };
+              batchesMap.set(attribute.node.id, batch);
+              batches.set(Array.from(batchesMap.values()).sort(compareBatches));
+            }
 
-        let val;
-        if (attribute.val) {
-          val = JSON.parse(attribute.val);
-        }
+            let val;
+            if (attribute.val) {
+              val = JSON.parse(attribute.val);
+            }
 
-        batch.attributes[attribute.key] = val;
-        batches.set(Array.from(batchesMap.values()));
+            batch.attributes[attribute.key] = val;
+            batch.attrs[attribute.key] = attribute;
+            batches.set(Array.from(batchesMap.values()).sort(compareBatches));
+            break;
+          case "game":
+            let game = gamesMap.get(attribute.node.id);
+            if (!game) {
+              game = {
+                id: attribute.node.id,
+                attrs: {},
+                attributes: {},
+                get(key) {
+                  return this.attributes[key];
+                },
+              };
+              gamesMap.set(attribute.node.id, game);
+              games.set(Array.from(gamesMap.values()));
+            }
+
+            let valg;
+            if (attribute.val) {
+              valg = JSON.parse(attribute.val);
+            }
+
+            game.attributes[attribute.key] = valg;
+            game.attrs[attribute.key] = attribute;
+            games.set(Array.from(gamesMap.values()));
+            break;
+          case "player":
+            let player = playersMap.get(attribute.node.id);
+            if (!player) {
+              player = {
+                id: attribute.node.id,
+                attrs: {},
+                attributes: {},
+                get(key) {
+                  return this.attributes[key];
+                },
+              };
+              playersMap.set(attribute.node.id, player);
+              players.set(Array.from(playersMap.values()));
+            }
+
+            let valp;
+            if (attribute.val) {
+              valp = JSON.parse(attribute.val);
+            }
+
+            player.attributes[attribute.key] = valp;
+            player.attrs[attribute.key] = attribute;
+            players.set(Array.from(playersMap.values()));
+            break;
+        }
       },
     });
   });
@@ -65,48 +144,15 @@
     </div>
   {:else}
     <!-- Projects table (small breakpoint and up) -->
-    <table class="w-full max-w-full table-auto bg-white shadow sm:rounded-md">
-      <thead>
-        <tr class="">
-          <th
-            class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center"
-          >
-            <div class="lg:pl-2 w-24">Status</div>
-          </th>
-
-          <th
-            class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-          >
-            Assigment
-          </th>
-          <th
-            class="px-6 py-3 border-b border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-          >
-            Configuration
-          </th>
-          <th
-            class="px-6 py-3 border-b whitespace-nowrap border-gray-200 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider text-center"
-          >
-            Game Count
-          </th>
-          <th
-            class="pr-6 py-3 border-b border-gray-200 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-          >
-            <div class="w-24" />
-          </th>
-          <th
-            class="pr-6 py-3 border-b border-gray-200 bg-gray-50 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-          />
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-100">
-        {#each $batches as batch}
-          {#if batch.attributes["config"]}
-            <BatchLine {batch} />
+    <div class="overflow-hidden bg-white shadow sm:rounded-md">
+      <ul role="list" class="divide-y divide-gray-200">
+        {#each $batches as batch (batch.id)}
+          {#if batch.get("config")}
+            <BatchLine {batch} games={$games} players={$players} />
           {/if}
         {/each}
-      </tbody>
-    </table>
+      </ul>
+    </div>
   {/if}
 </Page>
 
