@@ -56,12 +56,12 @@ export function EmpiricaMenu() {
             >
               About Empirica
             </a>
-            <button
+            {/* <button
               onClick={ctx.session.clearSession.bind(ctx.session)}
               className="whitespace-nowrap hover:text-empirica-600 w-full py-2 pl-4 pr-6 text-left"
             >
               About this Experiment
-            </button>
+            </button> */}
           </div>
 
           <a
