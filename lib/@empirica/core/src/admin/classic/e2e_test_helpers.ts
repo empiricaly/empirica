@@ -103,11 +103,7 @@ export async function startTajriba(): Promise<TajServer> {
   readline.createInterface({ input: taj.stderr! }).on("line", (data) => {
     try {
       const dat = JSON.parse(data);
-      if (
-        portRes &&
-        dat["message"] &&
-        dat["message"] === "Started Tajriba server"
-      ) {
+      if (dat["message"] && dat["message"] === "Started Tajriba server") {
         portRes(dat["port"] as number);
       }
 
@@ -615,7 +611,7 @@ export function gameInitCallbacks(
   duration: number = 10000
 ) {
   return function (_: ListenersCollector<Context, ClassicKinds>) {
-    _.unique.on("game", "start", (ctx, { game }: { game: Game }) => {
+    _.unique.on("game", "start", (_, { game }: { game: Game }) => {
       if (!game.get("start")) {
         return;
       }

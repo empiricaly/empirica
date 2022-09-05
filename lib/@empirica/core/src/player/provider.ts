@@ -79,6 +79,12 @@ export class TajribaProvider {
                   removed: scope.removed,
                 });
 
+                // console.log(
+                //   "ParticipantChange",
+                //   <ParticipantChange>scope.change,
+                //   scope.done
+                // );
+
                 if (scope.done) {
                   this.dones.next();
                 }

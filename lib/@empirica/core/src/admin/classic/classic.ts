@@ -1,4 +1,5 @@
 import { State } from "@empirica/tajriba";
+import { Attribute } from "../../shared/attributes";
 import { debug, error, trace, warn } from "../../utils/console";
 import { deepEqual } from "../../utils/object";
 import { pickRandom, selectRandom } from "../../utils/random";
@@ -32,7 +33,6 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
   const batches: Batch[] = [];
 
   function assignplayer(player: Player, skipGameIDs?: string[]) {
-    // console.log("assignplayer");
     if (player.get("gameID")) {
       return;
     }
@@ -518,7 +518,7 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     }
   );
 
-  type AfterRoundStart = { round: Round; start: boolean };
+  type AfterRoundStart = { round: Round; start: boolean; attribute: Attribute };
   _.unique.after("round", "start", (ctx, { round, start }: AfterRoundStart) => {
     if (!start) return;
 
@@ -599,7 +599,7 @@ export function Classic(_: ListenersCollector<Context, ClassicKinds>) {
     }
   );
 
-  type AfterStageStart = { stage: Stage; start: boolean };
+  type AfterStageStart = { stage: Stage; start: boolean; attribute: Attribute };
   _.unique.after("stage", "start", (ctx, { stage, start }: AfterStageStart) => {
     if (!start) return;
 

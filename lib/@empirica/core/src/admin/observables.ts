@@ -62,6 +62,7 @@ export async function awaitObsValueChange<T>(obs: Observable<T>): Promise<T> {
   return val;
 }
 
+// This does not behave correctly with a ReplaySubject
 export function subscribeAsync<T>(
   obs: Observable<T>,
   fn: (val: T) => Promise<any>

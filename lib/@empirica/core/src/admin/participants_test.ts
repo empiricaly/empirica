@@ -3,7 +3,7 @@ import test from "ava";
 import { Subject } from "rxjs";
 import { textHasLog } from "../shared/test_helpers";
 import { captureLogs } from "../utils/console";
-import { Connection, ConnectionMsg, participantsSub } from "./participants";
+import { ConnectionMsg, participantsSub } from "./participants";
 
 function setupParticipant() {
   const eventSubs = {

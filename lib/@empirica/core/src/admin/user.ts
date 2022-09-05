@@ -6,7 +6,6 @@ export { Attributes } from "./attributes";
 export { AdminConnection } from "./connection";
 export { EventContext, ListenersCollector, TajribaEvent } from "./events";
 export type { Subscriber } from "./events";
-export { Layer } from "./layers";
 export { participantsSub } from "./participants";
 export type { Participant } from "./participants";
 export { Scope, Scopes } from "./scopes";

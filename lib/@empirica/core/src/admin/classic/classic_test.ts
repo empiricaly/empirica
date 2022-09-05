@@ -15,11 +15,10 @@ import {
   withTajriba,
 } from "./e2e_test_helpers";
 import { ClassicKinds, Context } from "./models";
-import { ClassicListenersCollector } from "./proxy";
 
 const t = test;
 // const t = test.serial;
-const to = test.only;
+// const to = test.only;
 
 t("ready called when ready", async (t) => {
   await withTajriba(t, async (port: number) => {
@@ -53,8 +52,6 @@ t("ready called when ready", async (t) => {
 });
 
 t("experimentOpen starts undefined", async (t) => {
-  const Empirica = new ClassicListenersCollector();
-
   // Also checking ready is only called once
   var ready = sinon.fake();
 

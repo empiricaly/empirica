@@ -14,7 +14,7 @@ type Factor struct {
 type Treatment struct {
 	Name    string                 `json:"name,omitempty" yaml:"name,omitempty"`
 	Desc    string                 `json:"desc,omitempty" yaml:"desc,omitempty"`
-	Factors map[string]interface{} `validate:"required,dive,keys,gt=0,alphanumunicode,endKeys" validate:"required" json:"factors" yaml:"factors"`
+	Factors map[string]interface{} `validate:"required,dive,keys,gt=0,alphanumunicode,endkeys" json:"factors" yaml:"factors"`
 }
 
 type Treatments struct {

@@ -270,8 +270,7 @@ export class Cake<
     until?: Attribute
   ) {
     let handle: PromiseHandle | undefined = promiseHandle();
-    const unsub = subscribeAsync(
-      this.attributeSubscription(kind, key),
+    const unsub = this.attributeSubscription(kind, key).subscribe(
       async ({ attribute, done }) => {
         if (this.stopped) {
           if (handle) {

@@ -32,8 +32,9 @@ export async function participantsSub(
             handle?.result();
 
             connections.next({ done: true });
-            return;
           }
+
+          return;
         }
         error(`received no participant on connected`);
 
