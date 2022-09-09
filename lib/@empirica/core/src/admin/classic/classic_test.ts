@@ -14,11 +14,11 @@ import {
   withContext,
   withTajriba,
 } from "./e2e_test_helpers";
-import { ClassicKinds, Context } from "./models";
+import { ClassicKinds, Context, Game, Player } from "./models";
 
 const t = test;
 // const t = test.serial;
-// const to = test.only;
+const to = test.only;
 
 t("ready called when ready", async (t) => {
   await withTajriba(t, async (port: number) => {
@@ -322,7 +322,7 @@ t(
 );
 
 t(
-  "when the first game starts, players are reassigned to games in currnet batch",
+  "when the first game starts, players are reassigned to games in current batch",
   async (t) => {
     await withContext(
       t,
@@ -663,6 +663,61 @@ t("on stage submit, if all players submit, stage ends", async (t) => {
     },
     {
       listeners: gameInitCallbacks(1, 2),
+    }
+  );
+});
+
+t("players can be manually assigned to unstarted games", async (t) => {
+  await withContext(
+    t,
+    4,
+    async ({ admin, players, callbacks }) => {
+      const batch = await admin.createBatch(completeBatchConfig(2, 2));
+      await sleep(200); // games get created
+      batch.running();
+
+      await players.awaitPlayerExist();
+      t.is(players!.length, 4);
+
+      const playersMap = callbacks._runloop?._scopes.byKind("player")!;
+      const playersSrv = Array.from(playersMap.values()!) as Player[];
+      t.is(playersSrv!.length, 4);
+
+      const gamesMap = callbacks._runloop?._scopes.byKind("game")!;
+      const games = Array.from(gamesMap.values()!);
+      t.is(games!.length, 2);
+      const game1 = games[0]! as Game;
+      const game2 = games[1]! as Game;
+
+      let count = 0;
+      const distribution = new Map<string, string>();
+      for (const player of playersSrv) {
+        count++;
+        if (count % 2 === 0) {
+          distribution.set(player.id, game1.id);
+          game1.assignPlayer(player);
+        } else {
+          distribution.set(player.id, game2.id);
+          game2.assignPlayer(player);
+        }
+        // player.set("introDone", true);
+      }
+
+      // console.log(Array.from(distribution.values()));
+
+      for (const player of players) {
+        player.player!.set("introDone", true);
+      }
+
+      await players.awaitGameExist();
+      for (const player of players) {
+        t.truthy(player.game!.id);
+        t.is(player.game!.id, distribution.get(player.player!.id)!);
+      }
+    },
+    {
+      listeners: gameInitCallbacks(),
+      disableAssignment: true,
     }
   );
 });

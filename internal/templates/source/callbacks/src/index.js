@@ -25,7 +25,7 @@ setLogLevel("trace");
   );
 
   ctx.register(ClassicLoader);
-  ctx.register(Classic);
+  ctx.register(Classic());
   ctx.register(Empirica);
   ctx.register(function (_) {
     _.on("ready", function () {

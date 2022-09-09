@@ -120,6 +120,23 @@ export class Game extends BatchOwned {
     return !this.get("status");
   }
 
+  assignPlayer(player: Player) {
+    const treatment = this.get("treatment");
+    if (!treatment) {
+      warn(`game without treatment: ${this.id}`);
+
+      return;
+    }
+
+    const existingGameID = player.get("gameID");
+    if (existingGameID) {
+      existingGameID;
+    }
+
+    player.set("gameID", this.id);
+    player.set("treatment", treatment);
+  }
+
   addRound(attributes: { [key: string]: JsonValue } | AttributeInput[]) {
     if (!Array.isArray(attributes)) {
       const newAttr: AttributeInput[] = [];

@@ -134,6 +134,24 @@ export class Runloop<
     });
   }
 
+  /**
+   * @internal
+   *
+   * NOTE: For testing purposes only.
+   */
+  get _attributes() {
+    return this.attributes;
+  }
+
+  /**
+   * @internal
+   *
+   * NOTE: For testing purposes only.
+   */
+  get _scopes() {
+    return this.scopes;
+  }
+
   private async postCallback(final: boolean) {
     if (this.stopped) {
       return;

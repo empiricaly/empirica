@@ -43,6 +43,15 @@ export class AdminContext<
     this.tajriba = new TajribaConnection(url);
   }
 
+  /**
+   * @internal
+   *
+   * NOTE: For testing purposes only.
+   */
+  get _runloop() {
+    return this.runloop;
+  }
+
   static async init<
     Context,
     Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
