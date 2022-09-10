@@ -43,14 +43,20 @@ export class Attributes extends SharedAttributes {
         let attrs = [];
         for (const [_, attrByKey] of attrByScopeID?.entries()) {
           for (const [_, attr] of attrByKey) {
-            attrs.push(attr);
+            if (attr.key === key) {
+              attrs.push(attr);
+            }
           }
         }
 
-        let count = 0;
-        for (const attr of attrs) {
-          count++;
-          sub!.next({ attribute: attr, done: count == attrs.length });
+        if (attrs.length > 0) {
+          let count = 0;
+          for (const attr of attrs) {
+            count++;
+            sub!.next({ attribute: attr, done: count == attrs.length });
+          }
+        } else {
+          sub!.next({ done: true });
         }
       }, 0);
     }

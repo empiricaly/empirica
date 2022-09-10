@@ -302,8 +302,16 @@ export class Cake<
               error(err);
             }
 
+            if (this.stopped) {
+              return;
+            }
+
             if (this.postCallback) {
               await this.postCallback();
+            }
+
+            if (this.stopped) {
+              return;
             }
           }
 

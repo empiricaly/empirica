@@ -283,7 +283,7 @@ export function Classic(config: ClassicConfig = {}) {
 
           break;
         default:
-          warn(`unkown batch status: ${status}`);
+          warn("unknown batch status:", status);
 
           break;
       }

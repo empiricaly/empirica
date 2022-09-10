@@ -73,7 +73,7 @@ export async function withTajriba(
   fn: (port: number) => void
 ) {
   const srv = await startTajriba();
-  t.log(srv.port);
+  // t.log(srv.port);
   await fn(srv.port);
   srv.stop();
 }

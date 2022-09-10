@@ -227,7 +227,7 @@ export class Runloop<
 
   async addScopes(inputs: AddScopeInput[]) {
     if (this.stopped) {
-      warn("addScopes on stopped", inputs);
+      // warn("addScopes on stopped", inputs);
 
       return [];
     }
@@ -263,7 +263,7 @@ export class Runloop<
 
   async addGroups(inputs: AddGroupInput[]) {
     if (this.stopped) {
-      warn("addGroups on stopped", inputs);
+      // warn("addGroups on stopped", inputs);
 
       return [];
     }
@@ -275,7 +275,7 @@ export class Runloop<
 
   async addLinks(inputs: LinkInput[]) {
     if (this.stopped) {
-      warn("addLinks on stopped", inputs);
+      // warn("addLinks on stopped", inputs);
 
       return [];
     }
@@ -292,7 +292,7 @@ export class Runloop<
 
   async addSteps(inputs: AddStepInput[]) {
     if (this.stopped) {
-      warn("addSteps on stopped", inputs);
+      // warn("addSteps on stopped", inputs);
 
       return [];
     }
@@ -304,7 +304,7 @@ export class Runloop<
 
   async addTransitions(inputs: TransitionInput[]) {
     if (this.stopped) {
-      warn("addTransitions on stopped", inputs);
+      // warn("addTransitions on stopped", inputs);
 
       return [];
     }
@@ -355,9 +355,6 @@ export class Runloop<
     if (filters.length === 0) {
       return;
     }
-
-    // const initProm = this.loadAllScopes(filters);
-    // console.log("SUB", filters);
 
     let resolve: (value: void) => void;
     const prom = new Promise((r) => (resolve = r));

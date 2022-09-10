@@ -346,7 +346,7 @@ t(
 
         t.is(distribution.size, 2);
         for (const count of distribution.values()) {
-          t.true(count > 1);
+          t.true(count > 0);
         }
 
         const player1 = players.get(0)!;
