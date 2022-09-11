@@ -11,20 +11,21 @@ import {
   Batch,
   ClassicKinds,
   Context,
+  evt,
   Game,
   Player,
   PlayerStage,
   Round,
   Stage,
 } from "./models";
-import {
-  batchConfigSchema,
-  isGame,
-  isRound,
-  isStage,
-  isString,
-  treatmentSchema,
-} from "./schemas";
+import { batchConfigSchema, treatmentSchema } from "./schemas";
+import { z } from "zod";
+
+// const isBatch = z.instanceof(Batch).parse;
+const isGame = z.instanceof(Game).parse;
+const isRound = z.instanceof(Round).parse;
+const isStage = z.instanceof(Stage).parse;
+const isString = z.string().parse;
 
 export type ClassicConfig = {
   disableAssignment?: boolean;
@@ -35,9 +36,12 @@ export function Classic(config: ClassicConfig = {}) {
     const online = new Map<string, Participant>();
     const playersForParticipant = new Map<string, Player>();
     const stageForStepID = new Map<string, Stage>();
-    const batches: Batch[] = [];
 
-    function assignplayer(player: Player, skipGameIDs?: string[]) {
+    async function assignplayer(
+      ctx: EventContext<Context, ClassicKinds>,
+      player: Player,
+      skipGameIDs?: string[]
+    ) {
       if (config.disableAssignment) {
         return;
       }
@@ -46,7 +50,7 @@ export function Classic(config: ClassicConfig = {}) {
         return;
       }
 
-      for (const batch of batches) {
+      for (const batch of evt(ctx).batches) {
         if (!batch.isRunning) {
           continue;
         }
@@ -78,15 +82,7 @@ export function Classic(config: ClassicConfig = {}) {
 
         const game = pickRandom(availableGames);
 
-        const treatment = game.get("treatment");
-        if (!treatment) {
-          warn(`game without treatment: ${game.id}`);
-
-          return;
-        }
-
-        player.set("gameID", game.id);
-        player.set("treatment", treatment);
+        await game.assignPlayer(player);
 
         return;
       }
@@ -101,7 +97,7 @@ export function Classic(config: ClassicConfig = {}) {
     ) {
       let shouldOpenExperiment = false;
 
-      LOOP: for (const batch of batches) {
+      LOOP: for (const batch of evt(ctx).batches) {
         if (!batch.isRunning) {
           continue;
         }
@@ -181,7 +177,7 @@ export function Classic(config: ClassicConfig = {}) {
         ]);
       } else {
         // console.log("ALREADY", participant.id, player.id);
-        assignplayer(player);
+        await assignplayer(ctx, player);
       }
     });
 
@@ -189,7 +185,7 @@ export function Classic(config: ClassicConfig = {}) {
       online.delete(participant.id);
     });
 
-    _.on("player", (ctx, { player }: { player: Player }) => {
+    _.on("player", async (ctx, { player }: { player: Player }) => {
       // console.log("ON PLAYER", player.id);
       const participantID = isString(player.get("participantID"));
 
@@ -205,14 +201,11 @@ export function Classic(config: ClassicConfig = {}) {
       ]);
 
       if (online.has(participantID)) {
-        assignplayer(player);
+        await assignplayer(ctx, player);
       }
     });
 
     _.on("batch", (_, { batch }: { batch: Batch }) => {
-      // console.log("new batch");
-      batches.push(batch);
-
       if (batch.get("initialized")) {
         return;
       }
@@ -257,37 +250,41 @@ export function Classic(config: ClassicConfig = {}) {
     });
 
     type BatchStatus = { batch: Batch; status: string };
-    _.unique.on("batch", "status", (ctx, { batch, status }: BatchStatus) => {
-      switch (status) {
-        case "running": {
-          for (const [_, player] of playersForParticipant) {
-            if (player.participantID) {
-              assignplayer(player);
+    _.unique.on(
+      "batch",
+      "status",
+      async (ctx, { batch, status }: BatchStatus) => {
+        switch (status) {
+          case "running": {
+            for (const [_, player] of playersForParticipant) {
+              if (player.participantID) {
+                await assignplayer(ctx, player);
+              }
             }
-          }
 
-          checkShouldOpenExperiment(ctx);
-          break;
+            checkShouldOpenExperiment(ctx);
+            break;
+          }
+          case "terminated":
+            for (const game of batch.games) {
+              game.end(status, "batch ended");
+            }
+
+            checkShouldOpenExperiment(ctx);
+
+            break;
+
+          case "ended":
+            checkShouldOpenExperiment(ctx);
+
+            break;
+          default:
+            warn("unknown batch status:", status);
+
+            break;
         }
-        case "terminated":
-          for (const game of batch.games) {
-            game.end(status, "batch ended");
-          }
-
-          checkShouldOpenExperiment(ctx);
-
-          break;
-
-        case "ended":
-          checkShouldOpenExperiment(ctx);
-
-          break;
-        default:
-          warn("unknown batch status:", status);
-
-          break;
       }
-    });
+    );
 
     type GameStatus = { game: Game; status: string };
     _.unique.on("game", "status", (ctx, { game, status }: GameStatus) => {
@@ -377,7 +374,7 @@ export function Classic(config: ClassicConfig = {}) {
       return { nextStage, nextRound: isRound(nextStage.round), stop: false };
     }
 
-    _.on("player", "introDone", (_, { player }: { player: Player }) => {
+    _.on("player", "introDone", async (ctx, { player }: { player: Player }) => {
       if (!player.currentGame) {
         return;
       }
@@ -403,7 +400,7 @@ export function Classic(config: ClassicConfig = {}) {
       for (const plyr of game.players) {
         if (!playersIDS.includes(plyr.id)) {
           plyr.set("gameID", null);
-          assignplayer(plyr, [game.id]);
+          await assignplayer(ctx, plyr, [game.id]);
         }
       }
 
@@ -419,52 +416,13 @@ export function Classic(config: ClassicConfig = {}) {
     _.unique.before(
       "game",
       "start",
-      async (ctx, { game, start }: BeforeGameStart) => {
+      async (_, { game, start }: BeforeGameStart) => {
         if (!start) {
           return;
         }
 
-        const batchID = isString(game.get("batchID"));
-
-        trace(
-          "game start: players: ",
-          game.players.map((p) => p.id)
-        );
-
         for (const player of game.players) {
-          const playerGames = await ctx.addScopes([
-            {
-              kind: "playerGame",
-              attributes: attrs([
-                {
-                  key: "batchID",
-                  value: batchID,
-                  immutable: true,
-                },
-                {
-                  key: "gameID",
-                  value: game.id,
-                  immutable: true,
-                },
-                {
-                  key: "playerID",
-                  value: player.id,
-                  immutable: true,
-                },
-              ]),
-            },
-          ]);
-
-          if (playerGames.length < 1) {
-            error(`failed to create playerGame`);
-
-            return;
-          }
-
-          const key = `playerGameID-${game.id}`;
-          if (!player.get(key)) {
-            player.set(key, playerGames[0]!.id);
-          }
+          await game.createPlayerGame(player);
         }
       }
     );
@@ -482,54 +440,15 @@ export function Classic(config: ClassicConfig = {}) {
     _.unique.before(
       "round",
       "start",
-      async (ctx, { round, start }: BeforeRoundStart) => {
+      async (_, { round, start }: BeforeRoundStart) => {
         if (!start) {
           return;
         }
 
-        const gameID = isString(round.get("gameID"));
-        const batchID = isString(round.get("batchID"));
         const game = isGame(round.currentGame);
 
         for (const player of game.players) {
-          const playerRounds = await ctx.addScopes([
-            {
-              kind: "playerRound",
-              attributes: attrs([
-                {
-                  key: "batchID",
-                  value: batchID,
-                  immutable: true,
-                },
-                {
-                  key: "gameID",
-                  value: gameID,
-                  immutable: true,
-                },
-                {
-                  key: "roundID",
-                  value: round.id,
-                  immutable: true,
-                },
-                {
-                  key: "playerID",
-                  value: player.id,
-                  immutable: true,
-                },
-              ]),
-            },
-          ]);
-
-          if (playerRounds.length < 1) {
-            error(`failed to create playerRound`);
-
-            return;
-          }
-
-          const key = `playerRoundID-${round.id}`;
-          if (!player.get(key)) {
-            player.set(key, playerRounds[0]!.id);
-          }
+          await round.createPlayerRound(player);
         }
       }
     );
@@ -567,58 +486,13 @@ export function Classic(config: ClassicConfig = {}) {
     _.unique.before(
       "stage",
       "start",
-      async (ctx, { stage, start }: BeforeStageStart) => {
+      async (_, { stage, start }: BeforeStageStart) => {
         if (!start) return;
 
-        const roundID = isString(stage.get("roundID"));
-        const gameID = isString(stage.get("gameID"));
-        const batchID = isString(stage.get("batchID"));
         const game = isGame(stage.currentGame);
 
         for (const player of game.players) {
-          const playerStages = await ctx.addScopes([
-            {
-              kind: "playerStage",
-              attributes: attrs([
-                {
-                  key: "batchID",
-                  value: batchID,
-                  immutable: true,
-                },
-                {
-                  key: "gameID",
-                  value: gameID,
-                  immutable: true,
-                },
-                {
-                  key: "roundID",
-                  value: roundID,
-                  immutable: true,
-                },
-                {
-                  key: "stageID",
-                  value: stage.id,
-                  immutable: true,
-                },
-                {
-                  key: "playerID",
-                  value: player.id,
-                  immutable: true,
-                },
-              ]),
-            },
-          ]);
-
-          if (playerStages.length < 1) {
-            error(`failed to create playerStage`);
-
-            return;
-          }
-
-          const key = `playerStageID-${stage.id}`;
-          if (!player.get(key)) {
-            player.set(key, playerStages[0]!.id);
-          }
+          await stage.createPlayerStage(player);
         }
       }
     );

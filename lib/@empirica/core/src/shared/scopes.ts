@@ -59,14 +59,14 @@ export class Scopes<
     return this.scopes.get(id);
   }
 
-  byKind(kind: keyof Kinds) {
+  byKind<T extends Skope>(kind: keyof Kinds) {
     let map = this.scopesByKind.get(kind);
     if (!map) {
       map = new Map();
       this.scopesByKind.set(kind, map);
     }
 
-    return map;
+    return map! as Map<string, T>;
   }
 
   kindWasUpdated(kind: keyof Kinds): boolean {

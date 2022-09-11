@@ -8,7 +8,7 @@ import {
 import { Attribute } from "../shared/attributes";
 import { ScopeConstructor } from "../shared/scopes";
 import { Finalizer, TajribaAdminAccess } from "./context";
-import { Scope } from "./scopes";
+import { Scope, Scopes } from "./scopes";
 import { ScopeSubscriptionInput } from "./subscriptions";
 
 export type Subscriber<
@@ -347,8 +347,22 @@ export class EventContext<
 > {
   constructor(
     private subs: SubscriptionCollector,
-    private taj: TajribaAdminAccess
+    private taj: TajribaAdminAccess,
+    private scopes: Scopes<Context, Kinds>
   ) {}
+
+  scopesByKind<T extends Scope<Context, Kinds>>(kind: keyof Kinds) {
+    return this.scopes.byKind<T>(kind) as Map<string, T>;
+  }
+
+  scopesByKindMatching<T extends Scope<Context, Kinds>>(
+    kind: keyof Kinds,
+    key: string,
+    val: string
+  ): T[] {
+    const scopes = Array.from(this.scopes.byKind(kind).values());
+    return scopes.filter((s) => s.get(key) === val) as T[];
+  }
 
   scopeSub(...inputs: Partial<ScopeSubscriptionInput>[]) {
     for (const input of inputs) {

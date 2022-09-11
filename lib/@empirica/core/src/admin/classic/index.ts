@@ -4,6 +4,7 @@ export {
   Batch,
   classicKinds,
   Context,
+  evt,
   Game,
   Player,
   PlayerGame,
@@ -12,5 +13,5 @@ export {
   Round,
   Stage,
 } from "./models";
-export type { ClassicKinds } from "./models";
+export type { ClassicKinds, EventProxy } from "./models";
 export { ClassicListenersCollector } from "./proxy";

@@ -622,6 +622,11 @@ t("on game start, players get game, round, stange and playerX", async (t) => {
         t.truthy(player.player?.round);
         t.truthy(player.stage);
         t.truthy(player.player?.stage);
+        for (const plyr of player.players) {
+          t.truthy(plyr.game);
+          t.truthy(plyr.round);
+          t.truthy(plyr.stage);
+        }
       }
     },
     {
@@ -718,6 +723,55 @@ t("players can be manually assigned to unstarted games", async (t) => {
     {
       listeners: gameInitCallbacks(),
       disableAssignment: true,
+    }
+  );
+});
+
+t("new players can be assigned to a started game", async (t) => {
+  await withContext(
+    t,
+    2,
+    async ({ admin, players, callbacks }) => {
+      const batch = await admin.createBatch(completeBatchConfig(1));
+      await sleep(200); // games get created
+      batch.running();
+
+      await players.awaitPlayerKeyExist("gameID");
+      t.is(players!.length, 2);
+
+      const playersMap = callbacks._runloop?._scopes.byKind("player")!;
+      const playersSrv = Array.from(playersMap.values()!) as Player[];
+      t.is(playersSrv!.length, 2);
+
+      const gamesMap = callbacks._runloop?._scopes.byKind("game")!;
+      const games = Array.from(gamesMap.values()!);
+      t.is(games!.length, 1);
+      const game = games[0]! as Game;
+
+      const player1 = players.get(0)!;
+      const player2 = players.get(1)!;
+
+      player1.player!.set("introDone", true);
+
+      await player1.awaitGameExist();
+      await player1.awaitRoundExist();
+      await player1.awaitStageExist();
+
+      t.truthy(player1.player?.get("gameID"));
+      t.falsy(player2.player?.get("gameID"));
+
+      await game.assignPlayer(playersMap.get(player2.player!.id) as Player);
+      await callbacks._runloop?._postCallback();
+
+      await player2.awaitGameExist();
+      await player2.awaitRoundExist();
+      await player2.awaitStageExist();
+
+      t.truthy(player1.player?.get("gameID"));
+      t.truthy(player2.player?.get("gameID"));
+    },
+    {
+      listeners: gameInitCallbacks(),
     }
   );
 });

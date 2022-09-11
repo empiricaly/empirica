@@ -55,7 +55,6 @@ export class Runloop<
   private scopePromises: Promise<AddScopePayload[]>[] = [];
   private linkPromises: Promise<AddLinkPayload>[] = [];
   private transitionPromises: Promise<AddTransitionPayload>[] = [];
-  // private addTransitionsInputs: TransitionInput[] = [];
   private attributeInputs: SetAttributeInput[] = [];
   private scopes: Scopes<Context, Kinds>;
   private cake: Cake<Context, Kinds>;
@@ -101,7 +100,7 @@ export class Runloop<
       mut
     );
 
-    this.evtctx = new EventContext(this.subs, mut);
+    this.evtctx = new EventContext(this.subs, mut, this.scopes);
     this.cake = new Cake(
       this.evtctx,
       this.scopes.scope.bind(this.scopes),
@@ -150,6 +149,15 @@ export class Runloop<
    */
   get _scopes() {
     return this.scopes;
+  }
+
+  /**
+   * @internal
+   *
+   * NOTE: For testing purposes only.
+   */
+  async _postCallback() {
+    return await this.postCallback(true);
   }
 
   private async postCallback(final: boolean) {

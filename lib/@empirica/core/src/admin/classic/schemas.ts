@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Game, Round, Stage } from "./models";
+// import { Game, Round, Stage } from "./models";
 
 export const treatmentSchema = z.record(z.string().min(1), z.any());
 export const batchConfigSchema = z.discriminatedUnion("kind", [
@@ -29,8 +29,8 @@ export const batchConfigSchema = z.discriminatedUnion("kind", [
   }),
 ]);
 
-// const isBatch = z.instanceof(Batch).parse;
-export const isGame = z.instanceof(Game).parse;
-export const isRound = z.instanceof(Round).parse;
-export const isStage = z.instanceof(Stage).parse;
-export const isString = z.string().parse;
+// // const isBatch = z.instanceof(Batch).parse;
+// export const isGame = z.instanceof(Game).parse;
+// export const isRound = z.instanceof(Round).parse;
+// export const isStage = z.instanceof(Stage).parse;
+// export const isString = z.string().parse;
