@@ -55,7 +55,6 @@ export class Runloop<
   private scopePromises: Promise<AddScopePayload[]>[] = [];
   private linkPromises: Promise<AddLinkPayload>[] = [];
   private transitionPromises: Promise<AddTransitionPayload>[] = [];
-  // private addTransitionsInputs: TransitionInput[] = [];
   private attributeInputs: SetAttributeInput[] = [];
   private scopes: Scopes<Context, Kinds>;
   private cake: Cake<Context, Kinds>;
@@ -101,7 +100,7 @@ export class Runloop<
       mut
     );
 
-    this.evtctx = new EventContext(this.subs, mut);
+    this.evtctx = new EventContext(this.subs, mut, this.scopes);
     this.cake = new Cake(
       this.evtctx,
       this.scopes.scope.bind(this.scopes),
@@ -132,6 +131,33 @@ export class Runloop<
         stopSub.unsubscribe();
       },
     });
+  }
+
+  /**
+   * @internal
+   *
+   * NOTE: For testing purposes only.
+   */
+  get _attributes() {
+    return this.attributes;
+  }
+
+  /**
+   * @internal
+   *
+   * NOTE: For testing purposes only.
+   */
+  get _scopes() {
+    return this.scopes;
+  }
+
+  /**
+   * @internal
+   *
+   * NOTE: For testing purposes only.
+   */
+  async _postCallback() {
+    return await this.postCallback(true);
   }
 
   private async postCallback(final: boolean) {
@@ -173,7 +199,6 @@ export class Runloop<
       }
 
       const attrs = Object.values(uniqueAttrs);
-      // trace(`setting attributes: ${JSON.stringify(attrs)}`);
 
       promises.push(this.taj.setAttributes(attrs));
       this.attributeInputs = [];
@@ -209,7 +234,7 @@ export class Runloop<
 
   async addScopes(inputs: AddScopeInput[]) {
     if (this.stopped) {
-      warn("addScopes on stopped", inputs);
+      // warn("addScopes on stopped", inputs);
 
       return [];
     }
@@ -245,7 +270,7 @@ export class Runloop<
 
   async addGroups(inputs: AddGroupInput[]) {
     if (this.stopped) {
-      warn("addGroups on stopped", inputs);
+      // warn("addGroups on stopped", inputs);
 
       return [];
     }
@@ -257,7 +282,7 @@ export class Runloop<
 
   async addLinks(inputs: LinkInput[]) {
     if (this.stopped) {
-      warn("addLinks on stopped", inputs);
+      // warn("addLinks on stopped", inputs);
 
       return [];
     }
@@ -274,7 +299,7 @@ export class Runloop<
 
   async addSteps(inputs: AddStepInput[]) {
     if (this.stopped) {
-      warn("addSteps on stopped", inputs);
+      // warn("addSteps on stopped", inputs);
 
       return [];
     }
@@ -286,7 +311,7 @@ export class Runloop<
 
   async addTransitions(inputs: TransitionInput[]) {
     if (this.stopped) {
-      warn("addTransitions on stopped", inputs);
+      // warn("addTransitions on stopped", inputs);
 
       return [];
     }
@@ -337,9 +362,6 @@ export class Runloop<
     if (filters.length === 0) {
       return;
     }
-
-    // const initProm = this.loadAllScopes(filters);
-    // console.log("SUB", filters);
 
     let resolve: (value: void) => void;
     const prom = new Promise((r) => (resolve = r));

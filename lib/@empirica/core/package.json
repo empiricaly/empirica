@@ -1,6 +1,6 @@
 {
   "name": "@empirica/core",
-  "version": "1.0.0-rc.2",
+  "version": "1.0.0-rc.3",
   "description": "Empirica Core",
   "author": "Nicolas Paton <nicolas.paton@gmail.com>",
   "license": "Apache-2.0",
@@ -188,7 +188,7 @@
     "typescript": "4.7.4"
   },
   "dependencies": {
-    "@empirica/tajriba": "^1.0.0-rc.3",
+    "@empirica/tajriba": "^1.0.0-rc.5",
     "@swc/helpers": "0.4.2",
     "rxjs": "7.5.5",
     "zod": "3.17.3"

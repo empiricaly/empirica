@@ -111,6 +111,12 @@ export class Scope<
     this.taj = scopes.taj;
   }
 
+  protected scopeByID<T extends Scope<Context, Kinds>>(
+    id: string
+  ): T | undefined {
+    return this.scopes.scope(id) as T | undefined;
+  }
+
   protected scopeByKey<T extends Scope<Context, Kinds>>(
     key: string
   ): T | undefined {
@@ -122,8 +128,10 @@ export class Scope<
     return this.scopes.scope(id) as T | undefined;
   }
 
-  protected scopesByKind(kind: keyof Kinds) {
-    return this.scopes.byKind(kind);
+  protected scopesByKind<T extends Scope<Context, Kinds>>(
+    kind: keyof Kinds
+  ): Map<string, T> {
+    return this.scopes.byKind<T>(kind) as Map<string, T>;
   }
 
   protected scopesByKindMatching<T extends Scope<Context, Kinds>>(

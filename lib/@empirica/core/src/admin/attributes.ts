@@ -43,14 +43,20 @@ export class Attributes extends SharedAttributes {
         let attrs = [];
         for (const [_, attrByKey] of attrByScopeID?.entries()) {
           for (const [_, attr] of attrByKey) {
-            attrs.push(attr);
+            if (attr.key === key) {
+              attrs.push(attr);
+            }
           }
         }
 
-        let count = 0;
-        for (const attr of attrs) {
-          count++;
-          sub!.next({ attribute: attr, done: count == attrs.length });
+        if (attrs.length > 0) {
+          let count = 0;
+          for (const attr of attrs) {
+            count++;
+            sub!.next({ attribute: attr, done: count == attrs.length });
+          }
+        } else {
+          sub!.next({ done: true });
         }
       }, 0);
     }
@@ -99,6 +105,7 @@ export class Attributes extends SharedAttributes {
     for (const [kind, key, attrChange] of updates) {
       // Forcing nodeID because we already tested it above.
       const nodeID = attrChange.nodeID || attrChange.node!.id;
+
       // Forcing attr because we already tested it above.
       const attr = this.attrs.get(nodeID)!.get(key)!;
       const sub = this.attribSubs.get(kind)?.get(key);

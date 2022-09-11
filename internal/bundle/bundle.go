@@ -7,7 +7,6 @@ import (
 	"io"
 	"io/fs"
 	"os"
-	"path"
 	fpath "path"
 	"path/filepath"
 	"strings"
@@ -94,7 +93,7 @@ func Bundle(ctx context.Context, conf *empirica.Config, out string, useGzip bool
 	})
 
 	callbackpath := callbacks.BuildDir(conf.Callbacks)
-	if !path.IsAbs(callbackpath) {
+	if !fpath.IsAbs(callbackpath) {
 		callbackpath = fpath.Join(dir, callbackpath)
 	}
 
@@ -113,7 +112,7 @@ func Bundle(ctx context.Context, conf *empirica.Config, out string, useGzip bool
 	}
 
 	playerpath := player.BuildDir(conf.Player)
-	if !path.IsAbs(playerpath) {
+	if !fpath.IsAbs(playerpath) {
 		playerpath = fpath.Join(dir, playerpath)
 	}
 
@@ -147,7 +146,9 @@ func tarDir(tw *tar.Writer, src, dest string, skip func(string) bool) error {
 			return err
 		}
 
-		// spew.Dump(d)
+		if d == nil {
+			return nil
+		}
 
 		// Skip non-files
 		if !d.Type().IsRegular() {

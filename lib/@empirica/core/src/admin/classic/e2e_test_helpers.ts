@@ -4,7 +4,6 @@ import { spawn } from "child_process";
 import fs from "fs";
 import readline from "readline";
 import { z } from "zod";
-// import { Globals as PlayerGlobals } from "../../player";
 import { EmpiricaClassic, EmpiricaClassicContext } from "../../player/classic";
 import { MemStorage, ParticipantSession } from "../../player/connection";
 import { ParticipantModeContext } from "../../player/context";
@@ -73,7 +72,7 @@ export async function withTajriba(
   fn: (port: number) => void
 ) {
   const srv = await startTajriba();
-  t.log(srv.port);
+  // t.log(srv.port);
   await fn(srv.port);
   srv.stop();
 }
@@ -126,6 +125,9 @@ export async function startTajriba(): Promise<TajServer> {
   });
 
   const port = await portProm;
+
+  // Wait to make sure HTTP server is ready with all endpoints.
+  await sleep(200);
 
   let stopped = false;
   return {
@@ -430,7 +432,8 @@ interface testContext {
   makeCallbacks: (
     listeners?:
       | Subscriber<Context, ClassicKinds>
-      | ListenersCollector<Context, ClassicKinds>
+      | ListenersCollector<Context, ClassicKinds>,
+    disableAssignment?: boolean
   ) => Promise<AdminContext<Context, ClassicKinds>>;
 }
 
@@ -452,6 +455,7 @@ export async function withContext(
   options?: {
     inverted?: boolean;
     doNotRegisterPlayers?: boolean;
+    disableAssignment?: boolean;
     listeners?:
       | Subscriber<Context, ClassicKinds>
       | ListenersCollector<Context, ClassicKinds>;
@@ -465,7 +469,11 @@ export async function withContext(
 
     const initAdmins = async () => {
       admin = await makeAdmin(port);
-      callbacks = await makeCallbacks(port, options?.listeners);
+      callbacks = await makeCallbacks(
+        port,
+        options?.listeners,
+        options?.disableAssignment
+      );
     };
 
     if (!options?.inverted && !INVERTED) {
@@ -517,7 +525,8 @@ export async function makeCallbacks(
   port: number,
   listeners?:
     | Subscriber<Context, ClassicKinds>
-    | ListenersCollector<Context, ClassicKinds>
+    | ListenersCollector<Context, ClassicKinds>,
+  disableAssignment?: boolean
 ): Promise<AdminContext<Context, ClassicKinds>> {
   const ctx = await AdminContext.init(
     `http://localhost:${port}/query`,
@@ -529,7 +538,7 @@ export async function makeCallbacks(
   );
 
   ctx.register(ClassicLoader);
-  ctx.register(Classic);
+  ctx.register(Classic({ disableAssignment }));
   if (listeners) {
     ctx.register(listeners);
   }

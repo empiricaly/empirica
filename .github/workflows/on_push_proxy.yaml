@@ -1,11 +1,11 @@
 name: Build Proxy
 
 on:
-  pull_request:
-    paths:
-      - "cmds/proxy/**"
-      - ".github/workflows/on_push_proxy.yaml"
-      - ".github/actions/upload-empirica-cli/**"
+  # pull_request:
+  #   paths:
+  #     - "cmds/proxy/**"
+  #     - ".github/workflows/on_push_proxy.yaml"
+  #     - ".github/actions/upload-empirica-cli/**"
   push:
     paths:
       - "cmds/proxy/**"

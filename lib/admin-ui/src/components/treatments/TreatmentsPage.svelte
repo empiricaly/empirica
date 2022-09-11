@@ -4,14 +4,15 @@
   import Treatments from "./Treatments.svelte";
 </script>
 
-<Page title="Treatments and Factors">
+<Page title="Treatments">
   <span slot="labels">
-    Edit your <code>.empirica/treatments.yaml</code> file. Updates are automatically
-    saved.
+    You can edit Treatments here or in the
+    <code>.empirica/treatments.yaml</code> file. Updates are automatically saved
+    on this page. If you make changes to the yaml file, make sure to reload this
+    page.
   </span>
 
   <div class="max-w-7xl">
     <Treatments />
-    <div class="mt-10"><Factors /></div>
   </div>
 </Page>

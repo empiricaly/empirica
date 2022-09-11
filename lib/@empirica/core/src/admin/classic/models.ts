@@ -5,8 +5,11 @@ import { Attributable } from "../../shared/scopes";
 import { error, warn } from "../../utils/console";
 import { JsonValue } from "../../utils/json";
 import { AddScopePayload, StepPayload } from "../context";
+import { EventContext } from "../events";
 import { Scope } from "../scopes";
 import { AttributeInput, attrs, scopeConstructor } from "./helpers";
+
+const isString = z.string().parse;
 
 export const endedStatuses = ["ended", "terminated", "failed"];
 export type EndedStatuses = typeof endedStatuses[number];
@@ -118,6 +121,181 @@ export class Game extends BatchOwned {
 
   get hasNotStarted() {
     return !this.get("status");
+  }
+
+  get isRunning() {
+    return this.get("status") === "running";
+  }
+
+  async assignPlayer(player: Player) {
+    if (this.hasEnded) {
+      throw new Error("cannot assign player to ended Game");
+    }
+
+    const previousGameID = player.get("gameID");
+    const previousGameTreatment = player.get("treatment");
+
+    const treatment = this.get("treatment");
+    if (!treatment) {
+      warn(`game without treatment: ${this.id}`);
+
+      return;
+    }
+
+    player.set("gameID", this.id);
+    player.set("treatment", treatment);
+
+    if (
+      previousGameTreatment &&
+      JSON.stringify(previousGameTreatment) !== JSON.stringify(treatment)
+    ) {
+      if (previousGameID) {
+        warn(
+          `reassigning player from ${previousGameID} to ${this.id} with different treatments`
+        );
+      } else {
+        warn(`reassigning player to ${this.id} with different treatment`);
+      }
+    }
+
+    // Remove player from previous Game.
+    // We do this after setting the new gameID on the player so we don't
+    // conflict with the other game concurrently starting. If the game is just
+    // starting and we change the gameID too late, we might allow that previous
+    // Game to start with this player.
+    if (previousGameID) {
+      this.scopeByID<Game>(<string>previousGameID)?.removePlayer(player);
+    }
+
+    // Add player to running game.
+    await this.addPlayer(player);
+  }
+
+  // Add player to running game
+  private async addPlayer(player: Player) {
+    if (!this.isRunning) {
+      return;
+    }
+
+    const otherParticipantIDs = [];
+    const groupID = isString(this.get("groupID"));
+    const newPlayerNodeIDs = [this.id, groupID];
+    const otherNodeIDs = [];
+
+    const stage = this.currentStage;
+    if (!stage) {
+      return;
+    }
+
+    const timerID = stage.get("timerID") as string;
+    if (timerID) {
+      newPlayerNodeIDs.push(timerID);
+    }
+
+    newPlayerNodeIDs.push(stage.id);
+
+    const round = stage.round;
+    if (!round) {
+      return;
+    }
+
+    newPlayerNodeIDs.push(round.id);
+    const playerGameID = await this.createPlayerGame(player);
+    const playerRoundID = await round.createPlayerRound(player);
+    const playerStageID = await stage.createPlayerStage(player);
+
+    if (!playerGameID || !playerRoundID || !playerStageID) {
+      return;
+    }
+
+    newPlayerNodeIDs.push(player.id);
+    newPlayerNodeIDs.push(playerGameID!);
+    newPlayerNodeIDs.push(playerRoundID!);
+    newPlayerNodeIDs.push(playerStageID!);
+    otherNodeIDs.push(playerGameID!);
+    otherNodeIDs.push(playerRoundID!);
+    otherNodeIDs.push(playerStageID!);
+
+    // We assume the player has already added the gameID.
+    for (const plyr of this.players) {
+      if (player !== plyr) {
+        newPlayerNodeIDs.push(isString(plyr.get(`playerGameID-${this.id}`)));
+        newPlayerNodeIDs.push(isString(plyr.get(`playerRoundID-${round.id}`)));
+        newPlayerNodeIDs.push(isString(plyr.get(`playerStageID-${stage.id}`)));
+        otherParticipantIDs.push(plyr.participantID!);
+      }
+    }
+
+    await this.addLinks([
+      // Add links for new player with games and other players.
+      {
+        link: true,
+        participantIDs: [player.participantID!],
+        nodeIDs: newPlayerNodeIDs,
+      },
+      // Add links for other players with new player.
+      {
+        link: true,
+        participantIDs: otherParticipantIDs,
+        nodeIDs: otherNodeIDs,
+      },
+    ]);
+  }
+
+  // Remove player from running game
+  private removePlayer(player: Player) {
+    if (!this.isRunning) {
+      return;
+    }
+
+    const participantIDs = [player.participantID!];
+    const otherParticipantIDs = [];
+    const groupID = isString(this.get("groupID"));
+    const nodeIDs = [this.id, groupID, player.id];
+    const otherNodeIDs = [player.id];
+
+    const stage = this.currentStage;
+    if (!stage) {
+      return;
+    }
+
+    const timerID = stage.get("timerID") as string;
+    if (timerID) {
+      nodeIDs.push(timerID);
+    }
+
+    nodeIDs.push(stage.id);
+
+    const round = stage.round;
+    if (!round) {
+      return;
+    }
+
+    // Gotta inject player since it might have lost its gameID.
+    const players = [...this.players, player];
+    for (const plyr of players) {
+      nodeIDs.push(isString(plyr.get(`playerRoundID-${round.id}`)));
+      nodeIDs.push(isString(plyr.get(`playerStageID-${stage.id}`)));
+      nodeIDs.push(isString(plyr.get(`playerGameID-${this.id}`)));
+
+      if (player.id !== plyr.id) {
+        nodeIDs.push(plyr.id);
+        otherParticipantIDs.push(plyr.participantID!);
+      } else {
+        otherNodeIDs.push(isString(plyr.get(`playerRoundID-${round.id}`)));
+        otherNodeIDs.push(isString(plyr.get(`playerStageID-${stage.id}`)));
+        otherNodeIDs.push(isString(plyr.get(`playerGameID-${this.id}`)));
+      }
+    }
+
+    this.addLinks([
+      { link: false, participantIDs, nodeIDs },
+      {
+        link: false,
+        participantIDs: otherParticipantIDs,
+        nodeIDs: otherNodeIDs,
+      },
+    ]);
   }
 
   addRound(attributes: { [key: string]: JsonValue } | AttributeInput[]) {
@@ -317,6 +495,48 @@ export class Game extends BatchOwned {
 
     stage.end("ended", reason);
   }
+
+  async createPlayerGame(player: Player) {
+    const key = `playerGameID-${this.id}`;
+    if (player.get(key)) {
+      return isString(player.get(key));
+    }
+
+    const batchID = isString(this.get("batchID"));
+
+    const playerGames = await this.addScopes([
+      {
+        kind: "playerGame",
+        attributes: attrs([
+          {
+            key: "batchID",
+            value: batchID,
+            immutable: true,
+          },
+          {
+            key: "gameID",
+            value: this.id,
+            immutable: true,
+          },
+          {
+            key: "playerID",
+            value: player.id,
+            immutable: true,
+          },
+        ]),
+      },
+    ]);
+
+    if (playerGames.length < 1) {
+      error(`failed to create playerGame`);
+
+      return;
+    }
+
+    player.set(key, playerGames[0]!.id);
+
+    return playerGames[0]!.id;
+  }
 }
 
 export class GameOwned extends BatchOwned {
@@ -461,6 +681,54 @@ export class Round extends GameOwned {
 
     return accessors;
   }
+
+  async createPlayerRound(player: Player) {
+    const key = `playerRoundID-${this.id}`;
+    if (player.get(key)) {
+      return isString(player.get(key));
+    }
+
+    const gameID = isString(this.get("gameID"));
+    const batchID = isString(this.get("batchID"));
+
+    const playerRounds = await this.addScopes([
+      {
+        kind: "playerRound",
+        attributes: attrs([
+          {
+            key: "batchID",
+            value: batchID,
+            immutable: true,
+          },
+          {
+            key: "gameID",
+            value: gameID,
+            immutable: true,
+          },
+          {
+            key: "roundID",
+            value: this.id,
+            immutable: true,
+          },
+          {
+            key: "playerID",
+            value: player.id,
+            immutable: true,
+          },
+        ]),
+      },
+    ]);
+
+    if (playerRounds.length < 1) {
+      error(`failed to create playerRound`);
+
+      return;
+    }
+
+    player.set(key, playerRounds[0]!.id);
+
+    return playerRounds[0]!.id;
+  }
 }
 
 export class Stage extends GameOwned {
@@ -484,6 +752,60 @@ export class Stage extends GameOwned {
         cause: reason,
       },
     ]);
+  }
+
+  async createPlayerStage(player: Player) {
+    const key = `playerStageID-${this.id}`;
+    if (player.get(key)) {
+      return isString(player.get(key));
+    }
+
+    const roundID = isString(this.get("roundID"));
+    const gameID = isString(this.get("gameID"));
+    const batchID = isString(this.get("batchID"));
+
+    const playerStages = await this.addScopes([
+      {
+        kind: "playerStage",
+        attributes: attrs([
+          {
+            key: "batchID",
+            value: batchID,
+            immutable: true,
+          },
+          {
+            key: "gameID",
+            value: gameID,
+            immutable: true,
+          },
+          {
+            key: "roundID",
+            value: roundID,
+            immutable: true,
+          },
+          {
+            key: "stageID",
+            value: this.id,
+            immutable: true,
+          },
+          {
+            key: "playerID",
+            value: player.id,
+            immutable: true,
+          },
+        ]),
+      },
+    ]);
+
+    if (playerStages.length < 1) {
+      error(`failed to create playerStage`);
+
+      return;
+    }
+
+    player.set(key, playerStages[0]!.id);
+
+    return playerStages[0]!.id;
   }
 }
 
@@ -510,3 +832,26 @@ export const classicKinds = {
   round: Round,
   stage: Stage,
 };
+
+export class EventProxy {
+  constructor(private ctx: EventContext<Context, ClassicKinds>) {}
+
+  // Returns all loaded Batches.
+  get batches() {
+    return Array.from(this.ctx.scopesByKind<Batch>("batch").values());
+  }
+
+  // Returns all loaded Games accross Batches.
+  get games() {
+    return Array.from(this.ctx.scopesByKind<Game>("game").values());
+  }
+
+  // Returns all loaded Players accross all Games.
+  get players() {
+    return Array.from(this.ctx.scopesByKind<Player>("player").values());
+  }
+}
+
+export function evt(ctx: EventContext<Context, ClassicKinds>) {
+  return new EventProxy(ctx);
+}
