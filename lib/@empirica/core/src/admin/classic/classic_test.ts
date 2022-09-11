@@ -352,7 +352,8 @@ t(
         const player1 = players.get(0)!;
         player1.player!.set("introDone", true);
 
-        await sleep(300); // game start, reassign
+        await player1.awaitGameExist();
+        await sleep(300); // reassign
 
         distribution.clear();
         for (const player of players) {
@@ -775,3 +776,77 @@ t("new players can be assigned to a started game", async (t) => {
     }
   );
 });
+
+t(
+  "players in a game can be assigned to a different started game",
+  async (t) => {
+    await withContext(
+      t,
+      2,
+      async ({ admin, players, callbacks }) => {
+        const batch = await admin.createBatch(completeBatchConfig(1, 2));
+        await sleep(200); // games get created
+        batch.running();
+
+        await players.awaitPlayerExist();
+
+        const playersMap = callbacks._runloop?._scopes.byKind("player")!;
+        const playersSrv = Array.from(playersMap.values()!) as Player[];
+        t.is(playersSrv!.length, 2);
+
+        const gamesMap = callbacks._runloop?._scopes.byKind("game")!;
+        const games = Array.from(gamesMap.values()!);
+        t.is(games!.length, 2);
+
+        const game1 = games[0]! as Game;
+        const game2 = games[1]! as Game;
+
+        const player1 = players.get(0)!;
+        const player2 = players.get(1)!;
+
+        game1.assignPlayer(playersMap.get(player1.player!.id) as Player);
+        game2.assignPlayer(playersMap.get(player2.player!.id) as Player);
+        await callbacks._runloop?._postCallback();
+
+        await players.awaitPlayerKeyExist("gameID");
+
+        await sleep(200);
+
+        for (const player of players) {
+          player.player!.set("introDone", true);
+        }
+
+        await players.awaitGameExist();
+        await players.awaitRoundExist();
+        await players.awaitStageExist();
+
+        t.is(player1.player?.get("gameID"), game1.id);
+        t.is(player2.player?.get("gameID"), game2.id);
+
+        await game1.assignPlayer(playersMap.get(player2.player!.id) as Player);
+        await callbacks._runloop?._postCallback();
+
+        await sleep(200);
+
+        t.is(player1.player?.get("gameID"), game1.id);
+        t.is(player2.player?.get("gameID"), game1.id);
+
+        t.is(player1.round!.id, player2.round!.id);
+        t.is(player1.stage!.id, player2.stage!.id);
+
+        for (const player of players) {
+          t.truthy(player.player?.round);
+          t.truthy(player.player?.stage);
+          for (const plyr of player.players!) {
+            t.truthy(plyr.round);
+            t.truthy(plyr.stage);
+          }
+        }
+      },
+      {
+        listeners: gameInitCallbacks(2),
+        disableAssignment: true,
+      }
+    );
+  }
+);

@@ -4,7 +4,6 @@ import { spawn } from "child_process";
 import fs from "fs";
 import readline from "readline";
 import { z } from "zod";
-// import { Globals as PlayerGlobals } from "../../player";
 import { EmpiricaClassic, EmpiricaClassicContext } from "../../player/classic";
 import { MemStorage, ParticipantSession } from "../../player/connection";
 import { ParticipantModeContext } from "../../player/context";
@@ -127,8 +126,8 @@ export async function startTajriba(): Promise<TajServer> {
 
   const port = await portProm;
 
-  // Wait to make sure HTTP server is ready.
-  await sleep(100);
+  // Wait to make sure HTTP server is ready with all endpoints.
+  await sleep(200);
 
   let stopped = false;
   return {

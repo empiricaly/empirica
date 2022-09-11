@@ -1,4 +1,5 @@
 import { State } from "@empirica/tajriba";
+import { z } from "zod";
 import { Attribute } from "../../shared/attributes";
 import { debug, error, trace, warn } from "../../utils/console";
 import { deepEqual } from "../../utils/object";
@@ -19,7 +20,6 @@ import {
   Stage,
 } from "./models";
 import { batchConfigSchema, treatmentSchema } from "./schemas";
-import { z } from "zod";
 
 // const isBatch = z.instanceof(Batch).parse;
 const isGame = z.instanceof(Game).parse;
@@ -469,6 +469,10 @@ export function Classic(config: ClassicConfig = {}) {
 
         const stage = isStage(game.stages.find((s) => s.id === stageID));
 
+        if (stage.get("start")) {
+          return;
+        }
+
         const participantIDs: string[] = [];
         const nodeIDs = [round.id];
         for (const player of game.players) {
@@ -507,6 +511,17 @@ export function Classic(config: ClassicConfig = {}) {
       "start",
       (ctx, { stage, start }: AfterStageStart) => {
         if (!start) return;
+
+        // NOTE: this is a hack to get the stage to start only once
+        // TODO ensure that this is only called once.
+        // Currently, it is can  be called multiple times wit the start == true
+        // value, despite the unique.before hook above. This is because the
+        // unique.before hook is not called when the attribute is set to true
+        // but meanwhile the value is becomes true.
+        if (stage.get("started")) {
+          return;
+        }
+        stage.set("started", true);
 
         const game = isGame(stage.currentGame);
 

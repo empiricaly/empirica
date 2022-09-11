@@ -226,17 +226,14 @@ export class Game extends BatchOwned {
       }
     }
 
-    // Add links for new player with games and other players.
     await this.addLinks([
+      // Add links for new player with games and other players.
       {
         link: true,
         participantIDs: [player.participantID!],
         nodeIDs: newPlayerNodeIDs,
       },
-    ]);
-
-    // Add links for other players with new player.
-    await this.addLinks([
+      // Add links for other players with new player.
       {
         link: true,
         participantIDs: otherParticipantIDs,
@@ -252,45 +249,53 @@ export class Game extends BatchOwned {
     }
 
     const participantIDs = [player.participantID!];
+    const otherParticipantIDs = [];
     const groupID = isString(this.get("groupID"));
     const nodeIDs = [this.id, groupID, player.id];
+    const otherNodeIDs = [player.id];
 
-    const roundIDs: string[] = [];
-    const rounds = this.scopesByKindMatching<Round>("round", "gameID", this.id);
-    for (const round of rounds) {
-      nodeIDs.push(round.id);
-      roundIDs.push(round.id);
+    const stage = this.currentStage;
+    if (!stage) {
+      return;
     }
 
-    const stageIDs: string[] = [];
-    const stages = this.scopesByKindMatching<Stage>("stage", "gameID", this.id);
-    for (const stage of stages) {
-      nodeIDs.push(stage.id);
-      const timerID = stage.get("timerID") as string;
-      if (timerID) {
-        nodeIDs.push(timerID);
-      }
-      stageIDs.push(stage.id);
+    const timerID = stage.get("timerID") as string;
+    if (timerID) {
+      nodeIDs.push(timerID);
+    }
+
+    nodeIDs.push(stage.id);
+
+    const round = stage.round;
+    if (!round) {
+      return;
     }
 
     // Gotta inject player since it might have lost its gameID.
     const players = [...this.players, player];
-    for (const player of players) {
-      for (const roundID of roundIDs) {
-        nodeIDs.push(isString(player.get(`playerRoundID-${roundID}`)));
-      }
-      for (const stageID of stageIDs) {
-        nodeIDs.push(isString(player.get(`playerStageID-${stageID}`)));
-      }
+    for (const plyr of players) {
+      nodeIDs.push(isString(plyr.get(`playerRoundID-${round.id}`)));
+      nodeIDs.push(isString(plyr.get(`playerStageID-${stage.id}`)));
+      nodeIDs.push(isString(plyr.get(`playerGameID-${this.id}`)));
 
-      nodeIDs.push(player.id);
-      const playerGameID = player.get(`playerGameID-${this.id}`) as string;
-      if (playerGameID) {
-        nodeIDs.push(playerGameID);
+      if (player.id !== plyr.id) {
+        nodeIDs.push(plyr.id);
+        otherParticipantIDs.push(plyr.participantID!);
+      } else {
+        otherNodeIDs.push(isString(plyr.get(`playerRoundID-${round.id}`)));
+        otherNodeIDs.push(isString(plyr.get(`playerStageID-${stage.id}`)));
+        otherNodeIDs.push(isString(plyr.get(`playerGameID-${this.id}`)));
       }
     }
 
-    this.addLinks([{ link: false, participantIDs, nodeIDs }]);
+    this.addLinks([
+      { link: false, participantIDs, nodeIDs },
+      {
+        link: false,
+        participantIDs: otherParticipantIDs,
+        nodeIDs: otherNodeIDs,
+      },
+    ]);
   }
 
   addRound(attributes: { [key: string]: JsonValue } | AttributeInput[]) {

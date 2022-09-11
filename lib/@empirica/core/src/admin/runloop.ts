@@ -199,7 +199,6 @@ export class Runloop<
       }
 
       const attrs = Object.values(uniqueAttrs);
-      // trace(`setting attributes: ${JSON.stringify(attrs)}`);
 
       promises.push(this.taj.setAttributes(attrs));
       this.attributeInputs = [];

@@ -105,6 +105,7 @@ export class Attributes extends SharedAttributes {
     for (const [kind, key, attrChange] of updates) {
       // Forcing nodeID because we already tested it above.
       const nodeID = attrChange.nodeID || attrChange.node!.id;
+
       // Forcing attr because we already tested it above.
       const attr = this.attrs.get(nodeID)!.get(key)!;
       const sub = this.attribSubs.get(kind)?.get(key);

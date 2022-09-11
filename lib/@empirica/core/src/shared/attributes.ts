@@ -53,6 +53,7 @@ export class Attributes {
         this.update(attribute, removed);
       },
     });
+
     donesObs.subscribe({
       next: this.next.bind(this),
     });

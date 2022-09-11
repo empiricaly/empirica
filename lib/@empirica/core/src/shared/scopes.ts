@@ -89,7 +89,7 @@ export class Scopes<
 
     if (removed) {
       if (!existing) {
-        warn("scopes: missing scope on removal");
+        warn("scopes: missing scope on removal", scope.id, scope.kind);
 
         return;
       }
