@@ -511,7 +511,7 @@ t("when all games started, experiment closes", async (t) => {
 
       await player1.awaitGame();
 
-      await sleep(200); // experiment closing
+      await sleep(500); // experiment closing
 
       for (const player of players) {
         t.is(player.globals.get("experimentOpen"), false);
@@ -549,10 +549,11 @@ t("when game terminated, players are kicked", async (t) => {
 
       await game.end("terminated", "testing");
 
-      await sleep(100);
+      await players.awaitPlayerKeyExist("ended");
 
       for (const player of players) {
-        t.falsy(player.player!.get("ended"));
+        t.truthy(player.game);
+        t.truthy(player.player!.get("ended"));
       }
     },
     {
@@ -586,11 +587,11 @@ t("when last game terminated, batch ends", async (t) => {
 
       await game.end("terminated", "testing");
 
-      // await players.awaitGame();
-      await sleep(100);
+      await players.awaitPlayerKeyExist("ended");
 
       for (const player of players) {
-        t.falsy(player.player!.get("ended"));
+        t.truthy(player.game);
+        t.truthy(player.player!.get("ended"));
       }
     },
     {
@@ -805,8 +806,8 @@ t(
         const player1 = players.get(0)!;
         const player2 = players.get(1)!;
 
-        game1.assignPlayer(playersMap.get(player1.player!.id) as Player);
-        game2.assignPlayer(playersMap.get(player2.player!.id) as Player);
+        await game1.assignPlayer(playersMap.get(player1.player!.id) as Player);
+        await game2.assignPlayer(playersMap.get(player2.player!.id) as Player);
         await callbacks._runloop?._postCallback();
 
         await players.awaitPlayerKeyExist("gameID");
@@ -851,3 +852,46 @@ t(
     );
   }
 );
+
+// t("existing assigned players can see each other", async (t) => {
+//   await withContext(
+//     t,
+//     2,
+//     async ({ admin, players, callbacks }) => {
+//       const batch = await admin.createBatch(completeBatchConfig(1));
+//       await sleep(1000); // games get created
+//       batch.running();
+
+//       await players.awaitPlayerExist();
+
+//       const playersMap = callbacks._runloop?._scopes.byKind("player")!;
+//       const playersSrv = Array.from(playersMap.values()!) as Player[];
+//       t.is(playersSrv!.length, 2);
+
+//       const gamesMap = callbacks._runloop?._scopes.byKind("game")!;
+//       const games = Array.from(gamesMap.values()!);
+//       t.is(games!.length, 1);
+
+//       const game1 = games[0]! as Game;
+
+//       const player1 = players.get(0)!;
+//       const player2 = players.get(1)!;
+
+//       await game1.assignPlayer(playersMap.get(player1.player!.id) as Player);
+//       await game1.assignPlayer(playersMap.get(player2.player!.id) as Player);
+//       await callbacks._runloop?._postCallback();
+
+//       await players.awaitPlayerKeyExist("gameID");
+
+//       await players.awaitPlayersCount(2);
+
+//       for (const player of players) {
+//         t.truthy(player.player?.get("gameID"));
+//         t.is(player.players!.length, 2);
+//       }
+//     },
+//     {
+//       disableAssignment: true,
+//     }
+//   );
+// });

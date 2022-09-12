@@ -318,6 +318,10 @@ export class Playrs {
   async awaitPlayers() {
     return await Promise.all(this.playrs.map((p) => p.awaitPlayers()));
   }
+
+  async awaitPlayersCount(num: number) {
+    return await Promise.all(this.playrs.map((p) => p.awaitPlayersCount(num)));
+  }
 }
 
 export class Playr {
@@ -419,6 +423,18 @@ export class Playr {
 
   async awaitPlayers() {
     return await awaitObsValueChange(this.mode!.players);
+  }
+
+  async awaitPlayersCount(num: number) {
+    if (this.mode!.players.getValue()?.length === num) {
+      return;
+    }
+    while (true) {
+      await awaitObsValueChange(this.mode!.players);
+      if (this.mode!.players.getValue()?.length === num) {
+        return;
+      }
+    }
   }
 }
 
