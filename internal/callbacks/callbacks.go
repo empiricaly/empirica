@@ -78,7 +78,7 @@ func Start(
 	config *Config,
 ) (*Callbacks, error) {
 	termui := term.ForContext(ctx)
-	comp := termui.Add("callbacks")
+	comp := termui.Add("server")
 	isDefaultCmd := config.DevCmd == defaultDevCommand
 
 	p := &Callbacks{

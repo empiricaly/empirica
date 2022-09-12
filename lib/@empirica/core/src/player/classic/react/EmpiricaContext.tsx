@@ -4,6 +4,7 @@ import { Finished } from "../../react/Finished";
 import {
   useConsent,
   useGlobal,
+  usePartConnected,
   usePlayerID,
   useTajribaConnected,
 } from "../../react/hooks";
@@ -40,6 +41,7 @@ export function EmpiricaContext({
   children,
 }: EmpiricaContextProps) {
   const tajribaConnected = useTajribaConnected();
+  const participantConnected = usePartConnected();
   const globals = useGlobal();
   const player = usePlayer();
   const game = useGame();
@@ -54,7 +56,13 @@ export function EmpiricaContext({
     return <Exit exitSteps={exitSteps} finished={finished} />;
   }
 
-  if (!game && (!globals || !globals.get("experimentOpen"))) {
+  // If globals not yet loaded or we are connected to participant but player
+  // hasn't loaded yet.
+  if (!globals || (participantConnected && !player)) {
+    return <LoadingComp />;
+  }
+
+  if (!game && !globals.get("experimentOpen")) {
     return <NoGamesComp />;
   }
 

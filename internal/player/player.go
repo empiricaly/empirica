@@ -70,7 +70,7 @@ func Start(
 	os.Setenv("FORCE_COLOR", "3")
 
 	termui := term.ForContext(ctx)
-	comp := termui.Add("player")
+	comp := termui.Add("client")
 	isDefaultCmd := config.DevCmd == defaultDevCommand
 
 	p := &Player{

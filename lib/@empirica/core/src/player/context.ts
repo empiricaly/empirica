@@ -62,6 +62,14 @@ export class ParticipantContext {
     });
   }
 
+  get connecting() {
+    return this.participant.connecting;
+  }
+
+  get connected() {
+    return this.participant.connected;
+  }
+
   async register(playerIdentifier: string) {
     if (!this.tajriba.connected.getValue()) {
       throw ErrNotConnected;
