@@ -164,16 +164,69 @@ export class Game extends BatchOwned {
     // starting and we change the gameID too late, we might allow that previous
     // Game to start with this player.
     if (previousGameID) {
-      this.scopeByID<Game>(<string>previousGameID)?.removePlayer(player);
+      await this.scopeByID<Game>(<string>previousGameID)?.removePlayer(player);
     }
 
     // Add player to running game.
     await this.addPlayer(player);
   }
 
+  private async addPlayerToGroup(player: Player) {
+    if (this.hasEnded) {
+      return;
+    }
+
+    // add link between participant and groupID of game
+    const groupID = this.get("groupID") as string;
+    if (!groupID || !player.participantID) {
+      return;
+    }
+
+    await this.addLinks([
+      {
+        link: true,
+        participantIDs: this.players
+          .map((p) => p.participantID!)
+          .filter((p) => p),
+        nodeIDs: [...this.players.map((p) => p.id), groupID],
+      },
+    ]);
+  }
+
+  private async removePlayerFromGroup(player: Player) {
+    if (this.hasEnded) {
+      return;
+    }
+
+    // add link between participant and groupID of game
+    const groupID = this.get("groupID") as string;
+    if (!groupID || !player.participantID) {
+      return;
+    }
+
+    await this.addLinks([
+      // Add links for new player with games and other players.
+      {
+        link: false,
+        participantIDs: [player.participantID!],
+        nodeIDs: [groupID],
+      },
+      // Add links for other players with new player.
+      {
+        link: false,
+        participantIDs: this.players
+          .map((p) => p.participantID!)
+          .filter((p) => p && p !== player.participantID),
+        nodeIDs: [player.id],
+      },
+    ]);
+  }
+
   // Add player to running game
   private async addPlayer(player: Player) {
     if (!this.isRunning) {
+      // await this.addPlayerToGroup(player);
+
       return;
     }
 
@@ -212,6 +265,7 @@ export class Game extends BatchOwned {
     newPlayerNodeIDs.push(playerGameID!);
     newPlayerNodeIDs.push(playerRoundID!);
     newPlayerNodeIDs.push(playerStageID!);
+    otherNodeIDs.push(player.id);
     otherNodeIDs.push(playerGameID!);
     otherNodeIDs.push(playerRoundID!);
     otherNodeIDs.push(playerStageID!);
@@ -243,8 +297,10 @@ export class Game extends BatchOwned {
   }
 
   // Remove player from running game
-  private removePlayer(player: Player) {
+  private async removePlayer(player: Player) {
     if (!this.isRunning) {
+      // await this.removePlayerFromGroup(player);
+
       return;
     }
 
@@ -288,7 +344,7 @@ export class Game extends BatchOwned {
       }
     }
 
-    this.addLinks([
+    await this.addLinks([
       { link: false, participantIDs, nodeIDs },
       {
         link: false,

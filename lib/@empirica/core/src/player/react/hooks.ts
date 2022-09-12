@@ -1,10 +1,10 @@
 import { useContext, useEffect, useState } from "react";
 import { merge, Observable } from "rxjs";
-import { TajribaConnection } from "../../shared/tajriba_connection";
 import { Globals } from "../../shared/globals";
+import { TajribaConnection } from "../../shared/tajriba_connection";
+import { Session } from "../connection";
 import { ParticipantContext } from "../context";
 import { ParticipantCtx } from "./EmpiricaParticipant";
-import { Session } from "../connection";
 
 export function useParticipantContext() {
   return useContext(ParticipantCtx);
@@ -16,6 +16,14 @@ export function useTajribaConnecting() {
 
 export function useTajribaConnected() {
   return useTajribaCtxKey<boolean, "connected">("connected");
+}
+
+export function usePartConnecting() {
+  return usePartCtxKey<boolean, "connecting">("connecting");
+}
+
+export function usePartConnected() {
+  return usePartCtxKey<boolean, "connected">("connected");
 }
 
 export function useTajriba() {

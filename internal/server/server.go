@@ -77,6 +77,9 @@ func (s *Server) Start(ctx context.Context) (err error) {
 
 		<-ctx.Done()
 
+		// Give time for node to close gracefully.
+		time.Sleep(time.Second)
+
 		log.Debug().Msg("server: stopping")
 		s.wg.Add(1)
 
