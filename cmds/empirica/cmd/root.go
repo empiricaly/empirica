@@ -64,7 +64,7 @@ func root(_ *cobra.Command, _ []string, usingConfigFile *bool) error {
 		return errors.Wrap(err, "check node")
 	}
 
-	conf := getConfig()
+	conf := getConfig(true)
 
 	t, err := empirica.Start(ctx, conf, *usingConfigFile)
 	if err != nil {

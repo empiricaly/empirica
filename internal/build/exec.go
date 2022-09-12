@@ -156,46 +156,50 @@ func DownloadBinary(build *Build, fileName string) error {
 	defer cancel()
 
 	req = req.WithContext(ctx)
-
-	m := model{
-		url:      u.String(),
-		progress: progress.New(progress.WithGradient("#5098E7", "#1965B8")),
-	}
-
-	lipgloss.SetColorProfile(termenv.TrueColor)
-	lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
-
-	p := tea.NewProgram(m)
-
-	go func() {
-		if err := p.Start(); err != nil {
-			fmt.Fprintf(os.Stderr, "Error running program: %v\n", err)
-
-			os.Exit(1)
-		}
-	}()
-
 	resp := client.Do(req)
 
-	t := time.NewTicker(dowloadUIRefreshRate)
-	defer t.Stop()
+	fileInfo, _ := os.Stdout.Stat()
+	hasTTY := (fileInfo.Mode() & os.ModeCharDevice) != 0
 
-Loop:
-	for {
-		select {
-		case <-t.C:
-			p.Send(progressMsg(resp.Progress()))
-
-		case <-resp.Done:
-			p.Send(progressMsg(1))
-
-			// download is complete
-			break Loop
+	if hasTTY {
+		m := model{
+			url:      u.String(),
+			progress: progress.New(progress.WithGradient("#5098E7", "#1965B8")),
 		}
-	}
 
-	time.Sleep(dowloadDoneWait)
-	p.ReleaseTerminal()
+		lipgloss.SetColorProfile(termenv.TrueColor)
+		lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
+
+		p := tea.NewProgram(m)
+
+		go func() {
+			if err := p.Start(); err != nil {
+				fmt.Fprintf(os.Stderr, "Error running program: %v\n", err)
+
+				os.Exit(1)
+			}
+		}()
+
+		t := time.NewTicker(dowloadUIRefreshRate)
+		defer t.Stop()
+
+	Loop:
+		for {
+			select {
+			case <-t.C:
+				p.Send(progressMsg(resp.Progress()))
+
+			case <-resp.Done:
+				p.Send(progressMsg(1))
+
+				// download is complete
+				break Loop
+			}
+		}
+
+		time.Sleep(dowloadDoneWait)
+		p.ReleaseTerminal()
+	}
 
 	// check for errors
 	if err := resp.Err(); err != nil {
