@@ -18,7 +18,7 @@ export default defineConfig({
       allow: [
         // search up for workspace root
         searchForWorkspaceRoot(process.cwd()),
-        // @empirica/player lookup for windi
+        // @empirica/core lookup for windi
         "./node_modules/@empirica/core/dist/**/*.{js,ts,jsx,tsx}",
         "./node_modules/@empirica/core/assets/**/*.css",
       ],

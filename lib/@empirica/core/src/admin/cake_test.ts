@@ -114,7 +114,7 @@ function setupLayer(props: typeof setupLayerProps = setupLayerProps) {
     };
   }
 
-  const listeners = new ListenersCollector();
+  const listeners = new ListenersCollector<Context, AdminKinds>();
   listeners.on("game", (_, props) => {
     called.game.push(props);
   });
@@ -411,7 +411,7 @@ test.serial("Cake transition subs with postCallback", async (t) => {
 test.serial("Cake callbacks called in correct order", async (t) => {
   const { cake, kindsSubs } = setupLayer();
 
-  const listeners = new ListenersCollector();
+  const listeners = new ListenersCollector<Context, AdminKinds>();
 
   const vals: string[] = [];
   listeners.after("game", () => {
@@ -446,7 +446,7 @@ test.serial("Cake callbacks called in correct order", async (t) => {
 test.serial("Cake callbacks in order over multiple listeners", async (t) => {
   const { cake, kindsSubs } = setupLayer();
 
-  const listeners1 = new ListenersCollector();
+  const listeners1 = new ListenersCollector<Context, AdminKinds>();
 
   const vals: string[] = [];
   listeners1.after("game", () => {
@@ -457,7 +457,7 @@ test.serial("Cake callbacks in order over multiple listeners", async (t) => {
     vals.push("none1");
   });
 
-  const listeners2 = new ListenersCollector();
+  const listeners2 = new ListenersCollector<Context, AdminKinds>();
 
   listeners2.on("game", () => {
     vals.push("none2");

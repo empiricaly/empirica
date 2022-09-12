@@ -68,7 +68,7 @@ interface TajServer {
 }
 
 export async function withTajriba(
-  t: ExecutionContext,
+  _: ExecutionContext,
   fn: (port: number) => void
 ) {
   const srv = await startTajriba();

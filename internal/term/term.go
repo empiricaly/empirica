@@ -39,9 +39,13 @@ func (ui *UI) Stop() {
 }
 
 func init() {
-	lipgloss.SetColorProfile(termenv.TrueColor)
-	lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
-	// lipgloss.SetHasDarkBackground(true)
+	fileInfo, _ := os.Stdout.Stat()
+	hasTTY := (fileInfo.Mode() & os.ModeCharDevice) != 0
+
+	if hasTTY {
+		lipgloss.SetColorProfile(termenv.TrueColor)
+		lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
+	}
 }
 
 func (ui *UI) printClean() {

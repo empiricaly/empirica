@@ -299,7 +299,6 @@ export function Classic(config: ClassicConfig = {}) {
         case "ended":
         case "terminated":
           for (const player of game.players) {
-            player.set("gameID", null);
             player.set("ended", `game ${status}`);
           }
 

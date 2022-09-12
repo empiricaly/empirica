@@ -18,7 +18,7 @@ import { ClassicKinds, Context, Game, Player } from "./models";
 
 const t = test;
 // const t = test.serial;
-const to = test.only;
+// const to = test.only;
 
 t("ready called when ready", async (t) => {
   await withTajriba(t, async (port: number) => {
@@ -549,10 +549,10 @@ t("when game terminated, players are kicked", async (t) => {
 
       await game.end("terminated", "testing");
 
-      await players.awaitGame();
+      await sleep(100);
 
       for (const player of players) {
-        t.falsy(player.game);
+        t.falsy(player.player!.get("ended"));
       }
     },
     {
@@ -586,10 +586,11 @@ t("when last game terminated, batch ends", async (t) => {
 
       await game.end("terminated", "testing");
 
-      await players.awaitGame();
+      // await players.awaitGame();
+      await sleep(100);
 
       for (const player of players) {
-        t.falsy(player.game);
+        t.falsy(player.player!.get("ended"));
       }
     },
     {

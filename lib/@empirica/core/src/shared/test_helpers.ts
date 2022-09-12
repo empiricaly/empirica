@@ -17,6 +17,7 @@ import {
 import { ExecutionContext } from "ava";
 import { Observable, Subject } from "rxjs";
 import { fake, replace, SinonSpy } from "sinon";
+import { Scopes } from "../admin";
 import { Finalizer, TajribaAdminAccess } from "../admin/context";
 import { EventContext } from "../admin/events";
 import { Globals } from "../admin/globals";
@@ -618,7 +619,11 @@ export function setupEventContext() {
     })
   );
 
-  const ctx = new EventContext<Context, AdminKinds>(coll, mut);
+  const ctx = new EventContext<Context, AdminKinds>(
+    coll,
+    mut,
+    <Scopes<Context, AdminKinds>>{}
+  );
 
   return { coll, res, ctx, called, globals };
 }

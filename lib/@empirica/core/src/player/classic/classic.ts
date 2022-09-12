@@ -297,7 +297,6 @@ function getMainObjects(
   for (const player of res.players) {
     const key = `playerGameID-${res.game.id}`;
     if (!nextScopeByKey(scopes, attributes, player, key)) {
-      delete res.game;
       return res;
     }
   }
