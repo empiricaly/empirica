@@ -77,6 +77,7 @@ jobs:
         with:
           push: true
           file: ./build/Dockerfile.empirica
+          context: .
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_SHA_SHORT }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_NUM }}

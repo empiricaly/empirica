@@ -32,7 +32,7 @@ ENV PATH $VOLTA_HOME/bin:$PATH
 RUN curl https://get.volta.sh | bash
 RUN volta install node
 
-COPY out/empirica-linux-amd64 ./empirica
+COPY ./out/empirica-linux-amd64 ./empirica
 
-ENTRYPOINT ["volta", "list"]
+ENTRYPOINT ["/app/empirica"]
 
