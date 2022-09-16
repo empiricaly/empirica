@@ -16,6 +16,28 @@ func Init(name, dir string) error {
 	return errors.Wrapf(CreateEmpiricaDir(name, dir), "setup %s", EmpiricaDir)
 }
 
+var ErrEmpiricaDirMissing = errors.New("empirica directory missing")
+
+func Check(name, dir string) error {
+	empDir := path.Join(dir, EmpiricaDir)
+
+	if _, err := os.Stat(empDir); os.IsNotExist(err) {
+		return ErrEmpiricaDirMissing
+	}
+
+	if err := fillEmpiricaDir(empDir, name); err != nil {
+		return errors.Wrap(err, "fill empirica dir")
+	}
+
+	localDir := path.Join(empDir, LocalDir)
+
+	if err := createDir(localDir); err != nil {
+		return errors.Wrap(err, "create empirica local dir")
+	}
+
+	return errors.Wrapf(CreateEmpiricaDir(name, dir), "setup %s", EmpiricaDir)
+}
+
 const (
 	EmpiricaDir = ".empirica"
 	LocalDir    = "local"
@@ -70,12 +92,25 @@ func ReadIDFile(dir string) (string, error) {
 
 func CreateEmpiricaDir(name, dir string) error {
 	empDir := path.Join(dir, EmpiricaDir)
-	localDir := path.Join(empDir, LocalDir)
 
 	if err := createDir(empDir); err != nil {
-		return errors.Wrapf(err, "%s dir", EmpiricaDir)
+		return errors.Wrapf(err, "create %s dir", EmpiricaDir)
 	}
 
+	if err := fillEmpiricaDir(empDir, name); err != nil {
+		return errors.Wrap(err, "fill empirica dir")
+	}
+
+	localDir := path.Join(empDir, LocalDir)
+
+	if err := createDir(localDir); err != nil {
+		return errors.Wrap(err, "create empirica local dir")
+	}
+
+	return nil
+}
+
+func fillEmpiricaDir(empDir, name string) error {
 	giti := path.Join(empDir, ".gitignore")
 
 	if err := writeFile(giti, []byte(gitignore)); err != nil {
@@ -86,6 +121,10 @@ func CreateEmpiricaDir(name, dir string) error {
 
 	if err := writeFile(idfile, []byte(randSeq(idLen))); err != nil {
 		return errors.Wrap(err, "write id file")
+	}
+
+	if name == "" {
+		name = "myexperiment"
 	}
 
 	tomlFile := path.Join(empDir, EmpiricaTOML)
@@ -99,10 +138,6 @@ func CreateEmpiricaDir(name, dir string) error {
 
 	if err := writeFile(yamlFile, []byte(treatmentsyaml)); err != nil {
 		return errors.Wrap(err, "write treatments file")
-	}
-
-	if err := createDir(localDir); err != nil {
-		return errors.Wrap(err, "empirica dir")
 	}
 
 	return nil

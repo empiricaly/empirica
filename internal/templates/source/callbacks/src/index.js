@@ -12,7 +12,6 @@ import { Empirica } from "./callbacks";
 const argv = minimist(process.argv.slice(2), { string: ["token"] });
 
 setLogLevel(argv["loglevel"] || "info");
-setLogLevel("trace");
 
 (async () => {
   const ctx = await AdminContext.init(
