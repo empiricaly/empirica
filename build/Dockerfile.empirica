@@ -1,0 +1,38 @@
+FROM ubuntu:jammy
+
+WORKDIR /app
+
+# Basics
+########
+
+RUN apt-get update && \
+  DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -y  \
+  curl \
+  ca-certificates \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/* \
+  && apt-get autoremove -y \
+  && update-ca-certificates
+
+# Node
+######
+
+# Bash will load volta() function via .bashrc using $VOLTA_HOME/load.sh
+SHELL ["/bin/bash", "-c"]
+
+# Since we're starting non-interactive shell, 
+# we wil need to tell bash to load .bashrc manually
+ENV BASH_ENV ~/.bashrc
+# Needed by volta() function
+ENV VOLTA_HOME /root/.volta
+# Make sure packages managed by volta will be in PATH
+ENV PATH $VOLTA_HOME/bin:$PATH
+
+# Install volta
+RUN curl https://get.volta.sh | bash
+RUN volta install node
+
+COPY ./out/empirica-linux-amd64 ./empirica
+
+ENTRYPOINT ["/app/empirica"]
+

@@ -171,56 +171,56 @@ export class Game extends BatchOwned {
     await this.addPlayer(player);
   }
 
-  private async addPlayerToGroup(player: Player) {
-    if (this.hasEnded) {
-      return;
-    }
+  // private async addPlayerToGroup(player: Player) {
+  //   if (this.hasEnded) {
+  //     return;
+  //   }
 
-    // add link between participant and groupID of game
-    const groupID = this.get("groupID") as string;
-    if (!groupID || !player.participantID) {
-      return;
-    }
+  //   // add link between participant and groupID of game
+  //   const groupID = this.get("groupID") as string;
+  //   if (!groupID || !player.participantID) {
+  //     return;
+  //   }
 
-    await this.addLinks([
-      {
-        link: true,
-        participantIDs: this.players
-          .map((p) => p.participantID!)
-          .filter((p) => p),
-        nodeIDs: [...this.players.map((p) => p.id), groupID],
-      },
-    ]);
-  }
+  //   await this.addLinks([
+  //     {
+  //       link: true,
+  //       participantIDs: this.players
+  //         .map((p) => p.participantID!)
+  //         .filter((p) => p),
+  //       nodeIDs: [...this.players.map((p) => p.id), groupID],
+  //     },
+  //   ]);
+  // }
 
-  private async removePlayerFromGroup(player: Player) {
-    if (this.hasEnded) {
-      return;
-    }
+  // private async removePlayerFromGroup(player: Player) {
+  //   if (this.hasEnded) {
+  //     return;
+  //   }
 
-    // add link between participant and groupID of game
-    const groupID = this.get("groupID") as string;
-    if (!groupID || !player.participantID) {
-      return;
-    }
+  //   // add link between participant and groupID of game
+  //   const groupID = this.get("groupID") as string;
+  //   if (!groupID || !player.participantID) {
+  //     return;
+  //   }
 
-    await this.addLinks([
-      // Add links for new player with games and other players.
-      {
-        link: false,
-        participantIDs: [player.participantID!],
-        nodeIDs: [groupID],
-      },
-      // Add links for other players with new player.
-      {
-        link: false,
-        participantIDs: this.players
-          .map((p) => p.participantID!)
-          .filter((p) => p && p !== player.participantID),
-        nodeIDs: [player.id],
-      },
-    ]);
-  }
+  //   await this.addLinks([
+  //     // Add links for new player with games and other players.
+  //     {
+  //       link: false,
+  //       participantIDs: [player.participantID!],
+  //       nodeIDs: [groupID],
+  //     },
+  //     // Add links for other players with new player.
+  //     {
+  //       link: false,
+  //       participantIDs: this.players
+  //         .map((p) => p.participantID!)
+  //         .filter((p) => p && p !== player.participantID),
+  //       nodeIDs: [player.id],
+  //     },
+  //   ]);
+  // }
 
   // Add player to running game
   private async addPlayer(player: Player) {

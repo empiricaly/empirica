@@ -175,10 +175,14 @@ func (ui *UI) process(update update) {
 		ui.printClean()
 	case Restarted:
 		ui.printClean()
-	case Log:
+	case Log, Logerr:
+		subtleStr := lipgloss.NewStyle().
+			Foreground(lipgloss.AdaptiveColor{Light: "#555", Dark: "#aaaaaa"}).
+			Render
+
 		parts := strings.Split(strings.TrimSuffix(update.text, "\n"), "\n")
 		for _, part := range parts {
-			os.Stderr.Write([]byte("[" + update.component.Name + "] "))
+			os.Stderr.Write([]byte(subtleStr("[" + update.component.Name + "] ")))
 			os.Stderr.Write([]byte(part))
 			os.Stderr.Write([]byte("\n"))
 		}
@@ -230,6 +234,18 @@ func (c *Component) Log(text string) {
 	}
 }
 
+func (c *Component) Logerr(text string) {
+	if c.updates == nil {
+		return
+	}
+
+	c.updates <- update{
+		kind:      Logerr,
+		text:      text,
+		component: c,
+	}
+}
+
 func (c *Component) Restarted() {
 	if c.updates == nil {
 		return
@@ -244,7 +260,7 @@ func (c *Component) Restarted() {
 //go:generate go-enum -f=$GOFILE --marshal --lower --names --noprefix
 
 // updateKind is enumneration of messaging types.
-// ENUM(log, error, ready, restarted)
+// ENUM(log, logerr, error, ready, restarted)
 type updateKind uint8
 
 type update struct {

@@ -64,6 +64,27 @@ func root(_ *cobra.Command, _ []string, usingConfigFile *bool) error {
 		return errors.Wrap(err, "check node")
 	}
 
+	dir, err := os.Getwd()
+	if err != nil {
+		return errors.Wrap(err, "get current dir")
+	}
+
+	if err := settings.Check("", dir); err != nil {
+		if errors.Is(err, settings.ErrEmpiricaDirMissing) {
+			fmt.Fprintf(os.Stderr, `You do not seem to be in an Empirica project (%s directory not found). You can
+create a new project with:
+
+  empirica create myproject
+
+(this will create a new directory named 'myproject' in the current directory)
+`, settings.EmpiricaDir)
+
+			os.Exit(1)
+		}
+
+		return errors.Wrap(err, "check empirica dir")
+	}
+
 	conf := getConfig(true)
 
 	t, err := empirica.Start(ctx, conf, *usingConfigFile)
