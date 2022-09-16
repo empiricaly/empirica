@@ -78,8 +78,6 @@ jobs:
           push: true
           file: ./build/Dockerfile.empirica
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_SHA }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_SHA_SHORT }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_NUM }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_DEBUG }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_BRANCH }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_TAG }}
