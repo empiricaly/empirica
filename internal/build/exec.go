@@ -2,7 +2,6 @@ package build
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -27,17 +26,42 @@ const (
 	BuildSelectionEnvVar = "EMPIRICA_BUILD"
 	DebugBuildEnvVar     = "EMPIRICA_DEBUG_BUILD"
 	DownloadRootEnvVar   = "EMPIRICA_DOWNLOAD_ROOT"
-	BuildSelectionFile   = "release"
 )
-
-func BinarySelectionPath() string {
-	return settings.EmpiricaDir + "/" + BuildSelectionFile
-}
 
 var (
 	ErrBuildMissing = errors.New("build info missing")
 	ErrBuildEmpty   = errors.New("build info empty")
 )
+
+func ReleaseFilePath() string {
+	return settings.EmpiricaDir + "/" + settings.BuildSelectionFile
+}
+
+const filePerm = 0o600 // -rw-------
+
+func SaveReleaseFile(dir string) error {
+	build := Current()
+
+	components, err := build.VersionComponents()
+	if err != nil {
+		return errors.Wrap(err, "version components")
+	}
+
+	if len(components) < 2 {
+		return errors.New("invalid version components")
+	}
+
+	version := components[0] + ": " + components[1] + "\n"
+
+	fpath := ReleaseFilePath()
+	if dir != "" {
+		fpath = path.Join(dir, fpath)
+	}
+
+	err = os.WriteFile(fpath, []byte(version), filePerm)
+
+	return errors.Wrap(err, "save release file")
+}
 
 // BinaryVersion returns which binary version should be used. It will first
 // use the environement variable override, then try to look for the version lock
@@ -48,7 +72,7 @@ func BinaryVersion() (*Build, error) {
 	env := os.Getenv(BuildSelectionEnvVar)
 
 	if env != "" {
-		if err := json.Unmarshal([]byte(env), build); err != nil {
+		if err := yaml.Unmarshal([]byte(env), build); err != nil {
 			return nil, errors.Wrap(err, "read "+BuildSelectionEnvVar)
 		}
 
@@ -56,7 +80,7 @@ func BinaryVersion() (*Build, error) {
 			return nil, errors.New(BuildSelectionEnvVar + " is empty")
 		}
 	} else {
-		content, err := ioutil.ReadFile(BinarySelectionPath())
+		content, err := ioutil.ReadFile(ReleaseFilePath())
 		if err != nil {
 			return nil, ErrBuildMissing
 		}

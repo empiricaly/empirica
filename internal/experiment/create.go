@@ -68,6 +68,10 @@ func Create(ctx context.Context, name string) error {
 		return errors.Wrap(err, "empirica")
 	}
 
+	if err := build.SaveReleaseFile(dir); err != nil {
+		return errors.Wrap(err, "save release version")
+	}
+
 	stop()
 
 	printCreateDone(name)

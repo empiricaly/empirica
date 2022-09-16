@@ -39,12 +39,13 @@ func Check(name, dir string) error {
 }
 
 const (
-	EmpiricaDir = ".empirica"
-	LocalDir    = "local"
-	gitignore   = `local`
-	idLen       = 16
-	stokenLen   = 16
-	passLen     = 8
+	EmpiricaDir        = ".empirica"
+	BuildSelectionFile = "release"
+	LocalDir           = "local"
+	gitignore          = `local`
+	idLen              = 16
+	stokenLen          = 16
+	passLen            = 8
 
 	TreatmentsYAML = "treatments.yaml"
 	treatmentsyaml = `factors:
