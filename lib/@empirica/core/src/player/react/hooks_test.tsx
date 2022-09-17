@@ -93,7 +93,7 @@ test.serial("useConsent namespaced", async (t) => {
 
   resultNS.current[1]!();
 
-  await nextTick(10);
+  await nextTick(100);
 
   t.is(resultNS.current[0], true);
   t.is(resultNS.current[1], undefined);
