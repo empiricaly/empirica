@@ -35,7 +35,7 @@ func root(args []string) error {
 	}
 
 	if err := c.Wait(); err != nil {
-		er := &exec.ExitError{}
+		var er *exec.ExitError
 		if errors.As(err, er) {
 			os.Exit(er.ExitCode())
 		} else {
