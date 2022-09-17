@@ -8,12 +8,38 @@ import (
 	"syscall"
 
 	"github.com/empiricaly/empirica/internal/build"
+	logger "github.com/empiricaly/empirica/internal/utils/log"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
 )
 
+const (
+	LogsEnabledEnvVar = "EMPIRICA_PROXY_LOGS_ENABLED"
+	LogsNoTTYEnvVar   = "EMPIRICA_PROXY_LOGS_NO_TTY"
+	LogsJSONEnvVar    = "EMPIRICA_PROXY_LOGS_JSON"
+)
+
 func root(args []string) error {
 	ctx := initContext()
+
+	logenv := os.Getenv(LogsEnabledEnvVar)
+
+	logconf := &logger.Config{
+		Level:    "fatal",
+		ForceTTY: false,
+		JSON:     false,
+		ShowLine: false,
+	}
+
+	if logenv == "1" {
+		logconf.Level = "trace"
+		logconf.ForceTTY = os.Getenv(LogsNoTTYEnvVar) != "1"
+		logconf.JSON = os.Getenv(LogsJSONEnvVar) == "1"
+	}
+
+	if err := logger.Init(logconf); err != nil {
+		log.Fatal().Err(err).Msg("empirica: failed to init logging")
+	}
 
 	path, err := build.LookupBinary()
 	if err != nil {

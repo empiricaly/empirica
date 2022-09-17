@@ -37,8 +37,8 @@ var BuildNum string
 // Time holds the build time.
 var Time string
 
-// Commit holds the build Git commit SHA1.
-var Commit string
+// SHA holds the build Git commit SHA1.
+var SHA string
 
 const shaLen = 7
 
@@ -49,9 +49,9 @@ func VersionString() string {
 type Build struct {
 	DevBuild string `json:"dev,omitempty" yaml:"dev,omitempty"`
 	Version  string `json:"version,omitempty" yaml:"version,omitempty"`
-	Tag      string `json:"tag,omitempty" yaml:"tag,omitempty"`
-	Commit   string `json:"commit,omitempty" yaml:"commit,omitempty"`
+	SHA      string `json:"sha,omitempty" yaml:"sha,omitempty"`
 	BuildNum string `json:"build,omitempty" yaml:"build,omitempty"`
+	Tag      string `json:"tag,omitempty" yaml:"tag,omitempty"`
 	Branch   string `json:"branch,omitempty" yaml:"branch,omitempty"`
 	Time     string `json:"time,omitempty" yaml:"time,omitempty"`
 
@@ -64,7 +64,7 @@ func Current() *Build {
 	return &Build{
 		Version:  Version(),
 		Tag:      Tag,
-		Commit:   Commit,
+		SHA:      SHA,
 		BuildNum: BuildNum,
 		Branch:   Branch,
 		Time:     Time,
@@ -72,51 +72,84 @@ func Current() *Build {
 }
 
 func (b *Build) Empty() bool {
-	return b.Version == "" && b.Tag == "" && b.Commit == "" && b.BuildNum == "" && b.Branch == "" && b.DevBuild == ""
+	return b.Version == "" && b.Tag == "" && b.SHA == "" && b.BuildNum == "" && b.Branch == "" && b.DevBuild == ""
 }
 
 var ErrEmptyBuild = errors.New("empty build")
 
-// VersionComponents returns the most important key and value of of the build.
-// This allows identification of a build by different attributes, with the
-// following precedence:
+type VersionComponent struct {
+	Key   string
+	Value string
+}
+
+// PreferedPathComponent returns the path component (x/y/z) that best identify
+// this version, with the following precedence:
 // - version
-// - commit
+// - sha
 // - build
 // - tag
-// - branch.
-func (b *Build) VersionComponents() (components []string, err error) {
-	if b.Empty() {
+// - branch
+// E.g. If version == "v1.2.3", then the path components are "version/v1.2.3".
+func (b *Build) PreferedPathComponent() (components string, err error) {
+	comps, err := b.PathComponents(true)
+	if err != nil {
+		return "", err
+	}
+
+	return comps[0], nil
+}
+
+// PathComponents returns all paths components (x/y/z) for this version:
+// E.g. "version/v1.2.3", "sha/abcdefg", "build/123", "tag/v1.2.3",
+// "branch/master".
+func (b *Build) PathComponents(generic bool) (components []string, err error) {
+	comps := []string{}
+
+	if generic {
 		if b.prod {
-			return []string{"prod"}, nil
-		} else if b.dev {
-			return []string{"dev"}, nil
+			comps = append(comps, "prod")
 		}
 
-		return nil, ErrEmptyBuild
+		if b.dev {
+			comps = append(comps, "dev")
+		}
 	}
 
 	if b.Version != "" {
-		return []string{"tag", b.Version}, nil
+		comps = append(comps, "version/"+b.Version)
 	}
 
-	if b.Commit != "" {
-		return []string{"commit", b.Commit}, nil
+	if b.SHA != "" {
+		comps = append(comps, "sha/"+b.SHA)
 	}
 
 	if b.BuildNum != "" {
-		return []string{"build", b.BuildNum}, nil
+		comps = append(comps, "build/"+b.BuildNum)
 	}
 
 	if b.Tag != "" {
-		return []string{"tag", b.Tag}, nil
+		comps = append(comps, "tag/"+b.Tag)
 	}
 
 	if b.Branch != "" {
-		return []string{"branch", b.Branch}, nil
+		comps = append(comps, "branch/"+b.Branch)
 	}
 
-	return nil, ErrEmptyBuild
+	if !generic {
+		if b.prod {
+			comps = append(comps, "prod")
+		}
+
+		if b.dev {
+			comps = append(comps, "dev")
+		}
+	}
+
+	if len(comps) == 0 {
+		return nil, ErrEmptyBuild
+	}
+
+	return comps, nil
 }
 
 func (b *Build) String() string {
@@ -138,13 +171,13 @@ func (b *Build) String() string {
 		fmt.Fprintf(&str, "Tag:     %s\n", b.Tag)
 	}
 
-	if b.Commit != "" {
-		c := b.Commit
+	if b.SHA != "" {
+		c := b.SHA
 		if len(c) > shaLen {
 			c = c[:shaLen]
 		}
 
-		fmt.Fprintf(&str, "Commit:  %s\n", c)
+		fmt.Fprintf(&str, "SHA:     %s\n", c)
 	}
 
 	if b.BuildNum != "" {

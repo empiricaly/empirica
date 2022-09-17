@@ -2,10 +2,12 @@ package build
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -19,6 +21,7 @@ import (
 	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/muesli/termenv"
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 )
 
@@ -26,6 +29,7 @@ const (
 	BuildSelectionEnvVar = "EMPIRICA_BUILD"
 	DebugBuildEnvVar     = "EMPIRICA_DEBUG_BUILD"
 	DownloadRootEnvVar   = "EMPIRICA_DOWNLOAD_ROOT"
+	BinaryDirName        = "binaries"
 )
 
 var (
@@ -42,23 +46,23 @@ const filePerm = 0o600 // -rw-------
 func SaveReleaseFile(dir string) error {
 	build := Current()
 
-	components, err := build.VersionComponents()
-	if err != nil {
-		return errors.Wrap(err, "version components")
-	}
-
-	if len(components) < 2 {
-		return errors.New("invalid version components")
-	}
-
-	version := components[0] + ": " + components[1] + "\n"
-
 	fpath := ReleaseFilePath()
 	if dir != "" {
 		fpath = path.Join(dir, fpath)
 	}
 
-	err = os.WriteFile(fpath, []byte(version), filePerm)
+	b, err := yaml.Marshal(build)
+	if err != nil {
+		return errors.Wrap(err, "serialize build version")
+	}
+
+	log.Debug().
+		Str("path", fpath).
+		Interface("build", build).
+		Str("yaml", string(b)).
+		Msg("proxy: save release file")
+
+	err = os.WriteFile(fpath, b, filePerm)
 
 	return errors.Wrap(err, "save release file")
 }
@@ -71,7 +75,7 @@ func BinaryVersion() (*Build, error) {
 
 	env := os.Getenv(BuildSelectionEnvVar)
 
-	if env != "" {
+	if env == "1" {
 		if err := yaml.Unmarshal([]byte(env), build); err != nil {
 			return nil, errors.Wrap(err, "read "+BuildSelectionEnvVar)
 		}
@@ -79,9 +83,22 @@ func BinaryVersion() (*Build, error) {
 		if build.Empty() {
 			return nil, errors.New(BuildSelectionEnvVar + " is empty")
 		}
+
+		log.Debug().
+			Interface("build", build).
+			Msg("proxy: using build from env var")
 	} else {
 		content, err := ioutil.ReadFile(ReleaseFilePath())
 		if err != nil {
+			if errors.Is(err, os.ErrNotExist) {
+				log.Debug().
+					Err(err).
+					Str("path", ReleaseFilePath()).
+					Msg("proxy: no release file")
+			} else {
+				return nil, errors.Wrap(err, "read release file")
+			}
+
 			return nil, ErrBuildMissing
 		}
 
@@ -93,24 +110,42 @@ func BinaryVersion() (*Build, error) {
 		if build.Empty() {
 			return nil, ErrBuildEmpty
 		}
+
+		log.Debug().
+			Interface("build", build).
+			Msg("proxy: using build from release file")
 	}
 
 	return build, nil
 }
 
-func binaryPath(build *Build) (string, error) {
-	components, err := build.VersionComponents()
+func binaryDir() string {
+	return path.Join(settings.SharedDataDir(), BinaryDirName)
+}
+
+func binaryPaths(build *Build) ([]string, error) {
+	components, err := build.PathComponents(false)
 	if err != nil {
-		return "", errors.Wrap(err, "find binary path")
+		return nil, errors.Wrap(err, "find binary paths")
 	}
 
-	p := path.Join(settings.SharedDataDir(), "binaries", path.Join(components...))
+	comps := make([]string, 0, len(components))
 
-	if runtime.GOOS == "windows" {
-		p += ".exe"
+	for _, comp := range components {
+		if runtime.GOOS == "windows" {
+			comp = strings.Replace(comp, "/", "\\", -1)
+		}
+
+		p := path.Join(binaryDir(), comp)
+
+		if runtime.GOOS == "windows" {
+			p += ".exe"
+		}
+
+		comps = append(comps, p)
 	}
 
-	return p, nil
+	return comps, nil
 }
 
 const downloadRoot = "https://install.empirica.dev/empirica"
@@ -129,13 +164,12 @@ func DownloadRoot() string {
 func BinaryURL(build *Build) (*url.URL, error) {
 	root := DownloadRoot()
 
-	components, err := build.VersionComponents()
+	component, err := build.PreferedPathComponent()
 	if err != nil {
-		return nil, errors.Wrap(err, "version components")
+		return nil, errors.Wrap(err, "version path component")
 	}
 
-	comps := strings.Join(components, "/")
-	addr := fmt.Sprintf("%s/%s/%s/%s/empirica", root, runtime.GOOS, runtime.GOARCH, comps)
+	addr := fmt.Sprintf("%s/%s/%s/%s/empirica", root, runtime.GOOS, runtime.GOARCH, component)
 
 	if runtime.GOOS == "windows" {
 		addr += ".exe"
@@ -158,15 +192,23 @@ const (
 	executableMode       = 0o711
 )
 
-func DownloadBinary(build *Build, fileName string) error {
+func DownloadBinary(build *Build) error {
 	u, err := BinaryURL(build)
 	if err != nil {
 		return errors.Wrap(err, "get binary url")
 	}
 
-	err = os.MkdirAll(path.Dir(fileName), os.ModePerm)
+	log.Debug().
+		Str("url", u.String()).
+		Msg("proxy: binary url")
+
+	binpaths, err := binaryPaths(build)
 	if err != nil {
-		return errors.Wrap(err, "create binary dir")
+		return errors.Wrap(err, "get binary path")
+	}
+
+	if len(binpaths) == 0 {
+		return errors.New("no binary paths found")
 	}
 
 	client := grab.NewClient()
@@ -227,25 +269,86 @@ func DownloadBinary(build *Build, fileName string) error {
 
 	// check for errors
 	if err := resp.Err(); err != nil {
-		fmt.Fprintf(os.Stderr, "Download failed: %v\n", err)
-
-		os.Exit(1)
+		log.Fatal().
+			Err(err).
+			Str("url", u.String()).
+			Msg("proxy: download failed")
 	}
+
+	defer os.Remove(resp.Filename)
 
 	if err := os.Chmod(resp.Filename, executableMode); err != nil {
 		return errors.Wrap(err, "make binary executable")
 	}
 
-	dst, err := filepath.Abs(fileName)
+	newbuild, err := getBinaryBuild(resp.Filename)
 	if err != nil {
-		return errors.Wrap(err, "get destination path")
+		return errors.Wrap(err, "get binary build")
 	}
 
-	if err := os.Rename(resp.Filename, dst); err != nil {
-		return errors.Wrap(err, "copy binary file")
+	newbuild.prod = build.prod
+	newbuild.dev = build.dev
+
+	binpaths, err = binaryPaths(newbuild)
+	if err != nil {
+		return errors.Wrap(err, "get new binary path")
+	}
+
+	if len(binpaths) == 0 {
+		return errors.New("no new binary paths found")
+	}
+
+	for _, fileName := range binpaths {
+		dst, err := filepath.Abs(fileName)
+		if err != nil {
+			return errors.Wrap(err, "get destination path")
+		}
+
+		err = os.MkdirAll(path.Dir(dst), os.ModePerm)
+		if err != nil {
+			return errors.Wrap(err, "create binary dir")
+		}
+
+		if err := os.Link(resp.Filename, dst); err != nil {
+			if errors.Is(err, os.ErrExist) {
+				if err = os.Remove(dst); err != nil {
+					return errors.Wrap(err, "remove old binary file")
+				}
+
+				if err := os.Link(resp.Filename, dst); err != nil {
+					return errors.Wrap(err, "link new binary file")
+				}
+			} else {
+				return errors.Wrap(err, "link binary file")
+			}
+		}
+
+		log.Debug().
+			Str("path", dst).
+			Msg("proxy: linked binpath")
 	}
 
 	return nil
+}
+
+func getBinaryBuild(binpath string) (*Build, error) {
+	if binpath == "" {
+		return nil, errors.New("no path provided")
+	}
+
+	out, err := exec.Command(binpath, "version", "--json").Output()
+	if err != nil {
+		return nil, errors.Wrap(err, "get binary version")
+	}
+
+	build := new(Build)
+
+	err = json.Unmarshal(out, build)
+	if err != nil {
+		return nil, errors.Wrap(err, "unmarshal build")
+	}
+
+	return build, nil
 }
 
 func LookupBinary() (string, error) {
@@ -257,21 +360,79 @@ func LookupBinary() (string, error) {
 			} else {
 				build = &Build{prod: true}
 			}
+
+			log.Debug().
+				Interface("build", build).
+				Msg("proxy: using generic build version")
 		} else {
 			return "", errors.Wrap(err, "find binary version")
 		}
 	}
 
-	binpath, err := binaryPath(build)
+	binpaths, err := binaryPaths(build)
 	if err != nil {
 		return "", errors.Wrap(err, "get binary path")
 	}
 
-	if _, err := os.Stat(binpath); errors.Is(err, os.ErrNotExist) {
-		if err := DownloadBinary(build, binpath); err != nil {
-			return "", errors.Wrap(err, "download binary")
+	log.Debug().
+		Strs("paths", binpaths).
+		Msg("proxy: binary paths")
+
+	var binpath string
+	if len(binpaths) > 0 {
+		binpath = binpaths[0]
+		if _, err := os.Stat(binpath); err != nil {
+			if !errors.Is(err, os.ErrNotExist) {
+				return "", errors.Wrap(err, "check binary file")
+			}
+
+			binpath = ""
 		}
 	}
+
+	if binpath != "" {
+		return binpath, nil
+	}
+
+	log.Debug().Msg("proxy: no binary found, downloading")
+
+	if err := DownloadBinary(build); err != nil {
+		return "", errors.Wrap(err, "download binary")
+	}
+
+	binpaths, err = binaryPaths(build)
+	if err != nil {
+		return "", errors.Wrap(err, "get binary path")
+	}
+
+	log.Debug().
+		Strs("paths", binpaths).
+		Msg("proxy: checking downloaded binpaths")
+
+	if len(binpaths) == 0 {
+		return "", errors.New("no binary paths found")
+	}
+
+	for _, p := range binpaths {
+		if _, err := os.Stat(p); err != nil {
+			if !errors.Is(err, os.ErrNotExist) {
+				return "", errors.Wrap(err, "check binary file")
+			}
+
+			continue
+		}
+
+		binpath = p
+		break
+	}
+
+	if binpath == "" {
+		return "", errors.New("no binary found")
+	}
+
+	log.Debug().
+		Str("path", binpath).
+		Msg("proxy: binpath chosen")
 
 	return binpath, nil
 }
