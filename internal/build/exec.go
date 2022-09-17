@@ -75,7 +75,7 @@ func BinaryVersion() (*Build, error) {
 
 	env := os.Getenv(BuildSelectionEnvVar)
 
-	if env == "1" {
+	if env != "" {
 		if err := yaml.Unmarshal([]byte(env), build); err != nil {
 			return nil, errors.Wrap(err, "read "+BuildSelectionEnvVar)
 		}
