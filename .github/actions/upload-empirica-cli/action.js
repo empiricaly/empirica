@@ -147,6 +147,11 @@ function getAttributes(gitRef, gitSHA, githubEvent, githubRun) {
   branch = branch.replace("/", "-");
   tag = tag.replace("/", "-");
 
+  // If tag and branch are the same, we are on a tag, we assume branc is main.
+  if (tag === branch) {
+    branch = "main";
+  }
+
   const sha = gitSHA.substring(0, 7);
   const env = version !== "unknown" ? "prod" : branch === "main" ? "dev" : "";
   const num = githubRun;

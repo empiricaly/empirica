@@ -34,12 +34,21 @@ jobs:
         uses: tj-actions/branch-names@v5.4
       - name: Set GITHUB_ENV
         run: |
-          echo "BUILD_BRANCH=`echo "${{ steps.branch-name.outputs.current_branch }}" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
           echo "BUILD_TAG=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
           echo "BUILD_SHA=$(git rev-list -1 HEAD)" >> $GITHUB_ENV
           echo "BUILD_SHA_SHORT=$(git rev-parse --short=7 ${{ github.sha }})" >> $GITHUB_ENV
           echo "BUILD_NUM=${{ github.run_number }}" >> $GITHUB_ENV
+      # If it's a tag, we assume the branch is main
+      - name: Check if running on a tag branch.
+        if: steps.branch-name.outputs.is_tag == 'true'
+        run: |
+          echo "BUILD_BRANCH=`echo "main" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
+      # Otherwise use the actual branch name
+      - name: Use actual branch name.
+        if: steps.branch-name.outputs.is_tag != 'true'
+        run: |
+          echo "BUILD_BRANCH=`echo "${{ steps.branch-name.outputs.current_branch }}" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
       - name: Build
         uses: docker/build-push-action@v2
         with:
