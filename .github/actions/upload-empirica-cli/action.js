@@ -200,7 +200,6 @@ function getUploadParams(sourceDir, bucket, rootPath, fileName, files) {
 
     uploads.push({
       Bucket: bucket,
-      ACL: "public-read",
       Key: bucketPath,
       ContentType: mime,
       Body: p,
@@ -264,7 +263,6 @@ function createVariantUploads(files, bucket, rootPath, fileName, attr) {
       const params = {
         Bucket: bucket,
         Key: toPath,
-        ACL: "public-read",
         CopySource: fromPath,
       };
 
