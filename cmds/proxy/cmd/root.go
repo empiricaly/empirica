@@ -62,7 +62,7 @@ func root(args []string) error {
 
 	if err := c.Wait(); err != nil {
 		var er *exec.ExitError
-		if errors.As(err, er) {
+		if errors.As(err, &er) {
 			os.Exit(er.ExitCode())
 		} else {
 			return errors.Wrap(err, "failed to start")

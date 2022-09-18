@@ -11,11 +11,11 @@ on:
       - "cmds/proxy/**"
       - "**.md"
       - ".github/workflows/on_push_proxy.yaml"
-  create: # New tag (or branch)
-    paths-ignore:
-      - "cmds/proxy/**"
-      - "**.md"
-      - ".github/workflows/on_push_proxy.yaml"
+  # create: # New tag (or branch)
+  #   paths-ignore:
+  #     - "cmds/proxy/**"
+  #     - "**.md"
+  #     - ".github/workflows/on_push_proxy.yaml"
 
 env:
   REGISTRY: ghcr.io
@@ -34,12 +34,21 @@ jobs:
         uses: tj-actions/branch-names@v5.4
       - name: Set GITHUB_ENV
         run: |
-          echo "BUILD_BRANCH=`echo "${{ steps.branch-name.outputs.current_branch }}" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
           echo "BUILD_TAG=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
           echo "BUILD_SHA=$(git rev-list -1 HEAD)" >> $GITHUB_ENV
           echo "BUILD_SHA_SHORT=$(git rev-parse --short=7 ${{ github.sha }})" >> $GITHUB_ENV
           echo "BUILD_NUM=${{ github.run_number }}" >> $GITHUB_ENV
+      # If it's a tag, we assume the branch is main
+      - name: Check if running on a tag branch.
+        if: steps.branch-name.outputs.is_tag == 'true'
+        run: |
+          echo "BUILD_BRANCH=`echo "main" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
+      # Otherwise use the actual branch name
+      - name: Use actual branch name.
+        if: steps.branch-name.outputs.is_tag != 'true'
+        run: |
+          echo "BUILD_BRANCH=`echo "${{ steps.branch-name.outputs.current_branch }}" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
       - name: Build
         uses: docker/build-push-action@v2
         with:
@@ -61,11 +70,12 @@ jobs:
       - name: Upload binaries to S3
         uses: ./.github/actions/upload-empirica-cli
         with:
-          # NOTE Bucket name might not correspond to final domain name
-          bucket: get.empirica.dev
+          bucket: empirica
           root: empirica
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsEndpoint: https://f120117e0fd797d29319953881b7634c.r2.cloudflarestorage.com
+          awsSignatureVersion: v4
       - name: Log in to the Container registry
         uses: docker/login-action@v2
         with:

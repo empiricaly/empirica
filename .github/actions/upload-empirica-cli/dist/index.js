@@ -19445,6 +19445,12 @@ async function run(core, github, S3, fs) {
   const rootPath = core.getInput("root", {
     required: true,
   });
+  const awsEndpoint = core.getInput("awsEndpoint", {
+    required: false,
+  });
+  const awsSignatureVersion = core.getInput("awsSignatureVersion", {
+    required: false,
+  });
   const AWS_ACCESS_KEY_ID = core.getInput("AWS_ACCESS_KEY_ID", {
     required: true,
   });
@@ -19454,10 +19460,20 @@ async function run(core, github, S3, fs) {
   const withVariantsStr = core.getInput("withVariants");
   const withVariants = withVariantsStr === "true";
 
-  const s3 = new S3({
+  const s3Config = {
     accessKeyId: AWS_ACCESS_KEY_ID,
     secretAccessKey: AWS_SECRET_ACCESS_KEY,
-  });
+  };
+
+  if (awsEndpoint) {
+    s3Config.endpoint = awsEndpoint;
+  }
+
+  if (awsSignatureVersion) {
+    s3Config.signatureVersion = awsSignatureVersion;
+  }
+
+  const s3 = new S3(s3Config);
 
   const files = [
     `${fileName}-linux-amd64`,
@@ -19581,6 +19597,11 @@ function getAttributes(gitRef, gitSHA, githubEvent, githubRun) {
   branch = branch.replace("/", "-");
   tag = tag.replace("/", "-");
 
+  // If tag and branch are the same, we are on a tag, we assume branc is main.
+  if (tag === branch) {
+    branch = "main";
+  }
+
   const sha = gitSHA.substring(0, 7);
   const env = version !== "unknown" ? "prod" : branch === "main" ? "dev" : "";
   const num = githubRun;
@@ -19613,7 +19634,6 @@ function getUploadParams(sourceDir, bucket, rootPath, fileName, files) {
 
     uploads.push({
       Bucket: bucket,
-      ACL: "public-read",
       Key: bucketPath,
       ContentType: mime,
       Body: p,
@@ -19677,7 +19697,6 @@ function createVariantUploads(files, bucket, rootPath, fileName, attr) {
       const params = {
         Bucket: bucket,
         Key: toPath,
-        ACL: "public-read",
         CopySource: fromPath,
       };
 
