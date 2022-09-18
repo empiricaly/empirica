@@ -78,7 +78,7 @@ if [ -z $TEMP_DIR ] || [ ! -d $TEMP_DIR ]; then
   exit 1
 fi
 
-BIN_URL="https://install.empirica.dev/proxy/empirica-${PLATFORM}"
+BIN_URL="https://install.empirica.dev/proxy/${PLATFORM}/latest/empirica"
 
 echo $BIN_URL
 
