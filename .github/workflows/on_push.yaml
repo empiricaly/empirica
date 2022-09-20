@@ -89,6 +89,7 @@ jobs:
           file: ./build/Dockerfile.empirica
           context: .
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_SHA_SHORT }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_NUM }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.BUILD_BRANCH }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ env.BUILD_SHA_SHORT }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build-${{ env.BUILD_NUM }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:branch-${{ env.BUILD_BRANCH }}
