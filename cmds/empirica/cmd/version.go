@@ -2,8 +2,10 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/empiricaly/empirica/internal/build"
+	"github.com/empiricaly/empirica/internal/experiment"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -11,6 +13,31 @@ import (
 )
 
 var json = jsoniter.ConfigCompatibleWithStandardLibrary
+
+type simpleVersionOut struct {
+	Build      *build.Build                  `json:"build,omitempty" yaml:"build,omitempty"`
+	Components []*experiment.SimpleComponent `json:"components,omitempty" yaml:"components,omitempty"`
+}
+
+func (s *simpleVersionOut) String() string {
+	var b strings.Builder
+	if s.Build != nil {
+		b.WriteString(s.Build.String())
+	}
+
+	if len(s.Components) > 0 {
+		if s.Build != nil {
+			b.WriteString("\n")
+		}
+
+		for _, comp := range s.Components {
+			b.WriteString(comp.String())
+			b.WriteString("\n")
+		}
+	}
+
+	return b.String()
+}
 
 func addVersionCommand(parent *cobra.Command) error {
 	cmd := &cobra.Command{
@@ -25,16 +52,19 @@ func addVersionCommand(parent *cobra.Command) error {
 				return errors.Wrap(err, "parse json flag")
 			}
 
-			current := build.Current()
+			out := &simpleVersionOut{
+				Build:      build.Current(),
+				Components: experiment.GetSimpleComponent(false),
+			}
 			if outputJSON {
-				b, err := json.Marshal(current)
+				b, err := json.Marshal(out)
 				if err != nil {
 					return errors.Wrap(err, "serialize version info")
 				}
 
 				fmt.Println(string(b))
 			} else {
-				fmt.Print(current.String())
+				fmt.Print(out.String())
 			}
 
 			return nil

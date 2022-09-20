@@ -1,21 +1,29 @@
 FROM ubuntu:jammy
 
-WORKDIR /app
+# Empirica
+EXPOSE 3000
+# Vite HMR
+EXPOSE 8844
 
-# Basics
-########
+# Base packages
 
+
+# ca-certificates # tls connections
+# rsync # building the server
+# curl # downloading volta
 RUN apt-get update && \
-  DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -y  \
-  curl \
+  DEBIAN_FRONTEND="noninteractive" apt-get install --no-install-recommends -y \
   ca-certificates \
+  rsync \
+  curl \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/* \
   && apt-get autoremove -y \
-  && update-ca-certificates
+  && update-ca-certificates  # update tls certificates
 
-# Node
-######
+
+# Volta
+
 
 # Bash will load volta() function via .bashrc using $VOLTA_HOME/load.sh
 SHELL ["/bin/bash", "-c"]
@@ -30,9 +38,17 @@ ENV PATH $VOLTA_HOME/bin:$PATH
 
 # Install volta
 RUN curl https://get.volta.sh | bash
-RUN volta install node
 
-COPY ./out/empirica-linux-amd64 ./empirica
 
-ENTRYPOINT ["/app/empirica"]
+# Empirica
+
+
+# Copy empirica from expect build location. This is the location used by the
+# Github Actions workflow.
+COPY ./out/empirica-linux-amd64 /usr/local/bin/empirica
+
+# Default executable is empirica. Using CMD so it's easily overridable. Using
+# exec mode to avoid problems with signals. Child images can override this
+# as they see fit.
+CMD ["empirica"]
 

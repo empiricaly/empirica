@@ -126,7 +126,7 @@ func Execute() {
 	failedStart(addServeCommand(rootCmd))
 	failedStart(addSetupCommand(rootCmd))
 	failedStart(addNodeCommand(rootCmd))
-	failedStart(addYarnCommand(rootCmd))
+	failedStart(addNPMCommand(rootCmd))
 	failedStart(addUpgradeCommand(rootCmd))
 	failedStart(addVersionCommand(rootCmd))
 
