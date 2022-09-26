@@ -39,7 +39,7 @@ func addServeCommand(parent *cobra.Command) error {
 
 			in := args[0]
 
-			conf := getConfig()
+			conf := getConfig(true)
 			conf.Server.Addr = addr
 
 			return bundle.Serve(ctx, conf, in, clean)

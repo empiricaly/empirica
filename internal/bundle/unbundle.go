@@ -101,23 +101,6 @@ func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, err
 		return nil, errors.Wrap(err, "create storage dir")
 	}
 
-	_, err = os.Stat(conf.Tajriba.Store.File)
-
-	if err != nil && !os.IsNotExist(err) {
-		return nil, errors.Wrap(err, "check storage file already exists")
-	}
-
-	if os.IsNotExist(err) {
-		log.Info().Msg("unbundle: creating new storage file")
-
-		file, err := os.Create(conf.Tajriba.Store.File)
-		if err != nil {
-			return nil, errors.Wrap(err, "create storage file")
-		}
-
-		file.Close()
-	}
-
 	return conf, nil
 }
 
