@@ -331,6 +331,10 @@ func DownloadBinary(build *Build) error {
 	return nil
 }
 
+type cmdVersion struct {
+	Build *Build `json:"build,omitempty" yaml:"build,omitempty"`
+}
+
 func getBinaryBuild(binpath string) (*Build, error) {
 	if binpath == "" {
 		return nil, errors.New("no path provided")
@@ -341,14 +345,14 @@ func getBinaryBuild(binpath string) (*Build, error) {
 		return nil, errors.Wrap(err, "get binary version")
 	}
 
-	build := new(Build)
+	build := new(cmdVersion)
 
 	err = json.Unmarshal(out, build)
 	if err != nil {
 		return nil, errors.Wrap(err, "unmarshal build")
 	}
 
-	return build, nil
+	return build.Build, nil
 }
 
 func LookupBinary() (string, error) {
