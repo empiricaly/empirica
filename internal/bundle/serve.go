@@ -18,8 +18,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func Serve(ctx context.Context, config *empirica.Config, in string, clean bool) error {
-	dir, conf, err := Unbundle(ctx, config, in, clean)
+func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMode bool) error {
+	dir, conf, err := Unbundle(ctx, config, in, clean, devMode)
 	if err != nil {
 		return errors.Wrap(err, "unbundle")
 	}
