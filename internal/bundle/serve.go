@@ -104,6 +104,7 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMo
 
 	s.Router.NotFound = playerFS
 
+	s.Router.GET("/dev", server.DevCheck(conf.Production))
 	s.Router.GET("/treatments", server.ReadTreatments(conf.Server.Treatments))
 	s.Router.PUT("/treatments", server.WriteTreatments(conf.Server.Treatments))
 	s.Router.ServeFiles("/admin/*filepath", templates.HTTPFS("admin-ui"))
