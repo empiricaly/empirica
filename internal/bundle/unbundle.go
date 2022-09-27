@@ -78,10 +78,9 @@ func prepDotEmpirica(inConf *empirica.Config, dir string, devMode bool) (*empiri
 	// FIXME configuration manual tweaking is not ideal
 
 	conf.Callbacks.Token = conf.Tajriba.Auth.ServiceRegistrationToken
-	if !devMode {
-		conf.Production = true
-		conf.Tajriba.Server.Production = true
-	}
+	conf.Production = !devMode
+	conf.Server.Production = !devMode
+	conf.Tajriba.Server.Production = !devMode
 
 	if inConf.Tajriba.Store.UseMemory {
 		conf.Tajriba.Store.UseMemory = true
