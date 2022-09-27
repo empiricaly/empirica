@@ -10,7 +10,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/empiricaly/empirica"
 	"github.com/empiricaly/empirica/internal/settings"
@@ -51,28 +50,21 @@ func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, err
 			}
 		}
 	} else {
-		if err := cp.Copy(src, dst); err != nil {
+		if err := cp.Copy(src, dst, cp.Options{Sync: true}); err != nil {
 			return nil, errors.Wrapf(err, "copy %s", settings.EmpiricaDir)
 		}
 	}
 
-	// Wait for some reason, config not always read otherwise
-	time.Sleep(100 * time.Millisecond)
-
 	confFile := path.Join(dst, "empirica.toml")
 
-	viper.SetConfigFile(confFile)
+	if _, err = os.Stat(confFile); err != nil && !os.IsNotExist(err) {
+		log.Error().Err(err).Msgf("check %s already exists", settings.EmpiricaDir)
+	}
 
 	conf := new(empirica.Config)
 
-	if err := viper.Unmarshal(conf); err != nil {
-		log.Fatal().Err(err).Msg("could not parse configuration")
-	}
-
-	log.Trace().
-		Interface("config", conf).
-		Str("file", confFile).
-		Msg("config: got config first time")
+	viper.SetConfigFile(confFile)
+	viper.ReadInConfig()
 
 	if err := viper.Unmarshal(conf); err != nil {
 		log.Fatal().Err(err).Msg("could not parse configuration")
@@ -81,7 +73,7 @@ func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, err
 	log.Trace().
 		Interface("config", conf).
 		Str("file", confFile).
-		Msg("config: got config second time")
+		Msg("config: load new config file")
 
 	// FIXME configuration manual tweaking is not ideal
 
