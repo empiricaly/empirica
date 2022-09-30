@@ -22,7 +22,7 @@ import (
 	"github.com/twmb/murmur3"
 )
 
-func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, error) {
+func prepDotEmpirica(inConf *empirica.Config, dir string, devMode bool) (*empirica.Config, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		return nil, errors.Wrap(err, "get working dir")
@@ -78,8 +78,9 @@ func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, err
 	// FIXME configuration manual tweaking is not ideal
 
 	conf.Callbacks.Token = conf.Tajriba.Auth.ServiceRegistrationToken
-	conf.Production = true
-	conf.Tajriba.Server.Production = true
+	conf.Production = !devMode
+	conf.Server.Production = !devMode
+	conf.Tajriba.Server.Production = !devMode
 
 	if inConf.Tajriba.Store.UseMemory {
 		conf.Tajriba.Store.UseMemory = true
@@ -96,7 +97,7 @@ func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, err
 	return conf, nil
 }
 
-func Unbundle(_ context.Context, config *empirica.Config, in string, clean bool) (string, *empirica.Config, error) {
+func Unbundle(_ context.Context, config *empirica.Config, in string, clean, devMode bool) (string, *empirica.Config, error) {
 	f, err := os.Open(in)
 	if err != nil {
 		return "", nil, errors.Wrap(err, "open bundle")
@@ -126,7 +127,7 @@ func Unbundle(_ context.Context, config *empirica.Config, in string, clean bool)
 				return "", nil, errors.Wrap(err, "remove previous installation")
 			}
 		} else {
-			conf, err := prepDotEmpirica(config, dir)
+			conf, err := prepDotEmpirica(config, dir, devMode)
 			if err != nil {
 				return "", nil, errors.Wrapf(err, "copy %s", settings.EmpiricaDir)
 			}
@@ -169,7 +170,7 @@ func Unbundle(_ context.Context, config *empirica.Config, in string, clean bool)
 
 		switch {
 		case errors.Is(err, io.EOF):
-			conf, err := prepDotEmpirica(config, dir)
+			conf, err := prepDotEmpirica(config, dir, devMode)
 			if err != nil {
 				return "", nil, errors.Wrapf(err, "copy %s", settings.EmpiricaDir)
 			}
