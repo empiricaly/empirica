@@ -106,6 +106,7 @@
       label: "Create",
       primary: true,
       submit: true,
+      testId: "createBatchButton"
     },
   ];
 </script>
