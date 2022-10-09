@@ -1,4 +1,4 @@
-import { State } from "@empirica/tajriba";
+import { AddScopeInput, State } from "@empirica/tajriba";
 import { z } from "zod";
 import { Constructor } from "../../shared/helpers";
 import { Attributable } from "../../shared/scopes";
@@ -97,6 +97,12 @@ export class BatchOwned extends Scope<Context, ClassicKinds> {
 }
 
 export class Game extends BatchOwned {
+  get rounds() {
+    const rounds = this.scopesByKindMatching<Round>("round", "gameID", this.id);
+    rounds.sort(indexSortable);
+    return rounds;
+  }
+
   get stages() {
     const stages = this.scopesByKindMatching<Stage>("stage", "gameID", this.id);
     stages.sort(indexSortable);
@@ -375,14 +381,18 @@ export class Game extends BatchOwned {
     const game = this;
     const gameID = game.id;
 
+    const index = (game.get("roundIndex") as number) || 0;
+    const roundIndex = index + 1;
+    game.set("roundIndex", roundIndex);
+
     const [scope, accessors] = scopeConstructor({
       kind: "round",
       attributes: attrs([
         ...attributes.filter((a) => !reservedKeys.includes(a.key)),
         {
-          key: "newStages",
-          value: [],
-          protected: true,
+          key: "index",
+          value: `${roundIndex}`,
+          immutable: true,
         },
         {
           key: "gameID",
@@ -409,6 +419,8 @@ export class Game extends BatchOwned {
 
     const roundProm = this.addScopes([scope]);
 
+    const stageAdds: AddScopeInput[] = [];
+
     const addStage = (
       attributes: { [key: string]: JsonValue } | AttributeInput[]
     ) => {
@@ -424,13 +436,12 @@ export class Game extends BatchOwned {
         attributes = newAttr;
       }
 
+      // Check duration is valid
       const durAttr = attributes.find((a) => a.key === "duration");
       const res = z.number().int().gte(1).safeParse(durAttr?.value);
       if (!res.success) {
         throw new Error(`stage duration invalid: ${res.error}`);
       }
-
-      const duration = res.data;
 
       const [scope, accessors] = scopeConstructor({
         kind: "stage",
@@ -459,24 +470,51 @@ export class Game extends BatchOwned {
         ]),
       });
 
-      this.addFinalizer(async () => {
-        let rounds: AddScopePayload[];
-        try {
-          rounds = await roundProm;
-        } catch (err) {
-          error(`failed to create round: ${err}`);
+      stageAdds.push(scope);
 
-          return;
+      return accessors;
+    };
+
+    this.addFinalizer(async () => {
+      let rounds: AddScopePayload[];
+      try {
+        rounds = await roundProm;
+      } catch (err) {
+        error(`failed to create round: ${err}`);
+
+        return;
+      }
+
+      if (rounds.length < 1) {
+        error(`failed to create round`);
+
+        return;
+      }
+
+      // Forced because tested for length > 0
+      const roundID = rounds[0]!.id;
+
+      const round = this.scopeByID<Round>(roundID);
+      if (!round) {
+        throw "round not found in round finalizer";
+      }
+
+      let stageIndex = 0;
+
+      for (const scope of stageAdds) {
+        const durAttr = scope.attributes!.find((a) => a.key === "duration");
+        if (!durAttr || !durAttr!.val) {
+          error(`stage duration not found`);
+
+          continue;
         }
 
-        if (rounds.length < 1) {
-          error(`failed to create round`);
-
-          return;
+        const res = z.number().int().gte(1).safeParse(JSON.parse(durAttr.val));
+        if (!res.success) {
+          throw new Error(`stage duration invalid: ${res.error}`);
         }
 
-        // Forced because tested for length > 0
-        const roundID = rounds[0]!.id;
+        const duration = res.data;
 
         scope.attributes!.push({
           key: "roundID",
@@ -508,21 +546,19 @@ export class Game extends BatchOwned {
           immutable: true,
         });
 
-        const index = (game.get("stageIndex") as number) || 0;
-
         scope.attributes!.push({
           key: "index",
-          val: `${index + 1}`,
+          val: `${stageIndex}`,
           immutable: true,
         });
 
-        game.set("stageIndex", index + 1);
+        stageIndex++;
+      }
 
-        await this.addScopes([scope]);
-      });
+      round.set("stageIndex", stageIndex);
 
-      return accessors;
-    };
+      await this.addScopes(stageAdds);
+    });
 
     return {
       ...accessors,
@@ -645,10 +681,11 @@ export class Player extends GameOwned {
     return this.scopeByKey<PlayerStage>(key);
   }
 
-  hasUpdated() {
+  hasUpdated(): boolean {
     if (super.hasUpdated()) {
       return true;
     }
+
     return Boolean(
       this.round?.hasUpdated() ||
         this.stage?.hasUpdated() ||
@@ -672,6 +709,16 @@ export class PlayerStage extends GameOwned {
 }
 
 export class Round extends GameOwned {
+  get stages() {
+    const stages = this.scopesByKindMatching<Stage>(
+      "stage",
+      "roundID",
+      this.id
+    );
+    stages.sort(indexSortable);
+    return stages;
+  }
+
   addStage(attributes: { [key: string]: JsonValue } | AttributeInput[]) {
     if (!Array.isArray(attributes)) {
       const newAttr: AttributeInput[] = [];
@@ -691,6 +738,8 @@ export class Round extends GameOwned {
       throw new Error(`stage duration invalid: ${res.error}`);
     }
 
+    const duration = res.data;
+
     const batchID = this.get("batchID") as string;
     if (!batchID) {
       throw new Error("missing batch ID on round");
@@ -701,10 +750,18 @@ export class Round extends GameOwned {
       throw new Error("missing game ID on round");
     }
 
+    const stageIndex = z.number().parse(this.get("stageIndex") || 0) + 1;
+    this.set("stageIndex", stageIndex);
+
     const [scope, accessors] = scopeConstructor({
       kind: "stage",
       attributes: attrs([
         ...attributes.filter((a) => !reservedKeys.includes(a.key)),
+        {
+          key: "index",
+          value: stageIndex,
+          immutable: true,
+        },
         {
           key: "roundID",
           value: this.id,
@@ -733,7 +790,33 @@ export class Round extends GameOwned {
       ]),
     });
 
-    this.addScopes([scope]);
+    this.addFinalizer(async () => {
+      let steps: StepPayload[];
+      try {
+        steps = await this.addSteps([{ duration }]);
+      } catch (err) {
+        error(`failed to create steps: ${err}`);
+
+        return;
+      }
+
+      if (steps.length < 1) {
+        error(`failed to create steps`);
+
+        return;
+      }
+
+      // Forced because tested for length > 0
+      const stepID = steps[0]!.id;
+
+      scope.attributes!.push({
+        key: "timerID",
+        val: JSON.stringify(stepID),
+        immutable: true,
+      });
+
+      this.addScopes([scope]);
+    });
 
     return accessors;
   }
