@@ -381,7 +381,7 @@ export class Game extends BatchOwned {
     const game = this;
     const gameID = game.id;
 
-    const index = (game.get("roundIndex") as number) || 0;
+    const index = (game.get("roundIndex") as number) || -1;
     const roundIndex = index + 1;
     game.set("roundIndex", roundIndex);
 
@@ -750,7 +750,7 @@ export class Round extends GameOwned {
       throw new Error("missing game ID on round");
     }
 
-    const stageIndex = z.number().parse(this.get("stageIndex") || 0) + 1;
+    const stageIndex = z.number().parse(this.get("stageIndex") || -1) + 1;
     this.set("stageIndex", stageIndex);
 
     const [scope, accessors] = scopeConstructor({
