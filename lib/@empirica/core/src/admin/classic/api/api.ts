@@ -88,6 +88,18 @@ export class Conn {
     return this.scopesByKind<Stage>("stage", Stage);
   }
 
+  playerGames() {
+    return this.scopesByKind<PlayerGame>("playerGame", PlayerGame);
+  }
+
+  playerRounds() {
+    return this.scopesByKind<PlayerRound>("playerRound", PlayerRound);
+  }
+
+  playerStages() {
+    return this.scopesByKind<PlayerStage>("playerStage", PlayerStage);
+  }
+
   private scopesByKind<T extends Scope>(
     kind: string,
     cnstrctr: Constructor<T>

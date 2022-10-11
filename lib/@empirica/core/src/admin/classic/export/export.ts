@@ -1,7 +1,7 @@
 import { Conn, connect } from "../api/api";
 import { exportCSV } from "./export_csv";
 
-async function exportJSON(admin: Conn, output: string) {
+async function exportJSON(_: Conn, __: string) {
   throw new Error("JSON export not implemented");
 }
 

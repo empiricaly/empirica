@@ -9,7 +9,13 @@ const t = test;
 t("export csv", async (t) => {
   await withTajriba(
     async ({ url, srtoken }) => {
-      await runExport(url, null, srtoken, ExportFormat.CSV, "./out");
+      await runExport(
+        url,
+        null,
+        srtoken,
+        ExportFormat.CSV,
+        "/tmp/out-empirica.zip"
+      );
 
       t.truthy(true);
     },

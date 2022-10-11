@@ -130,6 +130,7 @@ func Execute() {
 	failedStart(addUpgradeCommand(rootCmd))
 	failedStart(addVersionCommand(rootCmd))
 	failedStart(addTajribaCommand(rootCmd))
+	failedStart(addExportCommand(rootCmd))
 
 	failedStart(addUtilsCommands(rootCmd))
 
