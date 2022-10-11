@@ -153,7 +153,7 @@ func Enable(
 	}
 	router.NotFound = prox
 
-	router.GET("/dev", dev(config.Production))
+	router.GET("/dev", DevCheck(config.Production))
 	router.GET("/treatments", ReadTreatments(config.Treatments))
 	router.PUT("/treatments", WriteTreatments(config.Treatments))
 	router.ServeFiles("/admin/*filepath", templates.HTTPFS("admin-ui"))
@@ -251,7 +251,7 @@ func handleIndexErr(err error, u *url.URL, connRetry *backoff.Backoff, w http.Re
 	w.WriteHeader(http.StatusInternalServerError)
 }
 
-func dev(isProd bool) httprouter.Handle {
+func DevCheck(isProd bool) httprouter.Handle {
 	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 		if isProd {
 			w.WriteHeader(http.StatusBadRequest)

@@ -86,7 +86,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) View() string {
 	if m.err != nil {
-		return "Error downloading: " + m.err.Error() + "\n"
+		return "Error downloading: " + m.url + "\n"
 	}
 
 	if m.done {

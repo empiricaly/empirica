@@ -46,6 +46,10 @@ const filePerm = 0o600 // -rw-------
 func SaveReleaseFile(dir string) error {
 	build := Current()
 
+	return SaveReleaseFileVersion(dir, build)
+}
+
+func SaveReleaseFileVersion(dir string, build *Build) error {
 	fpath := ReleaseFilePath()
 	if dir != "" {
 		fpath = path.Join(dir, fpath)
@@ -192,10 +196,10 @@ const (
 	executableMode       = 0o711
 )
 
-func DownloadBinary(build *Build) error {
+func DownloadBinary(build *Build) (string, error) {
 	u, err := BinaryURL(build)
 	if err != nil {
-		return errors.Wrap(err, "get binary url")
+		return "", errors.Wrap(err, "get binary url")
 	}
 
 	log.Debug().
@@ -204,18 +208,18 @@ func DownloadBinary(build *Build) error {
 
 	binpaths, err := binaryPaths(build)
 	if err != nil {
-		return errors.Wrap(err, "get binary path")
+		return "", errors.Wrap(err, "get binary path")
 	}
 
 	if len(binpaths) == 0 {
-		return errors.New("no binary paths found")
+		return "", errors.New("no binary paths found")
 	}
 
 	client := grab.NewClient()
 
 	req, err := grab.NewRequest(os.TempDir(), u.String())
 	if err != nil {
-		return errors.Wrap(err, "create request")
+		return "", errors.Wrap(err, "create request")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), maxDownloadDuration)
@@ -256,7 +260,11 @@ func DownloadBinary(build *Build) error {
 				p.Send(progressMsg(resp.Progress()))
 
 			case <-resp.Done:
-				p.Send(progressMsg(1))
+				if resp.Err() != nil {
+					p.Send(progressErrMsg{err: resp.Err()})
+				} else {
+					p.Send(progressMsg(1))
+				}
 
 				// download is complete
 				break Loop
@@ -269,21 +277,18 @@ func DownloadBinary(build *Build) error {
 
 	// check for errors
 	if err := resp.Err(); err != nil {
-		log.Fatal().
-			Err(err).
-			Str("url", u.String()).
-			Msg("proxy: download failed")
+		return "", errors.Wrap(err, "http fetch")
 	}
 
 	defer os.Remove(resp.Filename)
 
 	if err := os.Chmod(resp.Filename, executableMode); err != nil {
-		return errors.Wrap(err, "make binary executable")
+		return "", errors.Wrap(err, "make binary executable")
 	}
 
-	newbuild, err := getBinaryBuild(resp.Filename)
+	newbuild, err := GetBinaryBuild(resp.Filename)
 	if err != nil {
-		return errors.Wrap(err, "get binary build")
+		return "", errors.Wrap(err, "get binary build")
 	}
 
 	newbuild.prod = build.prod
@@ -291,35 +296,35 @@ func DownloadBinary(build *Build) error {
 
 	binpaths, err = binaryPaths(newbuild)
 	if err != nil {
-		return errors.Wrap(err, "get new binary path")
+		return "", errors.Wrap(err, "get new binary path")
 	}
 
 	if len(binpaths) == 0 {
-		return errors.New("no new binary paths found")
+		return "", errors.New("no new binary paths found")
 	}
 
 	for _, fileName := range binpaths {
 		dst, err := filepath.Abs(fileName)
 		if err != nil {
-			return errors.Wrap(err, "get destination path")
+			return "", errors.Wrap(err, "get destination path")
 		}
 
 		err = os.MkdirAll(path.Dir(dst), os.ModePerm)
 		if err != nil {
-			return errors.Wrap(err, "create binary dir")
+			return "", errors.Wrap(err, "create binary dir")
 		}
 
 		if err := os.Link(resp.Filename, dst); err != nil {
 			if errors.Is(err, os.ErrExist) {
 				if err = os.Remove(dst); err != nil {
-					return errors.Wrap(err, "remove old binary file")
+					return "", errors.Wrap(err, "remove old binary file")
 				}
 
 				if err := os.Link(resp.Filename, dst); err != nil {
-					return errors.Wrap(err, "link new binary file")
+					return "", errors.Wrap(err, "link new binary file")
 				}
 			} else {
-				return errors.Wrap(err, "link binary file")
+				return "", errors.Wrap(err, "link binary file")
 			}
 		}
 
@@ -328,10 +333,14 @@ func DownloadBinary(build *Build) error {
 			Msg("proxy: linked binpath")
 	}
 
-	return nil
+	return binpaths[0], nil
 }
 
-func getBinaryBuild(binpath string) (*Build, error) {
+type cmdVersion struct {
+	Build *Build `json:"build,omitempty" yaml:"build,omitempty"`
+}
+
+func GetBinaryBuild(binpath string) (*Build, error) {
 	if binpath == "" {
 		return nil, errors.New("no path provided")
 	}
@@ -341,14 +350,14 @@ func getBinaryBuild(binpath string) (*Build, error) {
 		return nil, errors.Wrap(err, "get binary version")
 	}
 
-	build := new(Build)
+	build := new(cmdVersion)
 
 	err = json.Unmarshal(out, build)
 	if err != nil {
 		return nil, errors.Wrap(err, "unmarshal build")
 	}
 
-	return build, nil
+	return build.Build, nil
 }
 
 func LookupBinary() (string, error) {
@@ -396,7 +405,7 @@ func LookupBinary() (string, error) {
 
 	log.Debug().Msg("proxy: no binary found, downloading")
 
-	if err := DownloadBinary(build); err != nil {
+	if _, err := DownloadBinary(build); err != nil {
 		return "", errors.Wrap(err, "download binary")
 	}
 
