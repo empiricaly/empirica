@@ -300,7 +300,7 @@ test.serial("useGlobal", async (t) => {
   });
 
   // Wait for session establishement
-  await nextTick();
+  await nextTick(100);
 
   t.true(result.current instanceof Globals);
 });
