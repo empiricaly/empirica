@@ -151,22 +151,22 @@
       </div>
       <div class="space-x-2">
         {#if status === "Created"}
-          <Button mini primary color="green" on:click={start}>
-            <div data-test="startButton" class="w-2 h-2 mr-2">
+          <Button mini primary color="green" testId="startButton" on:click={start}>
+            <div class="w-2 h-2 mr-2">
               <PlayIcon />
             </div>
             Start
           </Button>
         {:else if status === "Running"}
-          <Button mini primary color="red" on:click={stop}>
-            <div data-test="stopButton" class="w-2 h-2 mr-2">
+          <Button mini primary color="red" testId="stopButton" on:click={stop}>
+            <div class="w-2 h-2 mr-2">
               <StopIcon />
             </div>
             Stop
           </Button>
         {/if}
 
-        <Button mini color="gray" on:click={duplicate}>
+        <Button mini color="gray" testId="duplicateButton" on:click={duplicate}>
           <div class="w-2 h-2 mr-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"

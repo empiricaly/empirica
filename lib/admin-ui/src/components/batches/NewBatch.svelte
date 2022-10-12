@@ -84,16 +84,19 @@
       label: "Complete",
       onClick: () => (assignmentMethod = "complete"),
       selected: assignmentMethod === "complete",
+      testId: "completeAssignmentButton",
     },
     {
       label: "Simple",
       onClick: () => (assignmentMethod = "simple"),
       selected: assignmentMethod === "simple",
+      testId: "simpleAssignmentButton",
     },
     {
       label: "Custom",
       onClick: () => (assignmentMethod = "custom"),
       selected: assignmentMethod === "custom",
+      testId: "customAssignmentButton",
     },
   ];
 
@@ -101,6 +104,7 @@
     {
       onClick: () => (newBatch = false),
       label: "Cancel",
+      testId: "cancelButton"
     },
     {
       label: "Create",

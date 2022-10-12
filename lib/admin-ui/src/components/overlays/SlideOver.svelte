@@ -144,6 +144,7 @@
                         primary={action.primary}
                         on:click={action.onClick ? action.onClick : () => {}}
                         kind={action.submit ? "submit" : "button"}
+                        testId={action.testId}
                       >
                         {action.label}
                       </Button>

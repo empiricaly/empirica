@@ -11,11 +11,13 @@
       label: "CSV",
       onClick: () => (exportMethod = "CSV"),
       selected: exportMethod === "CSV",
+      testId: "csvButton",
     },
     {
       label: "JSON",
       onClick: () => (exportMethod = "JSON"),
       selected: exportMethod === "JSON",
+      testId: "jsonButton",
     },
   ];
 </script>
@@ -29,7 +31,7 @@
     </LabelBox>
 
     <div class="mt-4">
-      <Button>Export</Button>
+      <Button testId="exportButton">Export</Button>
     </div>
   </div>
 </Page>

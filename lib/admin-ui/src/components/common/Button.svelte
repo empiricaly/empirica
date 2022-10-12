@@ -5,7 +5,7 @@
   export let small = false;
   export let mini = false;
   export let color = "empirica";
-  export let testId = "";
+  export let testId = "unnamedButton";
 
   let size = "px-4 py-2 text-sm rounded-md";
   if (small) {
@@ -20,6 +20,6 @@
   let cn = `${base} ${primary ? prim : sec} ${customClass}`;
 </script>
 
-<button on:click type={kind} class={cn} data-testId={testId}>
+<button on:click type={kind} class={cn} data-test={testId}>
   <slot />
 </button>
