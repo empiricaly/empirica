@@ -121,6 +121,10 @@ async function run(core, github, S3, fs) {
   }
 
   for (const params of variantUploads) {
+    core.info(`New Upload: ${JSON.stringify(params, undefined, 2)}`);
+
+    params.Body = fs.createReadStream(params.Body);
+
     uploads.push(
       new Promise((resolve, reject) => {
         s3.upload(params, (err, data) => {
