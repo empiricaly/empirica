@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "package": "ncc build index.js -o dist",
+    "build": "ncc build index.js -o dist",
     "test": "ava -v",
     "test:watch": "ava --watch -v"
   },

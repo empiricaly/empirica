@@ -19521,9 +19521,9 @@ async function run(core, github, S3, fs) {
     );
   }
 
-  await Promise.all(uploads);
-
   if (!withVariants) {
+    await Promise.all(uploads);
+
     return;
   }
 
@@ -19542,6 +19542,7 @@ async function run(core, github, S3, fs) {
   core.info(`Num: ${attr.num}`);
 
   const variantUploads = createVariantUploads(
+    sourceDir,
     files,
     bucket,
     rootPath,
@@ -19553,23 +19554,53 @@ async function run(core, github, S3, fs) {
     throw "missing move params";
   }
 
-  const variations = [];
-
   for (const params of variantUploads) {
-    variations.push(
-      new Promise((resolve) => {
-        core.info(`New Copy: ${JSON.stringify(params, undefined, 2)}`);
+    uploads.push(
+      new Promise((resolve, reject) => {
+        s3.upload(params, (err, data) => {
+          if (err) {
+            core.error(err);
+            reject(err);
 
-        s3.copyObject(params, (err, data) => {
-          if (err) core.error(err);
-          core.info(`copied - ${params.CopySource} to ${params.Key}`);
-          resolve(null);
+            return;
+          }
+
+          core.info(`uploaded - ${data.Key}`);
+          core.info(`located - ${data.Location}`);
+
+          resolve(data.Location);
         });
       })
     );
   }
 
-  await Promise.all(variations);
+  await Promise.all(uploads);
+
+  // const variantUploads = createVariantCopies(
+  //   files,
+  //   bucket,
+  //   rootPath,
+  //   fileName,
+  //   attr
+  // );
+
+  // const variations = [];
+
+  // for (const params of variantUploads) {
+  // variations.push(
+  //   new Promise((resolve) => {
+  //     core.info(`New Copy: ${JSON.stringify(params, undefined, 2)}`);
+
+  //     s3.copyObject(params, (err, data) => {
+  //       if (err) core.error(err);
+  //       core.info(`copied - ${params.CopySource} to ${params.Key}`);
+  //       resolve(null);
+  //     });
+  //   })
+  // );
+  // }
+
+  // await Promise.all(variations);
 }
 
 function getAttributes(gitRef, gitSHA, githubEvent, githubRun) {
@@ -19643,7 +19674,7 @@ function getUploadParams(sourceDir, bucket, rootPath, fileName, files) {
   return uploads;
 }
 
-function createVariantUploads(files, bucket, rootPath, fileName, attr) {
+function createVariantCopies(files, bucket, rootPath, fileName, attr) {
   const variations = [];
   const variants = [
     {
@@ -19707,7 +19738,90 @@ function createVariantUploads(files, bucket, rootPath, fileName, attr) {
   return variations;
 }
 
-module.exports = { run, getUploadParams, getAttributes, createVariantUploads };
+function createVariantUploads(
+  sourceDir,
+  files,
+  bucket,
+  rootPath,
+  fileName,
+  attr
+) {
+  const variations = [];
+  const variants = [
+    {
+      prefix: "build",
+      suffix: attr.num.toString(),
+    },
+    {
+      prefix: "sha",
+      suffix: attr.sha,
+    },
+  ];
+
+  if (attr.branch !== "unknown" && attr.branch !== "not_found") {
+    variants.push({ prefix: "branch", suffix: attr.branch });
+  }
+
+  if (attr.tag !== "unknown") {
+    variants.push({ prefix: "tag", suffix: attr.tag });
+  }
+
+  if (attr.version !== "unknown") {
+    variants.push({ prefix: "version", suffix: attr.version });
+  }
+
+  switch (attr.env) {
+    case "dev":
+      variants.push({ prefix: "dev", suffix: "" });
+      break;
+    case "prod":
+      variants.push({ prefix: "prod", suffix: "" });
+      break;
+  }
+
+  for (const file of files) {
+    for (const variant of variants) {
+      const parts = file.split("-");
+      const os = parts[1];
+      const platform = parts[2];
+      const ext = os === "windows" ? ".exe" : "";
+      const mime =
+        os === "windows"
+          ? "application/vnd.microsoft.portable-executable"
+          : "application/x-executable";
+
+      let bucketPath = `${rootPath}/${os}/${platform}/${variant.prefix}`;
+
+      if (variant.suffix) {
+        bucketPath += `/${variant.suffix}`;
+      }
+
+      bucketPath = `${bucketPath}/${fileName}`;
+      bucketPath += ext;
+
+      const p = path.join(sourceDir, file);
+
+      const params = {
+        Bucket: bucket,
+        Key: bucketPath,
+        ContentType: mime,
+        Body: p,
+      };
+
+      variations.push(params);
+    }
+  }
+
+  return variations;
+}
+
+module.exports = {
+  run,
+  getUploadParams,
+  getAttributes,
+  createVariantUploads,
+  createVariantCopies,
+};
 
 
 /***/ }),
