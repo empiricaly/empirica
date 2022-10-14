@@ -36,4 +36,6 @@ setLogLevel(argv["loglevel"] || "info");
       }
     );
   }
+
+  process.exit();
 })();

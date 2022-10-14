@@ -12,10 +12,7 @@ export async function exportCSV(conn: Conn, output: string) {
 
   const prom = promiseHandle();
   stream.on("close", function () {
-    console.log(archive.pointer() + " total bytes");
-    console.log(
-      "archiver has been finalized and the output file descriptor has closed."
-    );
+    console.log("Finalizing archive (" + archive.pointer() + " bytes)");
     prom.result();
   });
 
@@ -33,31 +30,28 @@ export async function exportCSV(conn: Conn, output: string) {
 
   // file.put(encodeCells(keys.concat(dataKeys.map((k) => `data.${k}`))));
 
-  console.log("here");
-
   const a = archive;
-  await processType(a, output, "batches", conn.batches.bind(conn));
-  await processType(a, output, "games", conn.games.bind(conn));
-  await processType(a, output, "playerGames", conn.playerGames.bind(conn));
-  await processType(a, output, "rounds", conn.rounds.bind(conn));
-  await processType(a, output, "playerRounds", conn.playerRounds.bind(conn));
-  await processType(a, output, "stages", conn.stages.bind(conn));
-  await processType(a, output, "playerStages", conn.playerStages.bind(conn));
-  await processType(a, output, "players", conn.players.bind(conn));
+  await processType(a, "batches", conn.batches.bind(conn));
+  await processType(a, "games", conn.games.bind(conn));
+  await processType(a, "playerGames", conn.playerGames.bind(conn));
+  await processType(a, "rounds", conn.rounds.bind(conn));
+  await processType(a, "playerRounds", conn.playerRounds.bind(conn));
+  await processType(a, "stages", conn.stages.bind(conn));
+  await processType(a, "playerStages", conn.playerStages.bind(conn));
+  await processType(a, "players", conn.players.bind(conn));
 
   archive.finalize();
-  // await sleep(1000);
+
   await prom.promise;
 }
 
 async function processType<T extends Scope>(
   archive: Archiver,
-  output: string,
   fileName: string,
   it: () => AsyncGenerator<T, void, unknown>
 ) {
   console.log("processing", fileName);
-  const file = newFile(archive, output, fileName, "csv");
+  const file = newFile(archive, fileName, "csv");
 
   const keys = new Set<string>();
   for await (const record of it()) {
@@ -68,7 +62,6 @@ async function processType<T extends Scope>(
 
   const keyArr = Array.from(keys.values());
   file.put(encodeCells(keyArr));
-  console.log(fileName, "keys:", keyArr);
 
   for await (const record of it()) {
     const attrs = record.attributes;
@@ -86,22 +79,15 @@ async function processType<T extends Scope>(
       line.push(undefined);
     }
 
-    console.log(fileName, "line:", line);
     file.put(encodeCells(line));
   }
 
   file.stop();
 }
 
-function newFile(
-  archive: Archiver,
-  filename: string,
-  name: string,
-  extension: string
-) {
+function newFile(archive: Archiver, name: string, extension: string) {
   const file = new streams.ReadableStreamBuffer();
   archive.append(file, { name: `${name}.${extension}` });
-  console.log({ name: `${name}.${extension}` });
   file.put(BOM);
   return file;
 }

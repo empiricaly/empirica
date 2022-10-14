@@ -68,6 +68,10 @@ export class PlayerStage extends Scope {}
 export class Conn {
   constructor(private tajriba: TajribaAdmin) {}
 
+  stop() {
+    this.tajriba.stop();
+  }
+
   players() {
     return this.scopesByKind<Player>("player", Player);
   }

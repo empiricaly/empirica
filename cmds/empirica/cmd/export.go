@@ -30,6 +30,8 @@ func addExportCommand(parent *cobra.Command) error {
 			conf := getConfig(true)
 			ctx := cmd.Context()
 
+			fmt.Println("Setting up export environment...")
+
 			wd, err := os.Getwd()
 			if err != nil {
 				return errors.Wrap(err, "get working directory")
@@ -43,11 +45,23 @@ func addExportCommand(parent *cobra.Command) error {
 
 			exportScriptDir := path.Join(localDir, "export")
 
+			serverDir := path.Join(wd, "server")
+			versServer := experiment.GetVersion(serverDir, experiment.EmpiricaPackageName)
+
 			// (re-)create export dir. We always reexport for simplicity, so we
 			// don't have to manage versions... Should optimize later.
 			if _, err := os.Stat(exportScriptDir); err == nil {
-				// TODO REANABLE WHEN TESTING DONE
-				// os.RemoveAll(exportScriptDir)
+
+				// Check if version is identical to server/package.json
+				versExport := experiment.GetVersion(exportScriptDir, experiment.EmpiricaPackageName)
+				if versExport.Resolved != versServer.Resolved {
+					os.RemoveAll(exportScriptDir)
+				}
+			}
+
+			version := versServer.Resolved
+			if version == "not found" {
+				version = "latest"
 			}
 
 			if _, err := os.Stat(exportScriptDir); err != nil {
@@ -58,6 +72,10 @@ func addExportCommand(parent *cobra.Command) error {
 				if err := experiment.RunCmdSilent(ctx, exportScriptDir, "npm", "install", "--silent"); err != nil {
 					return errors.Wrap(err, "server")
 				}
+
+				if err := experiment.RunCmdSilent(ctx, exportScriptDir, "npm", "install", "--silent", "-E", "@empirica/core@"+version); err != nil {
+					return errors.Wrap(err, "upgrade client")
+				}
 			}
 
 			experimentName := conf.Name
@@ -65,13 +83,15 @@ func addExportCommand(parent *cobra.Command) error {
 				experimentName = "empirica"
 			}
 
+			filename := fmt.Sprintf("%s-%s.zip", experimentName, time.Now().Format("2006-01-02-15-04-05"))
+
 			exportArgs := []string{
 				"npm",
 				"run",
 				"export",
 				"--",
 				"--filename",
-				fmt.Sprintf("%s-%s.zip", experimentName, time.Now().Format("2006-01-02-15-04-05")),
+				path.Join(wd, filename),
 			}
 
 			if len(args) == 0 {
@@ -88,7 +108,7 @@ func addExportCommand(parent *cobra.Command) error {
 				tajfile := path.Join(localDir, "tajriba.json")
 
 				exportArgs = append(exportArgs,
-					"--token", token,
+					// "--token", token,
 					"--srtoken", srtoken,
 					"--tajfile", tajfile)
 			} else {

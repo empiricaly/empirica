@@ -29,4 +29,8 @@ export async function runExport(
     default:
       throw new Error(`Unknown format ${format}`);
   }
+
+  taj.stop();
+
+  console.log("finished");
 }
