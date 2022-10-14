@@ -2,13 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/empiricaly/empirica/internal/experiment"
 	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/empiricaly/empirica/internal/templates"
@@ -94,29 +94,33 @@ func addExportCommand(parent *cobra.Command) error {
 				path.Join(wd, filename),
 			}
 
+			// tokenFile := conf.Callbacks.SessionToken
+			// tokenb, err := os.ReadFile(tokenFile)
+
+			// var token string
+			// if err == nil {
+			// 	token = string(tokenb)
+			// 	token = strings.TrimSpace(token)
+			// }
+
+			srtoken := conf.Tajriba.Auth.ServiceRegistrationToken
+
 			if len(args) == 0 {
-				tokenFile := conf.Callbacks.SessionToken
-				tokenb, err := os.ReadFile(tokenFile)
-
-				var token string
-				if err == nil {
-					token = string(tokenb)
-					token = strings.TrimSpace(token)
-				}
-
-				srtoken := conf.Tajriba.Auth.ServiceRegistrationToken
 				tajfile := path.Join(localDir, "tajriba.json")
-
-				exportArgs = append(exportArgs,
-					// "--token", token,
-					"--srtoken", srtoken,
-					"--tajfile", tajfile)
+				exportArgs = append(exportArgs, "--tajfile", tajfile)
 			} else {
-				spew.Dump("what")
+				if _, err := url.ParseRequestURI(args[0]); err != nil {
+					tajfile := path.Join(localDir, args[0])
+					exportArgs = append(exportArgs, "--tajfile", tajfile)
+				} else {
+					exportArgs = append(exportArgs, "--url", args[0])
+				}
 			}
 
+			exportArgs = append(exportArgs, "--srtoken", srtoken)
+
 			log.Info().
-				Strs("args", exportArgs).
+				Str("args", strings.Join(exportArgs, " ")).
 				Msg("exporting data")
 
 			c := exec.CommandContext(ctx, "empirica", exportArgs...)
