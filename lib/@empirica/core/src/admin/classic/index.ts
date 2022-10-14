@@ -15,3 +15,5 @@ export {
 } from "./models";
 export type { ClassicKinds, EventProxy } from "./models";
 export { ClassicListenersCollector } from "./proxy";
+export { runExport, ExportFormat } from "./export/export";
+export { withTajriba } from "./api/connection_test_helper";
