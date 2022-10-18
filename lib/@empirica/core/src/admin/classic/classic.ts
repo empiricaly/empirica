@@ -147,8 +147,8 @@ export function Classic(config: ClassicConfig = {}) {
 
       ctx.addLinks([{ link: true, participantIDs, nodeIDs }]);
 
-      const stage = isStage(game.stages[0]);
-      const round = isRound(stage.round);
+      const round = isRound(game.rounds[0]);
+      const stage = isStage(round.stages[0]);
 
       game.set("stageID", stage.id);
 
@@ -359,18 +359,45 @@ export function Classic(config: ClassicConfig = {}) {
     ):
       | { stop: true; nextStage: undefined; nextRound: undefined }
       | { stop: false; nextStage: Stage; nextRound: Round } {
+      // Stop if we're at the end of the game
       if (game.hasEnded) {
         return { stop: true, nextStage: undefined, nextRound: undefined };
       }
 
-      const currentIndex = game.stages.findIndex((s) => s.id === stage.id);
-      const nextStage = game.stages[currentIndex + 1];
+      // Get the next stage in round
+      const currentRound = isRound(stage.round);
+      let nextRound: Round | undefined = currentRound;
+      const roundStages = currentRound.stages;
+      const currentStageIndex = roundStages.findIndex((s) => s.id === stage.id);
+      let nextStage = roundStages.find(
+        (s) => s.get("index") === currentStageIndex + 1
+      );
 
+      // If no more stages in round, get next round
       if (!nextStage) {
-        return { stop: true, nextStage: undefined, nextRound: undefined };
+        const gameRounds = game.rounds;
+        const currentRoundIndex = gameRounds.findIndex(
+          (s) => s.id === currentRound.id
+        );
+        nextRound = gameRounds.find(
+          (s) => s.get("index") === currentRoundIndex + 1
+        );
+
+        // If no more rounds in game, stop
+        if (!nextRound) {
+          return { stop: true, nextStage: undefined, nextRound: undefined };
+        }
+
+        // Get first stage in next round
+        nextStage = nextRound.stages[0];
+
+        // If next round is empty for whatever reason, stop
+        if (!nextStage) {
+          return { stop: true, nextStage: undefined, nextRound: undefined };
+        }
       }
 
-      return { nextStage, nextRound: isRound(nextStage.round), stop: false };
+      return { nextStage, nextRound, stop: false };
     }
 
     _.on("player", "introDone", async (ctx, { player }: { player: Player }) => {

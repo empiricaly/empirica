@@ -114,6 +114,16 @@ github.com/empiricaly/tajriba v1.0.0-rc.12 h1:bCL97TEy8m2VCSL47D9ytWJSiC76DEaQtW
 github.com/empiricaly/tajriba v1.0.0-rc.12/go.mod h1:YjXY+MvdICir57DvGb6DyFkT1sP3DOasxLeAMvXeyB8=
 github.com/empiricaly/tajriba v1.0.0-rc.13 h1:LGu9EoLYkRSfkOrA4aqa/UYLB1/lzRTPtpEKz0xl5do=
 github.com/empiricaly/tajriba v1.0.0-rc.13/go.mod h1:YjXY+MvdICir57DvGb6DyFkT1sP3DOasxLeAMvXeyB8=
+github.com/empiricaly/tajriba v1.0.0-rc.14 h1:LQefsYridGMrRPJsTPLi74AI3Sy1gzt9h5YJYGQkeBs=
+github.com/empiricaly/tajriba v1.0.0-rc.14/go.mod h1:YjXY+MvdICir57DvGb6DyFkT1sP3DOasxLeAMvXeyB8=
+github.com/empiricaly/tajriba v1.0.0-rc.15 h1:XnXgNFT8lRPV8xNiebcPQf+PcixJp3tQWQKZ3OgrNTQ=
+github.com/empiricaly/tajriba v1.0.0-rc.15/go.mod h1:YjXY+MvdICir57DvGb6DyFkT1sP3DOasxLeAMvXeyB8=
+github.com/empiricaly/tajriba v1.0.0-rc.16 h1:z5SDKItU9LFj6F2rAE8FZhiU0ux9OE4gsZ6FmLdq0To=
+github.com/empiricaly/tajriba v1.0.0-rc.16/go.mod h1:YjXY+MvdICir57DvGb6DyFkT1sP3DOasxLeAMvXeyB8=
+github.com/empiricaly/tajriba v1.0.0-rc.17 h1:JzSPQlYwCnh8XBOmrE4P7kpvZ6aNYLAJgFxUk/sarzM=
+github.com/empiricaly/tajriba v1.0.0-rc.17/go.mod h1:YjXY+MvdICir57DvGb6DyFkT1sP3DOasxLeAMvXeyB8=
+github.com/empiricaly/tajriba v1.0.0-rc.18 h1:GmrMg+lFSnH7xYxKULczIcBLh4qgicLRmR4DWqz5txI=
+github.com/empiricaly/tajriba v1.0.0-rc.18/go.mod h1:YjXY+MvdICir57DvGb6DyFkT1sP3DOasxLeAMvXeyB8=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.1-0.20191026205805-5f8ba28d4473/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=

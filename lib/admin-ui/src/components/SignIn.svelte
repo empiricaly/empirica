@@ -1,5 +1,6 @@
 <script>
   import { Empirica } from "@empirica/admin";
+  import { Tajriba } from "@empirica/tajriba";
   import { DEFAULT_TOKEN_KEY, URL } from "../constants";
   import { setCurrentAdmin } from "../utils/auth";
   import { focus } from "../utils/use";
@@ -14,15 +15,24 @@
   async function handleSubmit(e) {
     e.preventDefault();
     try {
+      console.log("signing in", username, password);
       signingIn = true;
-      const [admin, token] = await Empirica.loginAdmin(
-        `${URL}/query`,
-        username,
-        password
-      );
-      window.localStorage.setItem(DEFAULT_TOKEN_KEY, token.toString());
+
+      const taj = await Tajriba.createAndAwait(`${URL}/query`);
+      const sessionToken = await taj.login(username, password);
+      taj.stop();
+
+      // const [admin, token] = await Empirica.loginAdmin(
+      //   `${URL}/query`,
+      //   username,
+      //   password
+      // );
+
+      console.log("signed in");
+      window.localStorage.setItem(DEFAULT_TOKEN_KEY, sessionToken);
       loggedIn = true;
-      setCurrentAdmin(admin);
+      window.location.reload();
+      // setCurrentAdmin(admin);
     } catch (error) {
       console.error("admin sign in", error);
       alert("Failed to signin");

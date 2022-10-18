@@ -83,7 +83,7 @@ func CopyAsset(project, dir, root, name string) error {
 
 		if strings.Contains(base, "client") {
 			obj["name"] = project + "-empirica-client"
-		} else {
+		} else if strings.Contains(base, "server") {
 			obj["name"] = project + "-empirica-server"
 		}
 

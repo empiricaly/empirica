@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "package": "ncc build index.js -o dist",
+    "build": "ncc build index.js -o dist",
     "test": "ava -v",
     "test:watch": "ava --watch -v"
   },
@@ -16,7 +16,7 @@
     "npm": "8.15.0"
   },
   "dependencies": {
-    "@actions/core": "^1.2.4",
+    "@actions/core": "1.10.0",
     "@actions/github": "^4.0.0",
     "@zeit/ncc": "^0.22.3",
     "aws-sdk": "^2.730.0",

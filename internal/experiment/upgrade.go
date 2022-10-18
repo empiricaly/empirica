@@ -25,7 +25,7 @@ func UpgradePackages(ctx context.Context, version, playerPath, callbacksPath str
 
 func UpgradeCommand(ctx context.Context, version, clientDir string) error {
 	if version == "latest" {
-		v := getVersion(clientDir, empiricaPackageName)
+		v := GetVersion(clientDir, EmpiricaPackageName)
 		if v == nil {
 			return errors.New("could not find @empirica/core package in package.json")
 		}
