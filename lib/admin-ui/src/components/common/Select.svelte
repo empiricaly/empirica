@@ -6,6 +6,7 @@
   export let title = "";
   export let disabled = false;
   export let el = null;
+  export let testId = "unnamedSelect";
 </script>
 
 <div class="relative">
@@ -18,6 +19,7 @@
     {id}
     name={id}
     bind:value={selected}
+    data-test={testId}
     {title}
   >
     {#each options as option}

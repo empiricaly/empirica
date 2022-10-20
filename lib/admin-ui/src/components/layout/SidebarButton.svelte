@@ -6,12 +6,14 @@
   export let label;
   export let svgPath = "";
   export let svgWidth = 512;
+  export let testId = "unnamedSidebarButton";
 </script>
 
 <a
   href={path}
   use:link
   use:active
+  data-test={testId}
   class="text-gray-300 hover:bg-gray-700 hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md"
 >
   <slot>

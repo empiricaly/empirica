@@ -15,6 +15,7 @@
     {
       label: "New Batch",
       onClick: openNewBatch,
+      testId: "newBatchButton"
     },
   ];
 

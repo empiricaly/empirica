@@ -36,6 +36,7 @@
     <button
       type="button"
       class="{shared} {option.selected ? selected : unselected} {pos(i, last)}"
+      data-test={option.testId}
       on:click={option.onClick}
     >
       {option.label}

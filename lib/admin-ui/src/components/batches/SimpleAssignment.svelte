@@ -67,6 +67,7 @@
         ? "Add Treatment"
         : "No treatments left"}
       bind:selected={newTreatment}
+      testId="treatmentSelect"
       options={remaining.map((t) => ({ label: t.name, value: t }))}
       bind:el={newTreatmentSelect}
     />
@@ -81,6 +82,7 @@
       suffix={config.count === 1 ? "game" : "games"}
       right
       placeholder="0"
+      testId="gameCountInput"
       bind:value={config.count}
     />
   </div>
