@@ -69,19 +69,21 @@ func addTajribaCommand(parent *cobra.Command) error {
 		},
 	}
 
-	err := tajriba.ConfigFlags(cmd, "tajriba", "tajriba.json")
-	if err != nil {
-		return errors.Wrap(err, "define flags")
-	}
+	if len(os.Args) > 1 && os.Args[1] == "tajriba" {
+		err := tajriba.ConfigFlags(cmd, "tajriba", "tajriba.json")
+		if err != nil {
+			return errors.Wrap(err, "define flags")
+		}
 
-	err = viper.BindPFlags(cmd.Flags())
-	if err != nil {
-		return errors.Wrap(err, "bind root flags")
-	}
+		err = viper.BindPFlags(cmd.Flags())
+		if err != nil {
+			return errors.Wrap(err, "bind root flags")
+		}
 
-	err = viper.BindPFlags(cmd.PersistentFlags())
-	if err != nil {
-		return errors.Wrap(err, "bind root flags")
+		err = viper.BindPFlags(cmd.PersistentFlags())
+		if err != nil {
+			return errors.Wrap(err, "bind root flags")
+		}
 	}
 
 	parent.AddCommand(cmd)
