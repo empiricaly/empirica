@@ -133,7 +133,49 @@ const createLogger = (lvl: number, level: string[]) => {
 
     if (logsMock) {
       logsMock.log({ level: reversLevels[lvl]!, args: args });
+
       return;
+    }
+
+    if (args.length === 1) {
+      switch (typeof args[0]) {
+        case "string":
+          for (const line of args[0].split("\n")) {
+            console.log(...formatConsoleDate(new Date(), level).concat(line));
+          }
+          return;
+
+        case "object":
+          if (args[0] instanceof Error) {
+            const error = args[0] as Error;
+            const prettyErr =
+              error.name +
+              ": " +
+              error.message.replace(new RegExp(`^${error.name}[: ]*`), "") +
+              "\n" +
+              (error.stack || "")
+                .split("\n")
+                .map((line) => line.trim())
+                .map((line) => {
+                  if (line.startsWith(error.name + ": " + error.message))
+                    return null;
+
+                  if (line.startsWith("at")) {
+                    return "  " + line;
+                  }
+
+                  return line;
+                })
+                .filter(Boolean)
+                .join("\n");
+
+            for (const line of prettyErr.split("\n")) {
+              console.log(...formatConsoleDate(new Date(), level).concat(line));
+            }
+
+            return;
+          }
+      }
     }
 
     console.log(...formatConsoleDate(new Date(), level).concat(args));
