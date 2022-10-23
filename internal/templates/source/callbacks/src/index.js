@@ -28,7 +28,7 @@ setLogLevel(argv["loglevel"] || "info");
   ctx.register(Empirica);
   ctx.register(function (_) {
     _.on("ready", function () {
-      info("callbacks: started");
+      info("server: started");
     });
   });
 })();
