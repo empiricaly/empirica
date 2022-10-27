@@ -24,6 +24,13 @@ const reservedKeys = [
   "timerID",
 ];
 
+export const lobbyConfigSchema = z.object({
+  kind: z.union([z.literal("global"), z.literal("individual")]),
+  duration: z.number().min(1),
+  strategy: z.union([z.literal("fail"), z.literal("ignore")]),
+  extensions: z.number().min(1).optional(),
+});
+
 const indexSortable = (a: Attributable, b: Attributable) =>
   (a.get("index") as number) - (b.get("index") as number);
 
@@ -88,6 +95,10 @@ export class Batch extends Scope<Context, ClassicKinds> {
   get hasEnded() {
     return endedStatuses.includes(this.get("status") as EndedStatuses);
   }
+
+  get lobbyConfig() {
+    return lobbyConfigSchema.parse(this.get("lobbyConfig"));
+  }
 }
 
 export class BatchOwned extends Scope<Context, ClassicKinds> {
@@ -129,8 +140,16 @@ export class Game extends BatchOwned {
     return !this.get("status");
   }
 
+  get hasStarted() {
+    return Boolean(this.get("status"));
+  }
+
   get isRunning() {
     return this.get("status") === "running";
+  }
+
+  get lobbyConfig() {
+    return this.batch!.lobbyConfig;
   }
 
   async assignPlayer(player: Player) {
