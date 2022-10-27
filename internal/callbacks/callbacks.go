@@ -328,7 +328,8 @@ type callbacksWriter struct {
 func (c *callbacksWriter) Write(p []byte) (n int, err error) {
 	var ready bool
 	if c.isDefaultCmd {
-		if bytes.Contains(p, []byte("callbacks: started")) {
+		if bytes.Contains(p, []byte("server: started")) ||
+			bytes.Contains(p, []byte("callbacks: started")) {
 			ready = true
 		}
 	}

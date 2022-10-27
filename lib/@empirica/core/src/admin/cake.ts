@@ -57,7 +57,12 @@ export class Cake<
   async add(listeners: ListenersCollector<Context, Kinds>) {
     for (const start of listeners.starts) {
       debug("start callback");
-      await start.callback(this.evtctx);
+      try {
+        await start.callback(this.evtctx);
+      } catch (err) {
+        prettyPrintError("start", err as Error);
+      }
+
       if (this.postCallback) {
         await this.postCallback();
       }
@@ -153,7 +158,7 @@ export class Cake<
                 participant: conn.participant,
               });
             } catch (err) {
-              error(err);
+              prettyPrintError("participant connect", err as Error);
             }
 
             if (this.postCallback) {
@@ -184,9 +189,13 @@ export class Cake<
       }
     }
 
-    for (const start of listeners.readys) {
+    for (const ready of listeners.readys) {
       debug("ready callback");
-      await start.callback(this.evtctx);
+      try {
+        await ready.callback(this.evtctx);
+      } catch (err) {
+        prettyPrintError("ready", err as Error);
+      }
     }
   }
 
@@ -219,7 +228,7 @@ export class Cake<
             try {
               await callback.callback(this.evtctx, { [kind]: scope });
             } catch (err) {
-              error(err);
+              prettyPrintError(kind as string, err as Error);
             }
             if (this.postCallback) {
               await this.postCallback();
@@ -299,7 +308,7 @@ export class Cake<
             try {
               await callback.callback(this.evtctx, props);
             } catch (err) {
-              error(err);
+              prettyPrintError(`${kind as string}.${key}`, err as Error);
             }
 
             if (this.stopped) {
@@ -365,7 +374,7 @@ export class Cake<
             step: transition.step,
           });
         } catch (err) {
-          error(err);
+          prettyPrintError("transition", err as Error);
         }
 
         if (this.postCallback) {
@@ -407,7 +416,7 @@ export class Cake<
                 participant: connection.participant,
               });
             } catch (err) {
-              error(err);
+              prettyPrintError("participant connect", err as Error);
             }
 
             if (this.postCallback) {
@@ -451,7 +460,7 @@ export class Cake<
             participant: connection.participant,
           });
         } catch (err) {
-          error(err);
+          prettyPrintError("participant disconnect", err as Error);
         }
 
         if (this.postCallback) {
@@ -467,3 +476,8 @@ export class Cake<
 type HasPlacement = { placement: ListernerPlacement };
 const comparePlacement = (a: HasPlacement, b: HasPlacement) =>
   a.placement - b.placement;
+
+function prettyPrintError(location: string, err: Error) {
+  error(`Error caught in "${location}" callback:`);
+  error(err);
+}

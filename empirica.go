@@ -53,7 +53,7 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 
 	var schema graphql.ExecutableSchema
 
-	termui := term.New()
+	termui := term.New(config.Log.Level == "debug" || config.Log.Level == "trace")
 	ctx = term.SetContext(ctx, termui)
 	comp := termui.Add("tajriba")
 
