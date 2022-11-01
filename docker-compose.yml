@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+  empirica:
+    restart: always
+    build:
+      context: .
+      dockerfile: ./empirica.dockerfile
+    ports:
+      - "3001:3000"
+
+  playwright:
+    environment:
+      URL: 'http://empirica:3000'
+    build:
+      dockerfile: ./playwright.dockerfile
+    volumes:
+      - ./tests:/app/tests
+
