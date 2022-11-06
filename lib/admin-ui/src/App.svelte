@@ -69,10 +69,16 @@
       },
     });
 
-    admin = await tajriba.sessionAdmin(t);
-    setCurrentAdmin(admin);
-    loggedIn = true;
-    console.info("Connected");
+    try {
+      admin = await tajriba.sessionAdmin(t);
+      setCurrentAdmin(admin);
+      loggedIn = true;
+      console.info("Connected");
+    } catch (e) {
+      console.warn("Connection failed, clearing token");
+      window.localStorage.removeItem(DEFAULT_TOKEN_KEY);
+      window.location.reload();
+    }
   }
 
   async function sessionLogin() {
