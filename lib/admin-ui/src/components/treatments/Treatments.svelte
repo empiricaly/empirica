@@ -1,5 +1,5 @@
 <script>
-  import { DEFAULT_TREATMENT, URL } from "../../constants";
+  import { DEFAULT_TREATMENT, ORIGIN } from "../../constants";
   import { castValue } from "../../utils/typeValue";
   import { focus } from "../../utils/use";
   import Button from "../common/Button.svelte";
@@ -19,7 +19,7 @@
   let deleteIconIndex = -1;
 
   // Get treatments from file
-  fetch(URL + "/treatments")
+  fetch(ORIGIN + "/treatments")
     .then((response) => response.json())
     .then((data) => {
       treatments = data;
@@ -30,7 +30,7 @@
 
   async function writeTreatmentsToFile() {
     try {
-      await fetch(URL + "/treatments", {
+      await fetch(ORIGIN + "/treatments", {
         method: "PUT",
         body: JSON.stringify(treatments),
       });
