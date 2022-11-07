@@ -1,5 +1,5 @@
 <script>
-  import { DEFAULT_FACTOR, URL } from "../../constants";
+  import { DEFAULT_FACTOR, ORIGIN } from "../../constants";
   import { castValue } from "../../utils/typeValue";
   import { focus } from "../../utils/use";
   import Button from "../common/Button.svelte";
@@ -16,7 +16,7 @@
   let editedIndex;
 
   // Get treatments from file
-  fetch(URL + "/treatments")
+  fetch(ORIGIN + "/treatments")
     .then((response) => response.json())
     .then((data) => {
       treatments = data;
@@ -27,7 +27,7 @@
 
   async function writeFactorsToFile() {
     try {
-      await fetch(URL + "/treatments", {
+      await fetch(ORIGIN + "/treatments", {
         method: "PUT",
         body: JSON.stringify(treatments),
       });
