@@ -10,6 +10,7 @@ import { Scope } from "../scopes";
 import { AttributeInput, attrs, scopeConstructor } from "./helpers";
 
 const isString = z.string().parse;
+const isOptionalNumber = z.number().optional().parse;
 
 export const endedStatuses = ["ended", "terminated", "failed"];
 export type EndedStatuses = typeof endedStatuses[number];
@@ -97,6 +98,14 @@ export class BatchOwned extends Scope<Context, ClassicKinds> {
 }
 
 export class Game extends BatchOwned {
+  // this._tmpRoundIndex is used to keep track of the round index when adding
+  // multiple rounds to a game within a callback, during which the game's
+  // roundIndex attribute is not saved yet.
+  // this._tmpRoundIndex is reset to undefined after the callback is called in
+  // the finalizer.
+  // This is ugly...
+  private _tmpRoundIndex: number | undefined;
+
   get rounds() {
     const rounds = this.scopesByKindMatching<Round>("round", "gameID", this.id);
     rounds.sort(indexSortable);
@@ -381,9 +390,19 @@ export class Game extends BatchOwned {
     const game = this;
     const gameID = game.id;
 
-    const index = (game.get("roundIndex") as number) || -1;
-    const roundIndex = index + 1;
-    game.set("roundIndex", roundIndex);
+    let roundIndex = isOptionalNumber(this._tmpRoundIndex);
+    if (roundIndex === undefined) {
+      roundIndex = isOptionalNumber(game.get("roundIndex"));
+    }
+    if (roundIndex === undefined) {
+      roundIndex = -1;
+    }
+
+    // New round index
+    roundIndex += 1;
+
+    this._tmpRoundIndex = roundIndex;
+    game.set("roundIndex", this._tmpRoundIndex);
 
     const [scope, accessors] = scopeConstructor({
       kind: "round",
@@ -391,7 +410,7 @@ export class Game extends BatchOwned {
         ...attributes.filter((a) => !reservedKeys.includes(a.key)),
         {
           key: "index",
-          value: `${roundIndex}`,
+          value: roundIndex,
           immutable: true,
         },
         {
@@ -476,6 +495,8 @@ export class Game extends BatchOwned {
     };
 
     this.addFinalizer(async () => {
+      this._tmpRoundIndex = undefined;
+
       let rounds: AddScopePayload[];
       try {
         rounds = await roundProm;
@@ -499,7 +520,7 @@ export class Game extends BatchOwned {
         throw "round not found in round finalizer";
       }
 
-      let stageIndex = 0;
+      let stageIndex = isOptionalNumber(round.get("stageIndex")) || 0;
 
       for (const scope of stageAdds) {
         const durAttr = scope.attributes!.find((a) => a.key === "duration");

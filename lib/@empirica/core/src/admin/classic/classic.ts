@@ -148,6 +148,11 @@ export function Classic(config: ClassicConfig = {}) {
       ctx.addLinks([{ link: true, participantIDs, nodeIDs }]);
 
       const round = isRound(game.rounds[0]);
+
+      if (round.stages.length === 0) {
+        return;
+      }
+
       const stage = isStage(round.stages[0]);
 
       game.set("stageID", stage.id);
@@ -368,20 +373,13 @@ export function Classic(config: ClassicConfig = {}) {
       const currentRound = isRound(stage.round);
       let nextRound: Round | undefined = currentRound;
       const roundStages = currentRound.stages;
-      const currentStageIndex = roundStages.findIndex((s) => s.id === stage.id);
-      let nextStage = roundStages.find(
-        (s) => s.get("index") === currentStageIndex + 1
-      );
+      let nextStage: Stage | undefined =
+        roundStages[(stage.get("index") as number) + 1];
 
       // If no more stages in round, get next round
       if (!nextStage) {
         const gameRounds = game.rounds;
-        const currentRoundIndex = gameRounds.findIndex(
-          (s) => s.id === currentRound.id
-        );
-        nextRound = gameRounds.find(
-          (s) => s.get("index") === currentRoundIndex + 1
-        );
+        nextRound = gameRounds[(currentRound.get("index") as number) + 1];
 
         // If no more rounds in game, stop
         if (!nextRound) {
