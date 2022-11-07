@@ -36,6 +36,19 @@ export interface EmpiricaContextProps {
   // This is useful for games that want to persist render state between rounds
   // or stages. E.g. keep a video chat up between stages.
   unmanagedGame: boolean;
+
+  // Unmanaged assignement will render the children as soon as the player is
+  // connected. It is up to the developer to handle everything after the player
+  // is connected: intro steps, lobby, game, round, stage and exit steps.
+  unmanagedAssignment: boolean;
+
+  // Disable the consent screen. It is up to the developer to handle the consent
+  // screen.
+  disableConsent: boolean;
+
+  // Disable the NoGames screen. It is up to the developer to handle the NoGames
+  // condition.
+  disableNoGames: boolean;
 }
 
 export function EmpiricaContext({
@@ -49,6 +62,9 @@ export function EmpiricaContext({
   loading: LoadingComp = Loading,
   connecting: ConnectingComp = Loading,
   unmanagedGame = false,
+  unmanagedAssignment = false,
+  disableConsent = false,
+  disableNoGames = false,
   children,
 }: EmpiricaContextProps) {
   const tajribaConnected = useTajribaConnected();
@@ -73,11 +89,11 @@ export function EmpiricaContext({
     return <LoadingComp />;
   }
 
-  if (!game && !globals.get("experimentOpen")) {
+  if (!disableNoGames && !game && !globals.get("experimentOpen")) {
     return <NoGamesComp />;
   }
 
-  if (!consented) {
+  if (!disableConsent && !consented) {
     return <ConsentComp onConsent={onConsent!} />;
   }
 
@@ -87,12 +103,16 @@ export function EmpiricaContext({
     );
   }
 
-  if (game && game.hasEnded) {
-    return <Exit exitSteps={exitSteps} finished={finished} />;
-  }
-
   if (!player) {
     return <LoadingComp />;
+  }
+
+  if (unmanagedAssignment) {
+    return <>{children}</>;
+  }
+
+  if (game && game.hasEnded) {
+    return <Exit exitSteps={exitSteps} finished={finished} />;
   }
 
   return (

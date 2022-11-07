@@ -28,10 +28,29 @@ const isStage = z.instanceof(Stage).parse;
 const isString = z.string().parse;
 
 export type ClassicConfig = {
+  // Disables automatic assignment of players on the connection of a new player.
+  // It is up to the developer to call `game.assignPlayer` when they want to
+  // assign a player to a game.
   disableAssignment?: boolean;
+
+  // Disable the introDone check (when the players are done with intro steps),
+  // which normally will check if enough players are ready (done with intro
+  // steps) to start a game. This means that the game will not start on its own
+  // after intro steps. It is up to the developer to start the game manually
+  // with `game.start()`.
+  // This also disables playerCount checks and overflow from one game to the
+  // next available game with the same treatment.
+  disableIntroCheck?: boolean;
+
+  // Disable game creation on new batch.
+  disableGameCreation?: boolean;
 };
 
-export function Classic(config: ClassicConfig = {}) {
+export function Classic({
+  disableAssignment,
+  disableIntroCheck,
+  disableGameCreation,
+}: ClassicConfig = {}) {
   return function (_: ListenersCollector<Context, ClassicKinds>) {
     const online = new Map<string, Participant>();
     const playersForParticipant = new Map<string, Player>();
@@ -42,7 +61,7 @@ export function Classic(config: ClassicConfig = {}) {
       player: Player,
       skipGameIDs?: string[]
     ) {
-      if (config.disableAssignment) {
+      if (disableAssignment) {
         return;
       }
 
@@ -59,7 +78,7 @@ export function Classic(config: ClassicConfig = {}) {
 
         for (const game of batch.games) {
           if (
-            game.hasNotStarted &&
+            !game.hasStarted &&
             (!skipGameIDs || !skipGameIDs?.includes(game.id))
           ) {
             availableGames.push(game);
@@ -103,7 +122,7 @@ export function Classic(config: ClassicConfig = {}) {
         }
 
         for (const game of batch.games) {
-          if (game.hasNotStarted) {
+          if (!game.hasStarted) {
             shouldOpenExperiment = true;
             break LOOP;
           }
@@ -211,7 +230,7 @@ export function Classic(config: ClassicConfig = {}) {
     });
 
     _.on("batch", (_, { batch }: { batch: Batch }) => {
-      if (batch.get("initialized")) {
+      if (disableGameCreation || batch.get("initialized")) {
         return;
       }
 
@@ -350,7 +369,11 @@ export function Classic(config: ClassicConfig = {}) {
     });
 
     _.on("stage", "gameID", async (ctx, { stage }: { stage: Stage }) => {
-      tryToStartGame(ctx, isGame(stage.currentGame));
+      if (!stage.currentGame?.isRunning) {
+        return;
+      }
+
+      tryToStartGame(ctx, stage.currentGame);
     });
 
     type StageTimerID = { stage: Stage; timerID: string };
@@ -399,7 +422,7 @@ export function Classic(config: ClassicConfig = {}) {
     }
 
     _.on("player", "introDone", async (ctx, { player }: { player: Player }) => {
-      if (!player.currentGame) {
+      if (disableIntroCheck || !player.currentGame) {
         return;
       }
 
@@ -414,7 +437,7 @@ export function Classic(config: ClassicConfig = {}) {
         return;
       }
 
-      if (game.get("start")) {
+      if (game.hasStarted) {
         trace("introDone: game already started");
         return;
       }
@@ -428,12 +451,8 @@ export function Classic(config: ClassicConfig = {}) {
         }
       }
 
-      if (!game.get("start")) {
-        trace("introDone: starting game");
-        game.set("start", true);
-      } else {
-        trace("introDone: game already started");
-      }
+      trace("introDone: starting game");
+      game.start();
     });
 
     type BeforeGameStart = { game: Game; start: boolean };

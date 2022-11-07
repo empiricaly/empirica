@@ -134,12 +134,25 @@ export class Game extends BatchOwned {
     return endedStatuses.includes(this.get("status") as EndedStatuses);
   }
 
-  get hasNotStarted() {
-    return !this.get("status");
-  }
-
+  // Game has passed the gameStart callbacks and is currently running. This will
+  // be true until the game ends.
   get isRunning() {
     return this.get("status") === "running";
+  }
+
+  // The game has started, but it might not be running yet, it might still be in
+  // the gameStart callbacks.
+  // This will always be true once the game has started (even after the game
+  // ends).
+  get hasStarted() {
+    return Boolean(this.get("start"));
+  }
+
+  // Starts the game if it is not already started.
+  start() {
+    if (!this.get("start")) {
+      this.set("start", true);
+    }
   }
 
   async assignPlayer(player: Player) {
@@ -153,12 +166,12 @@ export class Game extends BatchOwned {
     const treatment = this.get("treatment");
     if (!treatment) {
       warn(`game without treatment: ${this.id}`);
-
-      return;
     }
 
     player.set("gameID", this.id);
-    player.set("treatment", treatment);
+    if (treatment) {
+      player.set("treatment", treatment);
+    }
 
     if (
       previousGameTreatment &&
@@ -185,57 +198,6 @@ export class Game extends BatchOwned {
     // Add player to running game.
     await this.addPlayer(player);
   }
-
-  // private async addPlayerToGroup(player: Player) {
-  //   if (this.hasEnded) {
-  //     return;
-  //   }
-
-  //   // add link between participant and groupID of game
-  //   const groupID = this.get("groupID") as string;
-  //   if (!groupID || !player.participantID) {
-  //     return;
-  //   }
-
-  //   await this.addLinks([
-  //     {
-  //       link: true,
-  //       participantIDs: this.players
-  //         .map((p) => p.participantID!)
-  //         .filter((p) => p),
-  //       nodeIDs: [...this.players.map((p) => p.id), groupID],
-  //     },
-  //   ]);
-  // }
-
-  // private async removePlayerFromGroup(player: Player) {
-  //   if (this.hasEnded) {
-  //     return;
-  //   }
-
-  //   // add link between participant and groupID of game
-  //   const groupID = this.get("groupID") as string;
-  //   if (!groupID || !player.participantID) {
-  //     return;
-  //   }
-
-  //   await this.addLinks([
-  //     // Add links for new player with games and other players.
-  //     {
-  //       link: false,
-  //       participantIDs: [player.participantID!],
-  //       nodeIDs: [groupID],
-  //     },
-  //     // Add links for other players with new player.
-  //     {
-  //       link: false,
-  //       participantIDs: this.players
-  //         .map((p) => p.participantID!)
-  //         .filter((p) => p && p !== player.participantID),
-  //       nodeIDs: [player.id],
-  //     },
-  //   ]);
-  // }
 
   // Add player to running game
   private async addPlayer(player: Player) {
@@ -288,6 +250,7 @@ export class Game extends BatchOwned {
     // We assume the player has already added the gameID.
     for (const plyr of this.players) {
       if (player !== plyr) {
+        newPlayerNodeIDs.push(plyr.id);
         newPlayerNodeIDs.push(isString(plyr.get(`playerGameID-${this.id}`)));
         newPlayerNodeIDs.push(isString(plyr.get(`playerRoundID-${round.id}`)));
         newPlayerNodeIDs.push(isString(plyr.get(`playerStageID-${stage.id}`)));
