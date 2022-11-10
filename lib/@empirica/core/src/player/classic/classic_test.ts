@@ -254,7 +254,7 @@ test("ClassicMode stage can have timer", (t) => {
 
   changes.next(
     stepChange({
-      ellapsed: 0,
+      elapsed: 0,
       remaining: 10,
       id: "step1",
       running: true,

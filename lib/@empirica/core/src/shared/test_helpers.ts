@@ -377,7 +377,7 @@ interface stepChangeProps {
   removed: boolean;
   id: string;
   running: boolean;
-  ellapsed?: number;
+  elapsed?: number;
   remaining?: number;
 }
 
@@ -386,12 +386,12 @@ const stepChangeDefaults: stepChangeProps = {
   removed: false,
   id: "123",
   running: false,
-  // ellapsed: 0,
+  // elapsed: 0,
   // remaining: 10,
 };
 
 export function stepChange(props: Partial<stepChangeProps>): ChangePayload {
-  const { done, removed, id, running, remaining, ellapsed } = {
+  const { done, removed, id, running, remaining, elapsed } = {
     ...stepChangeDefaults,
     ...props,
   };
@@ -403,7 +403,7 @@ export function stepChange(props: Partial<stepChangeProps>): ChangePayload {
       running,
       state: State.Created,
       remaining,
-      ellapsed,
+      elapsed,
     },
     removed,
     done,

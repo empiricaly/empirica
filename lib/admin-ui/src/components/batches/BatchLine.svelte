@@ -118,7 +118,7 @@
                           {treatment.count}
                           {treatment.count === 1 ? "game" : "games"}
                         </Badge>
-                        <div class="ml-2 truncate overflow-ellipsis italic">
+                        <div class="ml-2 overflow-ellipsis font-bold italic">
                           {treatment.treatment.name}
                         </div>
                         <div class="ml-2 truncate overflow-ellipsis opacity-60">
@@ -131,7 +131,7 @@
                   {:else if config.kind === "simple"}
                     {#each config.config.treatments as treatment}
                       <div class="flex items-center space-y-1">
-                        <div class="ml-2 truncate overflow-ellipsis italic">
+                        <div class="ml-2 overflow-ellipsis font-bold italic">
                           {treatment.name}
                         </div>
                         <div class="ml-2 truncate overflow-ellipsis opacity-60">

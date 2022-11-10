@@ -3,7 +3,7 @@ import { BehaviorSubject, map, Observable } from "rxjs";
 export interface StepChange {
   id: string;
   running: boolean;
-  ellapsed?: number;
+  elapsed?: number;
   remaining?: number;
 }
 
@@ -15,7 +15,7 @@ export interface StepUpdate {
 export interface StepTick {
   started: boolean;
   ended: boolean;
-  ellapsed: number;
+  elapsed: number;
   remaining: number;
   duration: number;
 }
@@ -103,7 +103,7 @@ export class Step {
     return {
       started: t >= this.startAt,
       ended: t >= this.endAt,
-      ellapsed: Math.round(t - this.startAt),
+      elapsed: Math.round(t - this.startAt),
       remaining: Math.round(this.endAt - t),
       duration: this.endAt - this.startAt,
     } as StepTick;
@@ -127,9 +127,9 @@ export class Step {
     }
 
     if (
-      step.ellapsed === null ||
+      step.elapsed === null ||
       step.remaining === null ||
-      step.ellapsed === undefined ||
+      step.elapsed === undefined ||
       step.remaining === undefined
     ) {
       this.running = false;
@@ -139,9 +139,9 @@ export class Step {
 
     const now = pnow();
 
-    this.startAt = now - step.ellapsed * 1000;
+    this.startAt = now - step.elapsed * 1000;
     this.endAt = now + step.remaining * 1000;
-    this.running = step.ellapsed >= 0 && step.remaining >= 0;
+    this.running = step.elapsed >= 0 && step.remaining >= 0;
 
     this.ticker.next(this.recalc(now));
   }

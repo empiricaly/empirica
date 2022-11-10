@@ -151,7 +151,7 @@ test.serial("useStageTimer", async (t) => {
   changes.next(
     stepChange({
       id: "123",
-      ellapsed: 0,
+      elapsed: 0,
       remaining: 10,
       running: true,
       done: true,
