@@ -26,6 +26,29 @@ export interface EmpiricaContextProps {
   finished?: React.ElementType;
   loading?: React.ElementType;
   connecting?: React.ElementType;
+
+  // An unmanaged game will render the children as soon as the Game is available
+  // whether the round or stage are available or not. It is up to the developer
+  // to handle the presence of the round and stage.
+  // Everything else is still managed: the consent, the player, the intro
+  // steps, the lobby, and the game.
+  // This is not recommended for most games.
+  // This is useful for games that want to persist render state between rounds
+  // or stages. E.g. keep a video chat up between stages.
+  unmanagedGame: boolean;
+
+  // Unmanaged assignement will render the children as soon as the player is
+  // connected. It is up to the developer to handle everything after the player
+  // is connected: intro steps, lobby, game, round, stage and exit steps.
+  unmanagedAssignment: boolean;
+
+  // Disable the consent screen. It is up to the developer to handle the consent
+  // screen.
+  disableConsent: boolean;
+
+  // Disable the NoGames screen. It is up to the developer to handle the NoGames
+  // condition.
+  disableNoGames: boolean;
 }
 
 export function EmpiricaContext({
@@ -38,6 +61,10 @@ export function EmpiricaContext({
   finished = Finished,
   loading: LoadingComp = Loading,
   connecting: ConnectingComp = Loading,
+  unmanagedGame = false,
+  unmanagedAssignment = false,
+  disableConsent = false,
+  disableNoGames = false,
   children,
 }: EmpiricaContextProps) {
   const tajribaConnected = useTajribaConnected();
@@ -62,11 +89,11 @@ export function EmpiricaContext({
     return <LoadingComp />;
   }
 
-  if (!game && !globals.get("experimentOpen")) {
+  if (!disableNoGames && !game && !globals.get("experimentOpen")) {
     return <NoGamesComp />;
   }
 
-  if (!consented) {
+  if (!disableConsent && !consented) {
     return <ConsentComp onConsent={onConsent!} />;
   }
 
@@ -76,12 +103,16 @@ export function EmpiricaContext({
     );
   }
 
-  if (game && game.hasEnded) {
-    return <Exit exitSteps={exitSteps} finished={finished} />;
-  }
-
   if (!player) {
     return <LoadingComp />;
+  }
+
+  if (unmanagedAssignment) {
+    return <>{children}</>;
+  }
+
+  if (game && game.hasEnded) {
+    return <Exit exitSteps={exitSteps} finished={finished} />;
   }
 
   return (
@@ -91,6 +122,7 @@ export function EmpiricaContext({
         lobby={lobby}
         finished={finished}
         loading={LoadingComp}
+        unmanagedGame={unmanagedGame}
       >
         {children}
       </EmpiricaInnerContext>
@@ -104,6 +136,7 @@ interface EmpiricaInnerContextProps {
   exitSteps: React.ElementType[] | StepsFunc;
   finished: React.ElementType;
   loading: React.ElementType;
+  unmanagedGame: boolean;
 }
 
 function EmpiricaInnerContext({
@@ -112,6 +145,7 @@ function EmpiricaInnerContext({
   finished,
   exitSteps,
   loading: LoadingComp,
+  unmanagedGame = false,
 }: EmpiricaInnerContextProps) {
   const game = useGame();
   const stage = useStage();
@@ -125,7 +159,7 @@ function EmpiricaInnerContext({
     return <Exit exitSteps={exitSteps} finished={finished} />;
   }
 
-  if (!stage || !round) {
+  if (!unmanagedGame && (!stage || !round)) {
     return <LoadingComp />;
   }
 

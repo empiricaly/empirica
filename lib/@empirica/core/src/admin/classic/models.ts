@@ -10,6 +10,7 @@ import { Scope } from "../scopes";
 import { AttributeInput, attrs, scopeConstructor } from "./helpers";
 
 const isString = z.string().parse;
+const isOptionalNumber = z.number().optional().parse;
 
 export const endedStatuses = ["ended", "terminated", "failed"];
 export type EndedStatuses = typeof endedStatuses[number];
@@ -97,6 +98,14 @@ export class BatchOwned extends Scope<Context, ClassicKinds> {
 }
 
 export class Game extends BatchOwned {
+  // this._tmpRoundIndex is used to keep track of the round index when adding
+  // multiple rounds to a game within a callback, during which the game's
+  // roundIndex attribute is not saved yet.
+  // this._tmpRoundIndex is reset to undefined after the callback is called in
+  // the finalizer.
+  // This is ugly...
+  private _tmpRoundIndex: number | undefined;
+
   get rounds() {
     const rounds = this.scopesByKindMatching<Round>("round", "gameID", this.id);
     rounds.sort(indexSortable);
@@ -125,12 +134,25 @@ export class Game extends BatchOwned {
     return endedStatuses.includes(this.get("status") as EndedStatuses);
   }
 
-  get hasNotStarted() {
-    return !this.get("status");
-  }
-
+  // Game has passed the gameStart callbacks and is currently running. This will
+  // be true until the game ends.
   get isRunning() {
     return this.get("status") === "running";
+  }
+
+  // The game has started, but it might not be running yet, it might still be in
+  // the gameStart callbacks.
+  // This will always be true once the game has started (even after the game
+  // ends).
+  get hasStarted() {
+    return Boolean(this.get("start"));
+  }
+
+  // Starts the game if it is not already started.
+  start() {
+    if (!this.get("start")) {
+      this.set("start", true);
+    }
   }
 
   async assignPlayer(player: Player) {
@@ -144,12 +166,12 @@ export class Game extends BatchOwned {
     const treatment = this.get("treatment");
     if (!treatment) {
       warn(`game without treatment: ${this.id}`);
-
-      return;
     }
 
     player.set("gameID", this.id);
-    player.set("treatment", treatment);
+    if (treatment) {
+      player.set("treatment", treatment);
+    }
 
     if (
       previousGameTreatment &&
@@ -176,57 +198,6 @@ export class Game extends BatchOwned {
     // Add player to running game.
     await this.addPlayer(player);
   }
-
-  // private async addPlayerToGroup(player: Player) {
-  //   if (this.hasEnded) {
-  //     return;
-  //   }
-
-  //   // add link between participant and groupID of game
-  //   const groupID = this.get("groupID") as string;
-  //   if (!groupID || !player.participantID) {
-  //     return;
-  //   }
-
-  //   await this.addLinks([
-  //     {
-  //       link: true,
-  //       participantIDs: this.players
-  //         .map((p) => p.participantID!)
-  //         .filter((p) => p),
-  //       nodeIDs: [...this.players.map((p) => p.id), groupID],
-  //     },
-  //   ]);
-  // }
-
-  // private async removePlayerFromGroup(player: Player) {
-  //   if (this.hasEnded) {
-  //     return;
-  //   }
-
-  //   // add link between participant and groupID of game
-  //   const groupID = this.get("groupID") as string;
-  //   if (!groupID || !player.participantID) {
-  //     return;
-  //   }
-
-  //   await this.addLinks([
-  //     // Add links for new player with games and other players.
-  //     {
-  //       link: false,
-  //       participantIDs: [player.participantID!],
-  //       nodeIDs: [groupID],
-  //     },
-  //     // Add links for other players with new player.
-  //     {
-  //       link: false,
-  //       participantIDs: this.players
-  //         .map((p) => p.participantID!)
-  //         .filter((p) => p && p !== player.participantID),
-  //       nodeIDs: [player.id],
-  //     },
-  //   ]);
-  // }
 
   // Add player to running game
   private async addPlayer(player: Player) {
@@ -279,6 +250,7 @@ export class Game extends BatchOwned {
     // We assume the player has already added the gameID.
     for (const plyr of this.players) {
       if (player !== plyr) {
+        newPlayerNodeIDs.push(plyr.id);
         newPlayerNodeIDs.push(isString(plyr.get(`playerGameID-${this.id}`)));
         newPlayerNodeIDs.push(isString(plyr.get(`playerRoundID-${round.id}`)));
         newPlayerNodeIDs.push(isString(plyr.get(`playerStageID-${stage.id}`)));
@@ -381,9 +353,19 @@ export class Game extends BatchOwned {
     const game = this;
     const gameID = game.id;
 
-    const index = (game.get("roundIndex") as number) || -1;
-    const roundIndex = index + 1;
-    game.set("roundIndex", roundIndex);
+    let roundIndex = isOptionalNumber(this._tmpRoundIndex);
+    if (roundIndex === undefined) {
+      roundIndex = isOptionalNumber(game.get("roundIndex"));
+    }
+    if (roundIndex === undefined) {
+      roundIndex = -1;
+    }
+
+    // New round index
+    roundIndex += 1;
+
+    this._tmpRoundIndex = roundIndex;
+    game.set("roundIndex", this._tmpRoundIndex);
 
     const [scope, accessors] = scopeConstructor({
       kind: "round",
@@ -391,7 +373,7 @@ export class Game extends BatchOwned {
         ...attributes.filter((a) => !reservedKeys.includes(a.key)),
         {
           key: "index",
-          value: `${roundIndex}`,
+          value: roundIndex,
           immutable: true,
         },
         {
@@ -476,6 +458,8 @@ export class Game extends BatchOwned {
     };
 
     this.addFinalizer(async () => {
+      this._tmpRoundIndex = undefined;
+
       let rounds: AddScopePayload[];
       try {
         rounds = await roundProm;
@@ -499,7 +483,7 @@ export class Game extends BatchOwned {
         throw "round not found in round finalizer";
       }
 
-      let stageIndex = 0;
+      let stageIndex = isOptionalNumber(round.get("stageIndex")) || 0;
 
       for (const scope of stageAdds) {
         const durAttr = scope.attributes!.find((a) => a.key === "duration");

@@ -1,6 +1,6 @@
 {
   "name": "@empirica/core",
-  "version": "1.0.0-rc.20",
+  "version": "1.0.0-rc.22",
   "description": "Empirica Core",
   "author": "Nicolas Paton <nicolas.paton@gmail.com>",
   "license": "Apache-2.0",
@@ -138,8 +138,8 @@
   "browserslist": "> 0.5%, last 2 versions, not dead",
   "ava": {
     "files": [
-      "src/**/admin/**/export/*_test.ts",
-      "src/**/admin/**/export/*_test.tsx"
+      "src/**/*_test.ts",
+      "src/**/*_test.tsx"
     ],
     "extensions": {
       "ts": "module",

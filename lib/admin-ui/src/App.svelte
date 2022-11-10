@@ -5,11 +5,11 @@
   import Loading from "./components/common/Loading.svelte";
   import Layout from "./components/layout/Layout.svelte";
   import SignIn from "./components/SignIn.svelte";
-  import { DEFAULT_TOKEN_KEY, URL } from "./constants";
+  import { DEFAULT_TOKEN_KEY, ORIGIN } from "./constants";
   import { routes } from "./routes";
   import { setCurrentAdmin } from "./utils/auth";
 
-  const queryURL = `${URL}/query`;
+  const queryURL = `${ORIGIN}/query`;
 
   let loggedIn = false;
   let loaded = false;
@@ -69,10 +69,16 @@
       },
     });
 
-    admin = await tajriba.sessionAdmin(t);
-    setCurrentAdmin(admin);
-    loggedIn = true;
-    console.info("Connected");
+    try {
+      admin = await tajriba.sessionAdmin(t);
+      setCurrentAdmin(admin);
+      loggedIn = true;
+      console.info("Connected");
+    } catch (e) {
+      console.warn("Connection failed, clearing token");
+      window.localStorage.removeItem(DEFAULT_TOKEN_KEY);
+      window.location.reload();
+    }
   }
 
   async function sessionLogin() {
@@ -96,7 +102,7 @@
 
     while (true) {
       try {
-        const res = await fetch(`${URL}/dev`, { cache: "reload" });
+        const res = await fetch(`${ORIGIN}/dev`, { cache: "reload" });
         await setDevToken(res.status === 200);
       } catch (err) {
         if (err instanceof TypeError && err.message === "Load failed") {

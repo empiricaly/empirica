@@ -79,5 +79,11 @@ export function Steps({
     }
   };
 
-  return <Step next={next}></Step>;
+  const previous = () => {
+    if (index > 0) {
+      obj.set(progressKey, index - 1);
+    }
+  };
+
+  return <Step index={index} previous={previous} next={next}></Step>;
 }
