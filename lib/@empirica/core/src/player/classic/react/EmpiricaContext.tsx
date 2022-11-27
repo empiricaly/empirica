@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { error } from "../../../utils/console";
 import { Consent, ConsentProps } from "../../react/Consent";
 import { Finished } from "../../react/Finished";
 import {
@@ -49,6 +50,15 @@ export interface EmpiricaContextProps {
   // Disable the NoGames screen. It is up to the developer to handle the NoGames
   // condition.
   disableNoGames: boolean;
+
+  // Use player ID from URL the param named after playerIdParam, if present in
+  // the URL. If the playerIdParam key is not present, the player creation form
+  // will be shown. If you want to restrict to only logging in with a URL param,
+  // set playerIdParamExclusive to true. Default is `playerID`.
+  playerIdParam: string;
+
+  // Disable the player creation form, only use the playerIdParam to log in.
+  playerIdParamExclusive: boolean;
 }
 
 export function EmpiricaContext({
@@ -65,6 +75,8 @@ export function EmpiricaContext({
   unmanagedAssignment = false,
   disableConsent = false,
   disableNoGames = false,
+  playerIdParam = "playerID",
+  playerIdParamExclusive = false,
   children,
 }: EmpiricaContextProps) {
   const tajribaConnected = useTajribaConnected();
@@ -74,6 +86,33 @@ export function EmpiricaContext({
   const game = useGame();
   const [connecting, hasPlayer, onPlayerID] = usePlayerID();
   const [consented, onConsent] = useConsent();
+
+  useEffect(() => {
+    if (hasPlayer || connecting || !onPlayerID) {
+      return;
+    }
+
+    if (!playerIdParam) {
+      if (playerIdParamExclusive) {
+        error("playerIdParamExclusive is true but playerIdParam is not set");
+      }
+
+      return;
+    }
+
+    // If we have a player ID in the URL, use it
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlPlayerID = urlParams.get(playerIdParam);
+    if (urlPlayerID) {
+      onPlayerID(urlPlayerID);
+    }
+  }, [
+    playerIdParam,
+    playerIdParamExclusive,
+    connecting,
+    hasPlayer,
+    onPlayerID,
+  ]);
 
   if (!tajribaConnected) {
     return <ConnectingComp />;
@@ -98,6 +137,19 @@ export function EmpiricaContext({
   }
 
   if (!hasPlayer || connecting) {
+    if (playerIdParam) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const playerId = urlParams.get(playerIdParam);
+
+      if (playerId) {
+        return <LoadingComp />;
+      }
+
+      if (playerIdParamExclusive) {
+        return <NoGamesComp />;
+      }
+    }
+
     return (
       <PlayerCreateForm onPlayerID={onPlayerID!} connecting={connecting} />
     );
