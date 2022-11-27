@@ -10,3 +10,6 @@ yarn-error.log
 node_modules
 go.work
 go.work.sum
+
+playwright-results
+test-results
