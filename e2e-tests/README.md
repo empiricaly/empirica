@@ -13,4 +13,4 @@ The tests run in a real browser in headless mode.
 
 2. run tests
 
-```npm run e2e:tests`
+```npm run test:e2e`
