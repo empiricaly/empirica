@@ -1,10 +1,10 @@
 import { expect } from "@playwright/test";
-import BasePageObject from "../BasePageObject";
+import BasePageElement from "../../BasePageElement";
 
 
 
 
-export default class ExitSurveyElement extends BasePageObject {
+export default class ExitSurveyElement extends BasePageElement {
     getBonusTitleElement() {
         return this.page.getByText('Bonus');
     }

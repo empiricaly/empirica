@@ -1,15 +1,15 @@
 import { test, expect, type Page } from '@playwright/test';
 
-export type BasePageObjectConstructor = {
+export type BasePageElementConstructor = {
     page: Page;
     baseUrl?: string;
 }
 
-export default class BasePageObject {
+export default class BasePageElement {
     public page: Page;
     public baseUrl: string;
 
-    constructor({ page, baseUrl }: BasePageObjectConstructor) {
+    constructor({ page, baseUrl }: BasePageElementConstructor) {
         this.baseUrl = baseUrl ?? '';
         this.page = page;
     }

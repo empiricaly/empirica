@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
-import BasePageObject from "../BasePageObject";
+import BasePage from "../BasePage";
+import BasePageElement from "../BasePageElement";
 
 
 
@@ -9,7 +10,7 @@ export enum GamesTypeTreatment {
 }
 
 
-export default class BatchesPage extends BasePageObject {
+export default class BatchesAdminPage extends BasePage {
     private getBatchesLinkInSidebar() {
         return this.page.locator('[data-test="batchesSidebarButton"]');
     }
@@ -34,6 +35,10 @@ export default class BatchesPage extends BasePageObject {
     }
 
     public async open() {
+        await this.initContext();
+
+        await this.page.goto(`${this.baseUrl}/admin`)
+
         const batchesSidebarButton = await this.getBatchesLinkInSidebar();
         
         await batchesSidebarButton.click();

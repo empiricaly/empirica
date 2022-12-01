@@ -1,10 +1,8 @@
 import { expect } from "@playwright/test";
-import BasePageObject from "../BasePageObject";
+import BasePageElement from "../../BasePageElement";
 
 
-
-
-export default class ConsentElement extends BasePageObject {
+export default class ConsentElement extends BasePageElement {
     getAcceptConsentButton() {
         return this.page.locator('button[type="button"]'); // TODO: add test id!
     }
