@@ -1,10 +1,10 @@
 import { expect } from "@playwright/test";
-import BasePageObject from "../BasePageObject";
+import BasePageElement from "../../BasePageElement";
 
 
 
 
-export default class InstructionsElement extends BasePageObject {
+export default class InstructionsElement extends BasePageElement {
     getNextButtonElement() {
         return this.page.getByText('Next'); // TODO: add test id
     }

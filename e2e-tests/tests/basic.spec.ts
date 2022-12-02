@@ -2,9 +2,9 @@ import { test, expect } from '@playwright/test';
 import * as uuid from 'uuid';
 import ExperimentPage from '../page-objects/main/ExperimentPage';
 import AdminPage from '../page-objects/admin/AdminPage';
-import NoExperimentsElement from '../page-objects/main/NoExperimentsElement';
+import NoExperimentsElement from '../page-objects/main/elements/NoExperimentsElement';
 import EmpiricaTestFactory from '../setup/EmpiricaTestFactory';
-import { GamesTypeTreatment } from '../page-objects/admin/BatchesPage';
+import BatchesAdminPage, { GamesTypeTreatment } from '../page-objects/admin/BatchesAdminPage';
 
 const baseUrl = 'http://localhost:3000';
 
@@ -21,38 +21,31 @@ test.afterAll(async () => {
 });
 
 
-test.describe('Empirica', () => {
+test.describe('Empirica in single player mode', () => {
 
-  test('Empty experiemnt page loads successfully', async ({ page }) => {
+  test('Empty experiemnt page loads successfully', async ({ browser }) => {
     const experimentPage = new ExperimentPage({
-      page,
+      browser,
       baseUrl
     })
 
     await experimentPage.open();
-
-    const noExperimentsElement = new NoExperimentsElement({ page });
-
-    await expect(await noExperimentsElement.getElement()).toBeVisible();
-
   });
 
-  test('Admin page loads successfully', async ({ page }) => {
-    const adminPage = new AdminPage({
-      page,
+  test('Bathes page loads successfully', async ({ browser }) => {
+    const batchesAdminPage = new BatchesAdminPage({
+      browser,
       baseUrl
     })
 
-    await adminPage.open();
-
+    await batchesAdminPage.open();
   });
 
-  test.only('creates batch with 1 game with one player, into view, player passes through the game', async ({ page }) => {
-    const adminPage = new AdminPage({
-      page,
+  test.only('creates batch with 1 game with one player, into view, player passes through the game', async ({ browser }) => {
+    const batchesPage = new BatchesAdminPage({
+      browser,
       baseUrl
     });
-
 
     const playerId = `player-${uuid.v4()}`;
     const gamesCount = 1;
@@ -61,9 +54,7 @@ test.describe('Empirica', () => {
     const playerGender = 'male';
     const jellyBeansCount = 1200;
 
-    await adminPage.open();
-
-    const batchesPage = adminPage.getBatchesPage();
+    await batchesPage.init();
 
     await batchesPage.open();
 
@@ -75,9 +66,11 @@ test.describe('Empirica', () => {
     await batchesPage.startGame();
 
     const experimentPage = new ExperimentPage({
-      page,
+      browser,
       baseUrl
-    })
+    });
+
+    await experimentPage.init();
 
     await experimentPage.open();
 

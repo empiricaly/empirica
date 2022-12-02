@@ -1,8 +1,8 @@
 import { expect } from "@playwright/test";
-import BasePageObject from "../BasePageObject";
+import BasePageElement from "../../BasePageElement";
 
 
-export default class FinishedElement extends BasePageObject {
+export default class FinishedElement extends BasePageElement {
     getFinishedText() {
         return this.page.getByText('Finished'); // TODO: add test id
     }

@@ -1,10 +1,10 @@
 import { expect } from "@playwright/test";
-import BasePageObject from "../BasePageObject";
+import BasePageElement from "../../BasePageElement";
 
 
 
 
-export default class LoginPage extends BasePageObject {
+export default class LoginElement extends BasePageElement {
     getLoginElement() {
         return this.page.locator('[id="playerID"]'); // TODO: add test id
     }

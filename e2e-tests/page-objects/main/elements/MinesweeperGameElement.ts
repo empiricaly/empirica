@@ -1,10 +1,10 @@
 import { expect } from "@playwright/test";
-import BasePageObject from "../BasePageObject";
+import BasePageElement from "../../BasePageElement";
 
 
 
 
-export default class MinesweeperGameElement extends BasePageObject {
+export default class MinesweeperGameElement extends BasePageElement {
     getTitleElement() {
         return this.page.getByText('Round 2 - Minesweeper');
     }

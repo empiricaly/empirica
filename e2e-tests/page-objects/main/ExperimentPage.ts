@@ -1,18 +1,18 @@
 import { expect } from "@playwright/test";
-import BasePageObject, { BasePageObjectConstructor } from "../BasePageObject";
-import NoExperimentsElement from "./NoExperimentsElement";
-import LoginPage from "./LoginPage";
-import InstructionsElement from "./InstructionElement";
-import JellyBeansGameElement from "./JellyBeansGameElement";
-import FinishedElement from "./FinishedElement";
-import ExitSurveyElement from "./ExitSurveyElement";
-import ConsentElement from "./ConsentElement";
-import MinesweeperGameElement from "./MinesweeperGameElement";
+import BasePage, { BasePageConstructor } from "../BasePage";
+import NoExperimentsElement from "./elements/NoExperimentsElement";
+import LoginElement from "./elements/LoginElement";
+import InstructionsElement from "./elements/InstructionElement";
+import JellyBeansGameElement from "./elements/JellyBeansGameElement";
+import FinishedElement from "./elements/FinishedElement";
+import ExitSurveyElement from "./elements/ExitSurveyElement";
+import ConsentElement from "./elements/ConsentElement";
+import MinesweeperGameElement from "./elements/MinesweeperGameElement";
 
 
-export default class ExperimentPage extends BasePageObject {
+export default class ExperimentPage extends BasePage {
     private noExperimentsElement: NoExperimentsElement
-    private loginPage: LoginPage;
+    private loginElement: LoginElement;
     private jellyBeansGame: JellyBeansGameElement;
     private exitSurveyElement: ExitSurveyElement;
     private instructionsElement: InstructionsElement;
@@ -20,10 +20,12 @@ export default class ExperimentPage extends BasePageObject {
     private consentElement: ConsentElement;
     private finishedElement: FinishedElement;
 
-    constructor({ page, baseUrl }: BasePageObjectConstructor) {
-        super({ page, baseUrl });
+    public async init() {
+        await this.initContext();
 
-        this.loginPage = new LoginPage({ page });
+        const page = this.page;
+
+        this.loginElement = new LoginElement({ page });
         this.noExperimentsElement = new NoExperimentsElement({ page });
         this.consentElement = new ConsentElement({ page });
         this.instructionsElement = new InstructionsElement({ page });
@@ -34,15 +36,23 @@ export default class ExperimentPage extends BasePageObject {
     }
 
     public async open() {
-        await this.page.goto(`${this.baseUrl}`)
+        await this.init();
+
+        await this.page.goto(`${this.baseUrl}`);
+    }
+
+    public async checkIfNoExperimentsVisible() {
+        this.noExperimentsElement = new NoExperimentsElement({ page: this.page });
+
+        await this.noExperimentsElement.checkIfVisible();
     }
 
     public async passInstructions() {
-        await this.instructionsElement.gotoNextPage()
+        await this.instructionsElement.gotoNextPage();
     }
 
     public async login({ playerId} : { playerId: string}) {
-        await this.loginPage.login({ playerId });
+        await this.loginElement.login({ playerId });
     }
 
     public async playJellyBeanGame({ count}: { count: number}) {

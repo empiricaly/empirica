@@ -1,11 +1,13 @@
 import { expect } from "@playwright/test";
-import BasePageObject from "../BasePageObject";
+import BasePage from "../BasePage";
 
 
 
 
-export default class PlayersPage extends BasePageObject {
+export default class PlayersPage extends BasePage {
     public async open() {
+        await this.initContext();
+
         await this.page.goto(`${this.baseUrl}/admin`)
 
         const leftPanel = await this.page.locator('[aria-label="Sidebar"]');

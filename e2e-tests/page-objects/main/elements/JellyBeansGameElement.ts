@@ -1,10 +1,10 @@
 import { expect } from "@playwright/test";
-import BasePageObject from "../BasePageObject";
+import BasePageElement from "../../BasePageElement";
 
 
 
 
-export default class JellyBeansGameElement extends BasePageObject {
+export default class JellyBeansGameElement extends BasePageElement {
     getTitleElement() {
         return this.page.getByText('Round 1 - Jelly Beans'); // TODO: add test id
     }
