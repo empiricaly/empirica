@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test tests/**/*.spec.ts",
     "test:e2e:trace": "playwright test --trace on",
     "lint": "eslint tests/**/*.ts page-objects/**/*.ts utils/**/*.ts setup/**/*.ts"
   },
