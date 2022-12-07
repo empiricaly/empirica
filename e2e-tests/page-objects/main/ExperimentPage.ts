@@ -1,5 +1,4 @@
-import { expect } from "@playwright/test";
-import BasePage, { BasePageConstructor } from "../BasePage";
+import BasePage from "../BasePage";
 import NoExperimentsElement from "./elements/NoExperimentsElement";
 import LoginElement from "./elements/LoginElement";
 import InstructionsElement from "./elements/InstructionElement";
@@ -8,75 +7,107 @@ import FinishedElement from "./elements/FinishedElement";
 import ExitSurveyElement from "./elements/ExitSurveyElement";
 import ConsentElement from "./elements/ConsentElement";
 import MinesweeperGameElement from "./elements/MinesweeperGameElement";
-
+import TimerElement from "./elements/TimerElement";
 
 export default class ExperimentPage extends BasePage {
-    private noExperimentsElement: NoExperimentsElement
-    private loginElement: LoginElement;
-    private jellyBeansGame: JellyBeansGameElement;
-    private exitSurveyElement: ExitSurveyElement;
-    private instructionsElement: InstructionsElement;
-    private minesweeperGameElement: MinesweeperGameElement;
-    private consentElement: ConsentElement;
-    private finishedElement: FinishedElement;
+  private noExperimentsElement: NoExperimentsElement;
 
-    public async init() {
-        await this.initContext();
+  private loginElement: LoginElement;
 
-        const page = this.page;
+  private jellyBeansGame: JellyBeansGameElement;
 
-        this.loginElement = new LoginElement({ page });
-        this.noExperimentsElement = new NoExperimentsElement({ page });
-        this.consentElement = new ConsentElement({ page });
-        this.instructionsElement = new InstructionsElement({ page });
-        this.exitSurveyElement = new ExitSurveyElement({ page });
-        this.jellyBeansGame = new JellyBeansGameElement({ page });
-        this.minesweeperGameElement = new MinesweeperGameElement({ page });
-        this.finishedElement = new FinishedElement({ page });
-    }
+  private exitSurveyElement: ExitSurveyElement;
 
-    public async open() {
-        await this.init();
+  private instructionsElement: InstructionsElement;
 
-        await this.page.goto(`${this.baseUrl}`);
-    }
+  private minesweeperGameElement: MinesweeperGameElement;
 
-    public async checkIfNoExperimentsVisible() {
-        this.noExperimentsElement = new NoExperimentsElement({ page: this.page });
+  private consentElement: ConsentElement;
 
-        await this.noExperimentsElement.checkIfVisible();
-    }
+  private finishedElement: FinishedElement;
 
-    public async passInstructions() {
-        await this.instructionsElement.gotoNextPage();
-    }
+  private timerElement: TimerElement;
 
-    public async login({ playerId} : { playerId: string}) {
-        await this.loginElement.login({ playerId });
-    }
+  public async init() {
+    await this.initContext();
 
-    public async playJellyBeanGame({ count}: { count: number}) {
-        await this.jellyBeansGame.selectJellyBeansCount(count);
-        await this.jellyBeansGame.submitResult();
-        await this.jellyBeansGame.finishGame();
-    }
+    const { page } = this;
 
-    public async playMinesweeper() {
-        const fieldNumber = 0;
+    this.loginElement = new LoginElement({ page });
+    this.noExperimentsElement = new NoExperimentsElement({ page });
+    this.consentElement = new ConsentElement({ page });
+    this.instructionsElement = new InstructionsElement({ page });
+    this.exitSurveyElement = new ExitSurveyElement({ page });
+    this.jellyBeansGame = new JellyBeansGameElement({ page });
+    this.minesweeperGameElement = new MinesweeperGameElement({ page });
+    this.finishedElement = new FinishedElement({ page });
+    this.timerElement = new TimerElement({ page });
+  }
 
-        await this.minesweeperGameElement.openMinefieldElement(fieldNumber);
-        await this.minesweeperGameElement.finishGame();
-    }
+  public async open() {
+    await this.init();
 
-    public async acceptConsent() {
-        await this.consentElement.acceptConsent();
-    }
+    await this.page.goto(`${this.baseUrl}`);
+  }
 
-    public async fillExitSurvey({ age, gender} : { age: number, gender: string}) {
-        await this.exitSurveyElement.fillSurvey({ age, gender });
-    }
+  public async checkIfNoExperimentsVisible() {
+    this.noExperimentsElement = new NoExperimentsElement({ page: this.page });
 
-    public async checkIfFinished() {
-        await this.finishedElement.checkIfVisible();
-    }
+    await this.noExperimentsElement.checkIfVisible();
+  }
+
+  public async passInstructions() {
+    await this.instructionsElement.gotoNextPage();
+  }
+
+  public async login({ playerId }: { playerId: string }) {
+    await this.loginElement.login({ playerId });
+  }
+
+  public async playJellyBeanGame({ count }: { count: number }) {
+    await this.jellyBeansGame.selectJellyBeansCount(count);
+    await this.jellyBeansGame.submitResult();
+    await this.jellyBeansGame.finishGame();
+  }
+
+  public async checkIfJellyBeansVisible() {
+    await this.jellyBeansGame.checkIfVisible();
+  }
+
+  public async selectJellyBeansCount({ count }: { count: number }) {
+    await this.jellyBeansGame.selectJellyBeansCount(count);
+  }
+
+  public async submitJellyBeansResult() {
+    await this.jellyBeansGame.submitResult();
+  }
+
+  public async finishJellyBeanGame() {
+    await this.jellyBeansGame.finishGame();
+  }
+
+  public async passMineSweeper() {
+    const fieldNumber = 0;
+
+    await this.minesweeperGameElement.openMinefieldElement(fieldNumber);
+    await this.minesweeperGameElement.finishGame();
+  }
+
+  public async acceptConsent() {
+    await this.consentElement.acceptConsent();
+  }
+
+  public async fillExitSurvey({
+    age,
+    gender,
+  }: {
+    age: number;
+    gender: string;
+  }) {
+    await this.exitSurveyElement.fillSurvey({ age, gender });
+  }
+
+  public async checkIfFinished() {
+    await this.finishedElement.checkIfVisible();
+  }
 }

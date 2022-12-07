@@ -12,4 +12,5 @@ go.work
 go.work.sum
 
 playwright-results
+playwright-report
 test-results
