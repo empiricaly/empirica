@@ -1,43 +1,46 @@
 import { expect } from "@playwright/test";
 import BasePageElement from "../../BasePageElement";
 
-
-
-
 export default class MinesweeperGameElement extends BasePageElement {
-    getTitleElement() {
-        return this.page.getByText('Round 2 - Minesweeper');
-    }
+  getTitleElement() {
+    return this.page.getByText("Round 2 - Minesweeper");
+  }
 
-    getSubmitButton() {
-        return this.page.locator('button[type="button"]'); // TODO: add test id
-    }
+  getSubmitButton() {
+    return this.page.locator('button[type="button"]'); // TODO: add test id
+  }
 
-    getMinefieldElement(number: number) {
-        return this.page.locator(`.h-full.w-full.flex >> nth=${number}`); // TODO: add test id!
-    }
+  getMinefieldElement(number: number) {
+    return this.page.locator(`.h-full.w-full.flex >> nth=${number}`); // TODO: add test id!
+  }
 
-    public async openMinefieldElement(number: number) {
-        const minefieldElement = await this.getMinefieldElement(number);
+  public async checkIfVisible() {
+    const roundTitle = await this.getTitleElement();
 
-        await expect(minefieldElement).toBeVisible();
+    await expect(roundTitle).toBeVisible();
+  }
 
-        await minefieldElement.click();
-    }
+  public async openMinefieldElement(number: number) {
+    const minefieldElement = await this.getMinefieldElement(number);
 
-    public async checkState(number: number) {
-        const submitButton = await this.getMinefieldElement(number);
+    await expect(minefieldElement).toBeVisible();
 
-        await expect(submitButton).toBeVisible();
+    await minefieldElement.click();
+  }
 
-        await submitButton.click();
-    }
+  public async checkState(number: number) {
+    const submitButton = await this.getMinefieldElement(number);
 
-    public async finishGame() {
-        const submitButton = await this.getSubmitButton();
+    await expect(submitButton).toBeVisible();
 
-        await expect(submitButton).toBeVisible();
+    await submitButton.click();
+  }
 
-        await submitButton.click();
-    }
+  public async finishGame() {
+    const submitButton = await this.getSubmitButton();
+
+    await expect(submitButton).toBeVisible();
+
+    await submitButton.click();
+  }
 }

@@ -1,76 +1,83 @@
 import { expect } from "@playwright/test";
 import BasePage from "../BasePage";
-import BasePageElement from "../BasePageElement";
-
-
 
 export enum GamesTypeTreatment {
-    'Solo' = 'Solo',
-    'TwoPlayers' = 'Two Players',
+  "Solo" = "Solo",
+  "TwoPlayers" = "Two Players",
 }
 
-
 export default class BatchesAdminPage extends BasePage {
-    private getBatchesLinkInSidebar() {
-        return this.page.locator('[data-test="batchesSidebarButton"]');
-    }
-    private getNewBatchButton() {
-        return this.page.locator('[data-test="newBatchButton"]');
-    }
+  private getBatchesLinkInSidebar() {
+    return this.page.locator('[data-test="batchesSidebarButton"]');
+  }
 
-    private getTreatmentsSelect() {
-        return this.page.locator('[data-test="treatmentSelect"]');
-    }
+  private getNewBatchButton() {
+    return this.page.locator('[data-test="newBatchButton"]');
+  }
 
-    private getCreateBatchButton() {
-        return this.page.locator('[data-test="createBatchButton"]');
-    }
+  private getTreatmentsSelect() {
+    return this.page.locator('[data-test="treatmentSelect"]');
+  }
 
-    private getGameBatchLine() {
-        return this.page.locator('[data-test="batchLine"]');
-    }
+  private getCreateBatchButton() {
+    return this.page.locator('[data-test="createBatchButton"]');
+  }
 
-    private getStartGameButton() {
-        return this.page.locator('[data-test="startButton"]');
-    }
+  private getGameBatchLine() {
+    return this.page.locator('[data-test="batchLine"]');
+  }
 
-    public async open() {
-        await this.initContext();
+  private getStartGameButton() {
+    return this.page.locator('[data-test="startButton"]');
+  }
 
-        await this.page.goto(`${this.baseUrl}/admin`)
+  private async selectTreatmeant(mode: GamesTypeTreatment) {
+    const treatmentsSelect = await this.getTreatmentsSelect();
 
-        const batchesSidebarButton = await this.getBatchesLinkInSidebar();
-        
-        await batchesSidebarButton.click();
-        
-        const newBatchButton = await this.getNewBatchButton();
+    await treatmentsSelect.selectOption({ label: mode });
+  }
 
-        await expect(newBatchButton).toBeVisible()
-    }
+  public async open() {
+    await this.initContext();
 
-    public async createBatch({ mode, gamesCount }: { mode: GamesTypeTreatment, gamesCount: number}) {
-        const newBatchButton = await this.getNewBatchButton();
+    await this.page.goto(`${this.baseUrl}/admin`);
 
-        await newBatchButton.click();
-        
-        const treatmentsSelect = await this.getTreatmentsSelect();
-        
-        await treatmentsSelect.selectOption(
-            '[object Object]'
-        ); // TODO: fix displayed value in the app
-            
-        const createBatchButton = await this.getCreateBatchButton();
+    const batchesSidebarButton = await this.getBatchesLinkInSidebar();
 
-        await createBatchButton.click();
-    }
+    await batchesSidebarButton.click();
 
-    public async startGame() {
-        const batchLine = await this.getGameBatchLine();
+    const newBatchButton = await this.getNewBatchButton();
 
-        await expect(batchLine).toBeVisible();
+    await expect(newBatchButton).toBeVisible();
+  }
 
-        const startGameButton = await this.getStartGameButton();
+  public async createBatch({
+    mode,
+    gamesCount,
+  }: {
+    mode: GamesTypeTreatment;
+    gamesCount: number;
+  }) {
+    console.log({ mode, gamesCount });
 
-        await startGameButton.click();
-    }
+    const newBatchButton = await this.getNewBatchButton();
+
+    await newBatchButton.click();
+
+    await this.selectTreatmeant(mode);
+
+    const createBatchButton = await this.getCreateBatchButton();
+
+    await createBatchButton.click();
+  }
+
+  public async startGame() {
+    const batchLine = await this.getGameBatchLine();
+
+    await expect(batchLine).toBeVisible();
+
+    const startGameButton = await this.getStartGameButton();
+
+    await startGameButton.click();
+  }
 }
