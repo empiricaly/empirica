@@ -1,10 +1,10 @@
 import { test } from "@playwright/test";
+import { createPlayer } from "../utils/playerUtils";
 import ExperimentPage from "../page-objects/main/ExperimentPage";
 import EmpiricaTestFactory from "../setup/EmpiricaTestFactory";
 import BatchesAdminPage, {
   GamesTypeTreatment,
 } from "../page-objects/admin/BatchesAdminPage";
-import { createPlayer } from "../utils/playerUtils";
 
 import { baseUrl } from "../setup/setupConstants";
 
