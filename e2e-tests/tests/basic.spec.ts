@@ -39,7 +39,7 @@ test.describe("Empirica in single player mode", () => {
     await batchesAdminPage.open();
   });
 
-  test.only("creates batch with 1 game with one player, into view, player passes through the game", async ({
+  test("creates batch with 1 game with one player, into view, player passes through the game", async ({
     browser,
   }) => {
     const batchesPage = new BatchesAdminPage({
