@@ -145,8 +145,13 @@ func Enable(
 	config *Config,
 	router *httprouter.Router,
 ) error {
-	router.GET("/", index)
-	u, _ := url.Parse("http://127.0.0.1:8844")
+	u, err := url.Parse(config.ProxyAddr)
+	if err != nil {
+		return errors.Wrap(err, "parse proxy address")
+	}
+
+	router.GET("/", index(u.Scheme, u.Host))
+
 	prox := httputil.NewSingleHostReverseProxy(u)
 	prox.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
 		rw.WriteHeader(http.StatusBadGateway)
@@ -161,27 +166,29 @@ func Enable(
 	return nil
 }
 
-func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	u, err := url.Parse(r.URL.String())
-	if err != nil {
-		log.Error().Err(err).Msg("server: send response for index failed")
+func index(scheme, host string) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		u, err := url.Parse(r.URL.String())
+		if err != nil {
+			log.Error().Err(err).Msg("server: send response for index failed")
 
-		w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
 
-		return
+			return
+		}
+
+		connRetry := &backoff.Backoff{
+			Min:    50 * time.Millisecond,
+			Max:    2 * time.Second,
+			Factor: 1.1,
+			Jitter: true,
+		}
+
+		u.Scheme = scheme
+		u.Host = host
+
+		forwardIndexReq(u, connRetry, w, r)
 	}
-
-	connRetry := &backoff.Backoff{
-		Min:    50 * time.Millisecond,
-		Max:    2 * time.Second,
-		Factor: 1.1,
-		Jitter: true,
-	}
-
-	u.Host = "localhost:8844"
-	u.Scheme = "http"
-
-	forwardIndexReq(u, connRetry, w, r)
 }
 
 func forwardIndexReq(u *url.URL, connRetry *backoff.Backoff, w http.ResponseWriter, r *http.Request) {
