@@ -302,6 +302,10 @@ export function Classic({
             checkShouldOpenExperiment(ctx);
 
             break;
+          case "created":
+            // noop
+
+            break;
           default:
             warn("unknown batch status:", status);
 
