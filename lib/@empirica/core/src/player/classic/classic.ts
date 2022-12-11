@@ -193,7 +193,7 @@ export function EmpiricaClassic(
         ret.round.next(updated.round);
       }
 
-      if (scopeChanged(current.stage, updated.stage)) {
+      if (scopeChanged(current.stage, updated.stage) || steps.hadUpdates()) {
         ret.stage.next(updated.stage);
       }
 
