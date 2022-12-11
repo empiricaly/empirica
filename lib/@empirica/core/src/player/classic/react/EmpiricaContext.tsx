@@ -102,7 +102,7 @@ export function EmpiricaContext({
     return <ConsentComp onConsent={onConsent!} />;
   }
 
-  if (!hasPlayer || connecting) {
+  if (!player && (!hasPlayer || connecting)) {
     return (
       <PlayerCreateForm onPlayerID={onPlayerID!} connecting={connecting} />
     );
