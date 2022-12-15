@@ -1,13 +1,18 @@
 import { test } from "@playwright/test";
 import ExperimentPage from "../page-objects/main/ExperimentPage";
 import BatchesAdminPage, {
+  BatchStatus,
+  GamesStatus,
   GamesTypeTreatment,
 } from "../page-objects/admin/BatchesAdminPage";
 import EmpiricaTestFactory from "../setup/EmpiricaTestFactory";
 import { createPlayer } from "../utils/playerUtils";
+
 import { baseUrl } from "../setup/setupConstants";
 
-const testFactory = new EmpiricaTestFactory({ installMode: "NPM" });
+const testFactory = new EmpiricaTestFactory({
+  installMode: "NPM",
+});
 
 test.beforeAll(async () => {
   await testFactory.init();
@@ -17,8 +22,8 @@ test.afterAll(async () => {
   await testFactory.teardown();
 });
 
-test.describe("Empirica in multi-player mode", () => {
-  test("creates batch with 1 game with one player, into view, one player finishes the game, 2nd player sees no games", async ({
+test.describe("Assignments in Empirica", () => {
+  test("creates a simple batch with 2 games for solo players, stop batch, players get kicked out", async ({
     browser,
   }) => {
     const batchesPage = new BatchesAdminPage({
@@ -27,9 +32,10 @@ test.describe("Empirica in multi-player mode", () => {
     });
 
     const player1 = createPlayer();
-    const gamesCount = 1;
+    const player2 = createPlayer();
+    const gamesCount = 2;
     const gameMode = GamesTypeTreatment.Solo;
-    const jellyBeansCount = 1200;
+    const batchNumber = 0;
 
     await batchesPage.open();
 
@@ -51,28 +57,33 @@ test.describe("Empirica in multi-player mode", () => {
     });
 
     await player1Page.open();
+    await player2Page.open();
 
     await player1Page.acceptConsent();
 
+    await player2Page.acceptConsent();
+
     await player1Page.login({ playerId: player1.id });
+    await player2Page.login({ playerId: player2.id });
 
     await player1Page.passInstructions();
+    await player2Page.passInstructions();
 
-    await player2Page.open();
-
-    await player2Page.checkIfNoExperimentsVisible();
-
-    await player1Page.playJellyBeanGame({ count: jellyBeansCount });
-
-    await player1Page.passMineSweeper();
+    await batchesPage.stopBatch({ batchNumber: 0 });
 
     await player1Page.fillExitSurvey({
       age: player1.age,
       gender: player1.gender,
     });
 
-    await player1Page.checkIfFinished();
+    await player2Page.fillExitSurvey({
+      age: player2.age,
+      gender: player2.gender,
+    });
 
-    await player2Page.checkIfNoExperimentsVisible();
+    await batchesPage.checkBatchStatus({
+      batchNumber: 0,
+      status: BatchStatus.Terminated,
+    });
   });
 });

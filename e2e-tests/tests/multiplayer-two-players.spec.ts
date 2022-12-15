@@ -8,9 +8,7 @@ import { createPlayer } from "../utils/playerUtils";
 
 import { baseUrl } from "../setup/setupConstants";
 
-const testFactory = new EmpiricaTestFactory({
-  installMode: "NPM",
-});
+const testFactory = new EmpiricaTestFactory({ installMode: "NPM" });
 
 test.beforeAll(async () => {
   await testFactory.init();
