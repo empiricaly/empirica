@@ -1,13 +1,17 @@
 import { test } from "@playwright/test";
 import ExperimentPage from "../page-objects/main/ExperimentPage";
 import BatchesAdminPage, {
+  GamesStatus,
   GamesTypeTreatment,
 } from "../page-objects/admin/BatchesAdminPage";
 import EmpiricaTestFactory from "../setup/EmpiricaTestFactory";
 import { createPlayer } from "../utils/playerUtils";
+
 import { baseUrl } from "../setup/setupConstants";
 
-const testFactory = new EmpiricaTestFactory({ installMode: "NPM" });
+const testFactory = new EmpiricaTestFactory({
+  installMode: "NPM",
+});
 
 test.beforeAll(async () => {
   await testFactory.init();
@@ -17,8 +21,8 @@ test.afterAll(async () => {
   await testFactory.teardown();
 });
 
-test.describe("Empirica in multi-player mode", () => {
-  test("creates batch with 1 game with one player, into view, one player finishes the game, 2nd player sees no games", async ({
+test.describe("Assignments in Empirica", () => {
+  test("creates a simple batch with 2 games for solo players, 2 players are assigned to two games", async ({
     browser,
   }) => {
     const batchesPage = new BatchesAdminPage({
@@ -27,9 +31,10 @@ test.describe("Empirica in multi-player mode", () => {
     });
 
     const player1 = createPlayer();
-    const gamesCount = 1;
+    const player2 = createPlayer();
+    const gamesCount = 2;
     const gameMode = GamesTypeTreatment.Solo;
-    const jellyBeansCount = 1200;
+    const batchNumber = 0;
 
     await batchesPage.open();
 
@@ -51,18 +56,46 @@ test.describe("Empirica in multi-player mode", () => {
     });
 
     await player1Page.open();
+    await player2Page.open();
 
     await player1Page.acceptConsent();
 
+    await batchesPage.checkGameStatus(
+      {
+        gameNumber: 1,
+        batchNumber,
+      },
+      GamesStatus.Created
+    );
+
+    await player2Page.acceptConsent();
+
+    await batchesPage.checkGameStatus(
+      {
+        gameNumber: 0,
+        batchNumber,
+      },
+      GamesStatus.Running
+    );
+
+    await batchesPage.checkGameStatus(
+      {
+        gameNumber: 1,
+        batchNumber,
+      },
+      GamesStatus.Created
+    );
+
     await player1Page.login({ playerId: player1.id });
+    await player2Page.login({ playerId: player2.id });
 
     await player1Page.passInstructions();
+    await player2Page.passInstructions();
 
-    await player2Page.open();
+    await player1Page.checkIfJellyBeansVisible();
+    await player2Page.checkIfJellyBeansVisible();
 
-    await player2Page.checkIfNoExperimentsVisible();
-
-    await player1Page.playJellyBeanGame({ count: jellyBeansCount });
+    await player1Page.playJellyBeanGame({ count: 123 });
 
     await player1Page.passMineSweeper();
 
@@ -71,8 +104,13 @@ test.describe("Empirica in multi-player mode", () => {
       gender: player1.gender,
     });
 
-    await player1Page.checkIfFinished();
+    await batchesPage.findGameByStatus(
+      {
+        batchNumber,
+      },
+      GamesStatus.Ended
+    );
 
-    await player2Page.checkIfNoExperimentsVisible();
+    await player1Page.checkIfFinished();
   });
 });
