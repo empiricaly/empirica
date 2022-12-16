@@ -8,9 +8,7 @@ import BatchesAdminPage, {
 
 import { baseUrl } from "../setup/setupConstants";
 
-const testFactory = new EmpiricaTestFactory({
-  installMode: "NPM", // TODO: implement caching of the empirica project
-});
+const testFactory = new EmpiricaTestFactory();
 
 test.beforeAll(async () => {
   await testFactory.init();
