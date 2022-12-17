@@ -1,5 +1,5 @@
 <script>
-  import { currentAdmin } from "../../utils/auth";
+  import { currentAdmin } from "../../utils/auth.js";
   import Badge from "../common/Badge.svelte";
   import Button from "../common/Button.svelte";
   import TimeSince from "../common/TimeSince.svelte";

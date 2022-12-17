@@ -1,7 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { writable } from "svelte/store";
-  import { currentAdmin } from "../../utils/auth";
+  import { currentAdmin } from "../../utils/auth.js";
   import EmptyState from "../common/EmptyState.svelte";
   import Page from "../common/Page.svelte";
   import BatchLine from "./BatchLine.svelte";
