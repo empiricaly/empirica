@@ -26,7 +26,7 @@ const reservedKeys = [
 ];
 
 export const lobbyConfigSchema = z.object({
-  kind: z.union([z.literal("global"), z.literal("individual")]),
+  kind: z.union([z.literal("shared"), z.literal("individual")]),
   duration: z.number().min(1),
   strategy: z.union([z.literal("fail"), z.literal("ignore")]),
   extensions: z.number().min(1).optional(),
@@ -682,6 +682,14 @@ export class Player extends GameOwned {
     const key = `playerStageID-${stage.id}`;
 
     return this.scopeByKey<PlayerStage>(key);
+  }
+
+  exit(reason: string) {
+    if (this.get("ended")) {
+      return;
+    }
+
+    this.set("ended", reason);
   }
 
   hasUpdated(): boolean {
