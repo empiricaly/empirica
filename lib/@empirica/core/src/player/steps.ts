@@ -156,6 +156,7 @@ export class Step {
 export class Steps {
   private steps = new Map<string, Step>();
   private updates = new Map<string, StepChange | boolean>();
+  private _hadUpdates = false;
 
   private ticker: BehaviorSubject<Epoch>;
 
@@ -183,12 +184,21 @@ export class Steps {
     return this.steps.get(stepID);
   }
 
+  hadUpdates() {
+    const hadUpdates = this._hadUpdates;
+    this._hadUpdates = false;
+
+    return hadUpdates;
+  }
+
   private update(step: StepChange, removed: boolean) {
     if (removed) {
       this.updates.set(step.id, true);
     } else {
       this.updates.set(step.id, step);
     }
+
+    this._hadUpdates = true;
   }
 
   private next() {

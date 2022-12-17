@@ -4,6 +4,10 @@ import { z } from "zod";
 export const treatmentSchema = z.record(z.string().min(1), z.any());
 export const batchConfigSchema = z.discriminatedUnion("kind", [
   z.object({
+    kind: z.literal("custom"),
+    config: z.any(),
+  }),
+  z.object({
     kind: z.literal("simple"),
     config: z.object({
       count: z.number().int().positive(),
