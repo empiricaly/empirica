@@ -2,6 +2,7 @@
   import { currentAdmin } from "../../utils/auth";
   import Badge from "../common/Badge.svelte";
   import Button from "../common/Button.svelte";
+  import TimeSince from "../common/TimeSince.svelte";
   import GamesLine from "../games/GamesLine.svelte";
   import PlayIcon from "../PlayIcon.svelte";
   import StopIcon from "../StopIcon.svelte";
@@ -10,12 +11,6 @@
   export let batch;
   export let games;
   export let players;
-
-  let open = false;
-
-  function clickOutsideHandler() {
-    open = false;
-  }
 
   const config = batch.get("config");
   let gameCount = "unknown";
@@ -60,6 +55,7 @@
       kind: "batch",
       attributes: [
         { key: "config", val: JSON.stringify(config), immutable: true },
+        { key: "status", val: JSON.stringify("created"), protected: true },
       ],
     });
     // $currentAdmin.createBatch({ config });
@@ -88,26 +84,48 @@
   }
 </script>
 
-<li>
+<li data-test="batchLine" data-batch-line-id={batch.id}>
   <div class="block">
-    <div data-test="batchLine" class="flex items-top px-4 py-4 sm:px-6">
-      <div class="flex min-w-0 flex-1 items-top">
-        <div class="flex-shrink-0 -mt-1">
+    <div class="flex items-top px-4 py-4 sm:px-6">
+      <div class="flex min-w-0 flex-1 items-baseline">
+        <div class="flex-shrink-0 -mt-1 h-min flex space-x-1 items-baseline">
           <Badge color={statusColor}>
             {status}
           </Badge>
         </div>
         <div class="min-w-0 flex-1 px-4 ">
           <div>
-            <p class="truncate text-sm font-medium text-empirica-600">
-              {config.kind}
+            <div class="truncate text-sm  flex space-x-1 items-baseline">
+              <div class="font-medium text-empirica-600">
+                {config.kind}
+              </div>
               {#if config.kind === "simple"}
                 <Badge>
                   {gameCount}
-                  {gameCount === "1" ? "game" : "games"}
+                  {gameCount === 1 ? "game" : "games"}
                 </Badge>
               {/if}
-            </p>
+
+              {#if status === "Running" || status === "Ended" || status === "Terminated" || status === "Failed"}
+                {#if batch.attrs["status"]}
+                  <div class="text-xs">
+                    {#if status === "Running"}
+                      Started
+                    {:else if status === "Ended"}
+                      Ended
+                    {:else if status === "Terminated"}
+                      Terminated
+                    {:else if status === "Failed"}
+                      Failed
+                    {/if}
+
+                    <TimeSince
+                      time={new Date(batch.attrs["status"].createdAt)}
+                    />
+                  </div>
+                {/if}
+              {/if}
+            </div>
             <p class="mt-2 flex items-center text-sm text-gray-500">
               <span class="truncate">
                 <div class="flex flex-col divide-transparent divide-y-2 w-full">
@@ -118,7 +136,7 @@
                           {treatment.count}
                           {treatment.count === 1 ? "game" : "games"}
                         </Badge>
-                        <div class="ml-2 truncate overflow-ellipsis italic">
+                        <div class="ml-2 overflow-ellipsis font-bold italic">
                           {treatment.treatment.name}
                         </div>
                         <div class="ml-2 truncate overflow-ellipsis opacity-60">
@@ -131,7 +149,7 @@
                   {:else if config.kind === "simple"}
                     {#each config.config.treatments as treatment}
                       <div class="flex items-center space-y-1">
-                        <div class="ml-2 truncate overflow-ellipsis italic">
+                        <div class="ml-2 overflow-ellipsis font-bold italic">
                           {treatment.name}
                         </div>
                         <div class="ml-2 truncate overflow-ellipsis opacity-60">
@@ -151,7 +169,13 @@
       </div>
       <div class="space-x-2">
         {#if status === "Created"}
-          <Button mini primary color="green" testId="startButton" on:click={start}>
+          <Button
+            mini
+            primary
+            color="green"
+            testId="startButton"
+            on:click={start}
+          >
             <div class="w-2 h-2 mr-2">
               <PlayIcon />
             </div>

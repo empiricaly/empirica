@@ -17,7 +17,7 @@ test("Steps should track steps", (t) => {
 
   changes.next(
     stepChange({
-      ellapsed: 0,
+      elapsed: 0,
       remaining: 10,
       id: "1",
       running: true,
@@ -38,7 +38,7 @@ test("Steps should track steps", (t) => {
 
   changes.next(
     stepChange({
-      ellapsed: 0,
+      elapsed: 0,
       remaining: 10,
       id: "1",
       running: true,
@@ -57,7 +57,7 @@ test("Steps only available when done", (t) => {
 
   changes.next(
     stepChange({
-      ellapsed: 0,
+      elapsed: 0,
       remaining: 10,
       id: "1",
       running: true,
@@ -82,7 +82,7 @@ test("Step tracks duration of step", (t) => {
 
   changes.next(
     stepChange({
-      ellapsed: 0,
+      elapsed: 0,
       remaining: 10,
       id: "1",
       running: true,
@@ -105,7 +105,7 @@ test("Step tracks duration of step", (t) => {
 
   expected.push({
     duration: 10000,
-    ellapsed: 0,
+    elapsed: 0,
     ended: false,
     remaining: 10000,
     started: true,
@@ -115,7 +115,7 @@ test("Step tracks duration of step", (t) => {
 
   expected.push({
     duration: 10000,
-    ellapsed: 1000,
+    elapsed: 1000,
     ended: false,
     remaining: 9000,
     started: true,
@@ -131,7 +131,7 @@ test("Step tracks duration of step", (t) => {
 
   expected.push({
     duration: 10000,
-    ellapsed: 2000,
+    elapsed: 2000,
     ended: false,
     remaining: 8000,
     started: true,
@@ -143,7 +143,7 @@ test("Step tracks duration of step", (t) => {
     setNow(i * 1000);
     expected.push({
       duration: 10000,
-      ellapsed: i * 1000,
+      elapsed: i * 1000,
       ended: false,
       remaining: 10000 - i * 1000,
       started: true,
@@ -158,7 +158,7 @@ test("Step tracks duration of step", (t) => {
 
   expected.push({
     duration: 10000,
-    ellapsed: 10000,
+    elapsed: 10000,
     ended: true,
     remaining: 0,
     started: true,
@@ -174,7 +174,7 @@ test("Step tracks step stopping early", (t) => {
 
   changes.next(
     stepChange({
-      ellapsed: 0,
+      elapsed: 0,
       remaining: 10,
       id: "1",
       running: true,
@@ -197,7 +197,7 @@ test("Step tracks step stopping early", (t) => {
 
   expected.push({
     duration: 10000,
-    ellapsed: 0,
+    elapsed: 0,
     ended: false,
     remaining: 10000,
     started: true,
@@ -207,7 +207,7 @@ test("Step tracks step stopping early", (t) => {
 
   expected.push({
     duration: 10000,
-    ellapsed: 1000,
+    elapsed: 1000,
     ended: false,
     remaining: 9000,
     started: true,
@@ -217,7 +217,7 @@ test("Step tracks step stopping early", (t) => {
 
   changes.next(
     stepChange({
-      ellapsed: 0,
+      elapsed: 0,
       remaining: 10,
       id: "1",
       running: false,
@@ -238,7 +238,7 @@ test("Step tracks step removed", (t) => {
 
   changes.next(
     stepChange({
-      ellapsed: 0,
+      elapsed: 0,
       remaining: 10,
       id: "1",
       running: true,
@@ -261,7 +261,7 @@ test("Step tracks step removed", (t) => {
 
   expected.push({
     duration: 10000,
-    ellapsed: 0,
+    elapsed: 0,
     ended: false,
     remaining: 10000,
     started: true,
@@ -271,7 +271,7 @@ test("Step tracks step removed", (t) => {
 
   expected.push({
     duration: 10000,
-    ellapsed: 1000,
+    elapsed: 1000,
     ended: false,
     remaining: 9000,
     started: true,
@@ -281,7 +281,7 @@ test("Step tracks step removed", (t) => {
 
   changes.next(
     stepChange({
-      ellapsed: 0,
+      elapsed: 0,
       remaining: 10,
       id: "1",
       running: true,
@@ -302,7 +302,7 @@ test("Step can return current state", (t) => {
 
   changes.next(
     stepChange({
-      ellapsed: 0,
+      elapsed: 0,
       remaining: 10,
       id: "1",
       running: true,
@@ -319,7 +319,7 @@ test("Step can return current state", (t) => {
 
   const expected = {
     duration: 10000,
-    ellapsed: 2000,
+    elapsed: 2000,
     ended: false,
     remaining: 8000,
     started: true,
@@ -328,14 +328,14 @@ test("Step can return current state", (t) => {
   t.deepEqual(stepDone!.current, expected);
 });
 
-test("Step cannot work with empty ellapsed", (t) => {
+test("Step cannot work with empty elapsed", (t) => {
   setNow(0);
 
   const { changes, steps } = setupSteps();
 
   changes.next(
     stepChange({
-      // ellapsed: 0,
+      // elapsed: 0,
       remaining: 10,
       id: "1",
       running: true,
@@ -360,7 +360,7 @@ test("Step cannot work with empty remaining", (t) => {
 
   changes.next(
     stepChange({
-      ellapsed: 0,
+      elapsed: 0,
       // remaining: 10,
       id: "1",
       running: true,

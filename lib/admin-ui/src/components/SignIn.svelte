@@ -1,8 +1,6 @@
 <script>
-  import { Empirica } from "@empirica/admin";
   import { Tajriba } from "@empirica/tajriba";
-  import { DEFAULT_TOKEN_KEY, URL } from "../constants";
-  import { setCurrentAdmin } from "../utils/auth";
+  import { DEFAULT_TOKEN_KEY, ORIGIN } from "../constants";
   import { focus } from "../utils/use";
   import Logo from "./layout/Logo.svelte";
 
@@ -18,7 +16,7 @@
       console.log("signing in", username, password);
       signingIn = true;
 
-      const taj = await Tajriba.createAndAwait(`${URL}/query`);
+      const taj = await Tajriba.createAndAwait(`${ORIGIN}/query`);
       const sessionToken = await taj.login(username, password);
       taj.stop();
 
