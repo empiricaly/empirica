@@ -195,6 +195,11 @@ export function Classic({
                 value: participant.id,
                 immutable: true,
               },
+              {
+                key: "participantIdentifier",
+                value: participant.identifier,
+                immutable: true,
+              },
             ]),
             kind: "player",
           },

@@ -18,20 +18,35 @@
 
   $: treatments = game.get("treatment");
   $: playerCount = treatments ? treatments["playerCount"] : 0;
-  $: p = players ? players.filter((p) => p.get("gameID") === game.id) : [];
+  $: p = players
+    ? players
+        .filter((p) => p.get("gameID") === game.id)
+        .sort((a, b) => {
+          if (
+            (a.get("introDone") && b.get("introDone")) ||
+            (!a.get("introDone") && !b.get("introDone"))
+          ) {
+            return 0;
+          }
+
+          if (a.get("introDone")) {
+            return -1;
+          } else {
+            return 1;
+          }
+        })
+    : [];
 
   let plyrs = [];
   $: {
     if (playerCount > 0 && p) {
-      for (const pp of p) {
-        console.log(pp.get("gameID"), game.id);
-      }
       plyrs = [];
-      for (let i = 0; i < playerCount; i++) {
+      for (let i = 0; i < Math.max(playerCount, p.length); i++) {
         const player = p[i];
         plyrs.push({
           player,
           ready: player && player.get("introDone"),
+          overflow: i + 1 > playerCount,
         });
       }
     }
@@ -59,7 +74,13 @@
     {#each plyrs as plyr}
       <div class="inline-block w-4 h-4">
         {#if plyr.player}
-          <span class={plyr.ready ? "text-green-400" : ""}>
+          <span
+            class={plyr.ready
+              ? "text-green-400"
+              : plyr.overflow
+              ? "text-orange-300"
+              : "text-gray-400"}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 448 512"
