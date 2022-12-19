@@ -66,12 +66,16 @@
       validateBatchConfig(config);
       // $currentAdmin.createBatch({ config });
 
-      await $currentAdmin.addScope({
+      const batch = await $currentAdmin.addScope({
         kind: "batch",
         attributes: [
           { key: "config", val: JSON.stringify(config), immutable: true },
+          { key: "status", val: JSON.stringify("created"), protected: true },
         ],
       });
+
+      console.log("new batch", batch);
+      window.lastNewBatch = batch;
 
       newBatch = false;
     } catch (err) {
@@ -104,13 +108,13 @@
     {
       onClick: () => (newBatch = false),
       label: "Cancel",
-      testId: "cancelButton"
+      testId: "cancelButton",
     },
     {
       label: "Create",
       primary: true,
       submit: true,
-      testId: "createBatchButton"
+      testId: "createBatchButton",
     },
   ];
 </script>

@@ -1,7 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import { writable } from "svelte/store";
-  import { currentAdmin } from "../../utils/auth";
+  import { currentAdmin } from "../../utils/auth.js";
   import EmptyState from "../common/EmptyState.svelte";
   import Page from "../common/Page.svelte";
   import BatchLine from "./BatchLine.svelte";
@@ -15,7 +15,7 @@
     {
       label: "New Batch",
       onClick: openNewBatch,
-      testId: "newBatchButton"
+      testId: "newBatchButton",
     },
   ];
 
@@ -23,23 +23,46 @@
   const games = writable([]);
   const players = writable([]);
 
+  const statuses = {
+    created: 1,
+    running: 0,
+    ended: 2,
+    terminated: 2,
+    failed: 2,
+  };
+
   const compareBatches = (a, b) => {
-    if (a.get("status") === "running") {
-      if (b.get("status") === "running") {
-        return (
-          new Date(b.attrs["status"].createdAt) -
-          new Date(a.attrs["status"].createdAt)
-        );
-      } else {
-        return -1;
-      }
-    } else {
+    if (b.attrs["status"] === undefined) {
       return 1;
     }
+
+    if (a.attrs["status"] === undefined) {
+      return -1;
+    }
+
+    if (statuses[a.get("status")] === statuses[b.get("status")]) {
+      if (a.get("status") === "running") {
+        return b.attrs["status"].createdAt > a.attrs["status"].createdAt
+          ? -1
+          : 1;
+      } else {
+        return b.attrs["status"].createdAt > a.attrs["status"].createdAt
+          ? 1
+          : -1;
+      }
+    }
+
+    return statuses[a.get("status")] < statuses[b.get("status")] ? -1 : 1;
   };
+
+  const compareNodes = (a, b) => {
+    return a.id > b.id ? -1 : 1;
+  };
+
   const batchesMap = new Map();
   const gamesMap = new Map();
   const playersMap = new Map();
+
   onMount(async function () {
     const obs = $currentAdmin.scopedAttributes([
       { kinds: ["batch", "game", "player"] },
@@ -97,7 +120,7 @@
 
             game.attributes[attribute.key] = valg;
             game.attrs[attribute.key] = attribute;
-            games.set(Array.from(gamesMap.values()));
+            games.set(Array.from(gamesMap.values()).sort(compareNodes));
             break;
           case "player":
             let player = playersMap.get(attribute.node.id);
@@ -111,7 +134,7 @@
                 },
               };
               playersMap.set(attribute.node.id, player);
-              players.set(Array.from(playersMap.values()));
+              players.set(Array.from(playersMap.values()).sort(compareNodes));
             }
 
             let valp;
@@ -121,7 +144,7 @@
 
             player.attributes[attribute.key] = valp;
             player.attrs[attribute.key] = attribute;
-            players.set(Array.from(playersMap.values()));
+            players.set(Array.from(playersMap.values()).sort(compareNodes));
             break;
         }
       },

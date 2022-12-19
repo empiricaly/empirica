@@ -49,6 +49,10 @@ export interface EmpiricaContextProps {
   // Disable the NoGames screen. It is up to the developer to handle the NoGames
   // condition.
   disableNoGames: boolean;
+
+  // Disable capturing URL params (?what=hello&some=thing) onto the Player under
+  // the `urlParams` key.
+  disableURLParamsCapture: boolean;
 }
 
 export function EmpiricaContext({
@@ -65,6 +69,7 @@ export function EmpiricaContext({
   unmanagedAssignment = false,
   disableConsent = false,
   disableNoGames = false,
+  disableURLParamsCapture = false,
   children,
 }: EmpiricaContextProps) {
   const tajribaConnected = useTajribaConnected();
@@ -97,7 +102,7 @@ export function EmpiricaContext({
     return <ConsentComp onConsent={onConsent!} />;
   }
 
-  if (!hasPlayer || connecting) {
+  if (!player && (!hasPlayer || connecting)) {
     return (
       <PlayerCreateForm onPlayerID={onPlayerID!} connecting={connecting} />
     );
@@ -105,6 +110,11 @@ export function EmpiricaContext({
 
   if (!player) {
     return <LoadingComp />;
+  }
+
+  if (!disableURLParamsCapture && !player.get("urlParams")) {
+    const urlParams = new URLSearchParams(window.location.search);
+    player.set("urlParams", Object.fromEntries(urlParams.entries()));
   }
 
   if (unmanagedAssignment) {

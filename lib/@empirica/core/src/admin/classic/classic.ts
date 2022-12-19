@@ -195,6 +195,11 @@ export function Classic({
                 value: participant.id,
                 immutable: true,
               },
+              {
+                key: "participantIdentifier",
+                value: participant.identifier,
+                immutable: true,
+              },
             ]),
             kind: "player",
           },
@@ -300,6 +305,10 @@ export function Classic({
 
           case "ended":
             checkShouldOpenExperiment(ctx);
+
+            break;
+          case "created":
+            // noop
 
             break;
           default:

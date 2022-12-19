@@ -14,6 +14,9 @@ type Config struct {
 	Addr       string `mapstructure:"addr"`
 	Treatments string `mapstructure:"treatments"`
 
+	// Player frontend proxy
+	ProxyAddr string `mapstructure:"proxyaddr"`
+
 	Production bool `mapstructure:"-"`
 }
 
@@ -42,6 +45,11 @@ func ConfigFlags(cmd *cobra.Command, prefix string) error {
 	flag = prefix + ".treatments"
 	sval = fmt.Sprintf("%s/treatments.yaml", settings.EmpiricaDir)
 	cmd.Flags().String(flag, sval, "Treatments config file")
+	viper.SetDefault(flag, sval)
+
+	flag = prefix + ".proxyaddr"
+	sval = "http://127.0.0.1:8844"
+	cmd.Flags().String(flag, sval, "Frontend proxy address")
 	viper.SetDefault(flag, sval)
 
 	return nil
