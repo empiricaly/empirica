@@ -28,8 +28,12 @@ export default class EmpiricaTestFactory {
     const cacheExists = await this.checkIfCacheExists();
 
     if (cacheExists) {
+      console.log("Cache exists");
+
       await this.createProjectFromCache();
     } else {
+      console.log("Cache doesn't exists");
+
       await this.createEmpiricaProject();
       await this.createProjectCache();
     }
@@ -128,15 +132,16 @@ export default class EmpiricaTestFactory {
 
     await fs.mkdir(cacheDir);
 
-    return tar
-      .c(
-        {
-          gzip: true,
-          cwd: path.join(__dirname, "..", this.getProjectId()),
-        },
-        ["."]
-      )
-      .pipe(createWriteStream(CACHE_FILEPATH));
+    await tar.c(
+      {
+        gzip: true,
+        cwd: path.join(__dirname, "..", this.getProjectId()),
+        file: CACHE_FILEPATH,
+      },
+      ["."]
+    );
+
+    console.log("Cache created");
   }
 
   private async startEmpiricaProject() {
