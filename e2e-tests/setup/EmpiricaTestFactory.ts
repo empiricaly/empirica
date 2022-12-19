@@ -1,15 +1,15 @@
-import { promises as fs, constants } from "fs";
+import { promises as fs, constants, createWriteStream } from "fs";
 import * as path from "path";
 import * as uuid from "uuid";
 import * as childProcess from "node:child_process";
 
-import AdmZip from "adm-zip";
+import * as tar from "tar";
 
 const EMPIRICA_CMD = "empirica";
 const EMPIRICA_CONFIG_RELATIVE_PATH = path.join(".empirica", "local");
 
 const CACHE_FOLDER = "cache";
-const CACHE_FILENAME = "cache.zip";
+const CACHE_FILENAME = "cache.tar.gz";
 const CACHE_FILEPATH = path.join(CACHE_FOLDER, CACHE_FILENAME);
 
 export default class EmpiricaTestFactory {
@@ -91,8 +91,6 @@ export default class EmpiricaTestFactory {
   private async checkIfCacheExists() {
     console.log("Checking if project cache exists");
 
-    // return false;
-
     try {
       await fs.access(CACHE_FILEPATH, constants.F_OK);
 
@@ -108,13 +106,14 @@ export default class EmpiricaTestFactory {
     );
 
     try {
-      const zip = new AdmZip(CACHE_FILEPATH);
+      const outputDir = path.join(__dirname, "..", this.getProjectId());
 
-      const outputDir = this.projectDirName;
+      await fs.mkdir(outputDir);
 
-      console.log("outputDir", outputDir);
-
-      await zip.extractAllToAsync(outputDir);
+      await tar.x({
+        file: CACHE_FILEPATH,
+        cwd: outputDir,
+      });
 
       console.log(`Extracted cache to "${outputDir}" successfully`);
     } catch (e) {
@@ -129,13 +128,15 @@ export default class EmpiricaTestFactory {
 
     await fs.mkdir(cacheDir);
 
-    const zip = new AdmZip();
-
-    await zip.addLocalFolderPromise(this.getProjectId(), {});
-
-    await zip.writeZipPromise(CACHE_FILEPATH);
-
-    console.log(`Created cache ${CACHE_FILENAME} successfully`);
+    return tar
+      .c(
+        {
+          gzip: true,
+          cwd: path.join(__dirname, "..", this.getProjectId()),
+        },
+        ["."]
+      )
+      .pipe(createWriteStream(CACHE_FILEPATH));
   }
 
   private async startEmpiricaProject() {
