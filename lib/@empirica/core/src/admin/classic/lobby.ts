@@ -132,27 +132,30 @@ async function expiredIndividualLobbyTimeout(
 
   const lobbyConfig = game.lobbyConfig;
 
-  if (!lobbyConfig.extensions || lobbyConfig.extensions === 0) {
-    player.exit("lobby timed out");
+  // For now, no extensions, so always exit after player timeout.
+  player.exit("lobby timed out");
 
-    return;
-  }
+  // if (!lobbyConfig.extensions || lobbyConfig.extensions === 0) {
+  //   player.exit("lobby timed out");
 
-  const extensionsKey = `${individualTimerExtensionsKey}-${game.id}`;
-  const extensions = (player.get(extensionsKey) as number) || 0;
+  //   return;
+  // }
 
-  if (extensions >= lobbyConfig.extensions) {
-    player.set("ended", "individual lobby timeout");
+  // const extensionsKey = `${individualTimerExtensionsKey}-${game.id}`;
+  // const extensions = (player.get(extensionsKey) as number) || 0;
 
-    return;
-  }
+  // if (extensions >= lobbyConfig.extensions) {
+  //   player.set("ended", "individual lobby timeout");
 
-  // Clear previous timeout
-  player.set(lobbyTimerKey, null);
+  //   return;
+  // }
 
-  player.set(extensionsKey, extensions + 1);
+  // // Clear previous timeout
+  // player.set(lobbyTimerKey, null);
 
-  setupIndividualLobbyTimeout(ctx, game, player);
+  // player.set(extensionsKey, extensions + 1);
+
+  // setupIndividualLobbyTimeout(ctx, game, player);
 }
 
 //
@@ -214,7 +217,12 @@ async function expiredSharedLobbyTimeout(
     return;
   }
 
-  // TODO check if there are no players, in which case, should clear timer.
+  const readyPlayers = game.players.filter((p) => p.get("introDone"));
+  if (readyPlayers.length === 0) {
+    game.set(lobbyTimerKey, null);
+
+    return;
+  }
 
   switch (game.lobbyConfig.strategy) {
     case "fail":
