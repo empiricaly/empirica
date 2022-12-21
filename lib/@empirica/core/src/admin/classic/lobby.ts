@@ -12,7 +12,7 @@ const second = 1000 * millisecond;
 
 const lobbyTimerKey = "lobbyTimerID";
 const individualTimerGameKey = "lobbyTimerGameID";
-const individualTimerExtensionsKey = "lobbyTimerExtensionsForGameID";
+// const individualTimerExtensionsKey = "lobbyTimerExtensionsForGameID";
 
 export type LobbyConfig = {};
 
@@ -130,12 +130,10 @@ async function expiredIndividualLobbyTimeout(
     return;
   }
 
-  const lobbyConfig = game.lobbyConfig;
-
   // For now, no extensions, so always exit after player timeout.
   player.exit("lobby timed out");
 
-  // if (!lobbyConfig.extensions || lobbyConfig.extensions === 0) {
+  // if (!game.lobbyConfig.extensions || game.lobbyConfig.extensions === 0) {
   //   player.exit("lobby timed out");
 
   //   return;
@@ -144,7 +142,7 @@ async function expiredIndividualLobbyTimeout(
   // const extensionsKey = `${individualTimerExtensionsKey}-${game.id}`;
   // const extensions = (player.get(extensionsKey) as number) || 0;
 
-  // if (extensions >= lobbyConfig.extensions) {
+  // if (extensions >= game.lobbyConfig.extensions) {
   //   player.set("ended", "individual lobby timeout");
 
   //   return;
