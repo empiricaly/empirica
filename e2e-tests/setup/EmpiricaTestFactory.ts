@@ -1,34 +1,43 @@
-import { promises as fs } from "fs";
+import { promises as fs, constants, createWriteStream } from "fs";
 import * as path from "path";
 import * as uuid from "uuid";
 import * as childProcess from "node:child_process";
 
+import * as tar from "tar";
+
 const EMPIRICA_CMD = "empirica";
 const EMPIRICA_CONFIG_RELATIVE_PATH = path.join(".empirica", "local");
 
-type InstallMode = "NPM" | "CACHED";
-
-type EmpiricaTestFactoryOptions = {
-  installMode: InstallMode;
-};
+const CACHE_FOLDER = "cache";
+const CACHE_FILENAME = "cache.tar.gz";
+const CACHE_FILEPATH = path.join(CACHE_FOLDER, CACHE_FILENAME);
 
 export default class EmpiricaTestFactory {
   private uniqueProjectId: string;
 
   private projectDirName: string;
 
-  private installMode: InstallMode;
-
   private empiricaProcess: childProcess.ChildProcess;
 
-  constructor(options: EmpiricaTestFactoryOptions) {
+  constructor() {
     this.uniqueProjectId = uuid.v4();
     this.projectDirName = `test-experiment-${this.uniqueProjectId}`;
-    this.installMode = options.installMode || "NPM"; // TODO: implement caching the setup
   }
 
   public async init() {
-    await this.createEmpiricaProject();
+    const cacheExists = await this.checkIfCacheExists();
+
+    if (cacheExists) {
+      console.log("Cache exists");
+
+      await this.createProjectFromCache();
+    } else {
+      console.log("Cache doesn't exists");
+
+      await this.createEmpiricaProject();
+      await this.createProjectCache();
+    }
+
     await this.startEmpiricaProject();
   }
 
@@ -39,6 +48,10 @@ export default class EmpiricaTestFactory {
 
   async fullCleanup() {
     await fs.rm(this.projectDirName, { recursive: true });
+  }
+
+  private getProjectId() {
+    return this.projectDirName;
   }
 
   async removeConfigFolder() {
@@ -79,10 +92,64 @@ export default class EmpiricaTestFactory {
     });
   }
 
+  private async checkIfCacheExists() {
+    console.log("Checking if project cache exists");
+
+    try {
+      await fs.access(CACHE_FILEPATH, constants.F_OK);
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  private async createProjectFromCache() {
+    console.log(
+      `Creating project "${this.getProjectId()}" from cached project`
+    );
+
+    try {
+      const outputDir = path.join(__dirname, "..", this.getProjectId());
+
+      await fs.mkdir(outputDir);
+
+      await tar.x({
+        file: CACHE_FILEPATH,
+        cwd: outputDir,
+      });
+
+      console.log(`Extracted cache to "${outputDir}" successfully`);
+    } catch (e) {
+      console.log(`Something went wrong. ${e}`);
+    }
+  }
+
+  private async createProjectCache() {
+    console.log("Creating cache.");
+
+    const cacheDir = "cache";
+
+    await fs.mkdir(cacheDir);
+
+    await tar.c(
+      {
+        gzip: true,
+        cwd: path.join(__dirname, "..", this.getProjectId()),
+        file: CACHE_FILEPATH,
+      },
+      ["."]
+    );
+
+    console.log("Cache created");
+  }
+
   private async startEmpiricaProject() {
+    console.log(`Starting rpoject ${this.getProjectId()}`);
+
     return new Promise((resolve) => {
       this.empiricaProcess = childProcess.spawn(EMPIRICA_CMD, {
-        cwd: this.projectDirName,
+        cwd: this.getProjectId(),
       });
 
       resolve(true);
