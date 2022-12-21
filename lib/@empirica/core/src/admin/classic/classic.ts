@@ -328,6 +328,7 @@ export function Classic({
         }
 
         case "ended":
+        case "failed":
         case "terminated":
           for (const player of game.players) {
             player.set("ended", `game ${status}`);
@@ -707,6 +708,7 @@ export function Classic({
     _.on(
       TajribaEvent.TransitionAdd,
       (_, { step, transition: { from, to } }: TransitionAdd) => {
+        console.log("stage transition check");
         const stage = stageForStepID.get(step.id);
         if (!stage) {
           return;

@@ -202,11 +202,11 @@
                         {f.strategy}
                       </dir>
                     {/if}
-                    {#if f.kind === "individual"}
+                    <!-- {#if f.kind === "individual"}
                       <dir>
                         {f.extensions || 0}
                       </dir>
-                    {/if}
+                    {/if} -->
                   </div>
                 </div>
               </div>
@@ -353,7 +353,7 @@
             </div>
           {/if}
 
-          {#if selectedLobby.kind === "individual"}
+          <!-- {#if selectedLobby.kind === "individual"}
             <div class="space-y-1 px-4 sm:px-6 sm:py-3">
               <LabelBox label="Extensions">
                 <Input
@@ -368,7 +368,7 @@
                 Number of times the player can extend their timeout.
               </FormTip>
             </div>
-          {/if}
+          {/if} -->
         </div>
 
         <!-- Action buttons -->

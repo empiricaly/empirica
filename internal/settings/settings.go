@@ -82,7 +82,6 @@ treatments:
 - name: Default individual
   kind: individual
   duration: 5m
-  extensions: 0  
 `
 
 	EmpiricaTOML = "empirica.toml"

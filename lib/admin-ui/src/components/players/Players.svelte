@@ -122,7 +122,7 @@
   {:else}
     <!-- Projects table (small breakpoint and up) -->
     <div class="overflow-hidden bg-white shadow sm:rounded-md">
-      <ul role="list" class="divide-y divide-gray-200">
+      <ul class="divide-y divide-gray-200">
         {#each $players as player (player.id)}
           {#if player.get("participantID")}
             <PlayerLine

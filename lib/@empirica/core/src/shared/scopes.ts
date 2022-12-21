@@ -214,6 +214,17 @@ export class Scope<
     return this.attributes.attribute(this.scope.id, key).set(value, ao);
   }
 
+  inspect() {
+    const attrs = this.attributes.attributes(this.scope.id);
+
+    const out: { [key: string]: JsonValue | undefined } = {};
+    for (const attr of attrs) {
+      out[attr.key] = attr.value;
+    }
+
+    return out;
+  }
+
   /**
    * @internal
    */
