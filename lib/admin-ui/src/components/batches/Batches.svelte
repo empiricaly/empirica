@@ -5,6 +5,7 @@
   import EmptyState from "../common/EmptyState.svelte";
   import Page from "../common/Page.svelte";
   import BatchLine from "./BatchLine.svelte";
+  import FetchLobbies from "./FetchLobbies.svelte";
   import FetchTreatments from "./FetchTreatments.svelte";
   import NewBatch from "./NewBatch.svelte";
 
@@ -180,6 +181,8 @@
   {/if}
 </Page>
 
-<FetchTreatments let:treatments>
-  <NewBatch bind:newBatch {treatments} />
-</FetchTreatments>
+<FetchLobbies let:lobbies>
+  <FetchTreatments let:treatments>
+    <NewBatch bind:newBatch {treatments} {lobbies} />
+  </FetchTreatments>
+</FetchLobbies>

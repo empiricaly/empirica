@@ -10,6 +10,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -361,7 +362,16 @@ func ReadLobbies(p string) httprouter.Handle {
 			log.Error().Err(err).Msg("Failed to parse lobbies.yaml")
 
 			w.WriteHeader(http.StatusUnprocessableEntity)
-			_, _ = w.Write([]byte(err.Error()))
+
+			val := struct {
+				Errors []string `json:"errors"`
+			}{
+				Errors: strings.Split(err.Error(), "\n"),
+			}
+
+			if b, err := json.Marshal(val); err == nil {
+				_, _ = w.Write(b)
+			}
 
 			return
 		}
