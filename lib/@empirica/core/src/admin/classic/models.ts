@@ -25,6 +25,13 @@ const reservedKeys = [
   "timerID",
 ];
 
+export const lobbyConfigSchema = z.object({
+  kind: z.union([z.literal("shared"), z.literal("individual")]),
+  duration: z.number().min(1),
+  strategy: z.union([z.literal("fail"), z.literal("ignore")]),
+  extensions: z.number().min(1).optional(),
+});
+
 const indexSortable = (a: Attributable, b: Attributable) =>
   (a.get("index") as number) - (b.get("index") as number);
 
@@ -89,6 +96,10 @@ export class Batch extends Scope<Context, ClassicKinds> {
   get hasEnded() {
     return endedStatuses.includes(this.get("status") as EndedStatuses);
   }
+
+  get lobbyConfig() {
+    return lobbyConfigSchema.parse(this.get("lobbyConfig"));
+  }
 }
 
 export class BatchOwned extends Scope<Context, ClassicKinds> {
@@ -134,18 +145,26 @@ export class Game extends BatchOwned {
     return endedStatuses.includes(this.get("status") as EndedStatuses);
   }
 
-  // Game has passed the gameStart callbacks and is currently running. This will
-  // be true until the game ends.
-  get isRunning() {
-    return this.get("status") === "running";
-  }
-
   // The game has started, but it might not be running yet, it might still be in
   // the gameStart callbacks.
   // This will always be true once the game has started (even after the game
   // ends).
   get hasStarted() {
     return Boolean(this.get("start"));
+  }
+
+  get hasNotStarted() {
+    return !this.hasStarted;
+  }
+
+  // Game has passed the gameStart callbacks and is currently running. This will
+  // be true until the game ends.
+  get isRunning() {
+    return this.get("status") === "running";
+  }
+
+  get lobbyConfig() {
+    return this.batch!.lobbyConfig;
   }
 
   // Starts the game if it is not already started.
@@ -663,6 +682,14 @@ export class Player extends GameOwned {
     const key = `playerStageID-${stage.id}`;
 
     return this.scopeByKey<PlayerStage>(key);
+  }
+
+  exit(reason: string) {
+    if (this.get("ended")) {
+      return;
+    }
+
+    this.set("ended", reason);
   }
 
   hasUpdated(): boolean {

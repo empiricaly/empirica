@@ -69,6 +69,21 @@ treatments:
     name: Two Players
 `
 
+	LobbiesYAML = "lobbies.yaml"
+	lobbiesyaml = `lobbies:
+- name: Default shared fail
+  kind: shared
+  duration: 5m
+  strategy: fail
+- name: Default shared ignore
+  kind: shared
+  duration: 5m
+  strategy: ignore
+- name: Default individual
+  kind: individual
+  duration: 5m
+`
+
 	EmpiricaTOML = "empirica.toml"
 	empiricatoml = `name = "%s"
 
@@ -139,6 +154,12 @@ func fillEmpiricaDir(empDir, name string) error {
 
 	if err := writeFile(yamlFile, []byte(treatmentsyaml)); err != nil {
 		return errors.Wrap(err, "write treatments file")
+	}
+
+	yamlFile = path.Join(empDir, LobbiesYAML)
+
+	if err := writeFile(yamlFile, []byte(lobbiesyaml)); err != nil {
+		return errors.Wrap(err, "write lobbies file")
 	}
 
 	return nil

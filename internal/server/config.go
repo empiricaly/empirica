@@ -13,6 +13,7 @@ import (
 type Config struct {
 	Addr       string `mapstructure:"addr"`
 	Treatments string `mapstructure:"treatments"`
+	Lobbies    string `mapstructure:"lobbies"`
 
 	// Player frontend proxy
 	ProxyAddr string `mapstructure:"proxyaddr"`
@@ -45,6 +46,11 @@ func ConfigFlags(cmd *cobra.Command, prefix string) error {
 	flag = prefix + ".treatments"
 	sval = fmt.Sprintf("%s/treatments.yaml", settings.EmpiricaDir)
 	cmd.Flags().String(flag, sval, "Treatments config file")
+	viper.SetDefault(flag, sval)
+
+	flag = prefix + ".lobbies"
+	sval = fmt.Sprintf("%s/lobbies.yaml", settings.EmpiricaDir)
+	cmd.Flags().String(flag, sval, "Lobbies config file")
 	viper.SetDefault(flag, sval)
 
 	flag = prefix + ".proxyaddr"

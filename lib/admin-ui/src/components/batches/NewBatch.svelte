@@ -14,13 +14,15 @@
 </script>
 
 <script>
+  import { formatLobby } from "../../utils/lobbies.js";
   import { push } from "svelte-spa-router";
-  import { currentAdmin } from "../../utils/auth";
-  import { validateBatchConfig } from "../../utils/batches";
+  import { currentAdmin } from "../../utils/auth.js";
+  import { validateBatchConfig } from "../../utils/batches.js";
   import Alert from "../common/Alert.svelte";
   import ButtonGroup from "../common/ButtonGroup.svelte";
   import EmptyState from "../common/EmptyState.svelte";
   import LabelBox from "../common/LabelBox.svelte";
+  import Select from "../common/Select.svelte";
   import SlideOver from "../overlays/SlideOver.svelte";
   import CompleteAssignment from "./CompleteAssignment.svelte";
   import CustomAssignment from "./CustomAssignment.svelte";
@@ -31,9 +33,11 @@
   let assignmentMethod = "complete";
 
   export let treatments = [];
+  export let lobbies = [];
   let complete = { kind: "complete", config: { treatments: [] } };
   let simple = { kind: "simple", config: { treatments: [], count: 1 } };
   let custom = { kind: "custom", config: {} };
+  let lobby = lobbies[0];
 
   let error = null;
   $: {
@@ -61,17 +65,26 @@
 
     console.info("submitting", JSON.stringify(config));
 
+    const attributes = [
+      { key: "config", val: JSON.stringify(config), immutable: true },
+      { key: "status", val: JSON.stringify("created"), protected: true },
+    ];
+
+    if (assignmentMethod !== "custom") {
+      attributes.push({
+        key: "lobbyConfig",
+        val: JSON.stringify(lobby),
+        immutable: true,
+      });
+    }
+
     error = null;
     try {
       validateBatchConfig(config);
-      // $currentAdmin.createBatch({ config });
 
       const batch = await $currentAdmin.addScope({
         kind: "batch",
-        attributes: [
-          { key: "config", val: JSON.stringify(config), immutable: true },
-          { key: "status", val: JSON.stringify("created"), protected: true },
-        ],
+        attributes,
       });
 
       console.log("new batch", batch);
@@ -144,13 +157,39 @@
           Create a Treatment
         </EmptyState>
       </div>
+    {:else if !lobbies || lobbies.length === 0}
+      <div class="sm:col-span-4">
+        <EmptyState
+          svgPath={treatmentSVGPath}
+          svgWidth={448}
+          on:click={() => push("/lobbies")}
+        >
+          Create a Lobby Configuration
+        </EmptyState>
+      </div>
     {:else if assignmentMethod === "complete"}
       <CompleteAssignment
         {treatments}
         bind:config={complete.config.treatments}
       />
+
+      <LabelBox label="Lobby Configuration">
+        <Select
+          bind:selected={lobby}
+          testId="lobbySelect"
+          options={lobbies.map((t) => ({ label: formatLobby(t), value: t }))}
+        />
+      </LabelBox>
     {:else if assignmentMethod === "simple"}
       <SimpleAssignment {treatments} bind:config={simple.config} />
+
+      <LabelBox label="Lobby Configuration">
+        <Select
+          bind:selected={lobby}
+          testId="lobbySelect"
+          options={lobbies.map((t) => ({ label: formatLobby(t), value: t }))}
+        />
+      </LabelBox>
     {:else}
       Error, unknown method!
     {/if}

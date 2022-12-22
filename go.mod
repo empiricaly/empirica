@@ -8,7 +8,7 @@ require (
 	github.com/briandowns/spinner v1.18.1
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/cortesi/moddwatch v0.0.0-20210323234936-df014e95c743
-	github.com/empiricaly/tajriba v1.0.0-rc.19
+	github.com/empiricaly/tajriba v1.0.0-rc.20
 	github.com/jpillora/backoff v1.0.0
 	github.com/julienschmidt/httprouter v1.3.0
 	github.com/klauspost/compress v1.15.0

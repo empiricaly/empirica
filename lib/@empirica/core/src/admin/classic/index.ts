@@ -1,5 +1,9 @@
+export { withTajriba } from "./api/connection_test_helper";
 export { Classic } from "./classic";
+export { ExportFormat, runExport } from "./export/export";
 export { ClassicLoader } from "./loader";
+export { Lobby } from "./lobby";
+export type { LobbyConfig } from "./lobby";
 export {
   Batch,
   classicKinds,
@@ -15,5 +19,3 @@ export {
 } from "./models";
 export type { ClassicKinds, EventProxy } from "./models";
 export { ClassicListenersCollector } from "./proxy";
-export { runExport, ExportFormat } from "./export/export";
-export { withTajriba } from "./api/connection_test_helper";

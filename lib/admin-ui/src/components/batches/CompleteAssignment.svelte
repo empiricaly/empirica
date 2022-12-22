@@ -1,6 +1,6 @@
 <script>
-  import { deepEqual } from "../../utils/equal";
-  import { formatFactorsToString } from "../../utils/treatments";
+  import { deepEqual } from "../../utils/equal.js";
+  import { formatFactorsToString } from "../../utils/treatments.js";
   import Input from "../common/Input.svelte";
   import LabelBox from "../common/LabelBox.svelte";
   import Select from "../common/Select.svelte";
@@ -63,7 +63,12 @@
         />
       </div>
       <div class="flex items-center">
-        <button type="button" on:click={remove(conf)} data-test="trashButton" class="w-6 h-6">
+        <button
+          type="button"
+          on:click={remove(conf)}
+          data-test="trashButton"
+          class="w-6 h-6"
+        >
           <Trash />
         </button>
       </div>

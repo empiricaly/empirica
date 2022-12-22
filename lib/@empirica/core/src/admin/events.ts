@@ -355,6 +355,13 @@ export class EventContext<
     return this.scopes.byKind<T>(kind) as Map<string, T>;
   }
 
+  scopesByKindID<T extends Scope<Context, Kinds>>(
+    kind: keyof Kinds,
+    id: string
+  ) {
+    return this.scopes.byKind<T>(kind).get(id);
+  }
+
   scopesByKindMatching<T extends Scope<Context, Kinds>>(
     kind: keyof Kinds,
     key: string,

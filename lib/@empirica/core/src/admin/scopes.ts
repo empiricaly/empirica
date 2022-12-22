@@ -134,6 +134,13 @@ export class Scope<
     return this.scopes.byKind<T>(kind) as Map<string, T>;
   }
 
+  protected scopesByKindID<T extends Scope<Context, Kinds>>(
+    kind: keyof Kinds,
+    id: string
+  ): T | undefined {
+    return this.scopes.byKind<T>(kind).get(id);
+  }
+
   protected scopesByKindMatching<T extends Scope<Context, Kinds>>(
     kind: keyof Kinds,
     key: string,

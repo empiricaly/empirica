@@ -1,7 +1,7 @@
 <script>
   import { quintInOut } from "svelte/easing";
   import { fly } from "svelte/transition";
-  import { md } from "../../utils/md";
+  import { md } from "../../utils/md.js";
   import Button from "../common/Button.svelte";
 
   export let title = null;
@@ -19,6 +19,14 @@
     if (!disableBgCloseClick) {
       open = false;
     }
+  }
+
+  function backgroundCloseKeypress(evt) {
+    if (evt.target !== evt.currentTarget) {
+      return;
+    }
+
+    backgroundClose();
   }
 
   function buttonClose() {
@@ -44,6 +52,7 @@
       ? 'bg-opacity-20'
       : 'bg-opacity-0'}"
     on:click={backgroundClose}
+    on:keypress={backgroundCloseKeypress}
   >
     <div class="absolute inset-0 overflow-hidden">
       <section class="absolute inset-y-0 right-0 pl-10 max-w-full flex">
@@ -52,6 +61,7 @@
           class="w-screen max-w-2xl"
           on:submit|preventDefault
           on:click|stopPropagation
+          on:keypress|stopPropagation
           transition:fly={{
             duration: 300,
             x: 672,

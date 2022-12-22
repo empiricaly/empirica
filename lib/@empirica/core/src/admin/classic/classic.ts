@@ -180,7 +180,6 @@ export function Classic({
     }
 
     _.on(TajribaEvent.ParticipantConnect, async (ctx, { participant }) => {
-      // console.log("ON PARTICIPANT", participant.id);
       online.set(participant.id, participant);
 
       const player = playersForParticipant.get(participant.id);
@@ -215,7 +214,6 @@ export function Classic({
     });
 
     _.on("player", async (ctx, { player }: { player: Player }) => {
-      // console.log("ON PLAYER", player.id);
       const participantID = isString(player.get("participantID"));
 
       player.participantID = participantID;
@@ -330,6 +328,7 @@ export function Classic({
         }
 
         case "ended":
+        case "failed":
         case "terminated":
           for (const player of game.players) {
             player.set("ended", `game ${status}`);
@@ -709,8 +708,13 @@ export function Classic({
     _.on(
       TajribaEvent.TransitionAdd,
       (_, { step, transition: { from, to } }: TransitionAdd) => {
-        const hasStage = Boolean(stageForStepID.get(step.id));
-        debug(`transition: ${from} => ${to} (has stage: ${hasStage})`);
+        console.log("stage transition check");
+        const stage = stageForStepID.get(step.id);
+        if (!stage) {
+          return;
+        }
+
+        debug(`transition stage: ${from} => ${to}`);
 
         if (from === State.Running && to === State.Ended) {
           const stage = isStage(stageForStepID.get(step.id));

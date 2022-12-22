@@ -38,7 +38,7 @@ func prepDotEmpirica(inConf *empirica.Config, dir string, devMode bool) (*empiri
 	}
 
 	if !os.IsNotExist(err) {
-		for _, fileName := range []string{"empirica.toml", "treatments.yaml"} {
+		for _, fileName := range []string{"empirica.toml", "treatments.yaml", "lobbies.yaml"} {
 			bytesRead, err := ioutil.ReadFile(path.Join(src, fileName))
 			if err != nil {
 				return nil, errors.Wrapf(err, "read %s", fileName)

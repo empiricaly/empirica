@@ -1,7 +1,7 @@
 <script>
-  import { DEFAULT_TREATMENT, ORIGIN } from "../../constants";
-  import { castValue } from "../../utils/typeValue";
-  import { focus } from "../../utils/use";
+  import { DEFAULT_TREATMENT, ORIGIN } from "../../constants.js";
+  import { castValue } from "../../utils/typeValue.js";
+  import { focus } from "../../utils/use.js";
   import Button from "../common/Button.svelte";
   import Duplicate from "../common/Duplicate.svelte";
   import Trash from "../common/Trash.svelte";
@@ -270,7 +270,7 @@
 </div>
 
 <div class="bg-white shadow overflow-hidden sm:rounded-md">
-  <ul role="list" class="divide-y divide-gray-200">
+  <ul class="divide-y divide-gray-200">
     {#if treatments && treatments.treatments}
       {#each treatments.treatments as t, i (t)}
         <li class="hover:bg-gray-50">

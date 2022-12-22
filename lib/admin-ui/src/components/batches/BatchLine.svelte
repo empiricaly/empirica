@@ -55,6 +55,11 @@
       kind: "batch",
       attributes: [
         { key: "config", val: JSON.stringify(config), immutable: true },
+        {
+          key: "lobbyConfig",
+          val: JSON.stringify(batch.get("lobbyConfig")),
+          immutable: true,
+        },
         { key: "status", val: JSON.stringify("created"), protected: true },
       ],
     });

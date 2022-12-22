@@ -5,6 +5,7 @@
   import EmptyState from "../common/EmptyState.svelte";
   import Page from "../common/Page.svelte";
   import BatchLine from "./BatchLine.svelte";
+  import FetchLobbies from "./FetchLobbies.svelte";
   import FetchTreatments from "./FetchTreatments.svelte";
   import NewBatch from "./NewBatch.svelte";
 
@@ -169,7 +170,7 @@
   {:else}
     <!-- Projects table (small breakpoint and up) -->
     <div class="overflow-hidden bg-white shadow sm:rounded-md">
-      <ul role="list" class="divide-y divide-gray-200">
+      <ul class="divide-y divide-gray-200">
         {#each $batches as batch (batch.id)}
           {#if batch.get("config")}
             <BatchLine {batch} games={$games} players={$players} />
@@ -180,6 +181,8 @@
   {/if}
 </Page>
 
-<FetchTreatments let:treatments>
-  <NewBatch bind:newBatch {treatments} />
-</FetchTreatments>
+<FetchLobbies let:lobbies>
+  <FetchTreatments let:treatments>
+    <NewBatch bind:newBatch {treatments} {lobbies} />
+  </FetchTreatments>
+</FetchLobbies>
