@@ -1,42 +1,65 @@
-import { promises as fs, constants, createWriteStream } from "fs";
+import { promises as fs, constants } from "fs";
 import * as path from "path";
 import * as uuid from "uuid";
 import * as childProcess from "node:child_process";
 
 import * as tar from "tar";
+import executeCommand from "../utils/launchProcess";
 
 const EMPIRICA_CMD = "empirica";
 const EMPIRICA_CONFIG_RELATIVE_PATH = path.join(".empirica", "local");
 
+const EMPIRICA_CORE_PACKAGE_PATH = path.join(
+  __dirname,
+  "..",
+  "..",
+  "lib",
+  "@empirica",
+  "core"
+);
+
 const CACHE_FOLDER = "cache";
 const CACHE_FILENAME = "cache.tar.gz";
 const CACHE_FILEPATH = path.join(CACHE_FOLDER, CACHE_FILENAME);
+
+interface TestFactoryParams {
+  shouldBuildCorePackage: boolean;
+}
 
 export default class EmpiricaTestFactory {
   private uniqueProjectId: string;
 
   private projectDirName: string;
 
+  private shouldBuildCorePackage: boolean;
+
   private empiricaProcess: childProcess.ChildProcess;
 
-  constructor() {
+  constructor(params?: TestFactoryParams) {
     this.uniqueProjectId = uuid.v4();
     this.projectDirName = `test-experiment-${this.uniqueProjectId}`;
+    this.shouldBuildCorePackage = params?.shouldBuildCorePackage || false;
   }
 
   public async init() {
     const cacheExists = await this.checkIfCacheExists();
+
+    if (this.shouldBuildCorePackage) {
+      await this.buildCorePackage();
+    }
 
     if (cacheExists) {
       console.log("Cache exists");
 
       await this.createProjectFromCache();
     } else {
-      console.log("Cache doesn't exists");
+      console.log("Cache doesn't exist");
 
       await this.createEmpiricaProject();
       await this.createProjectCache();
     }
+
+    await this.linkCorePackage();
 
     await this.startEmpiricaProject();
   }
@@ -142,6 +165,30 @@ export default class EmpiricaTestFactory {
     );
 
     console.log("Cache created");
+  }
+
+  private async buildCorePackage() {
+    console.log("Building the @empirica/core package");
+
+    await executeCommand({
+      command: "npm",
+      params: ["run", "build"],
+      cwd: EMPIRICA_CORE_PACKAGE_PATH,
+    });
+  }
+
+  private async linkCorePackage() {
+    await executeCommand({
+      command: "npm",
+      params: ["link"],
+      cwd: EMPIRICA_CORE_PACKAGE_PATH,
+    });
+
+    await executeCommand({
+      command: "npm",
+      params: ["link", "@empirica/core"],
+      cwd: path.join(this.getProjectId(), "client"),
+    });
   }
 
   private async startEmpiricaProject() {
