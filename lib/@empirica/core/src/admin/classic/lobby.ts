@@ -1,6 +1,6 @@
 import { AddStepInput, State, Step, Transition } from "@empirica/tajriba";
 import { z } from "zod";
-import { error } from "../../utils/console";
+import { debug, error } from "../../utils/console";
 import { StepPayload } from "../context";
 import { EventContext, ListenersCollector, TajribaEvent } from "../events";
 import { ClassicKinds, Context, Game, Player } from "./models";
@@ -19,15 +19,13 @@ export type LobbyConfig = {};
 export function Lobby(_: LobbyConfig = {}) {
   return function (_: ListenersCollector<Context, ClassicKinds>) {
     _.on("player", "introDone", async (ctx, { player }: { player: Player }) => {
-      console.log("lobby intro done");
+      debug("lobby: lobby intro done");
       const game = player.currentGame;
       if (!game) {
         return;
       }
 
-      console.log("lobby intro done", game.batch?.inspect());
-      console.log("lobby intro done", game.batch?.get("lobbyConfig"));
-      console.log("lobby intro done", game.lobbyConfig);
+      debug("lobby: lobby intro done", game.batch?.inspect());
 
       switch (game.lobbyConfig.kind) {
         case "shared":
@@ -55,7 +53,7 @@ export function Lobby(_: LobbyConfig = {}) {
     _.on(
       TajribaEvent.TransitionAdd,
       (ctx, { step, transition: { from, to } }: TransitionAdd) => {
-        console.log("lobby transition check");
+        debug("lobby: lobby transition check");
         if (from !== State.Running || to !== State.Ended) {
           return;
         }
@@ -165,7 +163,7 @@ async function setupSharedLobbyTimeout(
   game: Game
 ) {
   if (game.get(lobbyTimerKey)) {
-    console.log("lobby already exists", game.lobbyConfig);
+    debug("lobby: lobby already exists", game.lobbyConfig);
 
     return;
   }
@@ -177,7 +175,7 @@ async function setupSharedLobbyTimeout(
     return;
   }
 
-  console.log("lobby created", stepID);
+  debug("lobby: lobby created", stepID);
   game.set(lobbyTimerKey, stepID);
 
   try {
@@ -190,7 +188,7 @@ async function setupSharedLobbyTimeout(
       },
     ]);
   } catch (e) {
-    console.log("failed to start lobby timeout", e);
+    debug("lobby: failed to start lobby timeout", e);
   }
 }
 
@@ -201,16 +199,16 @@ async function expiredSharedLobbyTimeout(
   const games = ctx.scopesByKindMatching<Game>("game", lobbyTimerKey, step.id);
 
   if (!games.length) {
-    console.log("game for lobby not found");
+    debug("lobby: game for lobby not found");
 
     return;
   }
 
   const game = games[0]!;
-  console.log("lobby for game", game.id);
+  debug("lobby: lobby for game", game.id);
 
   if (game.hasStarted) {
-    console.log("game for lobby started");
+    debug("lobby: game for lobby started");
 
     return;
   }
@@ -224,12 +222,12 @@ async function expiredSharedLobbyTimeout(
 
   switch (game.lobbyConfig.strategy) {
     case "fail":
-      console.log("failing game");
+      debug("lobby: failing game");
       game.end("failed", "shared lobby timeout");
 
       break;
     case "ignore":
-      console.log("starting game");
+      debug("lobby: starting game");
 
       for (const player of game.players) {
         if (!player.get("introDone")) {
@@ -250,7 +248,7 @@ interface stepper {
 async function getTimer(ctx: stepper, duration: number) {
   try {
     const dur = duration / second;
-    console.log("creating lobby timeout for", dur, "seconds");
+    debug("lobby: creating lobby timeout for", dur, "seconds");
     const steps = await ctx.addSteps([{ duration: dur }]);
     return steps[0]?.id;
   } catch (err) {
