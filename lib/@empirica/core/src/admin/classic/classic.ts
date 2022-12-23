@@ -615,7 +615,7 @@ export function Classic({
           return;
         }
 
-        if (players.every((p) => p.stage!.get("submit"))) {
+        if (players.every((p) => p.stage!.get("submit") || p.get("ended"))) {
           ctx.addTransitions([
             {
               from: State.Running,
