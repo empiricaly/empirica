@@ -437,7 +437,9 @@ export function Classic({
       const game = isGame(player.currentGame);
       const treatment = treatmentSchema.parse(game.get("treatment"));
       const playerCount = treatment["playerCount"] as number;
-      const readyPlayers = game.players.filter((p) => p.get("introDone"));
+      const readyPlayers = game.players.filter(
+        (p) => p.get("introDone") && !p.get("ended")
+      );
 
       if (readyPlayers.length < playerCount) {
         trace("introDone: not enough players ready yet");
