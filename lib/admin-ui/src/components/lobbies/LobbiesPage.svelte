@@ -1,16 +1,16 @@
 <script>
-  import Page from "../common/Page.svelte";
   import { DEFAULT_LOBBY, ORIGIN } from "../../constants.js";
   import { castDuration, durationString } from "../../utils/time.js";
   import { focus } from "../../utils/use.js";
   import Badge from "../common/Badge.svelte";
   import ButtonGroup from "../common/ButtonGroup.svelte";
+  import FormTip from "../common/FormTip.svelte";
   import Input from "../common/Input.svelte";
   import LabelBox from "../common/LabelBox.svelte";
+  import Page from "../common/Page.svelte";
   import Trash from "../common/Trash.svelte";
   import Alert from "../layout/Alert.svelte";
   import SlideOver from "../overlays/SlideOver.svelte";
-  import FormTip from "../common/FormTip.svelte";
 
   let newLobby = false;
 
@@ -20,10 +20,13 @@
   let editedIndex;
 
   let lobbies;
-  function showLobbyEditor(f = { ...DEFAULT_LOBBY }, index = undefined) {
+  function showLobbyEditor(f = DEFAULT_LOBBY, index = undefined) {
     editedIndex = index;
     newLobby = true;
-    selectedLobby = f;
+    selectedLobby = { ...f };
+    if (!/[a-zA-Z]/.test(f.duration)) {
+      selectedLobby.duration = durationString(f.duration);
+    }
   }
 
   function handleDeleteLobby(index) {
