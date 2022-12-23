@@ -14,3 +14,5 @@ go.work.sum
 playwright-results
 playwright-report
 test-results
+e2e-tests/test-experiment-*
+e2e-tests/cache
