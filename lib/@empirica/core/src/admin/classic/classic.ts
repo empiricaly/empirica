@@ -144,9 +144,11 @@ export function Classic({
 
       const groupID = isString(game.get("groupID"));
 
+      const players = game.players.filter((p) => !p.get("ended"));
+
       const participantIDs: string[] = [];
       const nodeIDs = [game.id, groupID];
-      for (const player of game.players) {
+      for (const player of players) {
         nodeIDs.push(player.id);
         participantIDs.push(player.participantID!);
         const playerGameID = player.get(`playerGameID-${game.id}`) as

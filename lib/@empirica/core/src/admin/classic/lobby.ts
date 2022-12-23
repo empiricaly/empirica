@@ -230,6 +230,13 @@ async function expiredSharedLobbyTimeout(
       break;
     case "ignore":
       console.log("starting game");
+
+      for (const player of game.players) {
+        if (!player.get("introDone")) {
+          player.exit("lobby timed out before reached intro");
+        }
+      }
+
       game.start();
 
       break;
