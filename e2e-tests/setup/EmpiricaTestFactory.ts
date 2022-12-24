@@ -22,6 +22,8 @@ const CACHE_FOLDER = "cache";
 const CACHE_FILENAME = "cache.tar.gz";
 const CACHE_FILEPATH = path.join(CACHE_FOLDER, CACHE_FILENAME);
 
+const EMPIRICA_BUILD = "build: 167"; // TODO: we'd need to test against the code in repo
+
 interface TestFactoryParams {
   shouldBuildCorePackage: boolean;
 }
@@ -38,7 +40,7 @@ export default class EmpiricaTestFactory {
   constructor(params?: TestFactoryParams) {
     this.uniqueProjectId = uuid.v4();
     this.projectDirName = `test-experiment-${this.uniqueProjectId}`;
-    this.shouldBuildCorePackage = params?.shouldBuildCorePackage || false;
+    this.shouldBuildCorePackage = params?.shouldBuildCorePackage || true;
   }
 
   public async init() {
@@ -86,32 +88,13 @@ export default class EmpiricaTestFactory {
     await fs.rm(configDir, { recursive: true });
   }
 
-  private async createEmpiricaProject() {
-    return new Promise((resolve, reject) => {
-      const process = childProcess.spawn(EMPIRICA_CMD, [
-        "create",
-        this.projectDirName,
-      ]);
-
-      process.stdout.on("data", (data) => {
-        console.log(`${data}`);
-      });
-
-      process.stderr.on("data", (data) => {
-        console.error(`create project stderr: ${data}`);
-      });
-
-      process.on("close", (code) => {
-        if (code === 0) {
-          resolve(true);
-        } else {
-          console.log(
-            `"${EMPIRICA_CMD} create" process exited with code ${code}`
-          );
-
-          reject(code);
-        }
-      });
+  private createEmpiricaProject() {
+    return executeCommand({
+      command: EMPIRICA_CMD,
+      params: ["create", this.projectDirName],
+      env: {
+        EMPIRICA_BUILD,
+      },
     });
   }
 
@@ -192,24 +175,28 @@ export default class EmpiricaTestFactory {
   }
 
   private async startEmpiricaProject() {
-    console.log(`Starting rpoject ${this.getProjectId()}`);
+    console.log(`Starting project ${this.getProjectId()}`);
 
     return new Promise((resolve) => {
       this.empiricaProcess = childProcess.spawn(EMPIRICA_CMD, {
         cwd: this.getProjectId(),
+        env: {
+          ...process.env,
+          EMPIRICA_BUILD,
+        },
       });
 
       resolve(true);
 
-      process.stdout.on("data", (data) => {
+      this.empiricaProcess?.stdout?.on("data", (data) => {
         console.log(`stdout: ${data}`);
       });
 
-      process.stderr.on("data", (data) => {
+      this.empiricaProcess.stderr?.on("data", (data) => {
         console.error(`stderr: ${data}`);
       });
 
-      process.on("close", (code) => {
+      this.empiricaProcess?.on("close", (code) => {
         console.log(`"${EMPIRICA_CMD}" process exited with code ${code}`);
       });
     });

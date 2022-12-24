@@ -3,26 +3,34 @@ import * as childProcess from "node:child_process";
 export default function executeCommand({
   command,
   params,
+  env = {},
   cwd,
 }: {
   command: string;
   params: string[];
+  env?: Record<string, string>;
   cwd?: string;
 }) {
   return new Promise((resolve, reject) => {
-    const process = childProcess.spawn(command, params, {
+    console.log(`Executing "${command}" with params "${params}"`);
+
+    const spawnedProcess = childProcess.spawn(command, params, {
       cwd,
+      env: {
+        ...process.env,
+        ...env,
+      },
     });
 
-    process.stdout.on("data", (data) => {
-      console.log(`stdout: ${data}`);
+    spawnedProcess.stdout.on("data", (data) => {
+      console.log(`${data}`);
     });
 
-    process.stderr.on("data", (data) => {
+    spawnedProcess.stderr.on("data", (data) => {
       console.error(`stderr: ${data}`);
     });
 
-    process.on("close", (code) => {
+    spawnedProcess.on("close", (code) => {
       console.log(`"${command}" process exited with code ${code}`);
 
       if (code === 0) {
