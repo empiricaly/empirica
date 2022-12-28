@@ -144,9 +144,11 @@ export function Classic({
 
       const groupID = isString(game.get("groupID"));
 
+      const players = game.players.filter((p) => !p.get("ended"));
+
       const participantIDs: string[] = [];
       const nodeIDs = [game.id, groupID];
-      for (const player of game.players) {
+      for (const player of players) {
         nodeIDs.push(player.id);
         participantIDs.push(player.participantID!);
         const playerGameID = player.get(`playerGameID-${game.id}`) as
@@ -437,7 +439,9 @@ export function Classic({
       const game = isGame(player.currentGame);
       const treatment = treatmentSchema.parse(game.get("treatment"));
       const playerCount = treatment["playerCount"] as number;
-      const readyPlayers = game.players.filter((p) => p.get("introDone"));
+      const readyPlayers = game.players.filter(
+        (p) => p.get("introDone") && !p.get("ended")
+      );
 
       if (readyPlayers.length < playerCount) {
         trace("introDone: not enough players ready yet");
@@ -611,7 +615,7 @@ export function Classic({
           return;
         }
 
-        if (players.every((p) => p.stage!.get("submit"))) {
+        if (players.every((p) => p.stage!.get("submit") || p.get("ended"))) {
           ctx.addTransitions([
             {
               from: State.Running,
