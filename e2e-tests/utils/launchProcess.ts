@@ -4,13 +4,15 @@ export default function executeCommand({
   command,
   params,
   env = {},
+  hideOutput = false,
   cwd,
 }: {
   command: string;
   params: string[];
+  hideOutput?: boolean;
   env?: Record<string, string>;
   cwd?: string;
-}) {
+}): Promise<string | number> {
   return new Promise((resolve, reject) => {
     console.log(`Executing "${command}" with params "${params}"`);
 
@@ -22,8 +24,14 @@ export default function executeCommand({
       },
     });
 
+    let cmdOutput = "";
+
     spawnedProcess.stdout.on("data", (data) => {
-      console.log(`${data}`);
+      if (hideOutput) {
+        console.log(`${data}`);
+      }
+
+      cmdOutput += data;
     });
 
     spawnedProcess.stderr.on("data", (data) => {
@@ -34,8 +42,10 @@ export default function executeCommand({
       console.log(`"${command}" process exited with code ${code}`);
 
       if (code === 0) {
-        resolve(true);
+        resolve(cmdOutput);
       } else {
+        console.log(cmdOutput);
+
         reject(code);
       }
     });

@@ -5,6 +5,12 @@ import * as childProcess from "node:child_process";
 
 import * as tar from "tar";
 import executeCommand from "../utils/launchProcess";
+import {
+  EmpiricaVersion,
+  parseBranchName,
+  parseBuild,
+  parseVersion,
+} from "../utils/versionUtils";
 
 const EMPIRICA_CMD = "empirica";
 const EMPIRICA_CONFIG_RELATIVE_PATH = path.join(".empirica", "local");
@@ -19,13 +25,10 @@ const EMPIRICA_CORE_PACKAGE_PATH = path.join(
 );
 
 const CACHE_FOLDER = "cache";
-const CACHE_FILENAME = "cache.tar.gz";
-const CACHE_FILEPATH = path.join(CACHE_FOLDER, CACHE_FILENAME);
-
-const EMPIRICA_BUILD = "build: 167"; // TODO: we'd need to test against the code in repo
 
 interface TestFactoryParams {
   shouldBuildCorePackage: boolean;
+  shoudLinkCoreLib: boolean;
 }
 
 export default class EmpiricaTestFactory {
@@ -35,15 +38,28 @@ export default class EmpiricaTestFactory {
 
   private shouldBuildCorePackage: boolean;
 
+  private shoudLinkCoreLib: boolean;
+
+  private versionInfo: EmpiricaVersion;
+
   private empiricaProcess: childProcess.ChildProcess;
 
   constructor(params?: TestFactoryParams) {
     this.uniqueProjectId = uuid.v4();
     this.projectDirName = `test-experiment-${this.uniqueProjectId}`;
-    this.shouldBuildCorePackage = params?.shouldBuildCorePackage || true;
+    this.shouldBuildCorePackage = params?.shouldBuildCorePackage || false;
+    this.shoudLinkCoreLib = params?.shoudLinkCoreLib || false;
   }
 
   public async init() {
+    await this.checkEmpricaVersion();
+
+    console.log(
+      "Using empirica version:",
+      this.versionInfo.version,
+      this.versionInfo.build
+    );
+
     const cacheExists = await this.checkIfCacheExists();
 
     if (this.shouldBuildCorePackage) {
@@ -61,7 +77,9 @@ export default class EmpiricaTestFactory {
       await this.createProjectCache();
     }
 
-    await this.linkCorePackage();
+    if (this.shoudLinkCoreLib) {
+      await this.linkCorePackage();
+    }
 
     await this.startEmpiricaProject();
   }
@@ -92,17 +110,40 @@ export default class EmpiricaTestFactory {
     return executeCommand({
       command: EMPIRICA_CMD,
       params: ["create", this.projectDirName],
-      env: {
-        EMPIRICA_BUILD,
-      },
     });
+  }
+
+  private getCacheFilename() {
+    return `cache-${this.versionInfo.version}-${this.versionInfo.build}-${this.versionInfo.branchName}.tar.gz`;
+  }
+
+  private getCacheFilePath() {
+    return path.join(CACHE_FOLDER, this.getCacheFilename());
+  }
+
+  private async checkEmpricaVersion() {
+    const versionOutput = await executeCommand({
+      command: EMPIRICA_CMD,
+      params: ["version"],
+      hideOutput: true,
+    });
+
+    if (typeof versionOutput === "string") {
+      this.versionInfo = {
+        version: parseVersion(versionOutput),
+        branchName: parseBranchName(versionOutput),
+        build: parseBuild(versionOutput),
+      };
+    } else {
+      throw new Error(`Can't parse Empirica version: ${versionOutput}`);
+    }
   }
 
   private async checkIfCacheExists() {
     console.log("Checking if project cache exists");
 
     try {
-      await fs.access(CACHE_FILEPATH, constants.F_OK);
+      await fs.access(this.getCacheFilePath(), constants.F_OK);
 
       return true;
     } catch (e) {
@@ -121,7 +162,7 @@ export default class EmpiricaTestFactory {
       await fs.mkdir(outputDir);
 
       await tar.x({
-        file: CACHE_FILEPATH,
+        file: this.getCacheFilePath(),
         cwd: outputDir,
       });
 
@@ -142,7 +183,7 @@ export default class EmpiricaTestFactory {
       {
         gzip: true,
         cwd: path.join(__dirname, "..", this.getProjectId()),
-        file: CACHE_FILEPATH,
+        file: this.getCacheFilePath(),
       },
       ["."]
     );
@@ -180,10 +221,6 @@ export default class EmpiricaTestFactory {
     return new Promise((resolve) => {
       this.empiricaProcess = childProcess.spawn(EMPIRICA_CMD, {
         cwd: this.getProjectId(),
-        env: {
-          ...process.env,
-          EMPIRICA_BUILD,
-        },
       });
 
       resolve(true);
