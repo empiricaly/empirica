@@ -16,6 +16,8 @@ export enum GamesStatus {
 
 export enum BatchStatus {
   "Created" = "Created",
+  "Running" = "Running",
+  "Ended" = "Ended",
   "Terminated" = "Terminated",
 }
 
@@ -45,11 +47,15 @@ export default class BatchesAdminPage extends BasePage {
   }
 
   private getBatchStatusElement(batchNumber: number, status: BatchStatus) {
-    return this.page.locator('[data-test="batchLine"]').getByText(status);
+    return this.page.locator('[data-test="batchLine"] span').getByText(status);
   }
 
   private getGamesList(batchNumber: number) {
     return this.getGameBatchLine(batchNumber).locator("ul");
+  }
+
+  private getLobbyConfigrationList() {
+    return this.page.locator('[data-test="lobbySelect"]');
   }
 
   private getStartGameButton() {
@@ -84,6 +90,14 @@ export default class BatchesAdminPage extends BasePage {
     await gamesCountInput.fill(`${count}`);
   }
 
+  private async selectLobbyConfiguration(name: string) {
+    const configrationsList = await this.getLobbyConfigrationList();
+
+    expect(configrationsList).toBeVisible();
+
+    await configrationsList.selectOption({ label: name });
+  }
+
   public async open() {
     await this.initContext();
 
@@ -101,21 +115,23 @@ export default class BatchesAdminPage extends BasePage {
   public async createBatch({
     mode,
     gamesCount,
+    lobbyConfigrationName,
   }: {
     mode: GamesTypeTreatment;
     gamesCount: number;
+    lobbyConfigrationName?: string;
   }) {
-    const newBatchButton = await this.getNewBatchButton();
-
-    await newBatchButton.click();
+    await this.getNewBatchButton().click();
 
     await this.selectTreatmeant(mode);
 
     await this.selectGamesCount(gamesCount);
 
-    const createBatchButton = await this.getCreateBatchButton();
+    if (lobbyConfigrationName) {
+      await this.selectLobbyConfiguration(lobbyConfigrationName);
+    }
 
-    await createBatchButton.click();
+    await this.getCreateBatchButton().click();
   }
 
   public async checkGameStatus(
@@ -132,6 +148,8 @@ export default class BatchesAdminPage extends BasePage {
 
     const statusElement = await gameItem.getByText(status);
 
+    // TODO: this should be awaited! fix this issue:
+    // await expect(statusElement).toBeVisible();
     expect(statusElement).toBeVisible();
   }
 

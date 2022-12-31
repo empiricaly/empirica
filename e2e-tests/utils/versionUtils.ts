@@ -24,8 +24,6 @@ function parseValueFromString(string: string, regexp: RegExp) {
 
   const valueMatch = Array.isArray(parseResult) ? parseResult[1] : null;
 
-  console.log({ valueMatch });
-
   return valueMatch;
 }
 
