@@ -2,7 +2,6 @@ import { test } from "@playwright/test";
 import ExperimentPage from "../page-objects/main/ExperimentPage";
 import BatchesAdminPage, {
   BatchStatus,
-  GamesStatus,
   GamesTypeTreatment,
 } from "../page-objects/admin/BatchesAdminPage";
 import EmpiricaTestFactory from "../setup/EmpiricaTestFactory";
@@ -21,7 +20,8 @@ test.afterAll(async () => {
 });
 
 test.describe("Assignments in Empirica", () => {
-  test("creates a simple batch with 2 games for solo players, stop batch, players get kicked out", async ({
+  // Skipping for now, will improve this test
+  test.skip("creates a simple batch with 2 games for solo players, stop batch, players get kicked out", async ({
     browser,
   }) => {
     const batchesPage = new BatchesAdminPage({
