@@ -196,7 +196,7 @@ const (
 	executableMode       = 0o711
 )
 
-func DownloadBinary(build *Build) (string, error) {
+func DownloadBinary(build *Build, asProd bool) (string, error) {
 	u, err := BinaryURL(build)
 	if err != nil {
 		return "", errors.Wrap(err, "get binary url")
@@ -293,6 +293,11 @@ func DownloadBinary(build *Build) (string, error) {
 
 	newbuild.prod = build.prod
 	newbuild.dev = build.dev
+
+	if asProd {
+		newbuild.prod = true
+		newbuild.dev = false
+	}
 
 	binpaths, err = binaryPaths(newbuild)
 	if err != nil {
@@ -405,7 +410,7 @@ func LookupBinary() (string, error) {
 
 	log.Debug().Msg("proxy: no binary found, downloading")
 
-	if _, err := DownloadBinary(build); err != nil {
+	if _, err := DownloadBinary(build, false); err != nil {
 		return "", errors.Wrap(err, "download binary")
 	}
 

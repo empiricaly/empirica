@@ -60,6 +60,14 @@ type Build struct {
 	dev  bool `json:"-" yaml:"-"`
 }
 
+func NewProdBuild() *Build {
+	return &Build{prod: true}
+}
+
+func NewDevBuild() *Build {
+	return &Build{dev: true}
+}
+
 func Current() *Build {
 	return &Build{
 		Version:  Version(),

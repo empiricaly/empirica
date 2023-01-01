@@ -25,6 +25,15 @@ func addUpgradeCommand(parent *cobra.Command) error {
 				return errors.Wrap(err, "parse version flag")
 			}
 
+			global, err := cmd.Flags().GetBool("global")
+			if err != nil {
+				return errors.Wrap(err, "parse global flag")
+			}
+
+			if global {
+				return experiment.UpgradeCommandGlobal(ctx, version)
+			}
+
 			commandOnly, err := cmd.Flags().GetBool("commandOnly")
 			if err != nil {
 				return errors.Wrap(err, "parse commandOnly flag")
@@ -57,11 +66,16 @@ func addUpgradeCommand(parent *cobra.Command) error {
 
 	flag := "version"
 	sval := "latest"
-	cmd.Flags().String(flag, sval, "Upgrade to version")
+	cmd.Flags().String(flag, sval, "Upgrade to version, in yaml format. E.g. \"version: v0.1.0\"")
 	viper.SetDefault(flag, sval)
 
-	flag = "commandOnly"
+	flag = "global"
 	bval := false
+	cmd.Flags().Bool(flag, bval, "Upgrade the command line globally")
+	viper.SetDefault(flag, bval)
+
+	flag = "commandOnly"
+	bval = false
 	cmd.Flags().Bool(flag, bval, "Upgrade only the command line")
 	viper.SetDefault(flag, bval)
 
