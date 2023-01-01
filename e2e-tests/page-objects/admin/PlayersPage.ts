@@ -7,8 +7,12 @@ export default class PlayersPage extends BasePage {
 
     await this.page.goto(`${this.baseUrl}/admin`);
 
-    const leftPanel = await this.page.locator('[aria-label="Sidebar"]');
+    const batchesSidebarButton = await this.getLobbiesLinkInSidebar();
 
-    await expect(leftPanel).toBeVisible();
+    await batchesSidebarButton.click();
+
+    const newBatchButton = await this.getNewConfigurationButton();
+
+    await expect(newBatchButton).toBeVisible();
   }
 }

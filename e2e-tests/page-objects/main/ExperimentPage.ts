@@ -8,6 +8,7 @@ import ExitSurveyElement from "./elements/ExitSurveyElement";
 import ConsentElement from "./elements/ConsentElement";
 import MinesweeperGameElement from "./elements/MinesweeperGameElement";
 import TimerElement from "./elements/TimerElement";
+import WaitingOtherPlayersElement from "./elements/WaitingOtherPlayersElement";
 
 export default class ExperimentPage extends BasePage {
   private noExperimentsElement: NoExperimentsElement;
@@ -22,6 +23,8 @@ export default class ExperimentPage extends BasePage {
 
   private minesweeperGameElement: MinesweeperGameElement;
 
+  private waitingOtherPlayersElement: WaitingOtherPlayersElement;
+
   private consentElement: ConsentElement;
 
   private finishedElement: FinishedElement;
@@ -35,6 +38,7 @@ export default class ExperimentPage extends BasePage {
 
     this.loginElement = new LoginElement({ page });
     this.noExperimentsElement = new NoExperimentsElement({ page });
+    this.waitingOtherPlayersElement = new WaitingOtherPlayersElement({ page });
     this.consentElement = new ConsentElement({ page });
     this.instructionsElement = new InstructionsElement({ page });
     this.exitSurveyElement = new ExitSurveyElement({ page });
@@ -72,6 +76,10 @@ export default class ExperimentPage extends BasePage {
 
   public async checkIfJellyBeansVisible() {
     await this.jellyBeansGame.checkIfVisible();
+  }
+
+  public async checkIfLobbyVisible() {
+    await this.waitingOtherPlayersElement.checkIfVisible();
   }
 
   public async selectJellyBeansCount({ count }: { count: number }) {
