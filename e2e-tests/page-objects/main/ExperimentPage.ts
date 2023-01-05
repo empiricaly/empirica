@@ -74,6 +74,10 @@ export default class ExperimentPage extends BasePage {
     await this.jellyBeansGame.finishGame();
   }
 
+  public async checkIfTimerVisible() {
+    await this.timerElement.checkIfVisible();
+  }
+
   public async checkIfJellyBeansVisible() {
     await this.jellyBeansGame.checkIfVisible();
   }

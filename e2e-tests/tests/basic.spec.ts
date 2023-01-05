@@ -37,7 +37,7 @@ test.describe("Empirica in single player mode", () => {
     await batchesAdminPage.open();
   });
 
-  test("creates batch with 1 game with one player, into view, player passes through the game", async ({
+  test.only("creates batch with 1 game with one player, into view, player passes through the game", async ({
     browser,
   }) => {
     const batchesPage = new BatchesAdminPage({
@@ -76,7 +76,11 @@ test.describe("Empirica in single player mode", () => {
 
     await experimentPage.passInstructions();
 
+    await experimentPage.checkIfTimerVisible();
+
     await experimentPage.playJellyBeanGame({ count: jellyBeansCount });
+
+    await experimentPage.checkIfTimerVisible();
 
     await experimentPage.passMineSweeper();
 
