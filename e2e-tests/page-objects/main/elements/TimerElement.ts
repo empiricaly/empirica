@@ -11,8 +11,6 @@ export default class TimerElement extends BasePageElement {
   private parseTimerValue(timerText: string) {
     const [minutes, seconds] = timerText.split(":");
 
-    console.log("timerText", timerText);
-
     return {
       minutes: +minutes,
       seconds: +seconds,
@@ -29,8 +27,6 @@ export default class TimerElement extends BasePageElement {
     await expect(TIMER_NOT_INITIALIZED_VALUE).not.toBe(
       TIMER_NOT_INITIALIZED_VALUE
     );
-
-    console.log({ minutes, seconds });
 
     await expect(timerTextElement).toBeVisible();
 
