@@ -54,6 +54,10 @@ export default class ExperimentPage extends BasePage {
     await this.page.goto(`${this.baseUrl}`);
   }
 
+  public async reload() {
+    await this.page.reload();
+  }
+
   public async checkIfNoExperimentsVisible() {
     this.noExperimentsElement = new NoExperimentsElement({ page: this.page });
 

@@ -24,13 +24,11 @@ export default class TimerElement extends BasePageElement {
 
     const { minutes, seconds } = this.parseTimerValue(timerText);
 
-    await expect(TIMER_NOT_INITIALIZED_VALUE).not.toBe(
-      TIMER_NOT_INITIALIZED_VALUE
-    );
-
     await expect(timerTextElement).toBeVisible();
 
     await expect(minutes).not.toBeNaN();
     await expect(seconds).not.toBeNaN();
+
+    await expect(timerText).not.toBe(TIMER_NOT_INITIALIZED_VALUE);
   }
 }

@@ -76,9 +76,13 @@ test.describe("Empirica in single player mode", () => {
 
     await experimentPage.passInstructions();
 
+    await experimentPage.reload();
+
     await experimentPage.checkIfTimerVisible();
 
     await experimentPage.playJellyBeanGame({ count: jellyBeansCount });
+
+    await experimentPage.reload();
 
     await experimentPage.checkIfTimerVisible();
 
