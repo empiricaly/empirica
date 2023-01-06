@@ -54,6 +54,10 @@ export default class ExperimentPage extends BasePage {
     await this.page.goto(`${this.baseUrl}`);
   }
 
+  public async reload() {
+    await this.page.reload();
+  }
+
   public async checkIfNoExperimentsVisible() {
     this.noExperimentsElement = new NoExperimentsElement({ page: this.page });
 
@@ -72,6 +76,10 @@ export default class ExperimentPage extends BasePage {
     await this.jellyBeansGame.selectJellyBeansCount(count);
     await this.jellyBeansGame.submitResult();
     await this.jellyBeansGame.finishGame();
+  }
+
+  public async checkIfTimerVisible() {
+    await this.timerElement.checkIfVisible();
   }
 
   public async checkIfJellyBeansVisible() {
