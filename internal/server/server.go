@@ -3,7 +3,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net"
@@ -11,18 +10,25 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/empiricaly/empirica/internal/lobbies"
 	"github.com/empiricaly/empirica/internal/templates"
+	"github.com/empiricaly/empirica/internal/treatments"
+	"github.com/go-playground/validator/v10"
 	"github.com/jpillora/backoff"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
 	"github.com/rs/cors"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 // Server holds the server state.
 type Server struct {
@@ -72,6 +78,9 @@ func (s *Server) Start(ctx context.Context) (err error) {
 		log.Debug().Str("addr", s.config.Addr).Msg("server: starting")
 
 		<-ctx.Done()
+
+		// Give time for node to close gracefully.
+		time.Sleep(time.Second)
 
 		log.Debug().Msg("server: stopping")
 		s.wg.Add(1)
@@ -138,43 +147,52 @@ func Enable(
 	config *Config,
 	router *httprouter.Router,
 ) error {
-	router.GET("/", index)
-	u, _ := url.Parse("http://127.0.0.1:8844")
+	u, err := url.Parse(config.ProxyAddr)
+	if err != nil {
+		return errors.Wrap(err, "parse proxy address")
+	}
+
+	router.GET("/", index(u.Scheme, u.Host))
+
 	prox := httputil.NewSingleHostReverseProxy(u)
 	prox.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
 		rw.WriteHeader(http.StatusBadGateway)
 	}
 	router.NotFound = prox
 
-	router.GET("/dev", dev(config.Production))
+	router.GET("/dev", DevCheck(config.Production))
 	router.GET("/treatments", ReadTreatments(config.Treatments))
 	router.PUT("/treatments", WriteTreatments(config.Treatments))
+	router.GET("/lobbies", ReadLobbies(config.Lobbies))
+	router.PUT("/lobbies", WriteLobbies(config.Lobbies))
 	router.ServeFiles("/admin/*filepath", templates.HTTPFS("admin-ui"))
 
 	return nil
 }
 
-func index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	u, err := url.Parse(r.URL.String())
-	if err != nil {
-		log.Error().Err(err).Msg("server: send response for index failed")
+func index(scheme, host string) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		u, err := url.Parse(r.URL.String())
+		if err != nil {
+			log.Error().Err(err).Msg("server: send response for index failed")
 
-		w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
 
-		return
+			return
+		}
+
+		connRetry := &backoff.Backoff{
+			Min:    50 * time.Millisecond,
+			Max:    2 * time.Second,
+			Factor: 1.1,
+			Jitter: true,
+		}
+
+		u.Scheme = scheme
+		u.Host = host
+
+		forwardIndexReq(u, connRetry, w, r)
 	}
-
-	connRetry := &backoff.Backoff{
-		Min:    50 * time.Millisecond,
-		Max:    2 * time.Second,
-		Factor: 1.1,
-		Jitter: true,
-	}
-
-	u.Host = "localhost:8844"
-	u.Scheme = "http"
-
-	forwardIndexReq(u, connRetry, w, r)
 }
 
 func forwardIndexReq(u *url.URL, connRetry *backoff.Backoff, w http.ResponseWriter, r *http.Request) {
@@ -244,7 +262,7 @@ func handleIndexErr(err error, u *url.URL, connRetry *backoff.Backoff, w http.Re
 	w.WriteHeader(http.StatusInternalServerError)
 }
 
-func dev(isProd bool) httprouter.Handle {
+func DevCheck(isProd bool) httprouter.Handle {
 	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
 		if isProd {
 			w.WriteHeader(http.StatusBadRequest)
@@ -262,14 +280,23 @@ func ReadTreatments(p string) httprouter.Handle {
 			log.Error().Err(err).Msg("Failed to open yaml")
 		}
 
-		c := make(map[string]interface{})
+		t := &treatments.Treatments{}
 
-		err = yaml.Unmarshal(content, &c)
+		err = yaml.Unmarshal(content, &t)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed read yaml")
 		}
 
-		contentJSON, err := json.Marshal(c)
+		if err := validator.New().Struct(t); err != nil {
+			log.Error().Err(err).Msg("Failed to parse treatments.yaml")
+
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			_, _ = w.Write([]byte(err.Error()))
+
+			return
+		}
+
+		contentJSON, err := json.Marshal(t)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed write json")
 		}
@@ -287,15 +314,104 @@ func WriteTreatments(p string) httprouter.Handle {
 		if err != nil {
 			log.Error().Err(err).Msg("Failed read json")
 		}
+
 		r.Body.Close()
 
-		c := make(map[string]interface{})
-		err = json.Unmarshal(b, &c)
+		t := &treatments.Treatments{}
+		if err := json.Unmarshal(b, &t); err != nil {
+			log.Error().Err(err).Msg("Failed write json")
+		}
+
+		if err := validator.New().Struct(t); err != nil {
+			log.Error().Err(err).Msg("Failed to parse treatments.yaml")
+
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			_, _ = w.Write([]byte(err.Error()))
+
+			return
+		}
+
+		content, err := yaml.Marshal(t)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed write yaml")
+		}
+
+		err = ioutil.WriteFile(p, content, 0o644)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to open yaml")
+		}
+	}
+}
+
+// TODO sercure these endpoints
+func ReadLobbies(p string) httprouter.Handle {
+	return func(w http.ResponseWriter, _ *http.Request, _ httprouter.Params) {
+		content, err := ioutil.ReadFile(p)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to open yaml")
+		}
+
+		t := &lobbies.Lobbies{}
+
+		err = yaml.Unmarshal(content, &t)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed read yaml")
+		}
+
+		if err := validator.New().Struct(t); err != nil {
+			log.Error().Err(err).Msg("Failed to parse lobbies.yaml")
+
+			w.WriteHeader(http.StatusUnprocessableEntity)
+
+			val := struct {
+				Errors []string `json:"errors"`
+			}{
+				Errors: strings.Split(err.Error(), "\n"),
+			}
+
+			if b, err := json.Marshal(val); err == nil {
+				_, _ = w.Write(b)
+			}
+
+			return
+		}
+
+		contentJSON, err := json.Marshal(t)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed write json")
 		}
 
-		content, err := yaml.Marshal(c)
+		_, err = w.Write(contentJSON)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to send response for index")
+		}
+	}
+}
+
+func WriteLobbies(p string) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Error().Err(err).Msg("Failed read json")
+		}
+
+		r.Body.Close()
+
+		t := &lobbies.Lobbies{}
+		if err := json.Unmarshal(b, &t); err != nil {
+			log.Error().Err(err).Msg("Failed write json")
+		}
+
+		if err := validator.New().Struct(t); err != nil {
+			log.Error().Err(err).Msg("Failed to parse lobbies.yaml")
+
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			_, _ = w.Write([]byte(err.Error()))
+
+			return
+		}
+
+		content, err := yaml.Marshal(t)
 		if err != nil {
 			log.Error().Err(err).Msg("Failed write yaml")
 		}

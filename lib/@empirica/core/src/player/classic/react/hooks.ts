@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Observable, BehaviorSubject } from "rxjs";
+import { BehaviorSubject, Observable } from "rxjs";
 import { ParticipantModeContext } from "../../context";
 import { useParticipantContext } from "../../react/hooks";
-import { StepTick } from "../../steps";
+import type { StepTick } from "../../steps";
 import { EmpiricaClassicContext, Game, Player, Round, Stage } from "../classic";
 
 export function usePlayer() {
@@ -23,7 +23,9 @@ export function useStage() {
 
 export function useStageTimer() {
   const stage = useStage();
-  const [val, setVal] = useState<StepTick | undefined>(undefined);
+  const [val, setVal] = useState<{ tick: StepTick | undefined }>({
+    tick: stage?.timer?.current,
+  });
 
   useEffect(() => {
     if (!stage || !stage.timer) {
@@ -32,14 +34,14 @@ export function useStageTimer() {
 
     const sub = stage.timer.obs().subscribe({
       next(val) {
-        setVal(val);
+        setVal({ tick: val });
       },
     });
 
     return sub.unsubscribe.bind(sub);
   }, [stage]);
 
-  return val;
+  return val.tick;
 }
 
 export function usePlayers() {
@@ -51,7 +53,7 @@ export function usePlayers() {
 export function usePartModeCtx<M>() {
   const ctx = useParticipantContext() as ParticipantModeContext<M>;
   const [mode, setMode] = useState<{ data: M | undefined }>({
-    data: ctx.mode.getValue(),
+    data: ctx?.mode?.getValue(),
   });
 
   useEffect(() => {

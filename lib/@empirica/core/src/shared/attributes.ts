@@ -53,6 +53,7 @@ export class Attributes {
         this.update(attribute, removed);
       },
     });
+
     donesObs.subscribe({
       next: this.next.bind(this),
     });
@@ -72,6 +73,16 @@ export class Attributes {
     }
 
     return attr;
+  }
+
+  attributes(scopeID: string): Attribute[] {
+    let scopeMap = this.attrs.get(scopeID);
+    if (!scopeMap) {
+      scopeMap = new Map();
+      this.attrs.set(scopeID, scopeMap);
+    }
+
+    return Array.from(scopeMap.values());
   }
 
   attributePeek(scopeID: string, key: string): Attribute | undefined {
@@ -253,7 +264,7 @@ export class Attribute {
     }
 
     this.setAttributes([attrProps]);
-    trace(`SET ${this.key} = ${value}`);
+    trace(`SET ${this.key} = ${value} (${this.scopeID})`);
   }
 
   // internal only

@@ -1,4 +1,4 @@
-import { Observable, Subject } from "rxjs";
+import { Observable, ReplaySubject } from "rxjs";
 import {
   Attribute,
   AttributeChange,
@@ -6,20 +6,62 @@ import {
 } from "../shared/attributes";
 import { warn } from "../utils/console";
 
-export class Attributes extends SharedAttributes {
-  private attribSubs = new Map<string, Map<string, Subject<Attribute>>>();
+export type AttributeMsg = {
+  attribute?: Attribute;
+  done: boolean;
+};
 
-  subscribeAttribute(kind: string, key: string): Observable<Attribute> {
+export class Attributes extends SharedAttributes {
+  protected attrsByKind = new Map<
+    string,
+    Map<string, Map<string, Attribute>>
+  >();
+  private attribSubs = new Map<
+    string,
+    Map<string, ReplaySubject<AttributeMsg>>
+  >();
+
+  subscribeAttribute(kind: string, key: string): Observable<AttributeMsg> {
     if (!this.attribSubs.has(kind)) {
-      this.attribSubs.set(kind, new Map<string, Subject<Attribute>>());
+      this.attribSubs.set(kind, new Map<string, ReplaySubject<AttributeMsg>>());
     }
 
     const keyMap = this.attribSubs.get(kind)!;
-    if (!keyMap.has(key)) {
-      keyMap.set(key, new Subject<Attribute>());
+    let sub = keyMap.get(key);
+    if (!sub) {
+      sub = new ReplaySubject<AttributeMsg>();
+      keyMap.set(key, sub);
+
+      const attrByScopeID = this.attrsByKind.get(kind);
+
+      setTimeout(() => {
+        if (!attrByScopeID) {
+          sub!.next({ done: true });
+          return;
+        }
+
+        let attrs = [];
+        for (const [_, attrByKey] of attrByScopeID?.entries()) {
+          for (const [_, attr] of attrByKey) {
+            if (attr.key === key) {
+              attrs.push(attr);
+            }
+          }
+        }
+
+        if (attrs.length > 0) {
+          let count = 0;
+          for (const attr of attrs) {
+            count++;
+            sub!.next({ attribute: attr, done: count == attrs.length });
+          }
+        } else {
+          sub!.next({ done: true });
+        }
+      }, 0);
     }
 
-    return keyMap.get(key)!;
+    return sub!;
   }
 
   protected next() {
@@ -46,20 +88,15 @@ export class Attributes extends SharedAttributes {
 
     const updates: [string, string, AttributeChange][] = [];
     for (const [kind, attrs] of byKind) {
-      const keyMap = this.attribSubs.get(kind);
-      if (keyMap) {
-        for (const attr of attrs) {
-          if (keyMap.has(attr.key)) {
-            // This is very difficult to reproduce in tests since this.updates
-            // cannot contain an AttributeChange that would satisfy this.
-            /* c8 ignore next 4 */
-            if (!attr.nodeID && !attr.node?.id) {
-              warn(`found attribute change without node ID`);
-              continue;
-            }
-            updates.push([kind, attr.key, attr]);
-          }
+      for (const attr of attrs) {
+        // This is very difficult to reproduce in tests since this.updates
+        // cannot contain an AttributeChange that would satisfy this.
+        /* c8 ignore next 4 */
+        if (!attr.nodeID && !attr.node?.id) {
+          warn(`found attribute change without node ID`);
+          continue;
         }
+        updates.push([kind, attr.key, attr]);
       }
     }
 
@@ -68,9 +105,27 @@ export class Attributes extends SharedAttributes {
     for (const [kind, key, attrChange] of updates) {
       // Forcing nodeID because we already tested it above.
       const nodeID = attrChange.nodeID || attrChange.node!.id;
+
       // Forcing attr because we already tested it above.
       const attr = this.attrs.get(nodeID)!.get(key)!;
-      this.attribSubs.get(kind)!.get(key)!.next(attr);
+      const sub = this.attribSubs.get(kind)?.get(key);
+      if (sub) {
+        sub.next({ attribute: attr, done: true });
+      } else {
+        let kAttrs = this.attrsByKind.get(kind);
+        if (!kAttrs) {
+          kAttrs = new Map<string, Map<string, Attribute>>();
+          this.attrsByKind.set(kind, kAttrs);
+        }
+
+        let kkAttrs = kAttrs!.get(nodeID);
+        if (!kkAttrs) {
+          kkAttrs = new Map<string, Attribute>();
+          kAttrs!.set(nodeID, kkAttrs);
+        }
+
+        kkAttrs.set(key, attr);
+      }
     }
   }
 }

@@ -58,7 +58,7 @@ func Create(ctx context.Context, name string) error {
 
 	stop()
 
-	if err := Upgrade(ctx, clientDir, serverDir); err != nil {
+	if err := UpgradePackages(ctx, "latest", clientDir, serverDir); err != nil {
 		return errors.Wrap(err, "upgrade empirica")
 	}
 
@@ -66,6 +66,10 @@ func Create(ctx context.Context, name string) error {
 
 	if err := settings.Init(name, dir); err != nil {
 		return errors.Wrap(err, "empirica")
+	}
+
+	if err := build.SaveReleaseFile(dir); err != nil {
+		return errors.Wrap(err, "save release version")
 	}
 
 	stop()

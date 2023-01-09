@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/empiricaly/empirica"
@@ -17,8 +18,8 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func Serve(ctx context.Context, config *empirica.Config, in string, clean bool) error {
-	dir, conf, err := Unbundle(ctx, config, in, clean)
+func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMode bool) error {
+	dir, conf, err := Unbundle(ctx, config, in, clean, devMode)
 	if err != nil {
 		return errors.Wrap(err, "unbundle")
 	}
@@ -27,6 +28,10 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean bool) 
 		Interface("dir", dir).
 		Interface("config", config).
 		Msg("serve: current config")
+
+	if err := conf.Validate(); err != nil {
+		log.Fatal().Err(err).Msg("invalid config")
+	}
 
 	go func() {
 		parts := strings.Split(conf.Callbacks.ServeCmd, " ")
@@ -42,6 +47,17 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean bool) 
 		}
 
 		args = append(args, "--token", conf.Callbacks.Token)
+
+		if conf.Callbacks.SessionToken != "" {
+			p := conf.Callbacks.SessionToken
+			if !strings.HasPrefix(p, "/") {
+				pp, err := filepath.Abs(p)
+				if err == nil {
+					p = pp
+				}
+			}
+			args = append(args, "--sessionTokenPath", p)
+		}
 
 		log.Trace().
 			Strs("args", args).
@@ -88,6 +104,7 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean bool) 
 
 	s.Router.NotFound = playerFS
 
+	s.Router.GET("/dev", server.DevCheck(conf.Production))
 	s.Router.GET("/treatments", server.ReadTreatments(conf.Server.Treatments))
 	s.Router.PUT("/treatments", server.WriteTreatments(conf.Server.Treatments))
 	s.Router.ServeFiles("/admin/*filepath", templates.HTTPFS("admin-ui"))
@@ -102,34 +119,6 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean bool) 
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start tajriba")
 	}
-
-	// adminFS := http.FileServer(templates.HTTPFS("admin-ui"))
-	// playerFS := http.FileServer(http.Dir(path.Join(dir, "player")))
-
-	// getTreatments := server.ReadTreatments(config.Server.Treatments)
-
-	// s.Router.GET("/*filepath", func(w http.ResponseWriter, req *http.Request, ps httprouter.Params) {
-	// 	fp := ps.ByName("filepath")
-
-	// 	if fp == "/treatments" {
-	// 		getTreatments(w, req, ps)
-	// 		return
-	// 	}
-
-	// 	isAdmin := strings.HasPrefix(fp, "/admin")
-	// 	if isAdmin {
-	// 		fp = strings.TrimPrefix(fp, "/admin")
-	// 	}
-
-	// 	req.URL.Path = fp
-	// 	if isAdmin {
-	// 		adminFS.ServeHTTP(w, req)
-	// 	} else {
-	// 		playerFS.ServeHTTP(w, req)
-	// 	}
-	// })
-
-	// s.Router.PUT("/treatments", server.WriteTreatments(config.Server.Treatments))
 
 	if err := s.Start(ctx); err != nil {
 		return errors.Wrap(err, "start server")

@@ -5,7 +5,7 @@ import {
   LinkInput,
   TransitionInput,
 } from "@empirica/tajriba";
-import { Observable, Subject } from "rxjs";
+import { Observable, ReplaySubject } from "rxjs";
 import {
   Scope as SharedScope,
   ScopeConstructor,
@@ -16,11 +16,22 @@ import {
 import { Attributes } from "./attributes";
 import { Finalizer, TajribaAdminAccess } from "./context";
 
+export type ScopeMsg<
+  Context,
+  Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
+> = {
+  scope?: Scope<Context, Kinds>;
+  done: boolean;
+};
+
 export class Scopes<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > extends SharedScopes<Context, Kinds, Scope<Context, Kinds>> {
-  private kindSubs = new Map<keyof Kinds, Subject<Scope<Context, Kinds>>>();
+  private kindSubs = new Map<
+    keyof Kinds,
+    ReplaySubject<ScopeMsg<Context, Kinds>>
+  >();
 
   constructor(
     scopesObs: Observable<ScopeUpdate>,
@@ -33,21 +44,36 @@ export class Scopes<
     super(scopesObs, donesObs, ctx, kinds, attributes);
   }
 
-  subscribeKind(kind: keyof Kinds): Observable<Scope<Context, Kinds>> {
-    if (!this.kindSubs.has(kind)) {
-      this.kindSubs.set(kind, new Subject());
+  subscribeKind(kind: keyof Kinds): Observable<ScopeMsg<Context, Kinds>> {
+    let sub = this.kindSubs.get(kind);
+    if (!sub) {
+      sub = new ReplaySubject<ScopeMsg<Context, Kinds>>();
+      this.kindSubs.set(kind, sub);
+
+      const scopes = this.byKind(kind);
+
+      setTimeout(() => {
+        let count = 0;
+        for (const [_, scope] of scopes) {
+          count++;
+          sub!.next({ scope, done: scopes.size === count });
+        }
+        if (scopes.size === 0) {
+          sub!.next({ done: scopes.size === count });
+        }
+      }, 0);
     }
 
-    return this.kindSubs.get(kind)!;
+    return sub!;
   }
 
   protected next() {
-    for (const [_, scopeSubject] of this.scopes) {
-      const scope = scopeSubject.getValue();
+    for (const [_, scopeReplaySubject] of this.scopes) {
+      const scope = scopeReplaySubject.getValue();
       if (scope._updated) {
         const kindSub = this.kindSubs.get(scope.kind);
         if (kindSub) {
-          kindSub.next(scope);
+          kindSub.next({ scope, done: true });
         }
       }
     }
@@ -85,6 +111,12 @@ export class Scope<
     this.taj = scopes.taj;
   }
 
+  protected scopeByID<T extends Scope<Context, Kinds>>(
+    id: string
+  ): T | undefined {
+    return this.scopes.scope(id) as T | undefined;
+  }
+
   protected scopeByKey<T extends Scope<Context, Kinds>>(
     key: string
   ): T | undefined {
@@ -96,8 +128,17 @@ export class Scope<
     return this.scopes.scope(id) as T | undefined;
   }
 
-  protected scopesByKind(kind: keyof Kinds) {
-    return this.scopes.byKind(kind);
+  protected scopesByKind<T extends Scope<Context, Kinds>>(
+    kind: keyof Kinds
+  ): Map<string, T> {
+    return this.scopes.byKind<T>(kind) as Map<string, T>;
+  }
+
+  protected scopesByKindID<T extends Scope<Context, Kinds>>(
+    kind: keyof Kinds,
+    id: string
+  ): T | undefined {
+    return this.scopes.byKind<T>(kind).get(id);
   }
 
   protected scopesByKindMatching<T extends Scope<Context, Kinds>>(

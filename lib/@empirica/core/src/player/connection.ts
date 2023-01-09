@@ -1,18 +1,19 @@
 import { ParticipantIdent, TajribaParticipant } from "@empirica/tajriba";
-import { BehaviorSubject, merge, Observable } from "rxjs";
+import { BehaviorSubject, merge, Observable, SubscriptionLike } from "rxjs";
+import { subscribeAsync } from "../admin/observables";
 import {
   ErrNotConnected,
   TajribaConnection,
 } from "../shared/tajriba_connection";
-import { bs, bsu } from "../utils/object";
 import { error } from "../utils/console";
+import { bs, bsu } from "../utils/object";
 
 export class ParticipantConnection {
   private _tajribaPart = bsu<TajribaParticipant>();
   private _connected = bs(false);
   private _connecting = bs(false);
   private _stopped = bs(false);
-  private _sessionsUnsub: () => void;
+  private _sessionsSub: SubscriptionLike;
 
   constructor(
     taj: TajribaConnection,
@@ -21,8 +22,9 @@ export class ParticipantConnection {
   ) {
     let session: Session | undefined;
     let connected = false;
-    const { unsubscribe } = merge(taj.connected, sessions).subscribe({
-      next: async (sessionOrConnected) => {
+    this._sessionsSub = subscribeAsync(
+      merge(taj.connected, sessions),
+      async (sessionOrConnected) => {
         if (typeof sessionOrConnected === "boolean") {
           connected = sessionOrConnected;
         } else {
@@ -33,7 +35,7 @@ export class ParticipantConnection {
           return;
         }
 
-        if (this._connected.getValue()) {
+        if (this._connected.getValue() || this._connecting.getValue()) {
           return;
         }
 
@@ -46,34 +48,47 @@ export class ParticipantConnection {
           );
 
           this._tajribaPart.next(tajPart);
-          this._connected.next(true);
+          if (tajPart.connected) {
+            this._connected.next(true);
+            this._connecting.next(false);
+          }
 
-          tajPart.on(
-            "connected",
-            this._connected.next.bind(this._connected, true)
-          );
-          tajPart.on(
-            "disconnected",
-            this._connected.next.bind(this._connected, false)
-          );
+          tajPart.on("connected", () => {
+            if (!this._connected.getValue()) {
+              this._connected.next(true);
+              this._connecting.next(false);
+            }
+          });
+          tajPart.on("disconnected", () => {
+            if (this._connected.getValue()) {
+              this._connected.next(false);
+              this._connecting.next(false);
+            }
+          });
           tajPart.on("error", (err) => {
+            this._connecting.next(false);
             error("conn error", err);
           });
           tajPart.on("accessDenied", () => {
+            if (this._connected.getValue()) {
+              this._connected.next(false);
+              this._connecting.next(false);
+            }
+            console.log(
+              "accessDenied",
+              session?.participant.id,
+              session?.token
+            );
             this.resetSession();
           });
         } catch (err) {
           if (err !== ErrNotConnected) {
-            error("conn error", err);
+            error("new conn error", err);
             this.resetSession();
           }
         }
-
-        this._connecting.next(false);
-      },
-    });
-
-    this._sessionsUnsub = unsubscribe;
+      }
+    );
   }
 
   stop() {
@@ -89,7 +104,7 @@ export class ParticipantConnection {
       this._tajribaPart.next(undefined);
     }
 
-    this._sessionsUnsub();
+    this._sessionsSub.unsubscribe();
 
     this._connecting.next(false);
     this._connected.next(false);
@@ -123,6 +138,22 @@ interface Storage {
   getItem(key: string): string | null;
   removeItem(key: string): void;
   setItem(key: string, value: string): void;
+}
+
+export class MemStorage {
+  static vals: { [key: string]: any } = {};
+  static clear(): void {
+    this.vals = {};
+  }
+  static getItem(key: string): string | null {
+    return this.vals[key];
+  }
+  static removeItem(key: string): void {
+    delete this.vals[key];
+  }
+  static setItem(key: string, value: string): void {
+    this.vals[key] = value;
+  }
 }
 
 const isBrowser =

@@ -1,0 +1,32 @@
+{
+  "name": "empirica-e2e-tests",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:trace": "playwright test --trace on",
+    "lint": "eslint tests/**/*.ts page-objects/**/*.ts utils/**/*.ts setup/**/*.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@playwright/test": "^1.28.0",
+    "@types/tar": "^6.1.3",
+    "tar": "^6.1.13",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.29.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-airbnb-typescript-prettier": "^5.0.0",
+    "eslint-config-node": "^4.1.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.8.0",
+    "typescript": "^4.9.3"
+  }
+}

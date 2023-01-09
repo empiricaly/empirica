@@ -28,7 +28,8 @@ Empirica.onRoundEnded(({ round }) => {});
 
 Empirica.onGameEnded(({ game }) => {});
 
-const jellyBeansCount = 1623;
+// Note: this is not the actual number of beans in the pile, it's a guess...
+const jellyBeansCount = 634;
 
 function calculateJellyBeansScore(stage) {
   if (

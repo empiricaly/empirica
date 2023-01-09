@@ -10,6 +10,11 @@ export function EmpiricaMenu() {
     return null;
   }
 
+  function resetSession() {
+    ctx!.session.clearSession();
+    window.location.reload();
+  }
+
   return (
     <div className="group fixed top-full left-full -mt-20 -ml-20 rounded-lg bg-white z-20">
       <div className="w-14 h-14 p-2  text-empirica-500 shadow rounded-lg group-hover:shadow-none">
@@ -26,7 +31,7 @@ export function EmpiricaMenu() {
                 New Player
               </button>
               <button
-                onClick={ctx.session.clearSession.bind(ctx.session)}
+                onClick={resetSession}
                 className="whitespace-nowrap hover:text-empirica-600 w-full py-2 pl-4 pr-6 text-left"
               >
                 Reset Current Session
@@ -51,12 +56,12 @@ export function EmpiricaMenu() {
             >
               About Empirica
             </a>
-            <button
+            {/* <button
               onClick={ctx.session.clearSession.bind(ctx.session)}
               className="whitespace-nowrap hover:text-empirica-600 w-full py-2 pl-4 pr-6 text-left"
             >
               About this Experiment
-            </button>
+            </button> */}
           </div>
 
           <a

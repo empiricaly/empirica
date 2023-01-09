@@ -82,7 +82,7 @@ test.serial("AdminContext failed global scopes", async (t) => {
     await nextTick();
   });
 
-  textHasLog(t, logs, "error", "global scopeID not fetch");
+  textHasLog(t, logs, "error", "global scopeID not fetch", 2);
 });
 
 test.serial("AdminContext no global scopes", async (t) => {
@@ -107,7 +107,7 @@ test.serial("AdminContext no global scopes", async (t) => {
     await nextTick();
   });
 
-  textHasLog(t, logs, "warn", "global scopeID not found");
+  textHasLog(t, logs, "warn", "global scopeID not found", 2);
 });
 
 test.serial("AdminContext late admin connection", async (t) => {

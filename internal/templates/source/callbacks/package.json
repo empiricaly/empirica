@@ -7,8 +7,8 @@
     "serve": "node --trace-warnings --enable-source-maps index.js"
   },
   "volta": {
-    "node": "16.15.0",
-    "npm": "8.10.0"
+    "node": "16.17.0",
+    "npm": "8.15.0"
   },
   "dependencies": {
     "@empirica/core": "latest",

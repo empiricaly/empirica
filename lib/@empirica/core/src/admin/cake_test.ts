@@ -1,19 +1,20 @@
 import { State } from "@empirica/tajriba";
 import test from "ava";
-import { Subject } from "rxjs";
+import { Subject, ReplaySubject } from "rxjs";
 import { restore } from "sinon";
 import { Attribute } from "../shared/attributes";
 import { Constructor } from "../shared/helpers";
-import { Scope } from "./scopes";
 import {
   AdminKinds,
   Context,
   nextTick,
   setupEventContext,
 } from "../shared/test_helpers";
+import { AttributeMsg } from "./attributes";
 import { Cake } from "./cake";
 import { ListenersCollector, TajribaEvent } from "./events";
-import { Connection, Participant } from "./participants";
+import { ConnectionMsg, Participant } from "./participants";
+import { Scope, ScopeMsg } from "./scopes";
 import { Transition } from "./transitions";
 
 export class Batch extends Scope<Context, Kinds> {}
@@ -53,23 +54,25 @@ function setupLayer(props: typeof setupLayerProps = setupLayerProps) {
 
   const attributes: { [key: string]: Attribute } = {};
 
-  const kindsSubs = new Map<string, Subject<Scope<Context, AdminKinds>>>();
+  const kindsSubs = new Map<string, Subject<ScopeMsg<Context, AdminKinds>>>();
   const kindSubscription = (kind: keyof AdminKinds) => {
     let sub = kindsSubs.get(kind);
     if (!sub) {
-      sub = new Subject<Scope<Context, AdminKinds>>();
+      sub = new ReplaySubject<ScopeMsg<Context, AdminKinds>>();
+      sub.next({ done: true });
       kindsSubs.set(kind, sub);
     }
 
     return sub;
   };
 
-  const attribSubs = new Map<string, Subject<Attribute>>();
+  const attribSubs = new Map<string, Subject<AttributeMsg>>();
   const attributeSubscription = (kind: string, key: string) => {
     const k = kind + "-" + key;
     let sub = attribSubs.get(k);
     if (!sub) {
-      sub = new Subject<Attribute>();
+      sub = new ReplaySubject<AttributeMsg>();
+      sub.next({ done: true });
       attribSubs.set(k, sub);
     }
 
@@ -77,7 +80,7 @@ function setupLayer(props: typeof setupLayerProps = setupLayerProps) {
   };
 
   const participants = new Map<string, Participant>();
-  const connections = new Subject<Connection>();
+  const connections = new Subject<ConnectionMsg>();
   const transitions = new Subject<Transition>();
 
   const cake = new Cake<Context, AdminKinds>(
@@ -111,7 +114,7 @@ function setupLayer(props: typeof setupLayerProps = setupLayerProps) {
     };
   }
 
-  const listeners = new ListenersCollector();
+  const listeners = new ListenersCollector<Context, AdminKinds>();
   listeners.on("game", (_, props) => {
     called.game.push(props);
   });
@@ -155,7 +158,7 @@ test.serial("Cake kind subs called", async (t) => {
   t.is(called.game.length, 0);
 
   const game = <Scope<Context, AdminKinds>>{};
-  kindsSubs.get("game")!.next(game);
+  kindsSubs.get("game")!.next({ scope: game, done: true });
 
   t.is(called.game.length, 1);
   t.deepEqual(called.game[0], { game });
@@ -171,7 +174,7 @@ test.serial("Cake kind subs called with postCallback", async (t) => {
   t.is(called.cbcalled, 0);
 
   const game = <Scope<Context, AdminKinds>>{};
-  kindsSubs.get("game")!.next(game);
+  kindsSubs.get("game")!.next({ scope: game, done: true });
   await nextTick();
 
   t.is(called.cbcalled, 1);
@@ -185,7 +188,7 @@ test.serial("Cake attribute subs called", async (t) => {
   t.is(called.gameKeys.length, 0);
 
   const attribute = <Attribute>{ value: "hey", nodeID: "abc" };
-  attribSubs.get("game-a")!.next(attribute);
+  attribSubs.get("game-a")!.next({ attribute, done: true });
 
   t.is(called.gameKeys.length, 1);
   t.deepEqual(called.gameKeys[0], { attribute, a: "hey", game: scopes["abc"] });
@@ -201,7 +204,7 @@ test.serial("Cake attribute subs called with postCallback", async (t) => {
   t.is(called.cbcalled, 0);
 
   const attribute = <Attribute>{ value: "hey", nodeID: "abc" };
-  attribSubs.get("game-a")!.next(attribute);
+  attribSubs.get("game-a")!.next({ attribute, done: true });
   await nextTick();
 
   t.is(called.cbcalled, 1);
@@ -215,7 +218,7 @@ test.serial("Cake attribute subs called without kind", async (t) => {
   t.is(called.gameKeys.length, 0);
 
   const attribute = <Attribute>{ value: "hey", nodeID: "xyz" };
-  attribSubs.get("game-a")!.next(attribute);
+  attribSubs.get("game-a")!.next({ attribute, done: true });
   await nextTick();
 
   t.is(called.gameKeys.length, 1);
@@ -230,7 +233,7 @@ test.serial("Cake attribute subs called without node", async (t) => {
   t.is(called.gameKeys.length, 0);
 
   const attribute = <Attribute>{ value: "hey" };
-  attribSubs.get("game-a")!.next(attribute);
+  attribSubs.get("game-a")!.next({ attribute, done: true });
   await nextTick();
 
   t.is(called.gameKeys.length, 1);
@@ -249,16 +252,22 @@ test.serial("Cake participant connect subs called", async (t) => {
     identifier: "a",
   };
   connections.next({
-    connected: true,
-    participant,
+    connection: {
+      connected: true,
+      participant,
+    },
+    done: true,
   });
 
   t.is(called.partConnect.length, 1);
   t.deepEqual(called.partConnect[0], { participant });
 
   connections.next({
-    connected: false,
-    participant,
+    connection: {
+      connected: false,
+      participant,
+    },
+    done: true,
   });
 
   t.is(called.partConnect.length, 1);
@@ -279,8 +288,11 @@ test.serial("Cake participant connect with postCallback", async (t) => {
     identifier: "a",
   };
   connections.next({
-    connected: true,
-    participant,
+    connection: {
+      connected: true,
+      participant,
+    },
+    done: true,
   });
   await nextTick();
 
@@ -299,16 +311,22 @@ test.serial("Cake participant disconnect subs called", async (t) => {
     identifier: "a",
   };
   connections.next({
-    connected: false,
-    participant,
+    connection: {
+      connected: false,
+      participant,
+    },
+    done: true,
   });
 
   t.is(called.partDisconnect.length, 1);
   t.deepEqual(called.partDisconnect[0], { participant });
 
   connections.next({
-    connected: true,
-    participant,
+    connection: {
+      connected: true,
+      participant,
+    },
+    done: true,
   });
 
   t.is(called.partDisconnect.length, 1);
@@ -329,8 +347,11 @@ test.serial("Cake participant disconnect with postCallback", async (t) => {
     identifier: "a",
   };
   connections.next({
-    connected: false,
-    participant,
+    connection: {
+      connected: false,
+      participant,
+    },
+    done: true,
   });
   await nextTick();
 
@@ -390,7 +411,7 @@ test.serial("Cake transition subs with postCallback", async (t) => {
 test.serial("Cake callbacks called in correct order", async (t) => {
   const { cake, kindsSubs } = setupLayer();
 
-  const listeners = new ListenersCollector();
+  const listeners = new ListenersCollector<Context, AdminKinds>();
 
   const vals: string[] = [];
   listeners.after("game", () => {
@@ -414,7 +435,7 @@ test.serial("Cake callbacks called in correct order", async (t) => {
   t.is(vals.length, 0);
 
   const game = <Scope<Context, AdminKinds>>{};
-  kindsSubs.get("game")!.next(game);
+  kindsSubs.get("game")!.next({ scope: game, done: true });
 
   await nextTick();
 
@@ -425,7 +446,7 @@ test.serial("Cake callbacks called in correct order", async (t) => {
 test.serial("Cake callbacks in order over multiple listeners", async (t) => {
   const { cake, kindsSubs } = setupLayer();
 
-  const listeners1 = new ListenersCollector();
+  const listeners1 = new ListenersCollector<Context, AdminKinds>();
 
   const vals: string[] = [];
   listeners1.after("game", () => {
@@ -436,7 +457,7 @@ test.serial("Cake callbacks in order over multiple listeners", async (t) => {
     vals.push("none1");
   });
 
-  const listeners2 = new ListenersCollector();
+  const listeners2 = new ListenersCollector<Context, AdminKinds>();
 
   listeners2.on("game", () => {
     vals.push("none2");
@@ -452,7 +473,7 @@ test.serial("Cake callbacks in order over multiple listeners", async (t) => {
   t.is(vals.length, 0);
 
   const game = <Scope<Context, AdminKinds>>{};
-  kindsSubs.get("game")!.next(game);
+  kindsSubs.get("game")!.next({ scope: game, done: true });
 
   await nextTick();
 

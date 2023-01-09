@@ -3,6 +3,7 @@ import { WithChildren } from "../../react/helpers";
 import { Attributable } from "../../../shared/scopes";
 import { Game, Player } from "../classic";
 import { useGame, usePlayer } from "./hooks";
+import { error } from "../../../utils/console";
 
 export type StepsFunc = (props: {
   game?: Game;
@@ -33,7 +34,7 @@ export function Steps({
   } else if (player) {
     obj = player;
   } else {
-    console.error("no receiver and no player in Steps");
+    error("no receiver and no player in Steps");
     return <div>Missing attribute</div>;
   }
 
@@ -65,7 +66,8 @@ export function Steps({
   const Step = actualSteps[index];
 
   if (!Step) {
-    console.error("missing step at index");
+    error("missing step at index");
+
     return <div>Step missing</div>;
   }
 
@@ -77,5 +79,11 @@ export function Steps({
     }
   };
 
-  return <Step next={next}></Step>;
+  const previous = () => {
+    if (index > 0) {
+      obj.set(progressKey, index - 1);
+    }
+  };
+
+  return <Step index={index} previous={previous} next={next}></Step>;
 }

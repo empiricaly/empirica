@@ -24,6 +24,7 @@
     id="batch-configuration"
     name="configuration"
     rows="10"
+    data-test="configurationTextArea"
     class="block w-full px-3 py-2 shadow-sm sm:text-sm focus:outline-none focus:ring-2 focus:ring-empirica-500 focus:border-transparent border border-transaparent rounded-md"
   />
 

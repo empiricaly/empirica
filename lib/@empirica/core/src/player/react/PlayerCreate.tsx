@@ -9,10 +9,6 @@ export function PlayerCreate({ onPlayerID, connecting }: PlayerCreateProps) {
   const [playerID, setPlayerID] = useState("");
 
   const handleSubmit = (evt: FormEvent) => {
-    if (connecting) {
-      return;
-    }
-
     evt.preventDefault();
     if (!playerID || playerID.trim() === "") {
       return;

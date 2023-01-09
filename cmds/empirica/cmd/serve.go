@@ -30,7 +30,12 @@ func addServeCommand(parent *cobra.Command) error {
 
 			addr, err := cmd.Flags().GetString("addr")
 			if err != nil {
-				return errors.Wrap(err, "parse ddr flag")
+				return errors.Wrap(err, "parse addr flag")
+			}
+
+			devMode, err := cmd.Flags().GetBool("dev")
+			if err != nil {
+				return errors.Wrap(err, "parse dev flag")
 			}
 
 			if err := settings.InstallVoltaIfNeeded(ctx); err != nil {
@@ -42,7 +47,11 @@ func addServeCommand(parent *cobra.Command) error {
 			conf := getConfig()
 			conf.Server.Addr = addr
 
-			return bundle.Serve(ctx, conf, in, clean)
+			conf.Production = !devMode
+			conf.Server.Production = !devMode
+			conf.Tajriba.Server.Production = !devMode
+
+			return bundle.Serve(ctx, conf, in, clean, devMode)
 		},
 	}
 
@@ -52,6 +61,11 @@ func addServeCommand(parent *cobra.Command) error {
 	sval := ":3000"
 	cmd.Flags().String(flag, sval, "Address of the server")
 	viper.SetDefault(flag, sval)
+
+	flag = "dev"
+	bval := false
+	cmd.Flags().Bool(flag, bval, "Start in dev mode (no auth)")
+	viper.SetDefault(flag, bval)
 
 	err := viper.BindPFlags(cmd.Flags())
 	if err != nil {

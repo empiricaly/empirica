@@ -1,0 +1,24 @@
+{
+  "name": "export",
+  "description": "",
+  "main": "src/index.js",
+  "private": true,
+  "scripts": {
+    "export": "npm run build && node --trace-warnings --enable-source-maps dist/index.js",
+    "export:runonly": "node --trace-warnings --enable-source-maps dist/index.js",
+    "build": "esbuild src/index.js --platform=node --define:process.env.NODE_ENV='\"production\"' --bundle --minify --outfile=dist/index.js --sourcemap",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "1.0.0",
+  "volta": {
+    "node": "16.17.0",
+    "npm": "8.15.0"
+  },
+  "dependencies": {
+    "@empirica/core": "latest",
+    "minimist": "1.2.6"
+  },
+  "devDependencies": {
+    "esbuild": "0.14.47"
+  }
+}

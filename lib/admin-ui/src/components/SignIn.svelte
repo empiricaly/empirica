@@ -1,7 +1,6 @@
 <script>
-  import { Empirica } from "@empirica/admin";
-  import { DEFAULT_TOKEN_KEY, URL } from "../constants";
-  import { setCurrentAdmin } from "../utils/auth";
+  import { Tajriba } from "@empirica/tajriba";
+  import { DEFAULT_TOKEN_KEY, ORIGIN } from "../constants";
   import { focus } from "../utils/use";
   import Logo from "./layout/Logo.svelte";
 
@@ -14,21 +13,29 @@
   async function handleSubmit(e) {
     e.preventDefault();
     try {
+      console.log("signing in", username, password);
       signingIn = true;
-      const [admin, token] = await Empirica.loginAdmin(
-        `${URL}/query`,
-        username,
-        password
-      );
-      window.localStorage.setItem(DEFAULT_TOKEN_KEY, token.toString());
+
+      const taj = await Tajriba.createAndAwait(`${ORIGIN}/query`);
+      const sessionToken = await taj.login(username, password);
+      taj.stop();
+
+      // const [admin, token] = await Empirica.loginAdmin(
+      //   `${URL}/query`,
+      //   username,
+      //   password
+      // );
+
+      console.log("signed in");
+      window.localStorage.setItem(DEFAULT_TOKEN_KEY, sessionToken);
       loggedIn = true;
-      setCurrentAdmin(admin);
+      window.location.reload();
+      // setCurrentAdmin(admin);
     } catch (error) {
       console.error("admin sign in", error);
       alert("Failed to signin");
     } finally {
       signingIn = false;
-      console.log("yup");
     }
   }
 </script>
@@ -59,6 +66,7 @@
             id="username"
             name="username"
             type="username"
+            data-test="usernameInput"
             bind:value={username}
             required
             class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-empirica-500 focus:border-empirica-500 focus:z-10 sm:text-sm"
@@ -71,6 +79,7 @@
             id="password"
             name="password"
             type="password"
+            data-test="passwordInput"
             bind:value={password}
             autocomplete="current-password"
             required
@@ -83,6 +92,7 @@
       <div>
         <button
           type="submit"
+          data-test="signInButton"
           class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-empirica-600 hover:bg-empirica-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
           disabled={signingIn}
         >

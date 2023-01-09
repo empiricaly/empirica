@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -39,7 +40,7 @@ func defineRoot() (*cobra.Command, *bool, error) {
 		return nil, nil, errors.Wrap(err, "define flags")
 	}
 
-	cmd.PersistentFlags().String("config", "", "config file (default is .empirica/empirica.toml)")
+	cmd.PersistentFlags().String("config", "", fmt.Sprintf("config file (default is %s/empirica.toml)", settings.EmpiricaDir))
 
 	err = viper.BindPFlags(cmd.Flags())
 	if err != nil {
@@ -63,7 +64,28 @@ func root(_ *cobra.Command, _ []string, usingConfigFile *bool) error {
 		return errors.Wrap(err, "check node")
 	}
 
-	conf := getConfig()
+	dir, err := os.Getwd()
+	if err != nil {
+		return errors.Wrap(err, "get current dir")
+	}
+
+	if err := settings.Check("", dir); err != nil {
+		if errors.Is(err, settings.ErrEmpiricaDirMissing) {
+			fmt.Fprintf(os.Stderr, `You do not seem to be in an Empirica project (%s directory not found). You can
+create a new project with:
+
+  empirica create myproject
+
+(this will create a new directory named 'myproject' in the current directory)
+`, settings.EmpiricaDir)
+
+			os.Exit(1)
+		}
+
+		return errors.Wrap(err, "check empirica dir")
+	}
+
+	conf := getConfig(true)
 
 	t, err := empirica.Start(ctx, conf, *usingConfigFile)
 	if err != nil {
@@ -104,8 +126,11 @@ func Execute() {
 	failedStart(addServeCommand(rootCmd))
 	failedStart(addSetupCommand(rootCmd))
 	failedStart(addNodeCommand(rootCmd))
-	failedStart(addYarnCommand(rootCmd))
+	failedStart(addNPMCommand(rootCmd))
 	failedStart(addUpgradeCommand(rootCmd))
+	failedStart(addVersionCommand(rootCmd))
+	failedStart(addTajribaCommand(rootCmd))
+	failedStart(addExportCommand(rootCmd))
 
 	failedStart(addUtilsCommands(rootCmd))
 
@@ -128,18 +153,7 @@ func initConfig(rootCmd *cobra.Command, usingConfigFile *bool) func() {
 			// Use config file from the flag.
 			viper.SetConfigFile(cfgFile)
 		} else {
-			// Find home directory.
-			// home, err := homedir.Dir()
-			// if err != nil {
-			// 	log.Error().Err(err).Msg("Getting $HOME dir")
-			// 	os.Exit(1)
-			// }
-
-			// Search config in home directory with name ".empirica" (without extension).
-			// viper.AddConfigPath(".")
-			// viper.AddConfigPath("./empirica")
-			viper.AddConfigPath("./.empirica")
-			// viper.AddConfigPath(home)
+			viper.AddConfigPath(fmt.Sprintf("./%s", settings.EmpiricaDir))
 			viper.SetConfigName("empirica")
 		}
 

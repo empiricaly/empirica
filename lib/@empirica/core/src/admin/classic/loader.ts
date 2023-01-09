@@ -10,11 +10,8 @@ export function ClassicLoader(
   _: ListenersCollector<Context, ClassicKinds>
 ) {
   _.on("start", function (ctx) {
-    ctx.scopeSub({ kinds: ["batch", "player"] });
-  });
-
-  _.on("ready", function (ctx) {
     ctx.participantsSub();
+    ctx.scopeSub({ kinds: ["batch", "player"] });
   });
 
   _.on("batch", "status", function (ctx, { batch, status }) {

@@ -13,16 +13,39 @@ import (
 )
 
 func Init(name, dir string) error {
-	return errors.Wrap(CreateEmpiricaDir(name, dir), "setup .empirica")
+	return errors.Wrapf(CreateEmpiricaDir(name, dir), "setup %s", EmpiricaDir)
+}
+
+var ErrEmpiricaDirMissing = errors.New("empirica directory missing")
+
+func Check(name, dir string) error {
+	empDir := path.Join(dir, EmpiricaDir)
+
+	if _, err := os.Stat(empDir); os.IsNotExist(err) {
+		return ErrEmpiricaDirMissing
+	}
+
+	if err := fillEmpiricaDir(empDir, name); err != nil {
+		return errors.Wrap(err, "fill empirica dir")
+	}
+
+	localDir := path.Join(empDir, LocalDir)
+
+	if err := createDir(localDir); err != nil {
+		return errors.Wrap(err, "create empirica local dir")
+	}
+
+	return errors.Wrapf(CreateEmpiricaDir(name, dir), "setup %s", EmpiricaDir)
 }
 
 const (
-	EmpiricaDir = ".empirica"
-	LocalDir    = "local"
-	gitignore   = `local`
-	idLen       = 16
-	stokenLen   = 16
-	passLen     = 8
+	EmpiricaDir        = ".empirica"
+	BuildSelectionFile = "release"
+	LocalDir           = "local"
+	gitignore          = `local`
+	idLen              = 16
+	stokenLen          = 16
+	passLen            = 8
 
 	TreatmentsYAML = "treatments.yaml"
 	treatmentsyaml = `factors:
@@ -44,6 +67,21 @@ treatments:
     factors:
       playerCount: 2
     name: Two Players
+`
+
+	LobbiesYAML = "lobbies.yaml"
+	lobbiesyaml = `lobbies:
+- name: Default shared fail
+  kind: shared
+  duration: 5m
+  strategy: fail
+- name: Default shared ignore
+  kind: shared
+  duration: 5m
+  strategy: ignore
+- name: Default individual
+  kind: individual
+  duration: 5m
 `
 
 	EmpiricaTOML = "empirica.toml"
@@ -70,12 +108,25 @@ func ReadIDFile(dir string) (string, error) {
 
 func CreateEmpiricaDir(name, dir string) error {
 	empDir := path.Join(dir, EmpiricaDir)
-	localDir := path.Join(empDir, LocalDir)
 
 	if err := createDir(empDir); err != nil {
-		return errors.Wrap(err, ".empirica dir")
+		return errors.Wrapf(err, "create %s dir", EmpiricaDir)
 	}
 
+	if err := fillEmpiricaDir(empDir, name); err != nil {
+		return errors.Wrap(err, "fill empirica dir")
+	}
+
+	localDir := path.Join(empDir, LocalDir)
+
+	if err := createDir(localDir); err != nil {
+		return errors.Wrap(err, "create empirica local dir")
+	}
+
+	return nil
+}
+
+func fillEmpiricaDir(empDir, name string) error {
 	giti := path.Join(empDir, ".gitignore")
 
 	if err := writeFile(giti, []byte(gitignore)); err != nil {
@@ -86,6 +137,10 @@ func CreateEmpiricaDir(name, dir string) error {
 
 	if err := writeFile(idfile, []byte(randSeq(idLen))); err != nil {
 		return errors.Wrap(err, "write id file")
+	}
+
+	if name == "" {
+		name = "myexperiment"
 	}
 
 	tomlFile := path.Join(empDir, EmpiricaTOML)
@@ -101,8 +156,10 @@ func CreateEmpiricaDir(name, dir string) error {
 		return errors.Wrap(err, "write treatments file")
 	}
 
-	if err := createDir(localDir); err != nil {
-		return errors.Wrap(err, "empirica dir")
+	yamlFile = path.Join(empDir, LobbiesYAML)
+
+	if err := writeFile(yamlFile, []byte(lobbiesyaml)); err != nil {
+		return errors.Wrap(err, "write lobbies file")
 	}
 
 	return nil

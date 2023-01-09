@@ -1,4 +1,5 @@
 .DS_Store
+*.code-workspace
 *.db
 *.tgz
 *.tar.zst
@@ -8,4 +9,10 @@ internal/vendored/transport
 yarn-error.log
 node_modules
 go.work
-no.work
+go.work.sum
+
+playwright-results
+playwright-report
+test-results
+e2e-tests/test-experiment-*
+e2e-tests/cache

@@ -6,15 +6,21 @@ import {
   State,
   TransitionInput,
 } from "@empirica/tajriba";
-import { merge, Subject } from "rxjs";
+import { merge, Subject, SubscriptionLike } from "rxjs";
 import { ScopeConstructor } from "../shared/scopes";
 import { TajribaConnection } from "../shared/tajriba_connection";
 import { error, warn } from "../utils/console";
 import { AdminConnection } from "./connection";
 import { ListenersCollector, Subscriber } from "./events";
 import { Globals } from "./globals";
+import { subscribeAsync } from "./observables";
 import { Runloop } from "./runloop";
-import { FileTokenStorage, TokenProvider } from "./token_file";
+import {
+  FileTokenStorage,
+  MemTokenStorage,
+  SavedTokenStorage,
+  TokenProvider,
+} from "./token_file";
 
 export class AdminContext<
   Context,
@@ -22,6 +28,7 @@ export class AdminContext<
 > {
   readonly tajriba: TajribaConnection;
   public adminConn: AdminConnection | undefined;
+  private sub?: SubscriptionLike;
   private runloop: Runloop<Context, Kinds> | undefined;
   private adminSubs = new Subject<
     Subscriber<Context, Kinds> | ListenersCollector<Context, Kinds>
@@ -34,6 +41,15 @@ export class AdminContext<
 
   private constructor(url: string, private ctx: Context, private kinds: Kinds) {
     this.tajriba = new TajribaConnection(url);
+  }
+
+  /**
+   * @internal
+   *
+   * NOTE: For testing purposes only.
+   */
+  get _runloop() {
+    return this.runloop;
   }
 
   static async init<
@@ -49,7 +65,13 @@ export class AdminContext<
   ) {
     const adminContext = new this(url, ctx, kinds);
     const reset = new Subject<void>();
-    const strg = await FileTokenStorage.init(tokenFile, reset);
+    let strg: SavedTokenStorage;
+    if (tokenFile === ":mem:") {
+      strg = new MemTokenStorage();
+    } else {
+      strg = await FileTokenStorage.init(tokenFile, reset);
+    }
+
     const tp = new TokenProvider(
       adminContext.tajriba,
       strg,
@@ -62,16 +84,22 @@ export class AdminContext<
       reset.next.bind(reset)
     );
 
-    merge(
-      adminContext.tajriba.connected,
-      adminContext.adminConn.connected
-    ).subscribe({
-      next: async () => {
+    adminContext.sub = subscribeAsync(
+      merge(adminContext.tajriba.connected, adminContext.adminConn.connected),
+      async () => {
         await adminContext.initOrStop();
-      },
-    });
+      }
+    );
 
     return adminContext;
+  }
+
+  async stop() {
+    this.sub?.unsubscribe();
+    delete this.sub;
+    await this.stopSubs();
+    this.tajriba.stop();
+    this.adminConn?.stop();
   }
 
   register(
@@ -91,7 +119,7 @@ export class AdminContext<
     ) {
       await this.initSubs();
     } else {
-      this.stopSubs();
+      await this.stopSubs();
     }
   }
 
@@ -147,9 +175,12 @@ export class AdminContext<
     }
   }
 
-  private stopSubs() {
+  private async stopSubs() {
     this.adminStop.next();
-    this.runloop = undefined;
+    if (this.runloop) {
+      await this.runloop.stop();
+      this.runloop = undefined;
+    }
   }
 }
 

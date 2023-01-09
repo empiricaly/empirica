@@ -5,13 +5,31 @@ import test, { ExecutionContext } from "ava";
 import React from "react";
 import { Subject } from "rxjs";
 import { restore } from "sinon";
-import { fakeTajribaConnect, nextTick } from "../../../shared/test_helpers";
+import {
+  attrChange,
+  fakeTajribaConnect,
+  nextTick,
+  stepChange,
+} from "../../../shared/test_helpers";
 import { ParticipantSession } from "../../connection";
 import { ParticipantModeContext } from "../../context";
 import { ParticipantCtx } from "../../react/EmpiricaParticipant";
 import { EmpiricaClassic, Game, Player, Round, Stage } from "../classic";
-import { setupGame, setupPlayer, setupStage } from "../test_helpers";
-import { useGame, usePlayer, usePlayers, useRound, useStage } from "./hooks";
+import {
+  setupGame,
+  setupPlayer,
+  setupPlayerGame,
+  setupPlayerGameRoundStage,
+  setupStage,
+} from "../test_helpers";
+import {
+  useGame,
+  usePlayer,
+  usePlayers,
+  useRound,
+  useStage,
+  useStageTimer,
+} from "./hooks";
 
 test.serial.afterEach.always(() => {
   cleanup();
@@ -36,10 +54,15 @@ async function setupModeCtx(t: ExecutionContext<unknown>) {
   const ctx = new ParticipantModeContext("", "somens", EmpiricaClassic);
   cbs["connected"]![0]!();
 
-  await nextTick();
+  await nextTick(10);
+
+  cbs["connected"]![1]!();
+
+  await nextTick(10);
 
   setupPlayer(changes);
   setupGame(changes);
+  setupPlayerGame(changes);
   return { ctx, changes };
 }
 
@@ -95,6 +118,7 @@ test.serial("usePlayers", async (t) => {
 test.serial("useRound", async (t) => {
   const { ctx, changes } = await setupModeCtx(t);
   setupStage(changes);
+  setupPlayerGameRoundStage(changes);
 
   const { result } = renderHook(useRound, {
     wrapper: ({ children }) => (
@@ -108,6 +132,7 @@ test.serial("useRound", async (t) => {
 test.serial("useStage", async (t) => {
   const { ctx, changes } = await setupModeCtx(t);
   setupStage(changes);
+  setupPlayerGameRoundStage(changes);
 
   const { result } = renderHook(useStage, {
     wrapper: ({ children }) => (
@@ -116,4 +141,39 @@ test.serial("useStage", async (t) => {
   });
 
   t.true(result.current instanceof Stage);
+});
+
+test.serial("useStageTimer", async (t) => {
+  const { ctx, changes } = await setupModeCtx(t);
+  setupStage(changes);
+  setupPlayerGameRoundStage(changes);
+
+  changes.next(
+    stepChange({
+      id: "123",
+      elapsed: 0,
+      remaining: 10,
+      running: true,
+      done: true,
+      removed: false,
+    })
+  );
+
+  changes.next(
+    attrChange({
+      key: "timerID",
+      val: `"123"`,
+      nodeID: "stage1",
+      done: true,
+      removed: false,
+    })
+  );
+
+  const { result } = renderHook(useStageTimer, {
+    wrapper: ({ children }) => (
+      <ParticipantCtx.Provider value={ctx}>{children}</ParticipantCtx.Provider>
+    ),
+  });
+
+  t.truthy(result.current);
 });

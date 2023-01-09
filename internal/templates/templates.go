@@ -1,14 +1,16 @@
 package templates
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/pkg/errors"
 )
+
+var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 //go:generate go-bindata -ignore=node_modules|trigger|yarn-error.log|.DS_Store -pkg templates -prefix source -debug source/...
 
@@ -81,7 +83,7 @@ func CopyAsset(project, dir, root, name string) error {
 
 		if strings.Contains(base, "client") {
 			obj["name"] = project + "-empirica-client"
-		} else {
+		} else if strings.Contains(base, "server") {
 			obj["name"] = project + "-empirica-server"
 		}
 

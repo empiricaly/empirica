@@ -1,8 +1,10 @@
 package callbacks
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 
+	"github.com/empiricaly/empirica/internal/settings"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -70,11 +72,11 @@ func ConfigFlags(cmd *cobra.Command, prefix string) error {
 
 	flag = prefix + ".token"
 	sval = ""
-	cmd.Flags().String(flag, sval, "Service token (pulled from .empirica config file)")
+	cmd.Flags().String(flag, sval, fmt.Sprintf("Service token (pulled from %s config file)", settings.EmpiricaDir))
 	viper.SetDefault(flag, sval)
 
 	flag = prefix + ".sessionTokenPath"
-	sval = ".empirica/local/callBackSessionToken"
+	sval = fmt.Sprintf("%s/local/callBackSessionToken", settings.EmpiricaDir)
 	cmd.Flags().String(flag, sval, "Path to session token file")
 	viper.SetDefault(flag, sval)
 

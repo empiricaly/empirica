@@ -6,7 +6,7 @@
 #
 # Just open up your terminal and type:
 #
-#   curl https://get.empirica.dev | sh
+#   curl https://install.empirica.dev | sh
 #
 
 # We wrap this whole script in a function, so that we won't execute
@@ -51,8 +51,9 @@ if [ "$UNAME" = "Darwin" ] ; then
       exit 1
   fi
 
-elif [ "$UNAME" ">" "MINGW" -a "$UNAME" "<" "MINGX" ] ; then
-    PLATFORM="windows-arm64.exe"
+# NOTE: Windows build currently having problems
+# elif [ "$UNAME" ">" "MINGW" -a "$UNAME" "<" "MINGX" ] ; then
+#     PLATFORM="windows-arm64.exe"
 
 elif [ "$UNAME" = "Linux" ] ; then
   ### Linux ###
@@ -60,7 +61,7 @@ elif [ "$UNAME" = "Linux" ] ; then
   if [ "${LINUX_ARCH}" = "x86_64" ] ; then
     PLATFORM="linux-amd64"
   else
-    echo "Unusable architecture: ${LINUX_ARCH}"
+    echo "Unsupported architecture: ${LINUX_ARCH}"
     echo "Empirica only supports x86_64 for now."
     exit 1
   fi
@@ -77,7 +78,7 @@ if [ -z $TEMP_DIR ] || [ ! -d $TEMP_DIR ]; then
   exit 1
 fi
 
-BIN_URL="https://get.empirica.dev/empirica-${PLATFORM}"
+BIN_URL="https://install.empirica.dev/proxy/${PLATFORM}/latest/empirica"
 
 echo $BIN_URL
 
@@ -128,18 +129,6 @@ if cp "$BIN_FILE" "$PREFIX/bin/empirica" >/dev/null 2>&1; then
   echo "Writing empirica to $PREFIX/bin/empirica for your convenience."
 
   empirica setup
-
-  cat <<EOF
-
-To get started fast:
-
-  empirica create my-experiment
-  cd my-experiment
-  empirica
-
-Otherwise head over to https://docs.empirica.ly.
-EOF
-
 elif type sudo >/dev/null 2>&1; then
   echo "Writing empirica to $PREFIX/bin/empirica for your convenience."
   echo "This may prompt for your password."
@@ -159,19 +148,6 @@ elif type sudo >/dev/null 2>&1; then
   echo ""
 
   empirica setup
-
-# Add docs here
-  cat <<EOF
-  
-
-To get started fast:
-
-  empirica create my-experiment
-  cd my-experiment
-  empirica
-
-Otherwise head over to https://docs.empirica.ly.
-EOF
   else
     cat <<EOF
 

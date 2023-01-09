@@ -27,6 +27,7 @@ type Callbacks struct {
 
 	c            *exec.Cmd
 	stdout       *callbacksWriter
+	stderr       *callbacksWriter
 	comp         *term.Component
 	isDefaultCmd bool
 
@@ -78,7 +79,7 @@ func Start(
 	config *Config,
 ) (*Callbacks, error) {
 	termui := term.ForContext(ctx)
-	comp := termui.Add("callbacks")
+	comp := termui.Add("server")
 	isDefaultCmd := config.DevCmd == defaultDevCommand
 
 	p := &Callbacks{
@@ -87,6 +88,7 @@ func Start(
 		comp:         comp,
 		isDefaultCmd: isDefaultCmd,
 		stdout:       &callbacksWriter{w: os.Stdout, comp: comp, isDefaultCmd: isDefaultCmd},
+		stderr:       &callbacksWriter{w: os.Stdout, comp: comp, isDefaultCmd: isDefaultCmd, stderr: true},
 	}
 
 	if err := p.start(ctx); err != nil {
@@ -304,7 +306,7 @@ func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 	c := exec.CommandContext(ctx, parts[0], args...)
 	c.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pgid: 0}
 
-	c.Stderr = os.Stderr
+	c.Stderr = cb.stderr
 	c.Stdout = cb.stdout
 	c.Dir = cb.config.Path
 
@@ -320,17 +322,23 @@ type callbacksWriter struct {
 	comp         *term.Component
 	isDefaultCmd bool
 	startedOnce  bool
+	stderr       bool
 }
 
 func (c *callbacksWriter) Write(p []byte) (n int, err error) {
 	var ready bool
 	if c.isDefaultCmd {
-		if bytes.Contains(p, []byte("callbacks: started")) {
+		if bytes.Contains(p, []byte("server: started")) ||
+			bytes.Contains(p, []byte("callbacks: started")) {
 			ready = true
 		}
 	}
 
-	c.comp.Log(string(p))
+	if c.stderr {
+		c.comp.Logerr(string(p))
+	} else {
+		c.comp.Log(string(p))
+	}
 
 	if ready {
 		c.comp.Ready()
@@ -345,6 +353,4 @@ func (c *callbacksWriter) Write(p []byte) (n int, err error) {
 	}
 
 	return len(p), nil
-
-	// return c.w.Write(p)
 }

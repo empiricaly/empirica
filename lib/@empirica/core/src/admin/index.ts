@@ -7,7 +7,6 @@ export { AdminConnection } from "./connection";
 export { AdminContext } from "./context";
 export { EventContext, ListenersCollector, TajribaEvent } from "./events";
 export type { Subscriber } from "./events";
-export { Layer } from "./layers";
 export { participantsSub } from "./participants";
 export type { Participant } from "./participants";
 export { Runloop } from "./runloop";

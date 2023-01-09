@@ -14,15 +14,18 @@ import (
 )
 
 type UI struct {
-	comps   []*Component
-	updates chan update
-	close   chan bool
+	comps    []*Component
+	debug    bool
+	allReady bool
+	updates  chan update
+	close    chan bool
 
 	deadlock.Mutex
 }
 
-func New() *UI {
+func New(debug bool) *UI {
 	return &UI{
+		debug:   debug,
 		updates: make(chan update),
 		close:   make(chan bool),
 	}
@@ -39,12 +42,58 @@ func (ui *UI) Stop() {
 }
 
 func init() {
-	lipgloss.SetColorProfile(termenv.TrueColor)
-	lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
-	// lipgloss.SetHasDarkBackground(true)
+	fileInfo, _ := os.Stdout.Stat()
+	hasTTY := (fileInfo.Mode() & os.ModeCharDevice) != 0
+
+	if hasTTY {
+		lipgloss.SetColorProfile(termenv.TrueColor)
+		lipgloss.SetHasDarkBackground(termenv.HasDarkBackground())
+	}
 }
 
-func (ui *UI) printClean() {
+func (ui *UI) printRefresh(compName string) {
+	doc := strings.Builder{}
+
+	columnWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
+
+	if columnWidth < 0 {
+		return
+	}
+
+	subtle := lipgloss.AdaptiveColor{Light: "#555", Dark: "#aaaaaa"}
+
+	myCuteBorder := lipgloss.Border{
+		Top:         "\u2500",
+		Bottom:      "",
+		Left:        "",
+		Right:       "",
+		TopLeft:     "",
+		TopRight:    "",
+		BottomLeft:  "",
+		BottomRight: "",
+	}
+
+	// columnWidth -= 20
+
+	subtleStr := lipgloss.NewStyle().
+		Foreground(subtle).
+		Inline(true).
+		Render
+
+	text := compName + " refreshed"
+
+	border := lipgloss.NewStyle().
+		Border(myCuteBorder, true, false, false, false).
+		BorderForeground(lipgloss.AdaptiveColor{Light: "#333", Dark: "#aaaaaa"}).
+		PaddingBottom(1).
+		Render(subtleStr(text) + strings.Repeat(" ", columnWidth-len(text)))
+
+	doc.WriteString(border)
+
+	fmt.Fprintln(os.Stderr, doc.String())
+}
+
+func (ui *UI) printClean(printSeperator bool) {
 	doc := strings.Builder{}
 
 	columnWidth, _, _ := term.GetSize(int(os.Stdout.Fd()))
@@ -69,10 +118,10 @@ func (ui *UI) printClean() {
 		BottomRight: "",
 	}
 
-	columnWidth -= 20
+	// columnWidth -= 20
 
 	list := lipgloss.NewStyle().
-		MarginRight(2).
+		Padding(0, 2, 2, 2).
 		Width(columnWidth)
 
 	lineHeader := lipgloss.NewStyle().
@@ -87,6 +136,7 @@ func (ui *UI) printClean() {
 
 	subtleStr := lipgloss.NewStyle().
 		Foreground(subtle).
+		Inline(true).
 		Render
 
 	highlightStr := lipgloss.NewStyle().
@@ -96,6 +146,7 @@ func (ui *UI) printClean() {
 	urlHeader := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(highConstrast).
+		Inline(true).
 		Render
 	strs := []string{}
 
@@ -112,9 +163,9 @@ func (ui *UI) printClean() {
 	// }
 
 	strs = append(strs,
-		lineHeader(highlightStr("Empirica")+subtleStr(" ("+buildStr+") server running:")),
-		urlLine(urlHeader("Player  ")+subtleStr("http://localhost:3000")),
-		urlLine(urlHeader("Admin   ")+subtleStr("http://localhost:3000/admin")),
+		lineHeader(lipgloss.JoinHorizontal(lipgloss.Top, highlightStr("Empirica"), subtleStr(" ("+buildStr+") server running:"))),
+		urlLine(lipgloss.JoinHorizontal(lipgloss.Top, urlHeader("Player  "), subtleStr("http://localhost:3000"))),
+		urlLine(lipgloss.JoinHorizontal(lipgloss.Top, urlHeader("Admin   "), subtleStr("http://localhost:3000/admin"))),
 	)
 
 	lists := list.Render(
@@ -125,7 +176,7 @@ func (ui *UI) printClean() {
 
 	doc.WriteString(lists)
 
-	docStyle := lipgloss.NewStyle().Padding(0, 2, 2, 2)
+	// docStyle := lipgloss.NewStyle().Padding(0, 2, 2, 2)
 
 	border := lipgloss.NewStyle().
 		Border(myCuteBorder, true, false, false, false).
@@ -133,8 +184,11 @@ func (ui *UI) printClean() {
 		Render(strings.Repeat(" ", columnWidth))
 
 	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintln(os.Stderr, border)
-	fmt.Fprintln(os.Stderr, docStyle.Render(doc.String()))
+	if printSeperator {
+		fmt.Fprintln(os.Stderr, border)
+	}
+	// fmt.Fprintln(os.Stderr, docStyle.Render(doc.String()))
+	fmt.Fprintln(os.Stderr, doc.String())
 }
 
 func (ui *UI) run() {
@@ -168,13 +222,29 @@ func (ui *UI) process(update update) {
 			}
 		}
 
-		ui.printClean()
+		notFirstTime := ui.allReady
+
+		ui.allReady = true
+
+		if notFirstTime {
+			ui.printRefresh(update.component.Name)
+		} else {
+			ui.printClean(notFirstTime)
+		}
 	case Restarted:
-		ui.printClean()
-	case Log:
+		ui.printRefresh(update.component.Name)
+	case Log, Logerr:
+		if !ui.allReady && !ui.debug {
+			return
+		}
+
+		subtleStr := lipgloss.NewStyle().
+			Foreground(lipgloss.AdaptiveColor{Light: "#555", Dark: "#aaaaaa"}).
+			Render
+
 		parts := strings.Split(strings.TrimSuffix(update.text, "\n"), "\n")
 		for _, part := range parts {
-			os.Stderr.Write([]byte("[" + update.component.Name + "] "))
+			os.Stderr.Write([]byte(subtleStr("[" + update.component.Name + "] ")))
 			os.Stderr.Write([]byte(part))
 			os.Stderr.Write([]byte("\n"))
 		}
@@ -226,6 +296,18 @@ func (c *Component) Log(text string) {
 	}
 }
 
+func (c *Component) Logerr(text string) {
+	if c.updates == nil {
+		return
+	}
+
+	c.updates <- update{
+		kind:      Logerr,
+		text:      text,
+		component: c,
+	}
+}
+
 func (c *Component) Restarted() {
 	if c.updates == nil {
 		return
@@ -240,7 +322,7 @@ func (c *Component) Restarted() {
 //go:generate go-enum -f=$GOFILE --marshal --lower --names --noprefix
 
 // updateKind is enumneration of messaging types.
-// ENUM(log, error, ready, restarted)
+// ENUM(log, logerr, error, ready, restarted)
 type updateKind uint8
 
 type update struct {

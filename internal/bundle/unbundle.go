@@ -10,9 +10,9 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/empiricaly/empirica"
+	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/klauspost/compress/gzip"
 	"github.com/klauspost/compress/zstd"
 	cp "github.com/otiai10/copy"
@@ -22,23 +22,23 @@ import (
 	"github.com/twmb/murmur3"
 )
 
-func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, error) {
+func prepDotEmpirica(inConf *empirica.Config, dir string, devMode bool) (*empirica.Config, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		return nil, errors.Wrap(err, "get working dir")
 	}
 
-	dst := path.Join(wd, ".empirica")
-	src := path.Join(dir, ".empirica")
+	dst := path.Join(wd, settings.EmpiricaDir)
+	src := path.Join(dir, settings.EmpiricaDir)
 
 	_, err = os.Stat(dst)
 
 	if err != nil && !os.IsNotExist(err) {
-		return nil, errors.Wrap(err, "check .empirica already exists")
+		return nil, errors.Wrapf(err, "check %s already exists", settings.EmpiricaDir)
 	}
 
 	if !os.IsNotExist(err) {
-		for _, fileName := range []string{"empirica.toml", "treatments.yaml"} {
+		for _, fileName := range []string{"empirica.toml", "treatments.yaml", "lobbies.yaml"} {
 			bytesRead, err := ioutil.ReadFile(path.Join(src, fileName))
 			if err != nil {
 				return nil, errors.Wrapf(err, "read %s", fileName)
@@ -50,28 +50,21 @@ func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, err
 			}
 		}
 	} else {
-		if err := cp.Copy(src, dst); err != nil {
-			return nil, errors.Wrap(err, "copy .empirica")
+		if err := cp.Copy(src, dst, cp.Options{Sync: true}); err != nil {
+			return nil, errors.Wrapf(err, "copy %s", settings.EmpiricaDir)
 		}
 	}
 
-	// Wait for some reason, config not always read otherwise
-	time.Sleep(100 * time.Millisecond)
-
 	confFile := path.Join(dst, "empirica.toml")
 
-	viper.SetConfigFile(confFile)
+	if _, err = os.Stat(confFile); err != nil && !os.IsNotExist(err) {
+		log.Error().Err(err).Msgf("check %s already exists", settings.EmpiricaDir)
+	}
 
 	conf := new(empirica.Config)
 
-	if err := viper.Unmarshal(conf); err != nil {
-		log.Fatal().Err(err).Msg("could not parse configuration")
-	}
-
-	log.Trace().
-		Interface("config", conf).
-		Str("file", confFile).
-		Msg("config: got config first time")
+	viper.SetConfigFile(confFile)
+	viper.ReadInConfig()
 
 	if err := viper.Unmarshal(conf); err != nil {
 		log.Fatal().Err(err).Msg("could not parse configuration")
@@ -80,13 +73,14 @@ func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, err
 	log.Trace().
 		Interface("config", conf).
 		Str("file", confFile).
-		Msg("config: got config second time")
+		Msg("config: load new config file")
 
 	// FIXME configuration manual tweaking is not ideal
 
 	conf.Callbacks.Token = conf.Tajriba.Auth.ServiceRegistrationToken
-	conf.Production = true
-	conf.Tajriba.Server.Production = true
+	conf.Production = !devMode
+	conf.Server.Production = !devMode
+	conf.Tajriba.Server.Production = !devMode
 
 	if inConf.Tajriba.Store.UseMemory {
 		conf.Tajriba.Store.UseMemory = true
@@ -100,27 +94,10 @@ func prepDotEmpirica(inConf *empirica.Config, dir string) (*empirica.Config, err
 		return nil, errors.Wrap(err, "create storage dir")
 	}
 
-	_, err = os.Stat(conf.Tajriba.Store.File)
-
-	if err != nil && !os.IsNotExist(err) {
-		return nil, errors.Wrap(err, "check storage file already exists")
-	}
-
-	if os.IsNotExist(err) {
-		log.Info().Msg("unbundle: creating new storage file")
-
-		file, err := os.Create(conf.Tajriba.Store.File)
-		if err != nil {
-			return nil, errors.Wrap(err, "create storage file")
-		}
-
-		file.Close()
-	}
-
 	return conf, nil
 }
 
-func Unbundle(_ context.Context, config *empirica.Config, in string, clean bool) (string, *empirica.Config, error) {
+func Unbundle(_ context.Context, config *empirica.Config, in string, clean, devMode bool) (string, *empirica.Config, error) {
 	f, err := os.Open(in)
 	if err != nil {
 		return "", nil, errors.Wrap(err, "open bundle")
@@ -150,9 +127,9 @@ func Unbundle(_ context.Context, config *empirica.Config, in string, clean bool)
 				return "", nil, errors.Wrap(err, "remove previous installation")
 			}
 		} else {
-			conf, err := prepDotEmpirica(config, dir)
+			conf, err := prepDotEmpirica(config, dir, devMode)
 			if err != nil {
-				return "", nil, errors.Wrap(err, "copy .empirica")
+				return "", nil, errors.Wrapf(err, "copy %s", settings.EmpiricaDir)
 			}
 
 			return dir, conf, nil
@@ -193,9 +170,9 @@ func Unbundle(_ context.Context, config *empirica.Config, in string, clean bool)
 
 		switch {
 		case errors.Is(err, io.EOF):
-			conf, err := prepDotEmpirica(config, dir)
+			conf, err := prepDotEmpirica(config, dir, devMode)
 			if err != nil {
-				return "", nil, errors.Wrap(err, "copy .empirica")
+				return "", nil, errors.Wrapf(err, "copy %s", settings.EmpiricaDir)
 			}
 
 			return dir, conf, nil

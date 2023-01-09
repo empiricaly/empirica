@@ -1,24 +1,18 @@
 <script>
-  import { cubicInOut } from "svelte/easing";
-  import { fly } from "svelte/transition";
-  import { currentAdmin } from "../../utils/auth";
-  import { clickOutside } from "../../utils/clickoutside";
+  import { currentAdmin } from "../../utils/auth.js";
   import Badge from "../common/Badge.svelte";
   import Button from "../common/Button.svelte";
+  import TimeSince from "../common/TimeSince.svelte";
+  import GamesLine from "../games/GamesLine.svelte";
   import PlayIcon from "../PlayIcon.svelte";
   import StopIcon from "../StopIcon.svelte";
   import FactorsString from "../treatments/FactorsString.svelte";
 
   export let batch;
+  export let games;
+  export let players;
 
-  let open = false;
-
-  function clickOutsideHandler() {
-    open = false;
-  }
-
-  const config = batch.attributes["config"];
-  console.log(config);
+  const config = batch.get("config");
   let gameCount = "unknown";
 
   switch (config.kind) {
@@ -33,7 +27,7 @@
   let statusColor = "gray";
   let status = "Created";
   $: {
-    switch (batch.attributes["status"]) {
+    switch (batch.get("status")) {
       case "running":
         status = "Running";
         statusColor = "green";
@@ -61,6 +55,12 @@
       kind: "batch",
       attributes: [
         { key: "config", val: JSON.stringify(config), immutable: true },
+        {
+          key: "lobbyConfig",
+          val: JSON.stringify(batch.get("lobbyConfig")),
+          immutable: true,
+        },
+        { key: "status", val: JSON.stringify("created"), protected: true },
       ],
     });
     // $currentAdmin.createBatch({ config });
@@ -78,203 +78,140 @@
 
   function stop() {
     if (status === "Running") {
-      $currentAdmin.setAttribute({
-        key: "status",
-        val: JSON.stringify("ended"),
-        nodeID: batch.id,
-      });
+      if (confirm("Are you sure?")) {
+        $currentAdmin.setAttribute({
+          key: "status",
+          val: JSON.stringify("terminated"),
+          nodeID: batch.id,
+        });
+      }
     }
   }
 </script>
 
-<tr>
-  <td class="py-3 px-6 text-sm font-mediu align-top text-center">
-    <Badge color={statusColor}>
-      {status}
-    </Badge>
-  </td>
-  <td class="px-6 py-3 whitespace-nowrap text-sm  align-top">
-    <div class="flex items-start h-full">
-      {config.kind}
-    </div>
-  </td>
-  <td
-    class="hidden md:table-cell px-6 py-3 whitespace-nowrap text-sm w-full align-top"
-  >
-    <div class="flex flex-col divide-transparent divide-y-2 w-full">
-      {#if config.kind === "complete"}
-        {#each config.config.treatments as treatment}
-          <div class="flex items-center">
-            <Badge>
-              {treatment.count}
-              {treatment.count === 1 ? "game" : "games"}
-            </Badge>
-            <div class="ml-2 truncate overflow-ellipsis italic">
-              {treatment.treatment.name}
-            </div>
-            <div class="ml-2 truncate max-w-12 overflow-ellipsis opacity-60">
-              <FactorsString factors={treatment.treatment.factors} />
-            </div>
-          </div>
-        {/each}
-      {:else if config.kind === "simple"}
-        {#each config.config.treatments as treatment}
-          <div class="flex items-center">
-            <div class="ml-2 truncate overflow-ellipsis italic">
-              {treatment.name}
-            </div>
-            <div class="ml-2 truncate overflow-ellipsis opacity-60">
-              <FactorsString factors={treatment.factors} />
-            </div>
-          </div>
-        {/each}
-      {/if}
-    </div>
-  </td>
+<li data-test="batchLine" data-batch-line-id={batch.id}>
+  <div class="block">
+    <div class="flex items-top px-4 py-4 sm:px-6">
+      <div class="flex min-w-0 flex-1 items-baseline">
+        <div class="flex-shrink-0 -mt-1 h-min flex space-x-1 items-baseline">
+          <Badge color={statusColor}>
+            {status}
+          </Badge>
+        </div>
+        <div class="min-w-0 flex-1 px-4 ">
+          <div>
+            <div class="truncate text-sm  flex space-x-1 items-baseline">
+              <div class="font-medium text-empirica-600">
+                {config.kind}
+              </div>
+              {#if config.kind === "simple"}
+                <Badge>
+                  {gameCount}
+                  {gameCount === 1 ? "game" : "games"}
+                </Badge>
+              {/if}
 
-  <td
-    class="max-w-0 w-full whitespace-nowrap md:table-cell px-6 py-3 text-sm text-center align-top"
-  >
-    {gameCount}
-  </td>
-  <td
-    class="max-w-0 w-full whitespace-nowrap md:table-cell px-6 py-2 text-sm text-center align-top"
-  >
-    {#if status === "Created"}
-      <Button mini primary color="green" on:click={start}>
-        <div class="w-2 h-2 mr-2">
-          <PlayIcon />
-        </div>
-        Start
-      </Button>
-    {:else if status === "Running"}
-      <!-- else if content here -->
-      <Button mini primary color="red" on:click={stop}>
-        <div class="w-2 h-2 mr-2">
-          <StopIcon />
-        </div>
-        Stop
-      </Button>
-    {/if}
-  </td>
-  <td class="pr-6 py-2 align-top">
-    <div class="relative flex justify-end items-center">
-      <button
-        type="button"
-        class="w-8 h-8 bg-white inline-flex items-center justify-center text-gray-400 rounded-full hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-empirica-500"
-        id="project-options-menu-0-button"
-        aria-expanded="false"
-        aria-haspopup="true"
-        on:click={() => (open = !open)}
-      >
-        <span class="sr-only">Open actions</span>
-        <!-- Heroicon name: solid/dots-vertical -->
-        <svg
-          class="w-5 h-5"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          aria-hidden="true"
-        >
-          <path
-            d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
-          />
-        </svg>
-      </button>
+              {#if status === "Running" || status === "Ended" || status === "Terminated" || status === "Failed"}
+                {#if batch.attrs["status"]}
+                  <div class="text-xs">
+                    {#if status === "Running"}
+                      Started
+                    {:else if status === "Ended"}
+                      Ended
+                    {:else if status === "Terminated"}
+                      Terminated
+                    {:else if status === "Failed"}
+                      Failed
+                    {/if}
 
-      {#if open}
-        <div
-          transition:fly={{
-            duration: 100,
-            x: 0,
-            y: 20,
-            opacity: 0,
-            easing: cubicInOut,
-          }}
-          class="mx-3 origin-top-right absolute right-7 top-0 w-48 mt-1 rounded-md shadow-lg z-10 bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-200 focus:outline-none"
-          role="menu"
-          aria-orientation="vertical"
-          aria-labelledby="project-options-menu-0-button"
-          tabindex="-1"
-          use:clickOutside={clickOutsideHandler}
-        >
-          <div class="py-1" role="none">
-            <!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->
-            <!-- <button
-              type="button"
-              class="text-gray-700 group flex items-center px-4 py-2 text-sm"
-              role="menuitem"
-              tabindex="-1"
-              id="project-options-menu-0-item-0"
-            >
-              <svg
-                class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"
-                />
-                <path
-                  fill-rule="evenodd"
-                  d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-              Edit
-            </button> -->
-            <button
-              type="button"
-              class="text-gray-700 group flex items-center px-4 py-2 text-sm w-full"
-              role="menuitem"
-              tabindex="-1"
-              id="project-options-menu-0-item-1"
-              on:click={duplicate}
-            >
-              <!-- Heroicon name: solid/duplicate -->
-              <svg
-                class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  d="M7 9a2 2 0 012-2h6a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2V9z"
-                />
-                <path d="M5 3a2 2 0 00-2 2v6a2 2 0 002 2V5h8a2 2 0 00-2-2H5z" />
-              </svg>
-              Duplicate
-            </button>
+                    <TimeSince
+                      time={new Date(batch.attrs["status"].createdAt)}
+                    />
+                  </div>
+                {/if}
+              {/if}
+            </div>
+            <p class="mt-2 flex items-center text-sm text-gray-500">
+              <span class="truncate">
+                <div class="flex flex-col divide-transparent divide-y-2 w-full">
+                  {#if config.kind === "complete"}
+                    {#each config.config.treatments as treatment}
+                      <div class="flex items-center space-y-1">
+                        <Badge>
+                          {treatment.count}
+                          {treatment.count === 1 ? "game" : "games"}
+                        </Badge>
+                        <div class="ml-2 overflow-ellipsis font-bold italic">
+                          {treatment.treatment.name}
+                        </div>
+                        <div class="ml-2 truncate overflow-ellipsis opacity-60">
+                          <FactorsString
+                            factors={treatment.treatment.factors}
+                          />
+                        </div>
+                      </div>
+                    {/each}
+                  {:else if config.kind === "simple"}
+                    {#each config.config.treatments as treatment}
+                      <div class="flex items-center space-y-1">
+                        <div class="ml-2 overflow-ellipsis font-bold italic">
+                          {treatment.name}
+                        </div>
+                        <div class="ml-2 truncate overflow-ellipsis opacity-60">
+                          <FactorsString factors={treatment.factors} />
+                        </div>
+                      </div>
+                    {/each}
+                  {/if}
+                </div>
+                {#if status === "Running"}
+                  <GamesLine {batch} {games} {players} />
+                {/if}
+              </span>
+            </p>
           </div>
-          <!-- <div class="py-1" role="none">
-            <button
-              type="button"
-              class="text-gray-700 group flex items-center px-4 py-2 text-sm"
-              role="menuitem"
-              tabindex="-1"
-              id="project-options-menu-0-item-3"
-            >
-              <svg
-                class="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  fill-rule="evenodd"
-                  d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
-                  clip-rule="evenodd"
-                />
-              </svg>
-              Delete
-            </button>
-          </div> -->
         </div>
-      {/if}
+      </div>
+      <div class="space-x-2">
+        {#if status === "Created"}
+          <Button
+            mini
+            primary
+            color="green"
+            testId="startButton"
+            on:click={start}
+          >
+            <div class="w-2 h-2 mr-2">
+              <PlayIcon />
+            </div>
+            Start
+          </Button>
+        {:else if status === "Running"}
+          <Button mini primary color="red" testId="stopButton" on:click={stop}>
+            <div class="w-2 h-2 mr-2">
+              <StopIcon />
+            </div>
+            Stop
+          </Button>
+        {/if}
+
+        <Button mini color="gray" testId="duplicateButton" on:click={duplicate}>
+          <div class="w-2 h-2 mr-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 512 512"
+              class="mx-auto h-full w-full"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M0 224C0 188.7 28.65 160 64 160H128V288C128 341 170.1 384 224 384H352V448C352 483.3 323.3 512 288 512H64C28.65 512 0 483.3 0 448V224zM224 352C188.7 352 160 323.3 160 288V64C160 28.65 188.7 0 224 0H448C483.3 0 512 28.65 512 64V288C512 323.3 483.3 352 448 352H224z"
+              /></svg
+            >
+          </div>
+          Duplicate
+        </Button>
+      </div>
     </div>
-  </td>
-</tr>
+  </div>
+</li>

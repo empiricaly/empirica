@@ -1,5 +1,5 @@
 <script>
-  import { getTreatments } from "../../utils/treatments";
+  import { getTreatments } from "../../utils/treatments.js";
   import Alert from "../common/Alert.svelte";
   import Loading from "../common/Loading.svelte";
 </script>

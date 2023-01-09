@@ -6,7 +6,14 @@ import { TajribaProvider } from "../provider";
 import { Scope, Scopes } from "../scopes";
 import { Steps } from "../steps";
 
+export const endedStatuses = ["ended", "terminated", "failed"];
+export type EndedStatuses = typeof endedStatuses[number];
+
 export class Game extends Scope<Context, EmpiricaClassicKinds> {
+  get hasEnded() {
+    return endedStatuses.includes(this.get("status") as EndedStatuses);
+  }
+
   get stage() {
     return this.scopeByKey("stageID") as Stage | undefined;
   }
@@ -186,7 +193,7 @@ export function EmpiricaClassic(
         ret.round.next(updated.round);
       }
 
-      if (scopeChanged(current.stage, updated.stage)) {
+      if (scopeChanged(current.stage, updated.stage) || steps.hadUpdates()) {
         ret.stage.next(updated.stage);
       }
 
@@ -290,7 +297,6 @@ function getMainObjects(
   for (const player of res.players) {
     const key = `playerGameID-${res.game.id}`;
     if (!nextScopeByKey(scopes, attributes, player, key)) {
-      delete res.game;
       return res;
     }
   }

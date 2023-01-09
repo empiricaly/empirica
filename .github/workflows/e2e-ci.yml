@@ -1,0 +1,24 @@
+name: "Tests: E2E"
+on: [pull_request]
+jobs:
+  tests_e2e:
+    name: Run end-to-end tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+      - name: install empirica
+        working-directory: ./e2e-tests
+        run: curl https://get.empirica.dev | sh
+      - name: install dependencies
+        working-directory: ./e2e-tests
+        run: npm ci
+      - name: install playwright browsers
+        working-directory: ./e2e-tests
+        run: npx playwright install --with-deps
+      - name: install @empirica core dependencies
+        working-directory: ./lib/@empirica/core
+        run: npm ci
+      - name: npm run test:e2e
+        working-directory: ./e2e-tests
+        run: npm run test:e2e

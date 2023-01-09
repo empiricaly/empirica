@@ -2,13 +2,11 @@ package empirica
 
 import (
 	"context"
-	"os"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/empiricaly/empirica/internal/callbacks"
 	"github.com/empiricaly/empirica/internal/player"
 	"github.com/empiricaly/empirica/internal/server"
-	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/empiricaly/empirica/internal/term"
 	logger "github.com/empiricaly/empirica/internal/utils/log"
 	"github.com/empiricaly/tajriba"
@@ -51,20 +49,11 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 
 	log.Trace().Interface("config", config).Msg("Configuration")
 
-	dir, err := os.Getwd()
-	if err != nil {
-		return nil, errors.Wrap(err, "get current dir")
-	}
-
-	if err := settings.Init(config.Name, dir); err != nil {
-		return nil, errors.Wrap(err, "empirica")
-	}
-
 	r := &Runner{}
 
 	var schema graphql.ExecutableSchema
 
-	termui := term.New()
+	termui := term.New(config.Log.Level == "debug" || config.Log.Level == "trace")
 	ctx = term.SetContext(ctx, termui)
 	comp := termui.Add("tajriba")
 

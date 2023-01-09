@@ -1,8 +1,10 @@
 package server
 
 import (
-	"github.com/pkg/errors"
+	"fmt"
 
+	"github.com/empiricaly/empirica/internal/settings"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -11,6 +13,10 @@ import (
 type Config struct {
 	Addr       string `mapstructure:"addr"`
 	Treatments string `mapstructure:"treatments"`
+	Lobbies    string `mapstructure:"lobbies"`
+
+	// Player frontend proxy
+	ProxyAddr string `mapstructure:"proxyaddr"`
 
 	Production bool `mapstructure:"-"`
 }
@@ -38,8 +44,18 @@ func ConfigFlags(cmd *cobra.Command, prefix string) error {
 	viper.SetDefault(flag, sval)
 
 	flag = prefix + ".treatments"
-	sval = ".empirica/treatments.yaml"
+	sval = fmt.Sprintf("%s/treatments.yaml", settings.EmpiricaDir)
 	cmd.Flags().String(flag, sval, "Treatments config file")
+	viper.SetDefault(flag, sval)
+
+	flag = prefix + ".lobbies"
+	sval = fmt.Sprintf("%s/lobbies.yaml", settings.EmpiricaDir)
+	cmd.Flags().String(flag, sval, "Lobbies config file")
+	viper.SetDefault(flag, sval)
+
+	flag = prefix + ".proxyaddr"
+	sval = "http://127.0.0.1:8844"
+	cmd.Flags().String(flag, sval, "Frontend proxy address")
 	viper.SetDefault(flag, sval)
 
 	return nil

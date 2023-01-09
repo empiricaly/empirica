@@ -7,6 +7,7 @@
   export let value = "";
   export let type = "text";
   export let right = false;
+  export let testId = "unnamedInput";
 </script>
 
 <div
@@ -18,7 +19,7 @@
     </div>
   {/if}
   {#if type === "text"}
-    <input {title} bind:value type="text" name={id} {id} {placeholder} />
+    <input {title} data-test={testId} bind:value type="text" name={id} {id} {placeholder} />
   {:else if type === "number"}
     <input
       {title}
@@ -27,6 +28,7 @@
       name={id}
       {id}
       {placeholder}
+      data-test={testId}
       class="number-arrows-none {right ? 'text-right' : ''}"
     />
   {:else}

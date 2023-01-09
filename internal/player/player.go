@@ -70,7 +70,7 @@ func Start(
 	os.Setenv("FORCE_COLOR", "3")
 
 	termui := term.ForContext(ctx)
-	comp := termui.Add("player")
+	comp := termui.Add("client")
 	isDefaultCmd := config.DevCmd == defaultDevCommand
 
 	p := &Player{
@@ -187,15 +187,14 @@ type playerWriter struct {
 func (c *playerWriter) Write(p []byte) (n int, err error) {
 	var ready bool
 	if c.isDefaultCmd {
-		// trimmed := bytes.TrimSpace(stripansi.Strip(p))
+		if bytes.Contains(p, []byte("ready in ")) ||
+			bytes.Contains(p, []byte("page reload ")) ||
+			bytes.Contains(p, []byte("hmr update ")) {
 
-		// fmt.Println(string(trimmed))
-
-		if bytes.Contains(p, []byte("ready in ")) {
-			// if bytes.HasSuffix(trimmed, []byte("ms.")) {
 			ready = true
-			// }
 		}
+	} else {
+		ready = true
 	}
 
 	c.comp.Log(string(p))

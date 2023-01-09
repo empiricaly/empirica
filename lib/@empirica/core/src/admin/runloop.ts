@@ -7,10 +7,16 @@ import {
   SetAttributeInput,
   TransitionInput,
 } from "@empirica/tajriba";
-import { Observable, Subject, Subscription } from "rxjs";
+import {
+  BehaviorSubject,
+  Observable,
+  ReplaySubject,
+  Subject,
+  Subscription,
+} from "rxjs";
 import { AttributeChange, AttributeUpdate } from "../shared/attributes";
 import { ScopeConstructor, ScopeIdent, ScopeUpdate } from "../shared/scopes";
-import { error, info, trace, warn } from "../utils/console";
+import { error, warn } from "../utils/console";
 import { Attributes } from "./attributes";
 import { Cake } from "./cake";
 import { AdminConnection } from "./connection";
@@ -24,8 +30,8 @@ import {
 } from "./context";
 import { EventContext, ListenersCollector, Subscriber } from "./events";
 import { Globals } from "./globals";
-import { Layer } from "./layers";
-import { Connection, Participant, participantsSub } from "./participants";
+import { awaitObsValue, subscribeAsync } from "./observables";
+import { ConnectionMsg, Participant, participantsSub } from "./participants";
 import { Scopes } from "./scopes";
 import { Subs, Subscriptions } from "./subscriptions";
 import { Transition, transitionsSub } from "./transitions";
@@ -34,11 +40,10 @@ export class Runloop<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
-  private layers: Layer<Context, Kinds>[] = [];
   private subs = new Subscriptions<Context, Kinds>();
   private evtctx: EventContext<Context, Kinds>;
   private participants = new Map<string, Participant>();
-  private connections = new Subject<Connection>();
+  private connections = new ReplaySubject<ConnectionMsg>();
   private transitions = new Subject<Transition>();
   private scopesSub = new Subject<ScopeUpdate>();
   private attributesSub = new Subject<AttributeUpdate>();
@@ -50,10 +55,11 @@ export class Runloop<
   private scopePromises: Promise<AddScopePayload[]>[] = [];
   private linkPromises: Promise<AddLinkPayload>[] = [];
   private transitionPromises: Promise<AddTransitionPayload>[] = [];
-  // private addTransitionsInputs: TransitionInput[] = [];
   private attributeInputs: SetAttributeInput[] = [];
   private scopes: Scopes<Context, Kinds>;
   private cake: Cake<Context, Kinds>;
+  private running = new BehaviorSubject<boolean>(false);
+  private stopped = false;
 
   constructor(
     private conn: AdminConnection,
@@ -94,7 +100,7 @@ export class Runloop<
       mut
     );
 
-    this.evtctx = new EventContext(this.subs, mut);
+    this.evtctx = new EventContext(this.subs, mut, this.scopes);
     this.cake = new Cake(
       this.evtctx,
       this.scopes.scope.bind(this.scopes),
@@ -104,27 +110,18 @@ export class Runloop<
       this.connections,
       this.transitions
     );
-    this.cake.postCallback = this.postCallback.bind(this);
+    this.cake.postCallback = this.postCallback.bind(this, true);
 
-    const subsSub = subs.subscribe({
-      next: async (subscriber) => {
-        const layer = new Layer(
-          this.evtctx,
-          this.scopes.byKind.bind(this.scopes),
-          this.attributes.attributePeek.bind(this.scopes),
-          this.participants
-        );
-        this.layers.push(layer);
+    const subsSub = subscribeAsync(subs, async (subscriber) => {
+      let listeners: ListenersCollector<Context, Kinds>;
+      if (typeof subscriber === "function") {
+        listeners = new ListenersCollector<Context, Kinds>();
+        subscriber(listeners);
+      } else {
+        listeners = subscriber;
+      }
 
-        if (typeof subscriber === "function") {
-          subscriber(layer.listeners);
-        } else {
-          layer.listeners = subscriber;
-        }
-
-        await this.cake.add(layer.listeners);
-        await this.initLayer(layer);
-      },
+      await this.cake.add(listeners);
     });
 
     let stopSub: Subscription;
@@ -136,32 +133,40 @@ export class Runloop<
     });
   }
 
-  private async initLayer(layer: Layer<Context, Kinds>) {
-    await layer.start();
-
-    // Keep loading until no more subs
-    while (true) {
-      const subs = this.subs.newSubs();
-      if (!subs) {
-        break;
-      }
-      await this.processNewSub(subs);
-    }
-
-    await layer.ready();
-
-    while (true) {
-      const subs = this.subs.newSubs();
-      if (!subs) {
-        break;
-      }
-      await this.processNewSub(subs);
-    }
-
-    layer.postCallback = this.postCallback.bind(this);
+  /**
+   * @internal
+   *
+   * NOTE: For testing purposes only.
+   */
+  get _attributes() {
+    return this.attributes;
   }
 
-  private async postCallback() {
+  /**
+   * @internal
+   *
+   * NOTE: For testing purposes only.
+   */
+  get _scopes() {
+    return this.scopes;
+  }
+
+  /**
+   * @internal
+   *
+   * NOTE: For testing purposes only.
+   */
+  async _postCallback() {
+    return await this.postCallback(true);
+  }
+
+  private async postCallback(final: boolean) {
+    if (this.stopped) {
+      return;
+    }
+
+    this.running.next(true);
+
     const promises: Promise<any>[] = [];
 
     const subs = this.subs.newSubs();
@@ -194,7 +199,6 @@ export class Runloop<
       }
 
       const attrs = Object.values(uniqueAttrs);
-      trace(`setting attributes: ${JSON.stringify(attrs)}`);
 
       promises.push(this.taj.setAttributes(attrs));
       this.attributeInputs = [];
@@ -210,8 +214,18 @@ export class Runloop<
     const finalizer = this.finalizers.shift();
     if (finalizer) {
       await finalizer();
-      await this.postCallback();
+      await this.postCallback(false);
     }
+
+    if (final) {
+      this.running.next(false);
+    }
+  }
+
+  async stop() {
+    await this.cake.stop();
+    await awaitObsValue(this.running, false);
+    this.stopped = true;
   }
 
   addFinalizer(cb: Finalizer) {
@@ -219,7 +233,16 @@ export class Runloop<
   }
 
   async addScopes(inputs: AddScopeInput[]) {
-    const addScopes = this.taj.addScopes(inputs);
+    if (this.stopped) {
+      // warn("addScopes on stopped", inputs);
+
+      return [];
+    }
+
+    const addScopes = this.taj.addScopes(inputs).catch((err) => {
+      warn(err.message);
+      return [];
+    });
     this.scopePromises.push(
       addScopes.then((scopes) => {
         for (const scope of scopes) {
@@ -237,7 +260,6 @@ export class Runloop<
         }
 
         this.donesSub.next();
-        info("DID FINISH");
 
         return scopes;
       })
@@ -247,12 +269,24 @@ export class Runloop<
   }
 
   async addGroups(inputs: AddGroupInput[]) {
+    if (this.stopped) {
+      // warn("addGroups on stopped", inputs);
+
+      return [];
+    }
+
     const addGroups = this.taj.addGroups(inputs);
     this.groupPromises.push(addGroups);
     return addGroups;
   }
 
   async addLinks(inputs: LinkInput[]) {
+    if (this.stopped) {
+      // warn("addLinks on stopped", inputs);
+
+      return [];
+    }
+
     const proms: Promise<AddLinkPayload>[] = [];
     for (const input of inputs) {
       const linkPromise = this.taj.addLink(input);
@@ -264,12 +298,24 @@ export class Runloop<
   }
 
   async addSteps(inputs: AddStepInput[]) {
+    if (this.stopped) {
+      // warn("addSteps on stopped", inputs);
+
+      return [];
+    }
+
     const addSteps = this.taj.addSteps(inputs);
     this.stepPromises.push(addSteps);
     return addSteps;
   }
 
   async addTransitions(inputs: TransitionInput[]) {
+    if (this.stopped) {
+      // warn("addTransitions on stopped", inputs);
+
+      return [];
+    }
+
     const proms: Promise<AddTransitionPayload>[] = [];
     for (const input of inputs) {
       const transitionPromise = this.taj.transition(input);
@@ -317,9 +363,7 @@ export class Runloop<
       return;
     }
 
-    const initProm = this.loadAllScopes(filters);
-
-    let resolve: (value: unknown) => void;
+    let resolve: (value: void) => void;
     const prom = new Promise((r) => (resolve = r));
     this.taj.scopedAttributes(filters).subscribe({
       next: ({ attribute, done }) => {
@@ -341,13 +385,14 @@ export class Runloop<
         }
 
         if (done) {
-          resolve(null);
+          resolve();
           this.donesSub.next();
         }
       },
     });
 
-    await Promise.all([prom, initProm]);
+    // await Promise.all([prom, initProm]);
+    await prom;
   }
 
   private async processNewSub(subs: Subs) {
@@ -373,7 +418,7 @@ export class Runloop<
     }
 
     if (subs.participants) {
-      participantsSub(this.taj, this.connections, this.participants);
+      await participantsSub(this.taj, this.connections, this.participants);
     }
 
     if (subs.transitions.length > 0) {
