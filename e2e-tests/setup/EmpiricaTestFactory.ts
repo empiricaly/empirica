@@ -1,6 +1,7 @@
 import { promises as fs, constants } from "fs";
 import * as path from "path";
 import * as uuid from "uuid";
+import * as toml from "toml";
 import * as childProcess from "node:child_process";
 
 import * as tar from "tar";
@@ -11,9 +12,16 @@ import {
   parseBuild,
   parseVersion,
 } from "../utils/versionUtils";
+import { AdminUser, EmpricaConfigToml } from "../utils/adminUtils";
 
 const EMPIRICA_CMD = "empirica";
 const EMPIRICA_CONFIG_RELATIVE_PATH = path.join(".empirica", "local");
+
+const EMPIRICA_COMMANDS = {
+  SERVE: "serve",
+  BUNDLE: "bundle",
+  VERSION: "version",
+};
 
 const EMPIRICA_CORE_PACKAGE_PATH = path.join(
   __dirname,
@@ -26,9 +34,15 @@ const EMPIRICA_CORE_PACKAGE_PATH = path.join(
 
 const CACHE_FOLDER = "cache";
 
+export enum START_MODES {
+  DEV = "DEV",
+  BUNDLE = "BUNDLE",
+}
+
 interface TestFactoryParams {
-  shouldBuildCorePackage: boolean;
-  shoudLinkCoreLib: boolean;
+  shouldBuildCorePackage?: boolean;
+  shoudLinkCoreLib?: boolean;
+  startMode: START_MODES;
 }
 
 export default class EmpiricaTestFactory {
@@ -42,6 +56,8 @@ export default class EmpiricaTestFactory {
 
   private versionInfo: EmpiricaVersion;
 
+  private startMode: START_MODES;
+
   private empiricaProcess: childProcess.ChildProcess;
 
   constructor(params?: TestFactoryParams) {
@@ -49,6 +65,7 @@ export default class EmpiricaTestFactory {
     this.projectDirName = `test-experiment-${this.uniqueProjectId}`;
     this.shouldBuildCorePackage = params?.shouldBuildCorePackage || false;
     this.shoudLinkCoreLib = params?.shoudLinkCoreLib || false;
+    this.startMode = params?.startMode || START_MODES.DEV;
   }
 
   public async init() {
@@ -77,11 +94,18 @@ export default class EmpiricaTestFactory {
       await this.createProjectCache();
     }
 
+    console.log("credentias", await this.getAdminCredentials());
     if (this.shoudLinkCoreLib) {
       await this.linkCorePackage();
     }
 
-    await this.startEmpiricaProject();
+    if (this.startMode === START_MODES.DEV) {
+      await this.startEmpiricaProject();
+    } else {
+      await this.bundleEmpiricaProject();
+
+      await this.startBundledEmpiricaProject();
+    }
   }
 
   async teardown() {
@@ -124,7 +148,7 @@ export default class EmpiricaTestFactory {
   private async checkEmpricaVersion() {
     const versionOutput = await executeCommand({
       command: EMPIRICA_CMD,
-      params: ["version"],
+      params: [EMPIRICA_COMMANDS.VERSION],
       hideOutput: true,
     });
 
@@ -212,6 +236,67 @@ export default class EmpiricaTestFactory {
       command: "npm",
       params: ["link", "@empirica/core"],
       cwd: path.join(this.getProjectId(), "client"),
+    });
+  }
+
+  private getEmpiricaConfigTomlPath(projectId: string) {
+    return path.join(__dirname, "..", projectId, ".empirica", "empirica.toml");
+  }
+
+  public async getAdminCredentials(): Promise<AdminUser> {
+    const configPath = this.getEmpiricaConfigTomlPath(this.getProjectId());
+    const configFile = await fs.readFile(configPath, {
+      encoding: "utf8",
+    });
+
+    const config = toml.parse(configFile) as EmpricaConfigToml;
+
+    const adminUser = config.tajriba.auth.users[0];
+
+    return {
+      username: adminUser.username,
+      password: adminUser.password,
+    };
+  }
+
+  private async bundleEmpiricaProject() {
+    console.log(`Starting bundled project ${this.getProjectId()}`);
+
+    await executeCommand({
+      command: EMPIRICA_CMD,
+      params: [EMPIRICA_COMMANDS.BUNDLE],
+      cwd: this.getProjectId(),
+    });
+
+    console.log(`Finished bundling project.`);
+  }
+
+  private async startBundledEmpiricaProject() {
+    console.log(`Starting bundled project ${this.getProjectId()}`);
+
+    return new Promise((resolve) => {
+      const archiveName = `${this.getProjectId()}.tar.zst`;
+
+      this.empiricaProcess = childProcess.spawn(EMPIRICA_CMD, [
+        EMPIRICA_COMMANDS.SERVE,
+        archiveName,
+      ]);
+
+      resolve(true);
+
+      this.empiricaProcess?.stdout?.on("data", (data) => {
+        console.log(`${data}`);
+      });
+
+      this.empiricaProcess.stderr?.on("data", (data) => {
+        console.error(`stderr: ${data}`);
+      });
+
+      this.empiricaProcess?.on("close", (code) => {
+        console.log(
+          `"${EMPIRICA_CMD} ${EMPIRICA_COMMANDS.SERVE}" process exited with code ${code}`
+        );
+      });
     });
   }
 
