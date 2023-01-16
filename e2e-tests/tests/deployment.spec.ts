@@ -18,7 +18,7 @@ test.beforeAll(async () => {
 });
 
 test.afterAll(async () => {
-  // await testFactory.teardown();
+  await testFactory.teardown();
 });
 
 test.describe("Deployment in Empirica", () => {

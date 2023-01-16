@@ -117,17 +117,9 @@ export default class BatchesAdminPage extends BasePage {
   }
 
   public async open() {
-    await this.initContext();
+    await this.init();
 
     await this.page.goto(`${this.baseUrl}/admin`);
-
-    const batchesSidebarButton = await this.getBatchesLinkInSidebar();
-
-    await batchesSidebarButton.click();
-
-    const newBatchButton = await this.getNewBatchButton();
-
-    await expect(newBatchButton).toBeVisible();
   }
 
   public async createBatch({

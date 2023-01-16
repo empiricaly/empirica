@@ -13,9 +13,11 @@ import {
   parseVersion,
 } from "../utils/versionUtils";
 import { AdminUser, EmpricaConfigToml } from "../utils/adminUtils";
+import createEmpiricaConfigToml from "../utils/configUtils";
 
 const EMPIRICA_CMD = "empirica";
 const EMPIRICA_CONFIG_RELATIVE_PATH = path.join(".empirica", "local");
+const EMPIRICA_BUILD = "branch: main";
 
 const EMPIRICA_COMMANDS = {
   SERVE: "serve",
@@ -94,7 +96,6 @@ export default class EmpiricaTestFactory {
       await this.createProjectCache();
     }
 
-    console.log("credentias", await this.getAdminCredentials());
     if (this.shoudLinkCoreLib) {
       await this.linkCorePackage();
     }
@@ -134,6 +135,9 @@ export default class EmpiricaTestFactory {
     return executeCommand({
       command: EMPIRICA_CMD,
       params: ["create", this.projectDirName],
+      env: {
+        EMPIRICA_BUILD,
+      },
     });
   }
 
@@ -150,6 +154,9 @@ export default class EmpiricaTestFactory {
       command: EMPIRICA_CMD,
       params: [EMPIRICA_COMMANDS.VERSION],
       hideOutput: true,
+      env: {
+        EMPIRICA_BUILD,
+      },
     });
 
     if (typeof versionOutput === "string") {
@@ -185,10 +192,20 @@ export default class EmpiricaTestFactory {
 
       await fs.mkdir(outputDir);
 
+      const newEmpiricaConfig = createEmpiricaConfigToml(this.getProjectId(), {
+        username: uuid.v4(),
+        password: uuid.v4(),
+      });
+
       await tar.x({
         file: this.getCacheFilePath(),
         cwd: outputDir,
       });
+
+      await fs.writeFile(
+        this.getEmpiricaConfigTomlPath(this.getProjectId()),
+        newEmpiricaConfig
+      );
 
       console.log(`Extracted cache to "${outputDir}" successfully`);
     } catch (e) {
@@ -266,21 +283,33 @@ export default class EmpiricaTestFactory {
       command: EMPIRICA_CMD,
       params: [EMPIRICA_COMMANDS.BUNDLE],
       cwd: this.getProjectId(),
+      env: {
+        EMPIRICA_BUILD,
+      },
     });
 
     console.log(`Finished bundling project.`);
   }
 
   private async startBundledEmpiricaProject() {
-    console.log(`Starting bundled project ${this.getProjectId()}`);
+    console.log(
+      `Starting project "${this.getProjectId()}" in the bundled mode`
+    );
 
     return new Promise((resolve) => {
       const archiveName = `${this.getProjectId()}.tar.zst`;
 
-      this.empiricaProcess = childProcess.spawn(EMPIRICA_CMD, [
-        EMPIRICA_COMMANDS.SERVE,
-        archiveName,
-      ]);
+      this.empiricaProcess = childProcess.spawn(
+        EMPIRICA_CMD,
+        [EMPIRICA_COMMANDS.SERVE, archiveName],
+        {
+          env: {
+            ...process.env,
+            EMPIRICA_BUILD,
+          },
+          cwd: path.join(__dirname, "..", this.getProjectId()),
+        }
+      );
 
       resolve(true);
 
@@ -301,11 +330,15 @@ export default class EmpiricaTestFactory {
   }
 
   private async startEmpiricaProject() {
-    console.log(`Starting project ${this.getProjectId()}`);
+    console.log(`Starting project "${this.getProjectId()}" in dev mode`);
 
     return new Promise((resolve) => {
       this.empiricaProcess = childProcess.spawn(EMPIRICA_CMD, {
         cwd: this.getProjectId(),
+        env: {
+          ...process.env,
+          EMPIRICA_BUILD,
+        },
       });
 
       resolve(true);

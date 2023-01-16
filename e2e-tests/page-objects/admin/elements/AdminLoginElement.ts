@@ -4,15 +4,15 @@ import BasePageElement from "../../BasePageElement";
 
 export default class AdminLoginElement extends BasePageElement {
   getUsernameElement() {
-    return this.page.locator('[id="playerID"]');
+    return this.page.locator('[data-test="usernameInput"]');
   }
 
   getPasswordElement() {
-    return this.page.locator('[id="playerID"]');
+    return this.page.locator('[data-test="passwordInput"]');
   }
 
   getEnterButtonElement() {
-    return this.page.locator('button[type="submit"]');
+    return this.page.locator('button[data-test="signInButton"]');
   }
 
   public async login({ username, password }: AdminUser) {
