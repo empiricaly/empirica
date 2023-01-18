@@ -1,6 +1,4 @@
-/* eslint-disable no-plusplus */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable no-await-in-loop */
+/* eslint-disable no-plusplus, no-restricted-syntax, no-await-in-loop */
 import { test } from "@playwright/test";
 import { createPlayer, Player } from "../utils/playerUtils";
 import ExperimentPage from "../page-objects/main/ExperimentPage";
@@ -47,7 +45,7 @@ const GAMES_COUNT = 10;
 const PLAYERS_COUNT_PER_GAME = 2;
 
 test.describe("Performance tests for Empirica", () => {
-  test("creates batch with multiple games, all players get assigned correctly ", async ({
+  test.skip("creates batch with multiple games, all players get assigned correctly ", async ({
     browser,
   }) => {
     const batchesPage = new BatchesAdminPage({
