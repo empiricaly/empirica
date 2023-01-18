@@ -45,7 +45,7 @@ const GAMES_COUNT = 10;
 const PLAYERS_COUNT_PER_GAME = 2;
 
 test.describe("Performance tests for Empirica", () => {
-  test.skip("creates batch with multiple games, all players get assigned correctly ", async ({
+  test.skip("creates batch with multiple games, all players get assigned correctly @performance", async ({
     browser,
   }) => {
     const batchesPage = new BatchesAdminPage({
