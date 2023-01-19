@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --grep-invert @performance",
+    "test:e2e:perf": "playwright test --grep @performance",
     "test:e2e:trace": "playwright test --trace on",
     "lint": "eslint tests/**/*.ts page-objects/**/*.ts utils/**/*.ts setup/**/*.ts"
   },
