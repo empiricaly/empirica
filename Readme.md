@@ -1,7 +1,6 @@
 # Empirica v2
 
-Empirica v2 is currently in beta and ready for testing. We do not recommend
-building new experiments with v2 that need to run before June 2022.
+Empirica v2 is currently released and ready for creating experiments.
 We will be supporting Empirica v1 until December 2022.
 
 # Requirements
