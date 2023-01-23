@@ -1,5 +1,6 @@
-name: Release
+name: Release packages
 
+on: [pull_request]
 # on:
 #   push:
 #     branches:
