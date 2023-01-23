@@ -1,15 +1,16 @@
 {
   "name": "empirica-monorepo",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "Monorepo for Empirica v2",
   "directories": {
     "lib": "lib"
   },
   "scripts": {
+    "release:core": "cd ./lib/@empirica/core && npm release",
     "bump": "changeset version",
     "changeset": "changeset"
   },
-  "workspaces": [ "internal", "lib/@empirica/core" ],
+  "workspaces": [ "e2e-tests", "lib/@empirica/core" ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/empiricaly/empirica.git"

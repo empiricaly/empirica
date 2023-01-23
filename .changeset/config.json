@@ -3,8 +3,7 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [[
-    "@empirica/core",
-    "empirica-server"
+    "@empirica/core"
   ]],
   "linked": [],
   "access": "public",

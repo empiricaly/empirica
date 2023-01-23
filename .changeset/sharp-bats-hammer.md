@@ -1,6 +1,5 @@
 ---
-"empirica-server": major
-"@empirica/core": major
+"@empirica/core": patch
 ---
 
 Release of v1
