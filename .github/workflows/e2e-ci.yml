@@ -4,6 +4,8 @@ jobs:
   tests_e2e:
     name: Run end-to-end tests
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.29.0-focal
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -12,9 +14,6 @@ jobs:
         run: curl https://get.empirica.dev | sh
       - name: install dependencies
         run: npm ci
-      - name: install playwright browsers
-        working-directory: ./e2e-tests
-        run: npm run install_browsers --verbose
       - name: install @empirica core dependencies
         working-directory: ./lib/@empirica/core
         run: npm ci
