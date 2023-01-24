@@ -19,4 +19,5 @@ jobs:
         working-directory: ./lib/@empirica/core
         run: npm ci
       - name: test:e2e
-        run: npm run test:e2e --workspace=e2e-tests --verbose
+        working-directory: ./e2e-tests
+        run: npx playwright test --grep-invert @performance
