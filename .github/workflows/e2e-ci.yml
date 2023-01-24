@@ -17,5 +17,5 @@ jobs:
       - name: install @empirica core dependencies
         working-directory: ./lib/@empirica/core
         run: npm ci
-      - name: npm run test:e2e
-        run: npm run test:e2e
+      - name: test:e2e
+        run: npm run test:e2e --workspace=e2e-tests

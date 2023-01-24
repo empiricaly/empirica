@@ -8,7 +8,6 @@
   "scripts": {
     "release:core": "cd ./lib/@empirica/core && npm release",
     "install_browsers": "playwright install --with-deps",
-    "test:e2e": "playwright test --grep-invert @performance",
     "bump": "changeset version",
     "changeset": "changeset"
   },
