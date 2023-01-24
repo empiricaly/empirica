@@ -7,6 +7,7 @@
   },
   "scripts": {
     "release:core": "cd ./lib/@empirica/core && npm release",
+    "install_browsers": "playwright install --with-deps",
     "bump": "changeset version",
     "changeset": "changeset"
   },

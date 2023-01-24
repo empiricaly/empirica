@@ -13,7 +13,6 @@ jobs:
       - name: install dependencies
         run: npm ci
       - name: install playwright browsers
-        working-directory: ./e2e-tests
         run: npm run install_browsers
       - name: install @empirica core dependencies
         working-directory: ./lib/@empirica/core
