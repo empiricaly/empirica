@@ -11,7 +11,6 @@ jobs:
         working-directory: ./e2e-tests
         run: curl https://get.empirica.dev | sh
       - name: install dependencies
-        working-directory: ./e2e-tests
         run: npm ci
       - name: install playwright browsers
         working-directory: ./e2e-tests
