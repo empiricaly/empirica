@@ -12,13 +12,11 @@ jobs:
         run: curl https://get.empirica.dev | sh
       - name: install dependencies
         working-directory: ./e2e-tests
-        run: npm ci
-      - name: install playwright browsers
-        working-directory: ./e2e-tests
-        run: npx playwright install --with-deps
+        run: npm ci --workspaces=false
       - name: install @empirica core dependencies
         working-directory: ./lib/@empirica/core
         run: npm ci
-      - name: npm run test:e2e
-        working-directory: ./e2e-tests
-        run: npm run test:e2e
+      - name: install playwright browsers
+        run: npm run install_browsers -w ./e2e-tests
+      - name: test:e2e
+        run: npm run test:e2e -w ./e2e-tests

@@ -1,5 +1,6 @@
 import { promises as fs, constants } from "fs";
 import * as path from "path";
+import * as os from "os";
 import * as uuid from "uuid";
 import * as childProcess from "node:child_process";
 
@@ -36,6 +37,8 @@ export default class EmpiricaTestFactory {
 
   private projectDirName: string;
 
+  private rootDirPath: string;
+
   private shouldBuildCorePackage: boolean;
 
   private shoudLinkCoreLib: boolean;
@@ -59,6 +62,8 @@ export default class EmpiricaTestFactory {
       this.versionInfo.version,
       this.versionInfo.build
     );
+
+    this.rootDirPath = await this.createRootDirectory();
 
     const cacheExists = await this.checkIfCacheExists();
 
@@ -90,7 +95,7 @@ export default class EmpiricaTestFactory {
   }
 
   async fullCleanup() {
-    await fs.rm(this.projectDirName, { recursive: true });
+    await fs.rm(this.getProjectFullPath(), { recursive: true });
   }
 
   private getProjectId() {
@@ -99,7 +104,7 @@ export default class EmpiricaTestFactory {
 
   async removeConfigFolder() {
     const configDir = path.join(
-      this.projectDirName,
+      this.getProjectFullPath(),
       EMPIRICA_CONFIG_RELATIVE_PATH
     );
 
@@ -107,14 +112,29 @@ export default class EmpiricaTestFactory {
   }
 
   private createEmpiricaProject() {
+    console.log("this.getRootDirectory()", this.getRootDirectory());
+
     return executeCommand({
       command: EMPIRICA_CMD,
       params: ["create", this.projectDirName],
+      cwd: this.getRootDirectory(),
     });
   }
 
   private getCacheFilename() {
     return `cache-${this.versionInfo.version}-${this.versionInfo.build}-${this.versionInfo.branchName}.tar.gz`;
+  }
+
+  private async createRootDirectory() {
+    return fs.mkdtemp(path.join(os.tmpdir(), "empirica-test"));
+  }
+
+  private getRootDirectory() {
+    return this.rootDirPath;
+  }
+
+  private getProjectFullPath() {
+    return path.join(this.rootDirPath, this.getProjectId());
   }
 
   private getCacheFilePath() {
@@ -157,7 +177,7 @@ export default class EmpiricaTestFactory {
     );
 
     try {
-      const outputDir = path.join(__dirname, "..", this.getProjectId());
+      const outputDir = path.join(this.getRootDirectory(), this.getProjectId());
 
       await fs.mkdir(outputDir);
 
@@ -182,7 +202,7 @@ export default class EmpiricaTestFactory {
     await tar.c(
       {
         gzip: true,
-        cwd: path.join(__dirname, "..", this.getProjectId()),
+        cwd: this.getProjectFullPath(),
         file: this.getCacheFilePath(),
       },
       ["."]
@@ -220,7 +240,7 @@ export default class EmpiricaTestFactory {
 
     return new Promise((resolve) => {
       this.empiricaProcess = childProcess.spawn(EMPIRICA_CMD, {
-        cwd: this.getProjectId(),
+        cwd: this.getProjectFullPath(),
       });
 
       resolve(true);
