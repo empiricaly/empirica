@@ -202,7 +202,7 @@ export default class EmpiricaTestFactory {
     await tar.c(
       {
         gzip: true,
-        cwd: path.join(__dirname, "..", this.getProjectId()),
+        cwd: this.getProjectFullPath(),
         file: this.getCacheFilePath(),
       },
       ["."]
