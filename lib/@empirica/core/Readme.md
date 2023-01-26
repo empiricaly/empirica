@@ -3,6 +3,8 @@
 Empirica v2 is currently released and ready for creating experiments.
 We will be supporting Empirica v1 until December 2022.
 
+The documentation is available at https://docs.empirica.ly/
+
 # Requirements
 
 The current requirements for v2 are:
