@@ -33,6 +33,7 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create release tag
+        if: steps.changesets.outputs.published == 'true'
         id: create_tag
         uses: jaywcjlove/create-tag-action@v1.2.0
         with:
