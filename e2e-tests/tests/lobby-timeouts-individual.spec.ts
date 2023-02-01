@@ -23,7 +23,7 @@ test.afterAll(async () => {
 });
 
 test.describe("Lobby timeouts in Empirica", () => {
-  test.skip("create configuration with a individual lobby timeout", async ({
+  test("create configuration with a individual lobby timeout", async ({
     browser,
   }) => {
     const batchesPage = new BatchesAdminPage({
