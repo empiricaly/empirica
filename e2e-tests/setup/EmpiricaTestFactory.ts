@@ -90,8 +90,12 @@ export default class EmpiricaTestFactory {
   }
 
   async teardown() {
+    console.log(`Teardown, project id: ${this.getProjectId()}`);
+
     await this.stopEmpiricaProject();
     await this.fullCleanup();
+
+    console.log("Cleanup finished");
   }
 
   async fullCleanup() {
@@ -260,12 +264,16 @@ export default class EmpiricaTestFactory {
   }
 
   private async stopEmpiricaProject() {
+    console.log("Trying to kill Empirica process");
+
     return new Promise((resolve) => {
       try {
         this.empiricaProcess.stdout.destroy();
         this.empiricaProcess.stderr.destroy();
 
         this.empiricaProcess.kill();
+
+        console.log("Killed Empirica process");
 
         resolve(true);
       } catch (e) {
