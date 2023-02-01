@@ -48,7 +48,7 @@ test.describe("Performance tests for Empirica", () => {
   test.skip("creates batch with multiple games, all players get assigned correctly @performance", async ({
     browser,
   }) => {
-    const batchesPage = new BatchesAdminPage({
+    const batchesPage = testFactory.createPage(BatchesAdminPage,{
       browser,
       baseUrl,
     });

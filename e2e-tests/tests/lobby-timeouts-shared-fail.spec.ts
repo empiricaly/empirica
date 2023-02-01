@@ -32,7 +32,7 @@ test.describe("Lobby timeouts in Empirica", () => {
       baseUrl,
     });
 
-    const lobbiesPage = testFactory.createPage(LobbiesAdminPage, {
+    const lobbiesPage = testFactory.createPage(LobbiesAdminPage,{
       browser,
       baseUrl,
     });

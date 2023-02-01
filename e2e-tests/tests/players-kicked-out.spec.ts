@@ -24,7 +24,7 @@ test.describe("Assignments in Empirica", () => {
   test.skip("creates a simple batch with 2 games for solo players, stop batch, players get kicked out", async ({
     browser,
   }) => {
-    const batchesPage = new BatchesAdminPage({
+    const batchesPage = testFactory.createPage(BatchesAdminPage,{
       browser,
       baseUrl,
     });
