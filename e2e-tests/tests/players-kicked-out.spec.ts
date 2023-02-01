@@ -82,7 +82,5 @@ test.describe("Assignments in Empirica", () => {
       batchNumber: 0,
       status: BatchStatus.Terminated,
     });
-
-    await Promise.all([batchesPage.close(), player1Page.close()]);
   });
 });

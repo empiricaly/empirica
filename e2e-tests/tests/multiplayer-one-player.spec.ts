@@ -74,11 +74,5 @@ test.describe("Empirica in multi-player mode", () => {
     await player1Page.checkIfFinished();
 
     await player2Page.checkIfNoExperimentsVisible();
-
-    await Promise.all([
-      player1Page.close(),
-      player2Page.close(),
-      batchesPage.close(),
-    ]);
   });
 });
