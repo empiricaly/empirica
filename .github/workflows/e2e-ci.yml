@@ -20,7 +20,7 @@ jobs:
       
       - name: Get installed Playwright version
         id: playwright-version
-        run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').dependencies['@playwright/test'].version)")" >> $GITHUB_ENV
+        run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")"
       - name: Cache playwright binaries
         uses: actions/cache@v3
         id: playwright-cache
@@ -34,7 +34,6 @@ jobs:
       - name: test:e2e
         run: npm run test:e2e -w ./e2e-tests
       - uses: actions/upload-artifact@v2
-
         if: always()
         with:
           name: playwright-test-results

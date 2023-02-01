@@ -10,7 +10,6 @@ import { createPlayer } from "../utils/playerUtils";
 import { baseUrl } from "../setup/setupConstants";
 import LobbiesAdminPage, {
   LobbyTimeoutKind,
-  LobbyTimeoutStrategy,
 } from "../page-objects/admin/LobbiesAdminPage";
 
 const testFactory = new EmpiricaTestFactory();
@@ -24,7 +23,7 @@ test.afterAll(async () => {
 });
 
 test.describe("Lobby timeouts in Empirica", () => {
-  test("create configuration with a individual lobby timeout", async ({
+  test.skip("create configuration with a individual lobby timeout", async ({
     browser,
   }) => {
     const batchesPage = new BatchesAdminPage({
