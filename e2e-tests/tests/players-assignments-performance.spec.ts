@@ -88,5 +88,7 @@ test.describe("Performance tests for Empirica", () => {
 
       await experimentPage.checkIfJellyBeansVisible();
     }
+
+    await Promise.all([batchesPage.close()]);
   });
 });

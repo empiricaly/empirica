@@ -50,4 +50,8 @@ export default class BasePage implements BasePageInterface {
       await this.page.goto(this.baseUrl);
     }
   }
+
+  public async close() {
+    await this.context.close();
+  }
 }

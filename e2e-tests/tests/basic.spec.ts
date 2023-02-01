@@ -26,6 +26,8 @@ test.describe("Empirica in single player mode", () => {
     });
 
     await experimentPage.open();
+
+    await Promise.all([experimentPage.close()]);
   });
 
   test("Bathes page loads successfully", async ({ browser }) => {
@@ -35,6 +37,8 @@ test.describe("Empirica in single player mode", () => {
     });
 
     await batchesAdminPage.open();
+
+    await Promise.all([batchesAdminPage.close()]);
   });
 
   test("creates batch with 1 game with one player, into view, player passes through the game", async ({
@@ -94,5 +98,7 @@ test.describe("Empirica in single player mode", () => {
     });
 
     await experimentPage.checkIfFinished();
+
+    await Promise.all([experimentPage.close(), batchesPage.close()]);
   });
 });
