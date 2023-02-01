@@ -5,9 +5,14 @@ export type BasePageConstructor = {
   baseUrl?: string;
 };
 
+export interface BasePageConstructorInterface {
+  new (options: BasePageConstructor): BasePage;
+}
+
 export interface BasePageInterface {
   open: () => Promise<void>;
   init: () => Promise<void>;
+  close: () => Promise<void>;
 }
 
 export default class BasePage implements BasePageInterface {

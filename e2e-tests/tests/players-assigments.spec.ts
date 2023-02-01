@@ -43,12 +43,12 @@ test.describe("Assignments in Empirica", () => {
 
     await batchesPage.startGame();
 
-    const player1Page = new ExperimentPage({
+    const player1Page = testFactory.createPage(ExperimentPage, {
       browser,
       baseUrl,
     });
 
-    const player2Page = new ExperimentPage({
+    const player2Page = testFactory.createPage(ExperimentPage, {
       browser,
       baseUrl,
     });

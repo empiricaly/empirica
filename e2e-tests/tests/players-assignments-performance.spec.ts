@@ -20,7 +20,7 @@ test.afterAll(async () => {
 });
 
 async function addPlayerToGame({ browser, player }) {
-  const experimentPage = new ExperimentPage({
+  const experimentPage = testFactory.createPage(ExperimentPage, {
     browser,
     baseUrl,
   });

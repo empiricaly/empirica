@@ -64,7 +64,7 @@ test.describe("Lobby timeouts in Empirica", () => {
 
     await batchesPage.startGame();
 
-    const player1Page = new ExperimentPage({
+    const player1Page = testFactory.createPage(ExperimentPage, {
       browser,
       baseUrl,
     });
@@ -90,11 +90,5 @@ test.describe("Lobby timeouts in Empirica", () => {
     });
 
     await player1Page.checkIfFinished();
-
-    await Promise.all([
-      player1Page.close(),
-      batchesPage.close(),
-      lobbiesPage.close(),
-    ]);
   });
 });

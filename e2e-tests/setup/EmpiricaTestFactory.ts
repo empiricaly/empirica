@@ -1,8 +1,11 @@
+/* eslint-disable   */
+/* eslint-disable */
 import { promises as fs, constants } from "fs";
 import * as path from "path";
 import * as os from "os";
 import * as uuid from "uuid";
 import * as childProcess from "node:child_process";
+import { type Page, type Browser, type BrowserContext } from "@playwright/test";
 
 import * as tar from "tar";
 import executeCommand from "../utils/launchProcess";
@@ -12,6 +15,8 @@ import {
   parseBuild,
   parseVersion,
 } from "../utils/versionUtils";
+import BasePage from "../page-objects/BasePage";
+import PageManager from "./PageManager";
 
 const EMPIRICA_CMD = "empirica";
 const EMPIRICA_CONFIG_RELATIVE_PATH = path.join(".empirica", "local");
@@ -47,11 +52,14 @@ export default class EmpiricaTestFactory {
 
   private empiricaProcess: childProcess.ChildProcess;
 
+  private pageManager: PageManager;
+
   constructor(params?: TestFactoryParams) {
     this.uniqueProjectId = uuid.v4();
     this.projectDirName = `test-experiment-${this.uniqueProjectId}`;
     this.shouldBuildCorePackage = params?.shouldBuildCorePackage || false;
     this.shoudLinkCoreLib = params?.shoudLinkCoreLib || false;
+    this.pageManager = new PageManager();
   }
 
   public async init() {
@@ -94,6 +102,7 @@ export default class EmpiricaTestFactory {
 
     await this.stopEmpiricaProject();
     await this.fullCleanup();
+    await this.pageManager.cleanup();
 
     console.log("Cleanup finished");
   }
@@ -143,6 +152,10 @@ export default class EmpiricaTestFactory {
 
   private getCacheFilePath() {
     return path.join(CACHE_FOLDER, this.getCacheFilename());
+  }
+
+  public createPage<T extends BasePage>(pageClass: new (...a: any[]) => T, options: { browser: Browser, baseUrl?: string}) {
+    return this.pageManager.createPage<T>(pageClass, options);
   }
 
   private async checkEmpricaVersion() {

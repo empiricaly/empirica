@@ -33,7 +33,6 @@ test.describe("Assignments in Empirica", () => {
     const player2 = createPlayer();
     const gamesCount = 2;
     const gameMode = GamesTypeTreatment.Solo;
-    const batchNumber = 0;
 
     await batchesPage.open();
 
@@ -44,12 +43,12 @@ test.describe("Assignments in Empirica", () => {
 
     await batchesPage.startGame();
 
-    const player1Page = new ExperimentPage({
+    const player1Page = testFactory.createPage(ExperimentPage, {
       browser,
       baseUrl,
     });
 
-    const player2Page = new ExperimentPage({
+    const player2Page = testFactory.createPage(ExperimentPage, {
       browser,
       baseUrl,
     });
