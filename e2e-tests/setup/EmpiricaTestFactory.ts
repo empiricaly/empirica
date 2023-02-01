@@ -261,9 +261,20 @@ export default class EmpiricaTestFactory {
 
   private async stopEmpiricaProject() {
     return new Promise((resolve) => {
-      this.empiricaProcess.kill();
+      try {
+        this.empiricaProcess.stdout.destroy();
+        this.empiricaProcess.stderr.destroy();
 
-      resolve(true);
+        this.empiricaProcess.kill();
+
+        resolve(true);
+      } catch (e) {
+        console.error("Failed to kill Empirica process", e);
+
+        process.kill(this.empiricaProcess.pid, "SIGKILL");
+
+        resolve(false);
+      }
     });
   }
 }
