@@ -105,12 +105,5 @@ test.describe("Lobby timeouts in Empirica", () => {
     });
 
     await player1Page.checkIfFinished();
-
-    await Promise.all([
-      player1Page.close(),
-      player2Page.close(),
-      batchesPage.close(),
-      lobbiesPage.close(),
-    ]);
   });
 });
