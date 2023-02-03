@@ -139,7 +139,8 @@ export default class EmpiricaTestFactory {
   }
 
   private async createRootDirectory() {
-    return fs.mkdtemp(path.join(os.tmpdir(), "empirica-test"));
+    // return fs.mkdtemp(path.join(os.tmpdir(), "empirica-test"));
+    return fs.mkdtemp(path.join(__dirname,"..", "..","..", "empirica-test-"));
   }
 
   private getRootDirectory() {
