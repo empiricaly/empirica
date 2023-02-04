@@ -35,6 +35,7 @@ const CACHE_FOLDER = "cache";
 interface TestFactoryParams {
   shouldBuildCorePackage: boolean;
   shoudLinkCoreLib: boolean;
+  shouldUseCache: boolean;
 }
 
 export default class EmpiricaTestFactory {
@@ -292,7 +293,7 @@ export default class EmpiricaTestFactory {
         // this.empiricaProcess.kill();
         process.kill(this.empiricaProcess.pid, "SIGKILL");
 
-        // await killPortProcess(8844);
+        childProcess.exec("kill -9 $(lsof -t -i:8844)");
 
         console.log("Killed Empirica process");
 
