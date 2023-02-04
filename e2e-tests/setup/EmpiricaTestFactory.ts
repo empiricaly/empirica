@@ -272,7 +272,11 @@ export default class EmpiricaTestFactory {
       });
 
       this.empiricaProcess?.on("close", (code) => {
-        console.log(`"${EMPIRICA_CMD}" process exited with code ${code}`);
+        console.log(`"${EMPIRICA_CMD}" process closed with code ${code}`);
+      });
+
+      this.empiricaProcess?.on("exit", (code, signal) => {
+        console.log(`"${EMPIRICA_CMD}" process exited with code ${code}, signal "${signal}"`);
       });
     });
   }
@@ -280,12 +284,15 @@ export default class EmpiricaTestFactory {
   private async stopEmpiricaProject() {
     console.log("Trying to kill Empirica process");
 
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       try {
         this.empiricaProcess.stdout.destroy();
         this.empiricaProcess.stderr.destroy();
 
-        this.empiricaProcess.kill();
+        // this.empiricaProcess.kill();
+        process.kill(this.empiricaProcess.pid, "SIGKILL");
+
+        // await killPortProcess(8844);
 
         console.log("Killed Empirica process");
 
@@ -293,8 +300,7 @@ export default class EmpiricaTestFactory {
       } catch (e) {
         console.error("Failed to kill Empirica process", e);
 
-        process.kill(this.empiricaProcess.pid, "SIGKILL");
-
+        
         resolve(false);
       }
     });
