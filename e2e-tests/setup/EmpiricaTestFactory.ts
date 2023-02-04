@@ -1,5 +1,3 @@
-/* eslint-disable   */
-/* eslint-disable */
 import { promises as fs, constants } from "fs";
 import * as path from "path";
 import * as os from "os";
@@ -35,7 +33,6 @@ const CACHE_FOLDER = "cache";
 interface TestFactoryParams {
   shouldBuildCorePackage: boolean;
   shoudLinkCoreLib: boolean;
-  shouldUseCache: boolean;
 }
 
 export default class EmpiricaTestFactory {
@@ -290,7 +287,6 @@ export default class EmpiricaTestFactory {
         this.empiricaProcess.stdout.destroy();
         this.empiricaProcess.stderr.destroy();
 
-        // this.empiricaProcess.kill();
         process.kill(this.empiricaProcess.pid, "SIGKILL");
 
         childProcess.exec("kill -9 $(lsof -t -i:8844)");
@@ -300,7 +296,6 @@ export default class EmpiricaTestFactory {
         resolve(true);
       } catch (e) {
         console.error("Failed to kill Empirica process", e);
-
         
         resolve(false);
       }
