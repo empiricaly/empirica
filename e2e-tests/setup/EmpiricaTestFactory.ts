@@ -287,8 +287,14 @@ export default class EmpiricaTestFactory {
         this.empiricaProcess.stdout.destroy();
         this.empiricaProcess.stderr.destroy();
 
+        // This would send a kill signal to the child process
+        // but it doesn't verify that the process has been really killed
+        // see https://nodejs.org/api/child_process.html#subprocesskilled for details
+        // and also: https://github.com/nodejs/node/issues/27490
         process.kill(this.empiricaProcess.pid, "SIGKILL");
 
+        // Sometimes, the process is not killed by the command above
+        // so we might need to call the kill cmd in the system
         childProcess.exec("kill -9 $(lsof -t -i:8844)");
 
         console.log("Killed Empirica process");
