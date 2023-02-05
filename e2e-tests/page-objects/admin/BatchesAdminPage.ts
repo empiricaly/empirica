@@ -121,6 +121,8 @@ export default class BatchesAdminPage extends BasePage {
     gamesCount: number;
     lobbyConfigrationName?: string;
   }) {
+    await this.page.waitForTimeout(200);
+
     await this.getNewBatchButton().click();
 
     await this.selectTreatmeant(mode);
