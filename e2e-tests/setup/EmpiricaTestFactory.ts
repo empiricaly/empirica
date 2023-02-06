@@ -1,4 +1,4 @@
-import { promises as fs, constants } from "fs";
+import { promises as fs, constants, existsSync } from "fs";
 import * as path from "path";
 import * as os from "os";
 import * as uuid from "uuid";
@@ -18,10 +18,11 @@ import { AdminUser, EmpricaConfigToml } from "../utils/adminUtils";
 import createEmpiricaConfigToml from "../utils/configUtils";
 import BasePage from "../page-objects/BasePage";
 import PageManager from "./PageManager";
+import killProcess from "../utils/killProcess";
 
 const EMPIRICA_CMD = "empirica";
 const EMPIRICA_CONFIG_RELATIVE_PATH = path.join(".empirica", "local");
-const EMPIRICA_BUILD = "branch: main";
+const EMPIRICA_BUILD = "build: 175";
 
 const EMPIRICA_COMMANDS = {
   SERVE: "serve",
@@ -123,11 +124,18 @@ export default class EmpiricaTestFactory {
   async teardown() {
     console.log(`Teardown, project id: ${this.getProjectId()}`);
 
-    await this.stopEmpiricaProject();
-    await this.fullCleanup();
-    await this.pageManager.cleanup();
+    try {
+      await this.stopEmpiricaProject();
+      await this.fullCleanup();
 
-    console.log("Cleanup finished");
+    } catch (e) {
+      console.error("Failed to stop Empirica", e)
+    } finally {
+      await this.pageManager.cleanup();
+
+      console.log("Cleanup finished");
+    }
+
   }
 
   async fullCleanup() {
@@ -254,7 +262,9 @@ export default class EmpiricaTestFactory {
 
     const cacheDir = "cache";
 
-    await fs.mkdir(cacheDir);
+    if (!existsSync(cacheDir)) {
+      await fs.mkdir(cacheDir);
+    }
 
     await tar.c(
       {
@@ -293,7 +303,7 @@ export default class EmpiricaTestFactory {
   }
 
   private getEmpiricaConfigTomlPath(projectId: string) {
-    return path.join(__dirname, "..", projectId, ".empirica", "empirica.toml");
+    return path.join(this.getProjectFullPath(), ".empirica", "empirica.toml");
   }
 
   public async getAdminCredentials(): Promise<AdminUser> {
@@ -318,7 +328,7 @@ export default class EmpiricaTestFactory {
     await executeCommand({
       command: EMPIRICA_CMD,
       params: [EMPIRICA_COMMANDS.BUNDLE],
-      cwd: this.getProjectId(),
+      cwd: this.getProjectFullPath(),
       env: {
         EMPIRICA_BUILD,
       },
@@ -343,7 +353,7 @@ export default class EmpiricaTestFactory {
             ...process.env,
             EMPIRICA_BUILD,
           },
-          cwd: path.join(__dirname, "..", this.getProjectId()),
+          cwd: this.getProjectFullPath()
         }
       );
 
@@ -400,7 +410,10 @@ export default class EmpiricaTestFactory {
   private async stopEmpiricaProject() {
     console.log("Trying to kill Empirica process");
 
-    return new Promise(async (resolve) => {
+    
+    return new Promise(async (resolve, reject) => {
+      if (!this.empiricaProcess) reject(false);
+
       try {
         this.empiricaProcess.stdout.destroy();
         this.empiricaProcess.stderr.destroy();
@@ -413,7 +426,8 @@ export default class EmpiricaTestFactory {
 
         // Sometimes, the process is not killed by the command above
         // so we might need to call the kill cmd in the system
-        childProcess.exec("kill -9 $(lsof -t -i:8844)");
+        killProcess({ port: 8844 });
+        killProcess({ port: 3000 });
 
         console.log("Killed Empirica process");
 
@@ -421,7 +435,7 @@ export default class EmpiricaTestFactory {
       } catch (e) {
         console.error("Failed to kill Empirica process", e);
         
-        resolve(false);
+        reject(false);
       }
     });
   }
