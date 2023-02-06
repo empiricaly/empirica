@@ -1,6 +1,6 @@
 {
   "name": "@empirica/core",
-  "version": "1.0.0-rc.24",
+  "version": "1.0.1",
   "description": "Empirica Core",
   "author": "Nicolas Paton <nicolas.paton@gmail.com>",
   "license": "Apache-2.0",
@@ -162,9 +162,10 @@
     "test:real": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true c8 -r lcov -r html ava -v",
     "test": "echo 'tests temporarily disabled'",
     "test:watch": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ava --watch -v",
-    "prerelease": "npm run build",
+    "prerelease:legacy": "npm run build",
+    "prepublish": "npm run build",
     "release:next": "np --tag next",
-    "release": "np --tag latest"
+    "release:legacy": "np --tag latest"
   },
   "devDependencies": {
     "@testing-library/react": "13.3.0",

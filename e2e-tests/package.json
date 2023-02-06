@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "install_browsers": "playwright install --with-deps",
     "test:e2e": "playwright test --grep-invert @performance",
     "test:e2e:perf": "playwright test --grep @performance",
     "test:e2e:trace": "playwright test --trace on",

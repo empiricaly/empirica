@@ -20,7 +20,7 @@ test.afterAll(async () => {
 });
 
 async function addPlayerToGame({ browser, player }) {
-  const experimentPage = new ExperimentPage({
+  const experimentPage = testFactory.createPage(ExperimentPage, {
     browser,
     baseUrl,
   });
@@ -48,7 +48,7 @@ test.describe("Performance tests for Empirica", () => {
   test.skip("creates batch with multiple games, all players get assigned correctly @performance", async ({
     browser,
   }) => {
-    const batchesPage = new BatchesAdminPage({
+    const batchesPage = testFactory.createPage(BatchesAdminPage,{
       browser,
       baseUrl,
     });

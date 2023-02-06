@@ -5,8 +5,13 @@ export type BasePageConstructor = {
   baseUrl?: string;
 };
 
+export interface BasePageConstructorInterface {
+  new (options: BasePageConstructor): BasePage;
+}
+
 export interface BasePageInterface {
   open: () => Promise<void>;
+  close: () => Promise<void>;
 }
 
 export default class BasePage implements BasePageInterface {
@@ -49,5 +54,9 @@ export default class BasePage implements BasePageInterface {
     if (this.baseUrl) {
       await this.page.goto(this.baseUrl);
     }
+  }
+
+  public async close() {
+    await this.context.close();
   }
 }
