@@ -20,7 +20,7 @@ test.afterAll(async () => {
 
 test.describe("Empirica in single player mode", () => {
   test("Empty experiemnt page loads successfully", async ({ browser }) => {
-    const experimentPage = new ExperimentPage({
+    const experimentPage = testFactory.createPage(ExperimentPage, {
       browser,
       baseUrl,
     });
@@ -29,7 +29,7 @@ test.describe("Empirica in single player mode", () => {
   });
 
   test("Bathes page loads successfully", async ({ browser }) => {
-    const batchesAdminPage = new BatchesAdminPage({
+    const batchesAdminPage = testFactory.createPage(BatchesAdminPage, {
       browser,
       baseUrl,
     });
@@ -40,7 +40,7 @@ test.describe("Empirica in single player mode", () => {
   test("creates batch with 1 game with one player, into view, player passes through the game", async ({
     browser,
   }) => {
-    const batchesPage = new BatchesAdminPage({
+    const batchesPage = testFactory.createPage(BatchesAdminPage, {
       browser,
       baseUrl,
     });
@@ -61,7 +61,7 @@ test.describe("Empirica in single player mode", () => {
 
     await batchesPage.startGame();
 
-    const experimentPage = new ExperimentPage({
+    const experimentPage = testFactory.createPage(ExperimentPage, {
       browser,
       baseUrl,
     });

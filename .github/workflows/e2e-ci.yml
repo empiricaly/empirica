@@ -4,6 +4,7 @@ jobs:
   tests_e2e:
     name: Run end-to-end tests
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -16,7 +17,24 @@ jobs:
       - name: install @empirica core dependencies
         working-directory: ./lib/@empirica/core
         run: npm ci
+      
+      - name: Get installed Playwright version
+        id: playwright-version
+        run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
+      - name: Cache playwright binaries
+        uses: actions/cache@v3
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
       - name: install playwright browsers
         run: npm run install_browsers -w ./e2e-tests
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
       - name: test:e2e
         run: npm run test:e2e -w ./e2e-tests
+      - uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: playwright-test-results
+          path: ./e2e-tests/test-results/

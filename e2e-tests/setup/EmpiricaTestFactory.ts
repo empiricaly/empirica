@@ -3,6 +3,7 @@ import * as path from "path";
 import * as os from "os";
 import * as uuid from "uuid";
 import * as childProcess from "node:child_process";
+import { type Page, type Browser, type BrowserContext } from "@playwright/test";
 
 import * as tar from "tar";
 import executeCommand from "../utils/launchProcess";
@@ -12,6 +13,8 @@ import {
   parseBuild,
   parseVersion,
 } from "../utils/versionUtils";
+import BasePage from "../page-objects/BasePage";
+import PageManager from "./PageManager";
 
 const EMPIRICA_CMD = "empirica";
 const EMPIRICA_CONFIG_RELATIVE_PATH = path.join(".empirica", "local");
@@ -47,11 +50,14 @@ export default class EmpiricaTestFactory {
 
   private empiricaProcess: childProcess.ChildProcess;
 
+  private pageManager: PageManager;
+
   constructor(params?: TestFactoryParams) {
     this.uniqueProjectId = uuid.v4();
     this.projectDirName = `test-experiment-${this.uniqueProjectId}`;
     this.shouldBuildCorePackage = params?.shouldBuildCorePackage || false;
     this.shoudLinkCoreLib = params?.shoudLinkCoreLib || false;
+    this.pageManager = new PageManager();
   }
 
   public async init() {
@@ -90,8 +96,13 @@ export default class EmpiricaTestFactory {
   }
 
   async teardown() {
+    console.log(`Teardown, project id: ${this.getProjectId()}`);
+
     await this.stopEmpiricaProject();
     await this.fullCleanup();
+    await this.pageManager.cleanup();
+
+    console.log("Cleanup finished");
   }
 
   async fullCleanup() {
@@ -126,7 +137,8 @@ export default class EmpiricaTestFactory {
   }
 
   private async createRootDirectory() {
-    return fs.mkdtemp(path.join(os.tmpdir(), "empirica-test"));
+    // return fs.mkdtemp(path.join(os.tmpdir(), "empirica-test"));
+    return fs.mkdtemp(path.join(__dirname,"..", "..","..", "empirica-test-"));
   }
 
   private getRootDirectory() {
@@ -139,6 +151,10 @@ export default class EmpiricaTestFactory {
 
   private getCacheFilePath() {
     return path.join(CACHE_FOLDER, this.getCacheFilename());
+  }
+
+  public createPage<T extends BasePage>(pageClass: new (...a: any[]) => T, options: { browser: Browser, baseUrl?: string}) {
+    return this.pageManager.createPage<T>(pageClass, options);
   }
 
   private async checkEmpricaVersion() {
@@ -254,16 +270,41 @@ export default class EmpiricaTestFactory {
       });
 
       this.empiricaProcess?.on("close", (code) => {
-        console.log(`"${EMPIRICA_CMD}" process exited with code ${code}`);
+        console.log(`"${EMPIRICA_CMD}" process closed with code ${code}`);
+      });
+
+      this.empiricaProcess?.on("exit", (code, signal) => {
+        console.log(`"${EMPIRICA_CMD}" process exited with code ${code}, signal "${signal}"`);
       });
     });
   }
 
   private async stopEmpiricaProject() {
-    return new Promise((resolve) => {
-      this.empiricaProcess.kill();
+    console.log("Trying to kill Empirica process");
 
-      resolve(true);
+    return new Promise(async (resolve) => {
+      try {
+        this.empiricaProcess.stdout.destroy();
+        this.empiricaProcess.stderr.destroy();
+
+        // This would send a kill signal to the child process
+        // but it doesn't verify that the process has been really killed
+        // see https://nodejs.org/api/child_process.html#subprocesskilled for details
+        // and also: https://github.com/nodejs/node/issues/27490
+        process.kill(this.empiricaProcess.pid, "SIGKILL");
+
+        // Sometimes, the process is not killed by the command above
+        // so we might need to call the kill cmd in the system
+        childProcess.exec("kill -9 $(lsof -t -i:8844)");
+
+        console.log("Killed Empirica process");
+
+        resolve(true);
+      } catch (e) {
+        console.error("Failed to kill Empirica process", e);
+        
+        resolve(false);
+      }
     });
   }
 }
