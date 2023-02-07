@@ -1,5 +1,12 @@
 # @empirica/core
 
+## 1.0.4
+
+### Patch Changes
+
+- e984fe3: Fix publish (ignore e2e tests)
+- 4047181: Fix for publish
+
 ## 1.0.3
 
 ### Patch Changes
