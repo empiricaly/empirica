@@ -13,6 +13,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "private": true,
   "dependencies": {
     "@playwright/test": "^1.28.0",
     "@types/tar": "^6.1.3",
