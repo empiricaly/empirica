@@ -24,6 +24,9 @@ const EMPIRICA_CMD = "empirica";
 const EMPIRICA_CONFIG_RELATIVE_PATH = path.join(".empirica", "local");
 const EMPIRICA_BUILD = "build: 175";
 
+const SERVE_PORT = 3000;
+const DEFAULT_PORT = 8844;
+
 const EMPIRICA_COMMANDS = {
   SERVE: "serve",
   BUNDLE: "bundle",
@@ -426,8 +429,8 @@ export default class EmpiricaTestFactory {
 
         // Sometimes, the process is not killed by the command above
         // so we might need to call the kill cmd in the system
-        killProcess({ port: 8844 });
-        killProcess({ port: 3000 });
+        killProcess({ port: DEFAULT_PORT });
+        killProcess({ port: SERVE_PORT });
 
         console.log("Killed Empirica process");
 
