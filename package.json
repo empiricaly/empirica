@@ -6,7 +6,7 @@
     "lib": "lib"
   },
   "scripts": {
-    "release:core": "cd ./lib/@empirica/core && npm publish && cd ../../.. && changeset publish",
+    "release:core": "cd ./lib/@empirica/core && npm run build && cd ../../.. && changeset publish",
     "install_browsers": "playwright install --with-deps",
     "test:e2e": "playwright test --grep-invert @performance",
     "bump": "changeset version",
