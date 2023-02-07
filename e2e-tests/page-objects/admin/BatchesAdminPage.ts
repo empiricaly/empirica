@@ -1,5 +1,7 @@
 import { expect } from "@playwright/test";
+import { AdminUser } from "../../utils/adminUtils";
 import BasePage from "../BasePage";
+import AdminLoginElement from "./elements/AdminLoginElement";
 
 export enum GamesTypeTreatment {
   "Solo" = "Solo",
@@ -22,6 +24,16 @@ export enum BatchStatus {
 }
 
 export default class BatchesAdminPage extends BasePage {
+  private loginElement: AdminLoginElement;
+
+  public async init() {
+    await this.initContext();
+
+    const { page } = this;
+
+    this.loginElement = new AdminLoginElement({ page });
+  }
+
   private getBatchesLinkInSidebar() {
     return this.page.locator('[data-test="batchesSidebarButton"]');
   }
@@ -68,6 +80,12 @@ export default class BatchesAdminPage extends BasePage {
     );
   }
 
+  // Optional login, will be used when bundling the project
+  // not required in dev mode
+  public async login(credentials: AdminUser) {
+    await this.loginElement.login(credentials);
+  }
+
   private getGameItem({
     batchNumber = 0,
     gameNumber,
@@ -99,17 +117,9 @@ export default class BatchesAdminPage extends BasePage {
   }
 
   public async open() {
-    await this.initContext();
+    await this.init();
 
     await this.page.goto(`${this.baseUrl}/admin`);
-
-    const batchesSidebarButton = await this.getBatchesLinkInSidebar();
-
-    await batchesSidebarButton.click();
-
-    const newBatchButton = await this.getNewBatchButton();
-
-    await expect(newBatchButton).toBeVisible();
   }
 
   public async createBatch({
