@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.0.2
+
+### Patch Changes
+
+- 8175563: Fix release script
+
 ## 1.1.0
 
 ### Minor Changes
