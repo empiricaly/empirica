@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.0.3
+
+### Patch Changes
+
+- a23b822: Another try to fix the package publishing
+
 ## 1.0.2
 
 ### Patch Changes
