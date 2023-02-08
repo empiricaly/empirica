@@ -32,10 +32,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Get @empirica/core package version
+        id: core-version
+        working-directory: ./lib/@empirica/core
+        run: echo "EMPIRICA_CORE_VERSION=v$(node -e "console.log(require('./package.json').version)")" >> $GITHUB_ENV
+
       - name: Create release tag
         if: steps.changesets.outputs.published == 'true'
         id: create_tag
         uses: jaywcjlove/create-tag-action@v1.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ env.EMPIRICA_CORE_VERSION }}
           package-path: ./lib/@empirica/core/package.json
