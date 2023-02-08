@@ -11,11 +11,11 @@ on:
       - "cmds/proxy/**"
       - "**.md"
       - ".github/workflows/on_push_proxy.yaml"
-  # create: # New tag (or branch)
-  #   paths-ignore:
-  #     - "cmds/proxy/**"
-  #     - "**.md"
-  #     - ".github/workflows/on_push_proxy.yaml"
+  create: # New tag (or branch)
+    paths-ignore:
+      - "cmds/proxy/**"
+      - "**.md"
+      - ".github/workflows/on_push_proxy.yaml"
 
 env:
   REGISTRY: ghcr.io
