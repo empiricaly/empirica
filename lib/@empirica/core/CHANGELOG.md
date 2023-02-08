@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.0.6
+
+### Patch Changes
+
+- 35016f6: Fix build on tag creation
+
 ## 1.0.5
 
 ### Patch Changes
