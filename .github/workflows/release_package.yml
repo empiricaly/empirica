@@ -44,4 +44,3 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ env.EMPIRICA_CORE_VERSION }}
-          package-path: ./lib/@empirica/core/package.json
