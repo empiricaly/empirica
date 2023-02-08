@@ -1,4 +1,4 @@
-name: Release packages
+name: Build CLI command and release packages
 
 on:
   push:
@@ -12,6 +12,9 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     steps:
+      #
+      # Step 0. Setup
+      #
       - name: Checkout Repo
         uses: actions/checkout@v3
 
@@ -20,6 +23,62 @@ jobs:
         with:
           node-version: 16.x
 
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.4
+      
+      - name: Get @empirica/core package version
+        id: core-version
+        working-directory: ./lib/@empirica/core
+        run: echo "EMPIRICA_CORE_VERSION=v$(node -e "console.log(require('./package.json').version)")" >> $GITHUB_ENV
+
+      #
+      # Step 1. Build the Empirica cmd and run smoke test
+      #
+      - name: Set GITHUB_ENV
+        run: |
+          echo "BUILD_TAG=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+          echo "BUILD_SHA=$(git rev-list -1 HEAD)" >> $GITHUB_ENV
+          echo "BUILD_SHA_SHORT=$(git rev-parse --short=7 ${{ github.sha }})" >> $GITHUB_ENV
+          echo "BUILD_NUM=${{ github.run_number }}" >> $GITHUB_ENV
+      # If it's a tag, we assume the branch is main
+      - name: Check if running on a tag branch.
+        if: steps.branch-name.outputs.is_tag == 'true'
+        run: |
+          echo "BUILD_BRANCH=`echo "main" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
+      # Otherwise use the actual branch name
+      - name: Use actual branch name.
+        if: steps.branch-name.outputs.is_tag != 'true'
+        run: |
+          echo "BUILD_BRANCH=`echo "${{ steps.branch-name.outputs.current_branch }}" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
+      
+      - name: Use actual branch name.
+        if: steps.branch-name.outputs.is_tag != 'true'
+        run: |
+          echo "BUILD_BRANCH=`echo "${{ steps.branch-name.outputs.current_branch }}" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
+      - name: Build
+        uses: docker/build-push-action@v2
+        with:
+          push: false
+          tags: empirica-tmp
+          file: ./build/Dockerfile
+          build-args: |
+            BUILD_DATE=${{ env.BUILD_DATE }}
+            BUILD_SHA=${{ env.BUILD_SHA_SHORT }}
+            BUILD_NUM=${{ env.BUILD_NUM }}
+            BUILD_BRANCH=${{ env.BUILD_BRANCH }}
+            BUILD_TAG=${{ env.EMPIRICA_CORE_VERSION }}
+      - name: Copy binaries from image
+        run: |
+          mkdir out
+          docker run --rm empirica-tmp tar -cC /out . | tar -xC $(pwd)/out
+      - name: Smoke test
+        run: ./out/empirica-linux-amd64 --help
+
+      #
+      # Step 2. Build the npm package and publish
+      #
       - name: Install Dependencies
         run: npm ci
 
@@ -32,11 +91,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Get @empirica/core package version
-        id: core-version
-        working-directory: ./lib/@empirica/core
-        run: echo "EMPIRICA_CORE_VERSION=v$(node -e "console.log(require('./package.json').version)")" >> $GITHUB_ENV
-
       - name: Create release tag
         if: steps.changesets.outputs.published == 'true'
         id: create_tag
@@ -44,3 +98,38 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ env.EMPIRICA_CORE_VERSION }}
+
+      #
+      # Step 3. Test and upload the CLI to S3 and build the Docker image
+      #
+      
+      - name: Upload binaries to S3
+        if: steps.changesets.outputs.published == 'true'
+        uses: ./.github/actions/upload-empirica-cli
+        with:
+          bucket: empirica
+          root: empirica
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsEndpoint: https://f120117e0fd797d29319953881b7634c.r2.cloudflarestorage.com
+          awsSignatureVersion: v4
+      - name: Log in to the Container registry
+        if: steps.changesets.outputs.published == 'true'
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Docker image
+        if: steps.changesets.outputs.published == 'true'
+        uses: docker/build-push-action@v3
+        with:
+          push: true
+          file: ./build/Dockerfile.empirica
+          context: .
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ env.BUILD_SHA_SHORT }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build-${{ env.BUILD_NUM }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:branch-${{ env.BUILD_BRANCH }}
+

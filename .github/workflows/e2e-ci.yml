@@ -1,5 +1,13 @@
 name: "Tests: E2E"
-on: [pull_request]
+
+on:
+  pull_request:
+    paths-ignore:
+      - "cmds/proxy/**"
+      - "build/**"
+      - "**.md"
+      - ".github/workflows/on_push_proxy.yaml"
+
 jobs:
   tests_e2e:
     name: Run end-to-end tests
