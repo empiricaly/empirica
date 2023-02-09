@@ -10,15 +10,18 @@ on:
       - "**.md"
       - ".github/workflows/on_push_proxy.yaml"
   
-  
-  
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   release:
     name: Release
     runs-on: ubuntu-latest
+    if: github.repository == 'empiricaly/empirica' && github.event.pull_request.draft == false
     steps:
       #
       # Step 0. Setup
@@ -65,7 +68,7 @@ jobs:
         if: steps.branch-name.outputs.is_tag != 'true'
         run: |
           echo "BUILD_BRANCH=`echo "${{ steps.branch-name.outputs.current_branch }}" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
-      - name: Build
+      - name: Build Empirica server
         uses: docker/build-push-action@v2
         with:
           push: false
@@ -87,7 +90,7 @@ jobs:
       #
       # Step 2. Build the npm package and publish
       #
-      - name: Install Dependencies
+      - name: Step 2. Install dependencies
         if: github.ref == 'refs/heads/main'
         run: npm ci
 
@@ -113,7 +116,7 @@ jobs:
       # Step 3. Test and upload the CLI to S3 and build the Docker image
       #
       
-      - name: Upload binaries to S3
+      - name: Step 3. Upload binaries to S3
         if: steps.changesets.outputs.published == 'true'
         uses: ./.github/actions/upload-empirica-cli
         with:
