@@ -19,7 +19,7 @@ env:
 
 jobs:
   release:
-    name: Release
+    name: Build CLI command, run tests and release packages
     runs-on: ubuntu-latest
     if: github.repository == 'empiricaly/empirica' && github.event.pull_request.draft == false
     steps:
@@ -82,7 +82,7 @@ jobs:
             BUILD_TAG=${{ env.EMPIRICA_CORE_VERSION }}
       - name: Copy binaries from image
         run: |
-          mkdir out
+          mkdir -p out
           docker run --rm empirica-tmp tar -cC /out . | tar -xC $(pwd)/out
       - name: Smoke test
         run: ./out/empirica-linux-amd64 --help
@@ -101,23 +101,24 @@ jobs:
         working-directory: ./lib/@empirica/core
         run: npm ci
       
-      - name: Get installed Playwright version
+      - name: "E2E tests: Get installed Playwright version"
         id: playwright-version
         run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
-      - name: Cache playwright binaries
+      - name:  "E2E tests: Cache playwright binaries"
         uses: actions/cache@v3
         id: playwright-cache
         with:
           path: |
             ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
-      - name: install playwright browsers
+      - name: "E2E tests: install playwright browsers"
         run: npm run install_browsers -w ./e2e-tests
         if: steps.playwright-cache.outputs.cache-hit != 'true'
       - name: "E2E tests: Run"
         run: npm run test:e2e -w ./e2e-tests
 
-      - uses: actions/upload-artifact@v2
+      - name: "E2E tests: upload tests results to artifacts"
+        uses: actions/upload-artifact@v2
         if: always()
         with:
           name: playwright-test-results
@@ -126,11 +127,11 @@ jobs:
       #
       # Step 3. Build the npm package and publish
       #
-      - name: Step 2. Install dependencies
+      - name: "Build core package: install dependencies"
         if: github.ref == 'refs/heads/main'
         run: npm ci
 
-      - name: Create Release Pull Request or Publish to npm
+      - name: "Build core package: Create Release Pull Request or Publish to npm"
         if: github.ref == 'refs/heads/main'
         id: changesets
         uses: changesets/action@v1
@@ -140,7 +141,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Create release tag
+      - name: "Build core package: Create release tag"
         if: steps.changesets.outputs.published == 'true'
         id: create_tag
         uses: jaywcjlove/create-tag-action@v1.2.0
