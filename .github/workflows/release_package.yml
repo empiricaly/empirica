@@ -1,4 +1,4 @@
-name: Build CLI command and release packages
+name: Build CLI command, run tests and release packages
 
 on:
   push:
@@ -19,7 +19,7 @@ env:
 
 jobs:
   release:
-    name: Release
+    name: Build CLI command, run tests and release packages
     runs-on: ubuntu-latest
     if: github.repository == 'empiricaly/empirica' && github.event.pull_request.draft == false
     steps:
@@ -82,19 +82,56 @@ jobs:
             BUILD_TAG=${{ env.EMPIRICA_CORE_VERSION }}
       - name: Copy binaries from image
         run: |
-          mkdir out
+          mkdir -p out
           docker run --rm empirica-tmp tar -cC /out . | tar -xC $(pwd)/out
       - name: Smoke test
         run: ./out/empirica-linux-amd64 --help
 
       #
-      # Step 2. Build the npm package and publish
+      # Step 2. Run e2e tests
       #
-      - name: Step 2. Install dependencies
+
+      - name: "E2E tests: install empirica"
+        working-directory: ./e2e-tests
+        run: curl https://get.empirica.dev | sh
+      - name: "E2E tests: install dependencies"
+        working-directory: ./e2e-tests
+        run: npm ci --workspaces=false
+      - name: "E2E tests: install @empirica core dependencies"
+        working-directory: ./lib/@empirica/core
+        run: npm ci
+      
+      - name: "E2E tests: Get installed Playwright version"
+        id: playwright-version
+        run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
+      - name:  "E2E tests: Cache playwright binaries"
+        uses: actions/cache@v3
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+      - name: "E2E tests: install playwright browsers"
+        run: npm run install_browsers -w ./e2e-tests
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+      - name: "E2E tests: Run"
+        run: npm run test:e2e -w ./e2e-tests
+
+      - name: "E2E tests: upload tests results to artifacts"
+        uses: actions/upload-artifact@v2
+        if: always()
+        with:
+          name: playwright-test-results
+          path: ./e2e-tests/test-results/
+
+      #
+      # Step 3. Build the npm package and publish
+      #
+      - name: "Build core package: install dependencies"
         if: github.ref == 'refs/heads/main'
         run: npm ci
 
-      - name: Create Release Pull Request or Publish to npm
+      - name: "Build core package: Create Release Pull Request or Publish to npm"
         if: github.ref == 'refs/heads/main'
         id: changesets
         uses: changesets/action@v1
@@ -104,7 +141,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Create release tag
+      - name: "Build core package: Create release tag"
         if: steps.changesets.outputs.published == 'true'
         id: create_tag
         uses: jaywcjlove/create-tag-action@v1.2.0
@@ -113,11 +150,10 @@ jobs:
           version: ${{ env.EMPIRICA_CORE_VERSION }}
 
       #
-      # Step 3. Test and upload the CLI to S3 and build the Docker image
+      # Step 4. Test and upload the CLI to S3 and build the Docker image
       #
       
       - name: Step 3. Upload binaries to S3
-        if: steps.changesets.outputs.published == 'true'
         uses: ./.github/actions/upload-empirica-cli
         with:
           bucket: empirica
@@ -127,14 +163,12 @@ jobs:
           awsEndpoint: https://f120117e0fd797d29319953881b7634c.r2.cloudflarestorage.com
           awsSignatureVersion: v4
       - name: Log in to the Container registry
-        if: steps.changesets.outputs.published == 'true'
         uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Docker image
-        if: steps.changesets.outputs.published == 'true'
         uses: docker/build-push-action@v3
         with:
           push: true
