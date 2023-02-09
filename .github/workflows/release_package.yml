@@ -154,7 +154,6 @@ jobs:
       #
       
       - name: Step 3. Upload binaries to S3
-        if: steps.changesets.outputs.published == 'true'
         uses: ./.github/actions/upload-empirica-cli
         with:
           bucket: empirica
@@ -164,14 +163,12 @@ jobs:
           awsEndpoint: https://f120117e0fd797d29319953881b7634c.r2.cloudflarestorage.com
           awsSignatureVersion: v4
       - name: Log in to the Container registry
-        if: steps.changesets.outputs.published == 'true'
         uses: docker/login-action@v2
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Docker image
-        if: steps.changesets.outputs.published == 'true'
         uses: docker/build-push-action@v3
         with:
           push: true
