@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.0.7
+
+### Patch Changes
+
+- 8608440: Change Empirica release process
+
 ## 1.0.6
 
 ### Patch Changes
