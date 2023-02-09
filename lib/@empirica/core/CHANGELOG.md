@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.0.8
+
+### Patch Changes
+
+- dac8c4e: Fix empirica build pipelines (no real changes in the package)
+
 ## 1.0.7
 
 ### Patch Changes
