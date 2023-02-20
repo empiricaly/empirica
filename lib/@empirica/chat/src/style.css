@@ -1,0 +1,139 @@
+.game-lobby {
+  height: calc(100vh - 19rem);
+}
+.empirica-chat-container {
+  width: 100%;
+  height: 100%;
+}
+.empirica-chat-container.docked {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 50;
+}
+.empirica-chat-container.docked .chat {
+  position: absolute;
+  bottom: 0px;
+  right: 160px;
+  pointer-events: all;
+  width: 270px;
+  height: auto;
+  max-height: calc(100vh - 50px);
+  grid-template-rows: 36px;
+}
+.empirica-chat-container.docked .chat.open {
+  height: 500px;
+  grid-template-rows: 36px 1fr auto;
+}
+.empirica-chat-container.docked .chat .messages,
+.empirica-chat-container.docked .chat form {
+  background-color: white;
+  border: 1px solid #c0c2c9;
+  border-top: none;
+  border-bottom: none;
+}
+.empirica-chat-container.docked .chat form {
+  background-color: white;
+}
+.empirica-chat-container .chat {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
+.empirica-chat-container .chat .header {
+  background-color: white;
+  border: 1px solid #c0c2c9;
+  border-radius: 8px 8px 0px 0px;
+  color: #c2cbd3;
+  display: flex;
+  align-items: center;
+  padding: 0 17px 0 14px;
+}
+.empirica-chat-container .chat .header .title {
+  flex-grow: 2;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+}
+.empirica-chat-container .chat .header .close-button {
+  font-weight: bold;
+  font-size: 2rem;
+  cursor: pointer;
+}
+.empirica-chat-container .chat .messages {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.empirica-chat-container .chat .messages .empty {
+  margin-top: 20px;
+  color: #718096;
+  text-align: center;
+}
+.empirica-chat-container .chat .messages .message {
+  display: flex;
+  padding-left: 15px;
+  margin: 20px 24px 0px 0;
+}
+.empirica-chat-container .chat .messages .message .avatar {
+  width: 1.3em;
+  height: 1.3em;
+  margin-right: 15px;
+}
+.empirica-chat-container .chat .messages .message .text-container .name {
+  font-weight: 600;
+  font-size: 17px;
+  line-height: 20px;
+  color: #4a5568;
+  margin-bottom: 10px;
+  overflow-wrap: anywhere;
+}
+.empirica-chat-container .chat .messages .message .text-container .text {
+  font-size: 17px;
+  line-height: 20px;
+  color: #718096;
+  overflow-wrap: anywhere;
+}
+.empirica-chat-container .chat .messages .message .text-container .timeStamp {
+  margin-top: 10px;
+  font-size: 14px;
+  line-height: 17px;
+  color: #c2cbd3;
+}
+.empirica-chat-container .chat form {
+  width: 100%;
+  padding: 0 14px 15px 14px;
+}
+.empirica-chat-container .chat form .chat-footer {
+  display: flex;
+  align-items: flex-start;
+}
+.empirica-chat-container .chat form .chat-footer .chat-input {
+  outline: none;
+  border: 1px solid #e2e5e9;
+  border-radius: 5px 0px 0px 5px;
+  resize: none;
+  overflow: auto;
+  color: #718096;
+  font-size: 14px;
+  font-weight: 400;
+  flex-grow: 2;
+  padding: 6px;
+}
+.empirica-chat-container .chat form .chat-footer .chat-button-send {
+  background-color: #ffffff;
+  border: 1px solid #e2e5e9;
+  border-left: 0;
+  box-sizing: border-box;
+  border-radius: 0px 5px 5px 0px;
+  display: inline-block;
+  cursor: pointer;
+  padding: 0 10px;
+  vertical-align: middle;
+  font-size: 14px;
+  width: 60px;
+  margin: unset;
+}
