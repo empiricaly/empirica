@@ -16,3 +16,5 @@ playwright-report
 test-results
 e2e-tests/test-experiment-*
 e2e-tests/cache
+
+out
