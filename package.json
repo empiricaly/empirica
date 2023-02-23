@@ -12,7 +12,7 @@
     "bump": "changeset version",
     "changeset": "changeset"
   },
-  "workspaces": [ "e2e-tests", "lib/@empirica/core" ],
+  "workspaces": [ "e2e-tests", "lib/@empirica/*" ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/empiricaly/empirica.git"
