@@ -134,6 +134,9 @@
             <p class="mt-2 flex items-center text-sm text-gray-500">
               <span class="truncate">
                 <div class="flex flex-col divide-transparent divide-y-2 w-full">
+                  {#if config.kind === "custom"}
+                    <pre>{JSON.stringify(config.config, null, 2)}</pre>
+                  {/if}
                   {#if config.kind === "complete"}
                     {#each config.config.treatments as treatment}
                       <div class="flex items-center space-y-1">
