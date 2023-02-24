@@ -22,7 +22,7 @@ test.describe("Empirica in multi-player mode", () => {
   test("creates batch with 1 game with 2 players, both players finish the game", async ({
     browser,
   }) => {
-    const batchesPage = testFactory.createPage(BatchesAdminPage,{
+    const batchesPage = testFactory.createPage(BatchesAdminPage, {
       browser,
       baseUrl,
     });

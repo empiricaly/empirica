@@ -27,11 +27,11 @@ test.describe("Lobby timeouts in Empirica", () => {
   test("create configuration with a shared lobby timeout, ignore strategy", async ({
     browser,
   }) => {
-    const batchesPage = testFactory.createPage(BatchesAdminPage,{
+    const batchesPage = testFactory.createPage(BatchesAdminPage, {
       browser,
       baseUrl,
     });
-    const lobbiesPage = testFactory.createPage(LobbiesAdminPage,{
+    const lobbiesPage = testFactory.createPage(LobbiesAdminPage, {
       browser,
       baseUrl,
     });

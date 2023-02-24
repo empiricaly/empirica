@@ -10,6 +10,17 @@
     "test:e2e:trace": "playwright test --trace on",
     "lint": "eslint tests/**/*.ts page-objects/**/*.ts utils/**/*.ts setup/**/*.ts"
   },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "**/*.ts": [
+      "eslint --fix",
+      "git add"
+    ]
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -30,6 +41,8 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^4.2.1",
+    "husky": "^8.0.3",
+    "lint-staged": "^13.1.2",
     "prettier": "^2.8.0",
     "typescript": "^4.9.3"
   }

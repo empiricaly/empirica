@@ -1,10 +1,9 @@
 import { promises as fs, constants, existsSync } from "fs";
 import * as path from "path";
-import * as os from "os";
 import * as uuid from "uuid";
 import * as toml from "toml";
 import * as childProcess from "node:child_process";
-import { type Page, type Browser, type BrowserContext } from "@playwright/test";
+import { type Browser } from "@playwright/test";
 
 import * as tar from "tar";
 import executeCommand from "../utils/launchProcess";
@@ -130,15 +129,13 @@ export default class EmpiricaTestFactory {
     try {
       await this.stopEmpiricaProject();
       await this.fullCleanup();
-
     } catch (e) {
-      console.error("Failed to stop Empirica", e)
+      console.error("Failed to stop Empirica", e);
     } finally {
       await this.pageManager.cleanup();
 
       console.log("Cleanup finished");
     }
-
   }
 
   async fullCleanup() {
@@ -177,7 +174,7 @@ export default class EmpiricaTestFactory {
 
   private async createRootDirectory() {
     // return fs.mkdtemp(path.join(os.tmpdir(), "empirica-test"));
-    return fs.mkdtemp(path.join(__dirname,"..", "..","..", "empirica-test-"));
+    return fs.mkdtemp(path.join(__dirname, "..", "..", "..", "empirica-test-"));
   }
 
   private getRootDirectory() {
@@ -192,7 +189,10 @@ export default class EmpiricaTestFactory {
     return path.join(CACHE_FOLDER, this.getCacheFilename());
   }
 
-  public createPage<T extends BasePage>(pageClass: new (...a: any[]) => T, options: { browser: Browser, baseUrl?: string}) {
+  public createPage<T extends BasePage>(
+    pageClass: new (...a: any[]) => T,
+    options: { browser: Browser; baseUrl?: string }
+  ) {
     return this.pageManager.createPage<T>(pageClass, options);
   }
 
@@ -305,12 +305,12 @@ export default class EmpiricaTestFactory {
     });
   }
 
-  private getEmpiricaConfigTomlPath(projectId: string) {
+  private getEmpiricaConfigTomlPath() {
     return path.join(this.getProjectFullPath(), ".empirica", "empirica.toml");
   }
 
   public async getAdminCredentials(): Promise<AdminUser> {
-    const configPath = this.getEmpiricaConfigTomlPath(this.getProjectId());
+    const configPath = this.getEmpiricaConfigTomlPath();
     const configFile = await fs.readFile(configPath, {
       encoding: "utf8",
     });
@@ -356,7 +356,7 @@ export default class EmpiricaTestFactory {
             ...process.env,
             EMPIRICA_BUILD,
           },
-          cwd: this.getProjectFullPath()
+          cwd: this.getProjectFullPath(),
         }
       );
 
@@ -405,7 +405,9 @@ export default class EmpiricaTestFactory {
       });
 
       this.empiricaProcess?.on("exit", (code, signal) => {
-        console.log(`"${EMPIRICA_CMD}" process exited with code ${code}, signal "${signal}"`);
+        console.log(
+          `"${EMPIRICA_CMD}" process exited with code ${code}, signal "${signal}"`
+        );
       });
     });
   }
@@ -413,9 +415,9 @@ export default class EmpiricaTestFactory {
   private async stopEmpiricaProject() {
     console.log("Trying to kill Empirica process");
 
-    
-    return new Promise(async (resolve, reject) => {
-      if (!this.empiricaProcess) reject(false);
+    return new Promise((resolve, reject) => {
+      if (!this.empiricaProcess)
+        reject(new Error("Empirica process not found"));
 
       try {
         this.empiricaProcess.stdout.destroy();
@@ -437,8 +439,8 @@ export default class EmpiricaTestFactory {
         resolve(true);
       } catch (e) {
         console.error("Failed to kill Empirica process", e);
-        
-        reject(false);
+
+        reject(new Error(`Failed to kill Empirica process: ${e}`));
       }
     });
   }
