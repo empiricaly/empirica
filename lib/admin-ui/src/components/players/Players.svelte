@@ -25,6 +25,8 @@
       })
       .subscribe({
         next({ eventType, node }) {
+          if (!node) return;
+
           switch (eventType) {
             case EventType.ParticipantConnected:
               playersStatusMap.set(node.id, true);

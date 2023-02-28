@@ -615,7 +615,9 @@ export function Classic({
           return;
         }
 
-        if (players.every((p) => p.stage!.get("submit") || p.get("ended"))) {
+        const haveAllPlayersSubmitted = players.every((p) => p.stage!.get("submit") || p.get("ended") || !online.has(p.get('participantID')?.toString() as string));
+
+        if (haveAllPlayersSubmitted) {
           ctx.addTransitions([
             {
               from: State.Running,
