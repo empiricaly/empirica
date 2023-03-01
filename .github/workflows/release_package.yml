@@ -37,37 +37,61 @@ jobs:
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v5.4
-      
+
+      #
+      # Step 3. Build the npm package and publish
+      #
+      - name: "Build core package: install dependencies"
+        if: github.ref == 'refs/heads/main'
+        run: npm ci
+
+      - name: "Build core package: Create Release Pull Request or Publish to npm"
+        if: github.ref == 'refs/heads/main'
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: npm run release:core
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Get @empirica/core package version
         id: core-version
         working-directory: ./lib/@empirica/core
         run: echo "EMPIRICA_CORE_VERSION=v$(node -e "console.log(require('./package.json').version)")" >> $GITHUB_ENV
+
+      # We will use the result to determine if we need to create a release or not
+      - name: "Build core package: Create release tag"
+        if: steps.changesets.outputs.published == 'true'
+        id: create_tag
+        uses: jaywcjlove/create-tag-action@v1.2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ env.EMPIRICA_CORE_VERSION }}
 
       #
       # Step 1. Build the Empirica cmd and run smoke test
       #
       - name: Set GITHUB_ENV
         run: |
-          echo "BUILD_TAG=${{ steps.branch-name.outputs.tag }}" >> $GITHUB_ENV
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
           echo "BUILD_SHA=$(git rev-list -1 HEAD)" >> $GITHUB_ENV
           echo "BUILD_SHA_SHORT=$(git rev-parse --short=7 ${{ github.sha }})" >> $GITHUB_ENV
           echo "BUILD_NUM=${{ github.run_number }}" >> $GITHUB_ENV
-      # If it's a tag, we assume the branch is main
-      - name: Check if running on a tag branch.
-        if: steps.branch-name.outputs.is_tag == 'true'
+      # If tag has been created, we assume we need to release a version
+      - name: Check if tag has been created
+        if: steps.create_tag.outputs.successful
         run: |
           echo "BUILD_BRANCH=`echo "main" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
+          echo "BUILD_TAG=${{ env.EMPIRICA_CORE_VERSION }}" >> $GITHUB_ENV
+
       # Otherwise use the actual branch name
       - name: Use actual branch name.
-        if: steps.branch-name.outputs.is_tag != 'true'
+        if: steps.create_tag.outputs.successful != 'true'
         run: |
           echo "BUILD_BRANCH=`echo "${{ steps.branch-name.outputs.current_branch }}" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
-      
-      - name: Use actual branch name.
-        if: steps.branch-name.outputs.is_tag != 'true'
-        run: |
-          echo "BUILD_BRANCH=`echo "${{ steps.branch-name.outputs.current_branch }}" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
+          echo "BUILD_TAG="" >> $GITHUB_ENV
+  
       - name: Log build variables
         run: |
           echo BUILD_DATE=${{ env.BUILD_DATE }}
@@ -87,7 +111,7 @@ jobs:
             BUILD_SHA=${{ env.BUILD_SHA_SHORT }}
             BUILD_NUM=${{ env.BUILD_NUM }}
             BUILD_BRANCH=${{ env.BUILD_BRANCH }}
-            BUILD_TAG=${{ env.EMPIRICA_CORE_VERSION }}
+            BUILD_TAG=${{ env.BUILD_TAG }}
       - name: Copy binaries from image
         run: |
           mkdir -p out
@@ -131,31 +155,6 @@ jobs:
         with:
           name: playwright-test-results
           path: ./e2e-tests/test-results/
-
-      #
-      # Step 3. Build the npm package and publish
-      #
-      - name: "Build core package: install dependencies"
-        if: github.ref == 'refs/heads/main'
-        run: npm ci
-
-      - name: "Build core package: Create Release Pull Request or Publish to npm"
-        if: github.ref == 'refs/heads/main'
-        id: changesets
-        uses: changesets/action@v1
-        with:
-          publish: npm run release:core
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: "Build core package: Create release tag"
-        if: steps.changesets.outputs.published == 'true'
-        id: create_tag
-        uses: jaywcjlove/create-tag-action@v1.2.0
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          version: ${{ env.EMPIRICA_CORE_VERSION }}
 
       #
       # Step 4. Test and upload the CLI to S3 and build the Docker image
