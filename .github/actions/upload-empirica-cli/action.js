@@ -173,50 +173,6 @@ async function run(core, github, S3, fs) {
   // await Promise.all(variations);
 }
 
-// This would be deprecated. Use `getBuildAttributes`
-function getAttributes(gitRef, gitSHA, githubEvent, githubRun) {
-  let tag = "unknown";
-  let branch = "unknown";
-  let version = "unknown";
-  if (gitRef.startsWith("refs/tags/")) {
-    const tagParts = gitRef.split("/");
-    tag = tagParts.slice(2).join("/");
-
-    if (semver.valid(tag)) {
-      version = tag;
-    }
-  } else {
-    if (githubEvent === "pull_request") {
-      branch = process.env.GITHUB_HEAD_REF || "not_found";
-    } else {
-      // Other events where we have to extract branch from the ref
-      // Ref example: refs/heads/main, refs/tags/X
-      const branchParts = gitRef.split("/");
-      branch = branchParts.slice(2).join("/");
-    }
-  }
-
-  branch = branch.replace("/", "-");
-  tag = tag.replace("/", "-");
-
-  // If tag and branch are the same, we are on a tag, we assume branc is main.
-  if (tag === branch) {
-    branch = "main";
-  }
-
-  const sha = gitSHA.substring(0, 7);
-  const env = version !== "unknown" ? "prod" : branch === "main" ? "dev" : "";
-  const num = githubRun;
-
-  return {
-    branch,
-    tag,
-    version,
-    sha,
-    env,
-    num,
-  };
-}
 
 function getBuildAttributes(gitRef, gitSHA, githubEvent, githubRun) {
   let tag = process.env.BUILD_TAG;
@@ -413,7 +369,6 @@ module.exports = {
   run,
   getUploadParams,
   getBuildAttributes,
-  getAttributes,
   createVariantUploads,
   createVariantCopies,
 };
