@@ -1,5 +1,17 @@
 # @empirica/core
 
+## 1.1.0
+
+### Minor Changes
+
+- 549a84e: Implement stage submission with player dropout (#219)
+  Fix issue with a player being displayed as ready despite being offline
+  Fix error console when receieving the ParticipantConnected/Participant disconnected event
+
+### Patch Changes
+
+- 20ad61e: Display custom batch JSON in admin page
+
 ## 1.0.8
 
 ### Patch Changes
