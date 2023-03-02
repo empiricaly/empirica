@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.1.1
+
+### Patch Changes
+
+- c1735d1: Just testing the core release
+
 ## 1.1.0
 
 ### Minor Changes
