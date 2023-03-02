@@ -8,7 +8,7 @@
 
 2. Run the experiment
 
-`$ cd exp123`
+`$ cd <experiment-name>`
 `$ empirica`
 
 3. Run the dev server for the admin UI:

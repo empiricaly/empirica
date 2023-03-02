@@ -24,7 +24,7 @@ jobs:
     if: github.repository == 'empiricaly/empirica' && github.event.pull_request.draft == false
     steps:
       #
-      # Step 0. Setup
+      # Step 0. Setup and test if Empirica compiles successfully
       #
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -48,13 +48,13 @@ jobs:
             BUILD_DATE=${{ env.BUILD_DATE }}
 
       #
-      # Step 3. Build the npm package and publish
+      # Step 1. Build the npm package and publish
       #
       - name: "Build core package: install dependencies"
         if: github.ref == 'refs/heads/main'
         run: npm ci
 
-      - name: "Build core package: Create Release Pull Request or Publish to npm"
+      - name: "Build packages: Create Release Pull Request or Publish to npm"
         if: github.ref == 'refs/heads/main'
         id: changesets
         uses: changesets/action@v1
