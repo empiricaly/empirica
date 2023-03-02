@@ -93,7 +93,7 @@ async function run(core, github, S3, fs) {
     return;
   }
 
-  const attr = getAttributes(
+  const attr = getBuildAttributes(
     github.context.ref,
     github.context.sha,
     github.context.eventName,
@@ -173,6 +173,7 @@ async function run(core, github, S3, fs) {
   // await Promise.all(variations);
 }
 
+// This would be deprecated. Use `getBuildAttributes`
 function getAttributes(gitRef, gitSHA, githubEvent, githubRun) {
   let tag = "unknown";
   let branch = "unknown";
@@ -201,6 +202,29 @@ function getAttributes(gitRef, gitSHA, githubEvent, githubRun) {
   // If tag and branch are the same, we are on a tag, we assume branc is main.
   if (tag === branch) {
     branch = "main";
+  }
+
+  const sha = gitSHA.substring(0, 7);
+  const env = version !== "unknown" ? "prod" : branch === "main" ? "dev" : "";
+  const num = githubRun;
+
+  return {
+    branch,
+    tag,
+    version,
+    sha,
+    env,
+    num,
+  };
+}
+
+function getBuildAttributes(gitRef, gitSHA, githubEvent, githubRun) {
+  let tag = process.env.BUILD_TAG;
+  let branch = process.env.BUILD_BRANCH || "unknown";
+  let version = "unknown";
+
+  if (semver.valid(tag)) {
+    version = tag;
   }
 
   const sha = gitSHA.substring(0, 7);
@@ -388,6 +412,7 @@ function createVariantUploads(
 module.exports = {
   run,
   getUploadParams,
+  getBuildAttributes,
   getAttributes,
   createVariantUploads,
   createVariantCopies,
