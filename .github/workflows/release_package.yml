@@ -38,6 +38,15 @@ jobs:
         id: branch-name
         uses: tj-actions/branch-names@v5.4
 
+      - name: Quick build of Empirica CLI to ensure compilation is working
+        uses: docker/build-push-action@v2
+        with:
+          push: false
+          tags: empirica-tmp
+          file: ./build/Dockerfile
+          build-args: |
+            BUILD_DATE=${{ env.BUILD_DATE }}
+
       #
       # Step 3. Build the npm package and publish
       #
@@ -90,7 +99,6 @@ jobs:
         if: steps.create_tag.outputs.successful != 'true'
         run: |
           echo "BUILD_BRANCH=`echo "${{ steps.branch-name.outputs.current_branch }}" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
-          echo "BUILD_TAG="" >> $GITHUB_ENV
   
       - name: Log build variables
         run: |
@@ -100,6 +108,7 @@ jobs:
           echo BUILD_BRANCH=${{ env.BUILD_BRANCH }}
           echo BUILD_TAG=${{ env.BUILD_TAG }}
           echo EMPIRICA_CORE_VERSION=${{ env.EMPIRICA_CORE_VERSION }}
+
       - name: Build Empirica server
         uses: docker/build-push-action@v2
         with:
