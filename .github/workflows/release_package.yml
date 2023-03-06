@@ -46,6 +46,7 @@ jobs:
           file: ./build/Dockerfile
           build-args: |
             BUILD_DATE=${{ env.BUILD_DATE }}
+            BUILD_ONLY_AMD64=true
 
       #
       # Step 1. Build the npm package and publish

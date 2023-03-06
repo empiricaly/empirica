@@ -5,6 +5,9 @@ ARG BUILD_SHA
 ARG BUILD_NUM
 ARG BUILD_BRANCH
 ARG BUILD_TAG
+# This would be used in CI to verify that the compilation is successful
+# we only need one platform for this
+ARG BUILD_ONLY_AMD64
 
 # Install Node.js and NPM
 ##########################
@@ -41,8 +44,8 @@ RUN cd /build/internal/templates && go-bindata -ignore="node_modules|trigger|yar
 
 # Build
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -tags "static_build" -ldflags "-extldflags=-static -s -w -X 'github.com/empiricaly/empirica/internal/build.SHA=$BUILD_SHA' -X 'github.com/empiricaly/empirica/internal/build.Tag=$BUILD_TAG' -X 'github.com/empiricaly/empirica/internal/build.Branch=$BUILD_BRANCH' -X 'github.com/empiricaly/empirica/internal/build.BuildNum=$BUILD_NUM' -X 'github.com/empiricaly/empirica/internal/build.Time=$BUILD_DATE'" -o /out/empirica-linux-amd64 ./cmds/empirica
-RUN CC=o64-clang CXX=o64-clang++ CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X 'github.com/empiricaly/empirica/internal/build.SHA=$BUILD_SHA' -X 'github.com/empiricaly/empirica/internal/build.Tag=$BUILD_TAG' -X 'github.com/empiricaly/empirica/internal/build.Branch=$BUILD_BRANCH' -X 'github.com/empiricaly/empirica/internal/build.BuildNum=$BUILD_NUM' -X 'github.com/empiricaly/empirica/internal/build.Time=$BUILD_DATE'" -o /out/empirica-darwin-amd64 ./cmds/empirica
-RUN CC=aarch64-apple-darwin20.2-clang CXX=aarch64-apple-darwin20.2-clang++ CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w -X 'github.com/empiricaly/empirica/internal/build.SHA=$BUILD_SHA' -X 'github.com/empiricaly/empirica/internal/build.Tag=$BUILD_TAG' -X 'github.com/empiricaly/empirica/internal/build.Branch=$BUILD_BRANCH' -X 'github.com/empiricaly/empirica/internal/build.BuildNum=$BUILD_NUM' -X 'github.com/empiricaly/empirica/internal/build.Time=$BUILD_DATE'" -o /out/empirica-darwin-arm64 ./cmds/empirica
+RUN if [[ -z "$BUILD_ONLY_AMD64" ]] ; then CC=o64-clang CXX=o64-clang++ CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X 'github.com/empiricaly/empirica/internal/build.SHA=$BUILD_SHA' -X 'github.com/empiricaly/empirica/internal/build.Tag=$BUILD_TAG' -X 'github.com/empiricaly/empirica/internal/build.Branch=$BUILD_BRANCH' -X 'github.com/empiricaly/empirica/internal/build.BuildNum=$BUILD_NUM' -X 'github.com/empiricaly/empirica/internal/build.Time=$BUILD_DATE'" -o /out/empirica-darwin-amd64 ./cmds/empirica ; else echo Building only AMD64 ; fi 
+RUN if [[ -z "$BUILD_ONLY_AMD64" ]] ; then CC=aarch64-apple-darwin20.2-clang CXX=aarch64-apple-darwin20.2-clang++ CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w -X 'github.com/empiricaly/empirica/internal/build.SHA=$BUILD_SHA' -X 'github.com/empiricaly/empirica/internal/build.Tag=$BUILD_TAG' -X 'github.com/empiricaly/empirica/internal/build.Branch=$BUILD_BRANCH' -X 'github.com/empiricaly/empirica/internal/build.BuildNum=$BUILD_NUM' -X 'github.com/empiricaly/empirica/internal/build.Time=$BUILD_DATE'" -o /out/empirica-darwin-arm64 ./cmds/empirica ; else echo Building only AMD64 ; fi 
 # RUN CC=CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ CGO_ENABLED=1 GOOS=windows GOARCH=amd64 go build -tags "static_build" -ldflags "-extldflags=-static -buildmode=exe -s -w -X 'github.com/empiricaly/empirica/internal/build.SHA=$BUILD_SHA' -X 'github.com/empiricaly/empirica/internal/build.Tag=$BUILD_TAG' -X 'github.com/empiricaly/empirica/internal/build.Branch=$BUILD_BRANCH' -X 'github.com/empiricaly/empirica/internal/build.BuildNum=$BUILD_NUM' -X 'github.com/empiricaly/empirica/internal/build.Time=$BUILD_DATE'" -o /out/empirica-windows-amd64.exe ./cmds/empirica
 
 # Clear inherited entrypoint
