@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.1.2
+
+### Patch Changes
+
+- 486bdee: Another test release
+
 ## 1.1.1
 
 ### Patch Changes
