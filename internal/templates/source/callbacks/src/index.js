@@ -25,9 +25,7 @@ setLogLevel(argv["loglevel"] || "info");
   );
 
   ctx.register(ClassicLoader);
-  ctx.register(Classic({
-    disableBatchAutoend: false
-  }));
+  ctx.register(Classic());
   ctx.register(Lobby());
   ctx.register(Empirica);
   ctx.register(function (_) {
