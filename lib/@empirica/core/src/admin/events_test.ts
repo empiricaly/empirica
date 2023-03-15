@@ -3,7 +3,7 @@ import { AdminKinds, Context, setupEventContext } from "../shared/test_helpers";
 import {
   EventContext,
   ListenersCollector,
-  ListernerPlacement,
+  ListenerPlacement,
   TajribaEvent,
 } from "./events";
 
@@ -14,7 +14,7 @@ test.serial("ListenersCollector tracks listeners", async (t) => {
   const startCB = (_: EventContext<Context, AdminKinds>) => {};
   listeners.on("start", startCB);
   t.deepEqual(listeners.starts, [
-    { placement: ListernerPlacement.None, callback: startCB },
+    { placement: ListenerPlacement.None, callback: startCB },
   ]);
 
   /* c8 ignore next */
@@ -22,7 +22,7 @@ test.serial("ListenersCollector tracks listeners", async (t) => {
   listeners.on(TajribaEvent.ParticipantConnect, tajCB);
   t.deepEqual(listeners.tajEvents, [
     {
-      placement: ListernerPlacement.None,
+      placement: ListenerPlacement.None,
       event: TajribaEvent.ParticipantConnect,
       callback: tajCB,
     },
@@ -32,7 +32,7 @@ test.serial("ListenersCollector tracks listeners", async (t) => {
   const kindCB = (_: EventContext<Context, AdminKinds>) => {};
   listeners.on("game", kindCB);
   t.deepEqual(listeners.kindListeners, [
-    { placement: ListernerPlacement.None, kind: "game", callback: kindCB },
+    { placement: ListenerPlacement.None, kind: "game", callback: kindCB },
   ]);
 
   /* c8 ignore next */
@@ -40,7 +40,7 @@ test.serial("ListenersCollector tracks listeners", async (t) => {
   listeners.on("game", "something", attribCB);
   t.deepEqual(listeners.attributeListeners, [
     {
-      placement: ListernerPlacement.None,
+      placement: ListenerPlacement.None,
       kind: "game",
       key: "something",
       callback: attribCB,
@@ -55,7 +55,7 @@ test.serial("ListenersCollector tracks before listeners", async (t) => {
   const startCB = (_: EventContext<Context, AdminKinds>) => {};
   listeners.before("start", startCB);
   t.deepEqual(listeners.starts, [
-    { placement: ListernerPlacement.Before, callback: startCB },
+    { placement: ListenerPlacement.Before, callback: startCB },
   ]);
 
   /* c8 ignore next */
@@ -63,7 +63,7 @@ test.serial("ListenersCollector tracks before listeners", async (t) => {
   listeners.before(TajribaEvent.ParticipantConnect, tajCB);
   t.deepEqual(listeners.tajEvents, [
     {
-      placement: ListernerPlacement.Before,
+      placement: ListenerPlacement.Before,
       event: TajribaEvent.ParticipantConnect,
       callback: tajCB,
     },
@@ -73,7 +73,7 @@ test.serial("ListenersCollector tracks before listeners", async (t) => {
   const kindCB = (_: EventContext<Context, AdminKinds>) => {};
   listeners.before("game", kindCB);
   t.deepEqual(listeners.kindListeners, [
-    { placement: ListernerPlacement.Before, kind: "game", callback: kindCB },
+    { placement: ListenerPlacement.Before, kind: "game", callback: kindCB },
   ]);
 
   /* c8 ignore next */
@@ -81,7 +81,7 @@ test.serial("ListenersCollector tracks before listeners", async (t) => {
   listeners.before("game", "something", attribCB);
   t.deepEqual(listeners.attributeListeners, [
     {
-      placement: ListernerPlacement.Before,
+      placement: ListenerPlacement.Before,
       kind: "game",
       key: "something",
       callback: attribCB,
@@ -96,7 +96,7 @@ test.serial("ListenersCollector tracks after listeners", async (t) => {
   const startCB = (_: EventContext<Context, AdminKinds>) => {};
   listeners.after("start", startCB);
   t.deepEqual(listeners.starts, [
-    { placement: ListernerPlacement.After, callback: startCB },
+    { placement: ListenerPlacement.After, callback: startCB },
   ]);
 
   /* c8 ignore next */
@@ -104,7 +104,7 @@ test.serial("ListenersCollector tracks after listeners", async (t) => {
   listeners.after(TajribaEvent.ParticipantConnect, tajCB);
   t.deepEqual(listeners.tajEvents, [
     {
-      placement: ListernerPlacement.After,
+      placement: ListenerPlacement.After,
       event: TajribaEvent.ParticipantConnect,
       callback: tajCB,
     },
@@ -114,7 +114,7 @@ test.serial("ListenersCollector tracks after listeners", async (t) => {
   const kindCB = (_: EventContext<Context, AdminKinds>) => {};
   listeners.after("game", kindCB);
   t.deepEqual(listeners.kindListeners, [
-    { placement: ListernerPlacement.After, kind: "game", callback: kindCB },
+    { placement: ListenerPlacement.After, kind: "game", callback: kindCB },
   ]);
 
   /* c8 ignore next */
@@ -122,7 +122,7 @@ test.serial("ListenersCollector tracks after listeners", async (t) => {
   listeners.after("game", "something", attribCB);
   t.deepEqual(listeners.attributeListeners, [
     {
-      placement: ListernerPlacement.After,
+      placement: ListenerPlacement.After,
       kind: "game",
       key: "something",
       callback: attribCB,

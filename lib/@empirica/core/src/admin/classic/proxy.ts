@@ -1,5 +1,5 @@
-import { EventContext, ListenersCollector } from "../events";
-import { ClassicKinds, Context, Game, Round, Stage } from "./models";
+import { EventContext, ListenersCollector, TajribaEvent } from "../events";
+import { ClassicKinds, Context, Game, Round, Stage, Player } from "./models";
 
 /** Collects event listeners. */
 export class ClassicListenersCollector extends ListenersCollector<
@@ -108,6 +108,43 @@ export class ClassicListenersCollector extends ListenersCollector<
       ) => {
         if (!ended) return;
         cb({ game });
+      }
+    );
+  }
+
+  onPlayerConnected(cb: (props: { player: Player }) => void) {
+
+    console.log('onPlayerConnected/call', cb);
+    
+    this.on(
+      TajribaEvent.ParticipantConnect,
+    (
+        _: EventContext<Context, ClassicKinds>,
+        // { player }: { player: Player }
+        context
+      ) => {
+          console.log('_', _);
+          
+          cb(context);
+        }
+      );
+  }
+        
+  onPlayerDisconnected(cb: (props: { player: Player }) => void) {
+    // console.log('onPlayerDisconnected/call', cb);
+    this.on(
+      TajribaEvent.ParticipantDisconnect,
+      (
+        _: EventContext<Context, ClassicKinds>,
+        // { player }: { player: Player }
+        context
+      ) => {
+
+        // cb({ player });
+        // const playerWithConnectivityInfo = _.
+        console.log('context', context);
+        
+        cb(context);
       }
     );
   }

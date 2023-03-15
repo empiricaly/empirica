@@ -9,7 +9,7 @@ import {
   EvtCtxCallback,
   KindEventListener,
   ListenersCollector,
-  ListernerPlacement,
+  ListenerPlacement,
   TajEventListener,
   TajribaEvent,
 } from "./events";
@@ -473,7 +473,7 @@ export class Cake<
   }
 }
 
-type HasPlacement = { placement: ListernerPlacement };
+type HasPlacement = { placement: ListenerPlacement };
 const comparePlacement = (a: HasPlacement, b: HasPlacement) =>
   a.placement - b.placement;
 

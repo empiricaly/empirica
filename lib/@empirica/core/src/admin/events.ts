@@ -22,18 +22,18 @@ export enum TajribaEvent {
   ParticipantDisconnect = "PARTICIPANT_DISCONNECT",
 }
 
-export enum ListernerPlacement {
+export enum ListenerPlacement {
   Before,
   None, // Not before or after
   After,
 }
 
-const placementString = new Map<ListernerPlacement, string>();
-placementString.set(ListernerPlacement.Before, "before");
-placementString.set(ListernerPlacement.None, "on");
-placementString.set(ListernerPlacement.After, "after");
+const placementString = new Map<ListenerPlacement, string>();
+placementString.set(ListenerPlacement.Before, "before");
+placementString.set(ListenerPlacement.None, "on");
+placementString.set(ListenerPlacement.After, "after");
 
-export function PlacementString(placement: ListernerPlacement): string {
+export function PlacementString(placement: ListenerPlacement): string {
   return placementString.get(placement)!;
 }
 
@@ -41,24 +41,24 @@ export type SimpleListener<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > = {
-  placement: ListernerPlacement;
+  placement: ListenerPlacement;
   callback: (ctx: EventContext<Context, Kinds>) => void;
 };
 
 export type TajEventListener<Callback extends Function> = {
-  placement: ListernerPlacement;
+  placement: ListenerPlacement;
   event: TajribaEvent;
   callback: Callback;
 };
 
 export type KindEventListener<Callback extends Function> = {
-  placement: ListernerPlacement;
+  placement: ListenerPlacement;
   kind: string;
   callback: Callback;
 };
 
 export type AttributeEventListener<Callback extends Function> = {
-  placement: ListernerPlacement;
+  placement: ListenerPlacement;
   kind: string;
   key: string;
   callback: Callback;
@@ -75,7 +75,7 @@ function unique<
   K extends keyof Kinds
 >(
   kind: K,
-  placement: ListernerPlacement,
+  placement: ListenerPlacement,
   callback: EvtCtxCallback<Context, Kinds>
 ) {
   return async (ctx: EventContext<Context, Kinds>, props: any) => {
@@ -147,8 +147,8 @@ export class ListenersCollector<
       | ((ctx: EventContext<Context, Kinds>) => void),
     callback?: EvtCtxCallback<Context, Kinds>
   ): void {
-    this.registerListerner(
-      ListernerPlacement.None,
+    this.registerListener(
+      ListenerPlacement.None,
       kindOrEvent,
       keyOrNodeIDOrEventOrCallback,
       callback
@@ -165,8 +165,8 @@ export class ListenersCollector<
     callback?: EvtCtxCallback<Context, Kinds>,
     uniqueCall?: boolean
   ): void {
-    this.registerListerner(
-      ListernerPlacement.Before,
+    this.registerListener(
+      ListenerPlacement.Before,
       kindOrEvent,
       keyOrNodeIDOrEventOrCallback,
       callback,
@@ -184,8 +184,8 @@ export class ListenersCollector<
     callback?: EvtCtxCallback<Context, Kinds>,
     uniqueCall?: boolean
   ): void {
-    this.registerListerner(
-      ListernerPlacement.After,
+    this.registerListener(
+      ListenerPlacement.After,
       kindOrEvent,
       keyOrNodeIDOrEventOrCallback,
       callback,
@@ -193,8 +193,8 @@ export class ListenersCollector<
     );
   }
 
-  protected registerListerner(
-    placement: ListernerPlacement,
+  protected registerListener(
+    placement: ListenerPlacement,
     kindOrEvent: string,
     keyOrNodeIDOrEventOrCallback?:
       | string
@@ -204,6 +204,10 @@ export class ListenersCollector<
     callback?: EvtCtxCallback<Context, Kinds>,
     uniqueCall = false
   ): void {
+
+    console.log('registerListener/kindOrEvent', kindOrEvent);
+    console.log('registerListener/keyOrNodeIDOrEventOrCallback', keyOrNodeIDOrEventOrCallback);
+    
     if (kindOrEvent === "start") {
       if (callback) {
         throw new Error("start event only accepts 2 arguments");
@@ -293,8 +297,8 @@ class ListenersCollectorProxy<
     super();
   }
 
-  protected registerListerner(
-    placement: ListernerPlacement,
+  protected registerListener(
+    placement: ListenerPlacement,
     kindOrEvent: string,
     keyOrNodeIDOrEventOrCallback?:
       | string
@@ -312,7 +316,7 @@ class ListenersCollectorProxy<
       throw new Error("only attribute listeners can be unique");
     }
 
-    super.registerListerner(
+    super.registerListener(
       placement,
       kindOrEvent,
       keyOrNodeIDOrEventOrCallback,

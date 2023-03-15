@@ -684,6 +684,44 @@ export class Player extends GameOwned {
     return this.scopeByKey<PlayerStage>(key);
   }
 
+  get connectivityInfo() {
+    const key = `playerConnectivity-${this.id}`;
+
+    return this.scopeByKey<PlayerConnectivityInfo>(key);
+  }
+
+  async updateConnectivityInfo({ isConnected, connectedAt, disconnectedAt}: { isConnected: boolean, connectedAt: string | null, disconnectedAt: string | null} ) {
+    const key = `playerConnectivity-${this.id}`;
+    
+    if (this.connectivityInfo) {
+      this.connectivityInfo.set("isConnected", isConnected)
+    }
+
+    const playerConnectivityInfo = await this.addScopes([
+      {
+        kind: "playerConnectivityInfo",
+        attributes: attrs([
+          {
+            key: "isConnected",
+            value: isConnected,
+          },
+          {
+            key: "connectedAt",
+            value: connectedAt,
+          },
+          {
+            key: "disconnectedAt",
+            value: disconnectedAt,
+          },
+        ]),
+      },
+    ]);
+
+    this.set(key, playerConnectivityInfo[0]!.id);
+
+    return playerConnectivityInfo[0]!.id;
+  }
+
   exit(reason: string) {
     if (this.get("ended")) {
       return;
@@ -706,6 +744,8 @@ export class Player extends GameOwned {
 }
 
 export class PlayerGame extends GameOwned {}
+
+export class PlayerConnectivityInfo extends GameOwned {}
 
 export class PlayerRound extends GameOwned {}
 
@@ -969,6 +1009,7 @@ export type ClassicKinds = {
   playerRound: Constructor<PlayerRound>;
   playerStage: Constructor<PlayerStage>;
   round: Constructor<Round>;
+  playerConnectivityInfo: Constructor<PlayerConnectivityInfo>;
   stage: Constructor<Stage>;
 };
 
@@ -979,6 +1020,7 @@ export const classicKinds = {
   playerGame: PlayerGame,
   playerRound: PlayerRound,
   playerStage: PlayerStage,
+  playerConnectivityInfo: PlayerConnectivityInfo,
   round: Round,
   stage: Stage,
 };

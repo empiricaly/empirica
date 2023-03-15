@@ -34,6 +34,12 @@ export class Player extends Scope<Context, EmpiricaClassicKinds> {
     return this.scopeByKey(key) as PlayerGame | undefined;
   }
 
+  get connectivityInfo() {
+    const key = `player-connection-${this.id}`;
+
+    return this.scopeByKey(key) as PlayerGame | undefined;
+  }
+
   get round() {
     const { stage } = this.ctx;
     if (!stage) {

@@ -5,7 +5,7 @@ import { debug, error, trace, warn } from "../../utils/console";
 import { deepEqual } from "../../utils/object";
 import { pickRandom, selectRandom } from "../../utils/random";
 import { EventContext, ListenersCollector, TajribaEvent } from "../events";
-import { Participant } from "../participants";
+// import { Participant } from "../participants";
 import { Step, Transition } from "../transitions";
 import { attrs } from "./helpers";
 import {
@@ -19,6 +19,7 @@ import {
   Round,
   Stage,
 } from "./models";
+import PlayerStatusManager from "./PlayerStatusManager";
 import { batchConfigSchema, treatmentSchema } from "./schemas";
 
 // const isBatch = z.instanceof(Batch).parse;
@@ -58,7 +59,7 @@ export function Classic({
   disableBatchAutoend = false
 }: ClassicConfig = {}) {
   return function (_: ListenersCollector<Context, ClassicKinds>) {
-    const online = new Map<string, Participant>();
+    const playerStatusManager = new PlayerStatusManager();
     const playersForParticipant = new Map<string, Player>();
     const stageForStepID = new Map<string, Stage>();
 
@@ -188,12 +189,12 @@ export function Classic({
     }
 
     _.on(TajribaEvent.ParticipantConnect, async (ctx, { participant }) => {
-      online.set(participant.id, participant);
+      playerStatusManager.handlePlayerConnected(participant.id, participant);
 
       const player = playersForParticipant.get(participant.id);
 
       if (!player) {
-        // console.log("CREATE PLAYER", participant.id);
+        console.log("CREATE PLAYER", participant.id);
         await ctx.addScopes([
           {
             attributes: attrs([
@@ -218,7 +219,20 @@ export function Classic({
     });
 
     _.on(TajribaEvent.ParticipantDisconnect, (_, { participant }) => {
-      online.delete(participant.id);
+      playerStatusManager.handlePlayerDisconnect(participant.id);
+
+      const player = playersForParticipant.get(participant.id);
+      
+
+      if (player) {
+        player.updateConnectivityInfo({
+          isConnected: false,
+          connectedAt: null,
+          disconnectedAt: new Date().toISOString(),
+        })
+      } else {
+        console.log('player is not found in the online list');
+      }
     });
 
     _.on("player", async (ctx, { player }: { player: Player }) => {
@@ -226,6 +240,12 @@ export function Classic({
 
       player.participantID = participantID;
       playersForParticipant.set(participantID, player);
+
+      player.updateConnectivityInfo({
+        isConnected: true,
+        connectedAt: new Date().toISOString(),
+        disconnectedAt: null
+      })
 
       ctx.addLinks([
         {
@@ -235,7 +255,7 @@ export function Classic({
         },
       ]);
 
-      if (online.has(participantID)) {
+      if (playerStatusManager.getIsPlayerOnlineByParticipantId(participantID)) {
         await assignplayer(ctx, player);
       }
     });
@@ -622,7 +642,7 @@ export function Classic({
           return;
         }
 
-        const haveAllPlayersSubmitted = players.every((p) => p.stage!.get("submit") || p.get("ended") || !online.has(p.get('participantID')?.toString() as string));
+        const haveAllPlayersSubmitted = players.every((p) => p.stage!.get("submit") || p.get("ended") || !playerStatusManager.getIsPlayerOnlineByParticipantId(p.get('participantID')?.toString() as string));
 
         if (haveAllPlayersSubmitted) {
           ctx.addTransitions([
