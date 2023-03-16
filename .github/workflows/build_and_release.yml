@@ -87,13 +87,19 @@ jobs:
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
           echo "BUILD_SHA=$(git rev-list -1 HEAD)" >> $GITHUB_ENV
           echo "BUILD_SHA_SHORT=$(git rev-parse --short=7 ${{ github.sha }})" >> $GITHUB_ENV
-          echo "BUILD_NUM=${{ github.run_number }}" >> $GITHUB_ENV
       # If tag has been created, we assume we need to release a version
       - name: Check if tag has been created
         if: steps.create_tag.outputs.successful
         run: |
           echo "BUILD_BRANCH=`echo "main" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
           echo "BUILD_TAG=${{ env.EMPIRICA_CORE_VERSION }}" >> $GITHUB_ENV
+
+      # If tag hasn't been created, create a CalVer version
+      - name: Use actual branch name.
+        if: steps.create_tag.outputs.successful != 'true'
+        working-directory: ./build
+        run: /
+          echo "BUILD_TAG=$(./generate_calver.sh)" >> $GITHUB_ENV
 
       # Otherwise use the actual branch name
       - name: Use actual branch name.
@@ -105,7 +111,6 @@ jobs:
         run: |
           echo BUILD_DATE=${{ env.BUILD_DATE }}
           echo BUILD_SHA=${{ env.BUILD_SHA_SHORT }}
-          echo BUILD_NUM=${{ env.BUILD_NUM }}
           echo BUILD_BRANCH=${{ env.BUILD_BRANCH }}
           echo BUILD_TAG=${{ env.BUILD_TAG }}
           echo EMPIRICA_CORE_VERSION=${{ env.EMPIRICA_CORE_VERSION }}
@@ -119,7 +124,6 @@ jobs:
           build-args: |
             BUILD_DATE=${{ env.BUILD_DATE }}
             BUILD_SHA=${{ env.BUILD_SHA_SHORT }}
-            BUILD_NUM=${{ env.BUILD_NUM }}
             BUILD_BRANCH=${{ env.BUILD_BRANCH }}
             BUILD_TAG=${{ env.BUILD_TAG }}
       - name: Copy binaries from image
@@ -194,6 +198,6 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ env.BUILD_SHA_SHORT }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build-${{ env.BUILD_NUM }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build-${{ env.BUILD_TAG }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:branch-${{ env.BUILD_BRANCH }}
 
