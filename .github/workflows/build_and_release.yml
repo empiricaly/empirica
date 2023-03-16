@@ -99,7 +99,7 @@ jobs:
         if: steps.create_tag.outputs.successful != 'true'
         working-directory: ./build
         run: /
-          echo "BUILD_TAG=$(./generate_calver.sh)" >> $GITHUB_ENV
+          echo "BUILD_TAG=$(sh /generate_calver.sh)" >> $GITHUB_ENV
 
       # Otherwise use the actual branch name
       - name: Use actual branch name.
