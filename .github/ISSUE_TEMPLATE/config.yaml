@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Slack Community Support
+    url: https://join.slack.com/t/empirica-ly/shared_invite/zt-1fb34yq47-YlgYUJmXJAdv7QmHsa_fdw
+    about: "Please ask and answer questions in our #tech-support Slack channel."
+  - name: Empirica Documentation
+    url: https://docs.empirica.ly
+    about: Check the Empirica documentation.
