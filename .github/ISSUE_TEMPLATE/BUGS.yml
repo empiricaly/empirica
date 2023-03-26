@@ -1,6 +1,6 @@
 name: 🐞 Bug
 description: File a bug/issue
-title: ""
+# title: ""
 labels: ["bug"]
 # assignees:
 #   - npaton
