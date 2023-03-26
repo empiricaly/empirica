@@ -39,8 +39,9 @@ body:
     id: version
     attributes:
       label: Empirica Version
-      description: Copy and paste the output of `empirica version` at the root
-      of your project.
+      description: |
+        Copy and paste the output of `empirica version` at the root of your
+        project.
       render: text
     validations:
       required: false
@@ -70,9 +71,10 @@ body:
     id: logs
     attributes:
       label: Relevant log output
-      description: Please copy and paste any relevant log output, from the
-      `empirica` command or from the browser console. This will be
-      automatically formatted into code, so no need for backticks.
+      description: |
+        Please copy and paste any relevant log output, from the
+        `empirica` command or from the browser console. This will be
+        automatically formatted into code, so no need for backticks.
       render: shell
     validations:
       required: false
