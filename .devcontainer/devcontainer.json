@@ -4,30 +4,9 @@
     "codespaces": {
       "repositories": {
         "empiricaly/tajriba": {
-          "permissions": {
-            "permissions": "write-all"
-          }
+          "permissions": "write-all"
         }
       }
     }
-  },
-  "features": {
-    "ghcr.io/devcontainers/features/git:1": {
-      "ppa": true,
-      "version": "os-provided"
-    },
-    "ghcr.io/eitsupi/devcontainer-features/jq-likes:1": {
-      "jqVersion": "os-provided",
-      "yqVersion": "latest",
-      "gojqVersion": "latest"
-    },
-    "ghcr.io/dhoeric/features/act:1": {},
-    "ghcr.io/guiyomh/features/golangci-lint:0": {
-      "version": "latest"
-    },
-    "ghcr.io/enricosecondulfo/devcontainer-features/volta:1": {
-      "version": "latest"
-    },
-    "ghcr.io/flexwie/devcontainer-features/op:1": {}
   }
 }
