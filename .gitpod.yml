@@ -8,6 +8,9 @@ tasks:
   - name: Init
     init: |
       go install github.com/cortesi/modd/cmd/modd@latest
+      go install github.com/go-bindata/go-bindata/go-bindata@latest
+      curl https://get.volta.sh | bash
+      volta install node
       gp sync-done modd
   - name: Get Go deps
     init: |
@@ -21,7 +24,7 @@ tasks:
   - name: Link tajriba Go
     init: |
       gp sync-await deps-empirica
-      go work init ../tajriba
+      go work init . ../tajriba
   - name: Link tajriba npm
     before: cd ../tajriba/lib/tajriba
     init: |
@@ -77,8 +80,44 @@ tasks:
       gp sync-await npm-link-empirica-core
     command: modd
 
+  - name: Shell
+    init: git config --global gpg.format ssh && git config --global user.signingkey "$SSH_SIGNING_KEY" && git config commit.gpgsign true --global
+    command: bash
+
 ports:
   - name: Web App
     description: The Empirica dev web server
     port: 3000
     onOpen: open-browser
+
+vscode:
+  extensions:
+    - "aaron-bond.better-comments"
+    - "akmarnafi.comment-headers"
+    - "axelrindle.duplicate-file"
+    - "bradlc.vscode-tailwindcss"
+    - "ChristophLipp.shruggoff"
+    - "eamodio.gitlens"
+    - "eriklynd.json-tools"
+    - "esbenp.prettier-vscode"
+    - "formulahendry.auto-rename-tag"
+    - "GitHub.codespaces"
+    - "GitHub.copilot"
+    - "GitHub.remotehub"
+    - "github.vscode-github-actions"
+    - "GitHub.vscode-pull-request-github"
+    - "golang.go"
+    - "jobe451.lorem-whatever"
+    - "kumar-harsh.graphql-for-vscode"
+    - "marclipovsky.string-manipulation"
+    - "mitchdenny.ecdc"
+    - "mohsen1.prettify-json"
+    - "mrmlnc.vscode-duplicate"
+    - "ms-azuretools.vscode-docker"
+    - "oderwat.indent-rainbow"
+    - "ow.vscode-subword-navigation"
+    - "stackbreak.comment-divider"
+    - "stkb.rewrap"
+    - "svelte.svelte-vscode"
+    - "Tyriar.lorem-ipsum"
+    - "wmaurer.change-case"
