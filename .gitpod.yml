@@ -5,26 +5,29 @@ additionalRepositories:
     checkoutLocation: tajriba
 
 tasks:
-  - name: Init
+  - name: Shell
     init: |
       go install github.com/cortesi/modd/cmd/modd@latest
       go install github.com/go-bindata/go-bindata/go-bindata@latest
+      go install github.com/abice/go-enum@latest
       curl https://get.volta.sh | bash
       volta install node
+      sudo apt update
+      supt apt install rsync expect -y
       gp sync-done modd
+      git config --global gpg.format ssh && git config --global user.signingkey "$SSH_SIGNING_KEY"
+      git config commit.gpgsign true --global
+    command: bash
   - name: Get Go deps
     init: |
       go mod download
+      go work init . ../tajriba
       gp sync-done deps-empirica
   - name: Get Go deps (tajriba)
     before: cd ../tajriba
     init: |
       go mod download
       gp sync-done deps-tajriba
-  - name: Link tajriba Go
-    init: |
-      gp sync-await deps-empirica
-      go work init . ../tajriba
   - name: Link tajriba npm
     before: cd ../tajriba/lib/tajriba
     init: |
@@ -54,41 +57,51 @@ tasks:
       npm link @empirica/core
       gp sync-done npm-link-react
 
-  - name: Empirica modd
+  - name: Build admin ui
+    before: cd lib/admin-ui
     init: |
-      gp sync-await modd
-      gp sync-await deps-empirica
-      gp sync-await npm-link-callbacks
-      gp sync-await npm-link-react
-    command: modd
-  - name: Tajriba modd
+      gp sync-await npm-link-empirica-core
+      gp sync-await npm-link-tajriba
+      npm install
+      npm run build
+      gp sync-done admin-ui-build
+    command: npm run dev
+  - name: Tajriba
     before: cd ../tajriba
     init: |
       gp sync-await modd
       gp sync-await deps-tajriba
-    command: modd
-  - name: Tajriba.js modd
+    command: bash
+  - name: Tajriba.js
     before: cd ../tajriba/lib/tajriba
     init: |
       gp sync-await modd
       gp sync-await npm-link-tajriba
-    command: modd
+    command: bash
   - name: Empirica.js modd
     before: cd lib/@empirica/core
     init: |
       gp sync-await modd
       gp sync-await npm-link-empirica-core
     command: modd
-
-  - name: Shell
-    init: git config --global gpg.format ssh && git config --global user.signingkey "$SSH_SIGNING_KEY" && git config commit.gpgsign true --global
-    command: bash
+  - name: Empirica modd
+    init: |
+      gp sync-await modd
+      gp sync-await deps-empirica
+      gp sync-await npm-link-callbacks
+      gp sync-await npm-link-react
+      gp sync-await admin-ui-build
+    command: modd
 
 ports:
   - name: Web App
     description: The Empirica dev web server
     port: 3000
     onOpen: open-browser
+  - name: Vite Server
+    description: The Vite Server for hot reload
+    port: 8844
+    onOpen: ignore
 
 vscode:
   extensions:
@@ -121,3 +134,4 @@ vscode:
     - "svelte.svelte-vscode"
     - "Tyriar.lorem-ipsum"
     - "wmaurer.change-case"
+    - "tamasfe.even-better-toml"

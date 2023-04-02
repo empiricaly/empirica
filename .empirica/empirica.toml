@@ -1,0 +1,15 @@
+name = "myexperiment"
+
+[callbacks]
+path = "internal/templates/source/callbacks"
+
+[player]
+path = "internal/templates/source/react"
+
+[tajriba.auth]
+srtoken = "01234567890123456789"
+
+[[tajriba.auth.users]]
+name = "Admin"
+username = "admin"
+password = "123123123"

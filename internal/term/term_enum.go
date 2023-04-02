@@ -24,6 +24,8 @@ const (
 	Restarted
 )
 
+var ErrInvalidupdateKind = fmt.Errorf("not a valid updateKind, try [%s]", strings.Join(_updateKindNames, ", "))
+
 const _updateKindName = "loglogerrerrorreadyrestarted"
 
 var _updateKindNames = []string{
@@ -57,6 +59,13 @@ func (x updateKind) String() string {
 	return fmt.Sprintf("updateKind(%d)", x)
 }
 
+// IsValid provides a quick way to determine if the typed value is
+// part of the allowed enumerated values
+func (x updateKind) IsValid() bool {
+	_, ok := _updateKindMap[x]
+	return ok
+}
+
 var _updateKindValue = map[string]updateKind{
 	_updateKindName[0:3]:                    Log,
 	strings.ToLower(_updateKindName[0:3]):   Log,
@@ -75,7 +84,7 @@ func ParseupdateKind(name string) (updateKind, error) {
 	if x, ok := _updateKindValue[name]; ok {
 		return x, nil
 	}
-	return updateKind(0), fmt.Errorf("%s is not a valid updateKind, try [%s]", name, strings.Join(_updateKindNames, ", "))
+	return updateKind(0), fmt.Errorf("%s is %w", name, ErrInvalidupdateKind)
 }
 
 // MarshalText implements the text marshaller method.
