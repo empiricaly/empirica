@@ -1,0 +1,84 @@
+workspaceLocation: empirica/main.code-workspace # Relative to /workspace dir
+additionalRepositories:
+  - url: https://github.com/empiricaly/tajriba.git
+    # checkoutLocation is relative to /workspaces
+    checkoutLocation: tajriba
+
+tasks:
+  - name: Init
+    init: |
+      go install github.com/cortesi/modd/cmd/modd@latest
+      gp sync-done modd
+  - name: Get Go deps
+    init: |
+      go mod download
+      gp sync-done deps-empirica
+  - name: Get Go deps (tajriba)
+    before: cd ../tajriba
+    init: |
+      go mod download
+      gp sync-done deps-tajriba
+  - name: Link tajriba Go
+    init: |
+      gp sync-await deps-empirica
+      go work init ../tajriba
+  - name: Link tajriba npm
+    before: cd ../tajriba/lib/tajriba
+    init: |
+      npm install
+      npm link
+      gp sync-done npm-link-tajriba
+  - name: Link core npm
+    before: cd lib/@empirica/core
+    init: |
+      gp sync-await npm-link-tajriba
+      npm install
+      npm link @empirica/tajriba
+      npm link
+      gp sync-done npm-link-empirica-core
+  - name: Link callbacks
+    before: cd internal/templates/source/callbacks
+    init: |
+      gp sync-await npm-link-empirica-core
+      npm install
+      npm link @empirica/core
+      gp sync-done npm-link-callbacks
+  - name: Link react
+    before: cd internal/templates/source/react
+    init: |
+      gp sync-await npm-link-empirica-core
+      npm install
+      npm link @empirica/core
+      gp sync-done npm-link-react
+
+  - name: Empirica modd
+    init: |
+      gp sync-await modd
+      gp sync-await deps-empirica
+      gp sync-await npm-link-callbacks
+      gp sync-await npm-link-react
+    command: modd
+  - name: Tajriba modd
+    before: cd ../tajriba
+    init: |
+      gp sync-await modd
+      gp sync-await deps-tajriba
+    command: modd
+  - name: Tajriba.js modd
+    before: cd ../tajriba/lib/tajriba
+    init: |
+      gp sync-await modd
+      gp sync-await npm-link-tajriba
+    command: modd
+  - name: Empirica.js modd
+    before: cd lib/@empirica/core
+    init: |
+      gp sync-await modd
+      gp sync-await npm-link-empirica-core
+    command: modd
+
+ports:
+  - name: Web App
+    description: The Empirica dev web server
+    port: 3000
+    onOpen: open-browser
