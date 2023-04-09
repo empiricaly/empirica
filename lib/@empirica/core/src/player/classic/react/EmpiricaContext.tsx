@@ -1,6 +1,9 @@
 import React from "react";
 import { Consent, ConsentProps } from "../../react/Consent";
 import { Finished } from "../../react/Finished";
+import { Loading } from "../../react/Loading";
+import { NoGames } from "../../react/NoGames";
+import { PlayerCreate, PlayerCreateProps } from "../../react/PlayerCreate";
 import {
   useConsent,
   useGlobal,
@@ -8,12 +11,9 @@ import {
   usePlayerID,
   useTajribaConnected,
 } from "../../react/hooks";
-import { Loading } from "../../react/Loading";
-import { NoGames } from "../../react/NoGames";
-import { PlayerCreate, PlayerCreateProps } from "../../react/PlayerCreate";
-import { useGame, usePlayer, useRound, useStage } from "./hooks";
 import { Lobby as DefaultLobby } from "./Lobby";
 import { Steps, StepsFunc } from "./Steps";
+import { useGame, usePlayer, useRound, useStage } from "./hooks";
 
 export interface EmpiricaContextProps {
   children: React.ReactNode;
@@ -94,7 +94,12 @@ export function EmpiricaContext({
     return <LoadingComp />;
   }
 
-  if (!disableNoGames && !game && !globals.get("experimentOpen")) {
+  if (
+    !disableNoGames &&
+    !game &&
+    (!player || !player.get("gameID")) &&
+    !globals.get("experimentOpen")
+  ) {
     return <NoGamesComp />;
   }
 

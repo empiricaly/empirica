@@ -163,9 +163,7 @@
     "test": "echo 'tests temporarily disabled'",
     "test:watch": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true ava --watch -v",
     "prerelease:legacy": "npm run build",
-    "prepublish": "npm run build",
-    "release:next": "np --tag next",
-    "release:legacy": "np --tag latest"
+    "prepublish": "npm run build"
   },
   "devDependencies": {
     "@testing-library/react": "13.3.0",
@@ -179,7 +177,6 @@
     "c8": "7.11.3",
     "global-jsdom": "8.4.0",
     "jsdom": "20.0.0",
-    "np": "7.6.2",
     "prettier": "2.7.1",
     "sinon": "14.0.0",
     "tmp": "0.2.1",

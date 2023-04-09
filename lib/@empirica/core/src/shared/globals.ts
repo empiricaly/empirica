@@ -5,10 +5,10 @@ import { JsonValue } from "../utils/json";
 export class Globals {
   protected attrs = new Map<string, BehaviorSubject<JsonValue | undefined>>();
   private updates = new Map<string, JsonValue | undefined>();
-  public self: BehaviorSubject<Globals>;
+  public self: BehaviorSubject<Globals | undefined>;
 
   constructor(globals: Observable<SubAttributesPayload>) {
-    this.self = new BehaviorSubject<Globals>(this);
+    this.self = new BehaviorSubject<Globals | undefined>(undefined);
 
     globals.subscribe({
       next: ({ attribute, done }) => {
@@ -25,6 +25,8 @@ export class Globals {
           for (const [key, val] of this.updates) {
             this.obs(key).next(val);
           }
+
+          console.log("globals done", this.updates);
 
           this.updates.clear();
 

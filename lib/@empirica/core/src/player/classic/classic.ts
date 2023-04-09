@@ -122,7 +122,7 @@ export type EmpiricaClassicContext = {
   players: BehaviorSubject<Player[]>;
   round: BehaviorSubject<Round | undefined>;
   stage: BehaviorSubject<Stage | undefined>;
-  globals: BehaviorSubject<Globals>;
+  globals: BehaviorSubject<Globals | undefined>;
 };
 
 export function EmpiricaClassic(

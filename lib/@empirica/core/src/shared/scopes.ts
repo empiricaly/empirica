@@ -214,6 +214,29 @@ export class Scope<
     return this.attributes.attribute(this.scope.id, key).set(value, ao);
   }
 
+  append(key: string, value: JsonValue, ao?: Partial<AttributeOptions>) {
+    if (!ao) {
+      ao = {};
+    }
+    ao.append = true;
+
+    return this.attributes.attribute(this.scope.id, key).set(value, ao);
+  }
+
+  setIndex(
+    key: string,
+    index: number,
+    value: JsonValue,
+    ao?: Partial<AttributeOptions>
+  ) {
+    if (!ao) {
+      ao = {};
+    }
+    ao.index = index;
+
+    return this.attributes.attribute(this.scope.id, key).set(value, ao);
+  }
+
   inspect() {
     const attrs = this.attributes.attributes(this.scope.id);
 
