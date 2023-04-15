@@ -10,13 +10,15 @@ tasks:
       go install github.com/cortesi/modd/cmd/modd@latest
       go install github.com/go-bindata/go-bindata/go-bindata@latest
       go install github.com/abice/go-enum@latest
+      go install github.com/onsi/ginkgo/v2/ginkgo@latest
       curl https://get.volta.sh | bash
       volta install node
       sudo apt update
-      supt apt install rsync expect -y
+      sudo apt install rsync expect -y
       gp sync-done modd
-      git config --global gpg.format ssh && git config --global user.signingkey "$SSH_SIGNING_KEY"
-      git config commit.gpgsign true --global
+      git config --global gpg.format ssh
+      git config --global user.signingkey "$SSH_SIGNING_KEY"
+      git config --global commit.gpgsign true
     command: bash
   - name: Get Go deps
     init: |

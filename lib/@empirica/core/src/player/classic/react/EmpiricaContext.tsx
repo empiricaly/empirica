@@ -1,6 +1,9 @@
 import React from "react";
 import { Consent, ConsentProps } from "../../react/Consent";
 import { Finished } from "../../react/Finished";
+import { Loading } from "../../react/Loading";
+import { NoGames } from "../../react/NoGames";
+import { PlayerCreate, PlayerCreateProps } from "../../react/PlayerCreate";
 import {
   useConsent,
   useGlobal,
@@ -8,12 +11,9 @@ import {
   usePlayerID,
   useTajribaConnected,
 } from "../../react/hooks";
-import { Loading } from "../../react/Loading";
-import { NoGames } from "../../react/NoGames";
-import { PlayerCreate, PlayerCreateProps } from "../../react/PlayerCreate";
-import { useGame, usePlayer, useRound, useStage } from "./hooks";
 import { Lobby as DefaultLobby } from "./Lobby";
 import { Steps, StepsFunc } from "./Steps";
+import { useGame, usePlayer, useRound, useStage } from "./hooks";
 
 export interface EmpiricaContextProps {
   children: React.ReactNode;
@@ -80,7 +80,7 @@ export function EmpiricaContext({
   const [connecting, hasPlayer, onPlayerID] = usePlayerID();
   const [consented, onConsent] = useConsent();
 
-  if (!tajribaConnected) {
+  if (!tajribaConnected || connecting) {
     return <ConnectingComp />;
   }
 
@@ -88,13 +88,18 @@ export function EmpiricaContext({
     return <Exit exitSteps={exitSteps} finished={finished} />;
   }
 
-  // If globals not yet loaded or we are connected to participant but player
-  // hasn't loaded yet.
-  if (!globals || (participantConnected && !player)) {
+  if (
+    !globals ||
+    (hasPlayer && (!participantConnected || !player || game === undefined))
+  ) {
     return <LoadingComp />;
   }
 
-  if (!disableNoGames && !game && !globals.get("experimentOpen")) {
+  if (
+    !disableNoGames &&
+    !globals.get("experimentOpen") &&
+    (!hasPlayer || !player?.get("gameID"))
+  ) {
     return <NoGamesComp />;
   }
 
@@ -102,12 +107,13 @@ export function EmpiricaContext({
     return <ConsentComp onConsent={onConsent!} />;
   }
 
-  if (!player && (!hasPlayer || connecting)) {
+  if (!hasPlayer) {
     return (
       <PlayerCreateForm onPlayerID={onPlayerID!} connecting={connecting} />
     );
   }
 
+  // To satisfy TS... We already know by this point we must have player...
   if (!player) {
     return <LoadingComp />;
   }

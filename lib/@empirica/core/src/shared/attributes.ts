@@ -149,7 +149,11 @@ export class Attributes {
     if (removed) {
       scopeMap.set(attr.key, true);
     } else {
-      scopeMap.set(attr.key, attr);
+      let key = attr.key;
+      if (attr.index !== undefined && attr.index !== null) {
+        key = `${key}[${attr.index}]`;
+      }
+      scopeMap.set(key, attr);
     }
   }
 
@@ -171,15 +175,16 @@ export class Attributes {
       }
 
       for (const [key, attrOrDel] of attrs) {
-        let attr = scopeMap.get(key);
         if (typeof attrOrDel === "boolean") {
+          let attr = scopeMap.get(key);
           if (attr) {
             attr._update(undefined);
           }
         } else {
+          let attr = scopeMap.get(attrOrDel.key);
           if (!attr) {
-            attr = new Attribute(this.setAttributes, scopeID, key);
-            scopeMap.set(key, attr);
+            attr = new Attribute(this.setAttributes, scopeID, attrOrDel.key);
+            scopeMap.set(attrOrDel.key, attr);
           }
 
           attr._update(attrOrDel);
@@ -203,8 +208,6 @@ export interface AttributeOptions {
   protected: boolean;
   /** Immutable creates an Attribute that cannot be updated. */
   immutable: boolean;
-  /** Vector indicates the value is a vector. */
-  vector: boolean;
   /**
    * Index, only used if the Attribute is a vector, indicates which index to
    * update the value at.
@@ -219,6 +222,8 @@ export interface AttributeOptions {
 
 export class Attribute {
   private attr?: AttributeChange;
+  private attrs?: (AttributeChange | null)[];
+
   private val = new BehaviorSubject<JsonValue | undefined>(undefined);
 
   constructor(
@@ -244,7 +249,41 @@ export class Attribute {
   }
 
   set(value: JsonValue, ao?: Partial<AttributeOptions>) {
-    this.val.next(value);
+    const attrProps = this.prepSet(value, ao);
+    this.setAttributes([attrProps]);
+    trace(`SET ${this.key} = ${value} (${this.scopeID})`);
+  }
+
+  prepSet(value: JsonValue, ao?: Partial<AttributeOptions>): SetAttributeInput {
+    if (ao?.index !== undefined) {
+      const index = ao!.index!;
+
+      if (!this.attrs) {
+        this.attrs = [];
+      }
+
+      if (index + 1 > (this.attrs?.length || 0)) {
+        this.attrs.length = index! + 1;
+      }
+
+      if (this.attrs[index]) {
+        this.attrs![index]!.val = JSON.stringify(value);
+      } else {
+        this.attrs[index] = {
+          key: this.key,
+          val: JSON.stringify(value),
+          nodeID: this.scopeID,
+          vector: true,
+          index,
+          id: "nope",
+          version: 1,
+        };
+      }
+      const v = this._recalcVectorVal();
+      this.val.next(v);
+    } else {
+      this.val.next(value);
+    }
 
     const attrProps: SetAttributeInput = {
       key: this.key,
@@ -259,17 +298,44 @@ export class Attribute {
       attrProps.protected = ao.protected;
       attrProps.immutable = ao.immutable;
       attrProps.append = ao.append;
-      attrProps.vector = ao.vector;
       attrProps.index = ao.index;
     }
 
-    this.setAttributes([attrProps]);
-    trace(`SET ${this.key} = ${value} (${this.scopeID})`);
+    return attrProps;
+  }
+
+  private _recalcVectorVal() {
+    return this.attrs!.map((a) =>
+      !a || a.val == undefined ? null : JSON.parse(a.val)
+    );
   }
 
   // internal only
   _update(attr?: AttributeChange) {
     if (attr && this.attr && this.attr.id === attr.id) {
+      return;
+    }
+
+    if (attr && attr.vector) {
+      // TODO check if is vector
+
+      if (attr.index === undefined) {
+        error(`vector attribute missing index`);
+        return;
+      }
+
+      if (this.attrs == undefined) {
+        this.attrs = [];
+      }
+
+      while (this.attrs.length < attr.index! + 1) {
+        this.attrs.push(null);
+      }
+
+      this.attrs[attr.index!] = attr;
+      const value = this._recalcVectorVal();
+      this.val.next(value);
+
       return;
     }
 

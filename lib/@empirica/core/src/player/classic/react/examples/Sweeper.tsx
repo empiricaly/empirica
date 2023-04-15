@@ -131,7 +131,9 @@ export function Sweeper() {
     visited[i]![j] = 1;
 
     round.set("visited", [...visited]);
-    if (bombs[i]![j]! < 1) {
+
+    const cell = bombs[i]![j]!;
+    if (typeof cell === "number" && cell < 1) {
       dfsCells(i + 1, j);
       dfsCells(i - 1, j);
       dfsCells(i, j + 1);

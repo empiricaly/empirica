@@ -157,6 +157,12 @@ export class Scopes<
   }
 }
 
+type AttributeInput = {
+  key: string;
+  value: JsonValue;
+  ao?: Partial<AttributeOptions>;
+};
+
 export class Scope<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
@@ -210,7 +216,41 @@ export class Scope<
     return this.attributes.attribute(this.scope.id, key).obs;
   }
 
-  set(key: string, value: JsonValue, ao?: Partial<AttributeOptions>) {
+  set(values: AttributeInput[]): void;
+  set(key: string, value: JsonValue, ao?: Partial<AttributeOptions>): void;
+  set(
+    keyOrAttributes: string | AttributeInput[],
+    value?: JsonValue,
+    ao?: Partial<AttributeOptions>
+  ) {
+    if (typeof keyOrAttributes === "string") {
+      if (!value) {
+        value = null;
+      }
+
+      return this.attributes
+        .attribute(this.scope.id, keyOrAttributes)
+        .set(value, ao);
+    }
+
+    const nextProps = [];
+    for (const attr of keyOrAttributes) {
+      nextProps.push(
+        this.attributes
+          .attribute(this.scope.id, attr.key)
+          .prepSet(attr.value, attr.ao)
+      );
+    }
+
+    this.attributes.setAttributes(nextProps);
+  }
+
+  append(key: string, value: JsonValue, ao?: Partial<AttributeOptions>) {
+    if (!ao) {
+      ao = {};
+    }
+    ao.append = true;
+
     return this.attributes.attribute(this.scope.id, key).set(value, ao);
   }
 

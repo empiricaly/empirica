@@ -4,7 +4,7 @@ import {
   SetAttributeInput,
   SubAttributesPayload,
 } from "@empirica/tajriba";
-import { groupBy, Observable, Subject } from "rxjs";
+import { Observable, Subject, groupBy } from "rxjs";
 import { AttributeChange, AttributeUpdate } from "../shared/attributes";
 import { ScopeIdent, ScopeUpdate } from "../shared/scopes";
 import { StepChange, StepUpdate } from "./steps";
@@ -26,7 +26,7 @@ export class TajribaProvider {
     readonly globals: Observable<SubAttributesPayload>,
     readonly setAttributes: (input: SetAttributeInput[]) => Promise<any>
   ) {
-    changes.pipe(groupBy((chg) => chg.change.__typename)).subscribe({
+    changes.pipe(groupBy((chg) => chg?.change?.__typename)).subscribe({
       next: (group) => {
         switch (group.key) {
           case "ScopeChange":
@@ -36,12 +36,6 @@ export class TajribaProvider {
                   scope: <ScopeIdent>scope.change,
                   removed: scope.removed,
                 });
-
-                // console.log(
-                //   "ScopeChange",
-                //   (<ScopeIdent>scope.change).kind,
-                //   scope.done
-                // );
 
                 if (scope.done) {
                   this.dones.next();
@@ -58,12 +52,6 @@ export class TajribaProvider {
                   removed: attribute.removed,
                 });
 
-                // console.log(
-                //   "AttributeChange",
-                //   (<AttributeChange>attribute.change).key,
-                //   attribute.done
-                // );
-
                 if (attribute.done) {
                   this.dones.next();
                 }
@@ -78,12 +66,6 @@ export class TajribaProvider {
                   participant: <ParticipantChange>scope.change,
                   removed: scope.removed,
                 });
-
-                // console.log(
-                //   "ParticipantChange",
-                //   <ParticipantChange>scope.change,
-                //   scope.done
-                // );
 
                 if (scope.done) {
                   this.dones.next();
@@ -101,6 +83,16 @@ export class TajribaProvider {
                 });
 
                 if (scope.done) {
+                  this.dones.next();
+                }
+              },
+            });
+
+            break;
+          default:
+            group.subscribe({
+              next: (change) => {
+                if (change.done) {
                   this.dones.next();
                 }
               },
