@@ -6,8 +6,8 @@ Empirica.onGameStart(({ game }) => {
     name: "Round 1 - Jelly Beans",
     task: "jellybeans",
   });
-  round.addStage({ name: "Answer", duration: 300000 });
-  round.addStage({ name: "Result", duration: 120000 });
+  round.addStage({ name: "Answer", duration: 300 });
+  round.addStage({ name: "Result", duration: 120 });
 
   const round2 = game.addRound({
     name: "Round 2 - Minesweeper",
