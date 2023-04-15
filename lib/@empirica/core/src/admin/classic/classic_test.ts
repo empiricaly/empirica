@@ -625,7 +625,7 @@ t("on game start, players get game, round, stange and playerX", async (t) => {
         t.truthy(player.player?.round);
         t.truthy(player.stage);
         t.truthy(player.player?.stage);
-        for (const plyr of player.players) {
+        for (const plyr of player.players || []) {
           t.truthy(plyr.game);
           t.truthy(plyr.round);
           t.truthy(plyr.stage);

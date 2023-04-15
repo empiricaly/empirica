@@ -92,8 +92,8 @@ export class Stage extends Scope<Context, EmpiricaClassicKinds> {
 
 // TODO update context
 class Context {
-  public game?: Game;
-  public stage?: Stage;
+  public game?: Game | null;
+  public stage?: Stage | null;
 }
 
 type EmpiricaClassicKinds = {
@@ -117,11 +117,11 @@ export const kinds = {
 };
 
 export type EmpiricaClassicContext = {
-  game: BehaviorSubject<Game | undefined>;
-  player: BehaviorSubject<Player | undefined>;
-  players: BehaviorSubject<Player[]>;
-  round: BehaviorSubject<Round | undefined>;
-  stage: BehaviorSubject<Stage | undefined>;
+  game: BehaviorSubject<Game | null | undefined>;
+  player: BehaviorSubject<Player | null | undefined>;
+  players: BehaviorSubject<Player[] | undefined>;
+  round: BehaviorSubject<Round | null | undefined>;
+  stage: BehaviorSubject<Stage | null | undefined>;
   globals: BehaviorSubject<Globals | undefined>;
 };
 
@@ -152,11 +152,11 @@ export function EmpiricaClassic(
   const glob = new Globals(provider.globals);
 
   const ret = {
-    game: new BehaviorSubject<Game | undefined>(undefined),
-    player: new BehaviorSubject<Player | undefined>(undefined),
-    players: new BehaviorSubject<Player[]>([]),
-    round: new BehaviorSubject<Round | undefined>(undefined),
-    stage: new BehaviorSubject<Stage | undefined>(undefined),
+    game: new BehaviorSubject<Game | null | undefined>(undefined),
+    player: new BehaviorSubject<Player | null | undefined>(undefined),
+    players: new BehaviorSubject<Player[] | undefined>(undefined),
+    round: new BehaviorSubject<Round | null | undefined>(undefined),
+    stage: new BehaviorSubject<Stage | null | undefined>(undefined),
     globals: glob.self,
   };
 
@@ -199,8 +199,8 @@ export function EmpiricaClassic(
 
       let playersChanged = false;
       const players: Player[] = [];
-      for (let i = 0; i < updated.players.length; i++) {
-        let p = updated.players[i];
+      for (let i = 0; i < (updated.players || []).length; i++) {
+        let p = updated.players![i];
 
         if (p) {
           const partID = attributes.nextAttributeValue(
@@ -212,7 +212,7 @@ export function EmpiricaClassic(
           }
         }
 
-        if (!playersChanged && scopeChanged(p, current.players[i])) {
+        if (!playersChanged && scopeChanged(p, (current.players || [])[i])) {
           playersChanged = true;
         }
 
@@ -233,18 +233,22 @@ export function EmpiricaClassic(
 }
 
 type mainObjects = {
-  game?: Game;
-  player?: Player;
-  round?: Round;
-  stage?: Stage;
-  players: Player[];
+  game?: Game | null;
+  player?: Player | null;
+  round?: Round | null;
+  stage?: Stage | null;
+  players?: Player[];
 };
 
 function scopeChanged(
-  current?: Scope<Context, EmpiricaClassicKinds>,
-  updated?: Scope<Context, EmpiricaClassicKinds>
+  current?: Scope<Context, EmpiricaClassicKinds> | null,
+  updated?: Scope<Context, EmpiricaClassicKinds> | null
 ): boolean {
   if (!current && !updated) {
+    if (current === undefined && updated === null) {
+      return true;
+    }
+
     return false;
   }
 
@@ -274,6 +278,10 @@ function getMainObjects(
 
   const res: mainObjects = {
     players: Array.from(players.values()) as Player[],
+    game: null,
+    player: null,
+    round: null,
+    stage: null,
   };
 
   if (players.size === 0) {
@@ -294,7 +302,7 @@ function getMainObjects(
     return res;
   }
 
-  for (const player of res.players) {
+  for (const player of res.players || []) {
     const key = `playerGameID-${res.game.id}`;
     if (!nextScopeByKey(scopes, attributes, player, key)) {
       return res;
@@ -306,7 +314,7 @@ function getMainObjects(
     return res;
   }
 
-  for (const player of res.players) {
+  for (const player of res.players || []) {
     const key = `playerStageID-${res.stage.id}`;
     if (!nextScopeByKey(scopes, attributes, player, key)) {
       delete res.stage;
@@ -319,7 +327,7 @@ function getMainObjects(
     return res;
   }
 
-  for (const player of res.players) {
+  for (const player of res.players || []) {
     const key = `playerRoundID-${res.round.id}`;
     if (!nextScopeByKey(scopes, attributes, player, key)) {
       delete res.stage;
@@ -339,8 +347,8 @@ function nextScopeByKey(
 ) {
   const id = attributes.nextAttributeValue(scope.id, key);
   if (!id || typeof id !== "string") {
-    return;
+    return null;
   }
 
-  return scopes.scope(id);
+  return scopes.scope(id) || null;
 }

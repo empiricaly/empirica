@@ -26,8 +26,6 @@ export class Globals {
             this.obs(key).next(val);
           }
 
-          console.log("globals done", this.updates);
-
           this.updates.clear();
 
           if (this.self) {

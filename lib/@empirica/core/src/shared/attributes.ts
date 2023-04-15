@@ -208,8 +208,6 @@ export interface AttributeOptions {
   protected: boolean;
   /** Immutable creates an Attribute that cannot be updated. */
   immutable: boolean;
-  /** Vector indicates the value is a vector. */
-  vector: boolean;
   /**
    * Index, only used if the Attribute is a vector, indicates which index to
    * update the value at.
@@ -251,6 +249,12 @@ export class Attribute {
   }
 
   set(value: JsonValue, ao?: Partial<AttributeOptions>) {
+    const attrProps = this.prepSet(value, ao);
+    this.setAttributes([attrProps]);
+    trace(`SET ${this.key} = ${value} (${this.scopeID})`);
+  }
+
+  prepSet(value: JsonValue, ao?: Partial<AttributeOptions>): SetAttributeInput {
     if (ao?.index !== undefined) {
       const index = ao!.index!;
 
@@ -297,8 +301,7 @@ export class Attribute {
       attrProps.index = ao.index;
     }
 
-    this.setAttributes([attrProps]);
-    trace(`SET ${this.key} = ${value} (${this.scopeID})`);
+    return attrProps;
   }
 
   private _recalcVectorVal() {

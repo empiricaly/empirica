@@ -1,13 +1,13 @@
 import React from "react";
-import { WithChildren } from "../../react/helpers";
 import { Attributable } from "../../../shared/scopes";
+import { error } from "../../../utils/console";
+import { WithChildren } from "../../react/helpers";
 import { Game, Player } from "../classic";
 import { useGame, usePlayer } from "./hooks";
-import { error } from "../../../utils/console";
 
 export type StepsFunc = (props: {
-  game?: Game;
-  player?: Player;
+  game?: Game | null;
+  player?: Player | null;
 }) => React.ElementType[] | undefined;
 
 export type StepsProps = WithChildren<{

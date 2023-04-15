@@ -80,7 +80,7 @@ export function EmpiricaContext({
   const [connecting, hasPlayer, onPlayerID] = usePlayerID();
   const [consented, onConsent] = useConsent();
 
-  if (!tajribaConnected) {
+  if (!tajribaConnected || connecting) {
     return <ConnectingComp />;
   }
 
@@ -88,17 +88,17 @@ export function EmpiricaContext({
     return <Exit exitSteps={exitSteps} finished={finished} />;
   }
 
-  // If globals not yet loaded or we are connected to participant but player
-  // hasn't loaded yet.
-  if (!globals || (participantConnected && !player)) {
+  if (
+    !globals ||
+    (hasPlayer && (!participantConnected || !player || game === undefined))
+  ) {
     return <LoadingComp />;
   }
 
   if (
     !disableNoGames &&
-    !game &&
-    (!player || !player.get("gameID")) &&
-    !globals.get("experimentOpen")
+    !globals.get("experimentOpen") &&
+    (!hasPlayer || !player?.get("gameID"))
   ) {
     return <NoGamesComp />;
   }
@@ -107,12 +107,13 @@ export function EmpiricaContext({
     return <ConsentComp onConsent={onConsent!} />;
   }
 
-  if (!player && (!hasPlayer || connecting)) {
+  if (!hasPlayer) {
     return (
       <PlayerCreateForm onPlayerID={onPlayerID!} connecting={connecting} />
     );
   }
 
+  // To satisfy TS... We already know by this point we must have player...
   if (!player) {
     return <LoadingComp />;
   }
