@@ -80,7 +80,6 @@ export function attrs(attrs: AttributeInput[]) {
       nodeID,
       private: privat,
       protected: protecte,
-      vector,
       value,
     } = attr;
 
@@ -92,7 +91,6 @@ export function attrs(attrs: AttributeInput[]) {
       nodeID,
       private: privat,
       protected: protecte,
-      vector,
       val: JSON.stringify(value),
     });
   }
