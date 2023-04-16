@@ -118,6 +118,7 @@ export function EmpiricaContext({
     return <LoadingComp />;
   }
 
+  // TODO Put in a useEffect, this is dirty.
   if (!disableURLParamsCapture && !player.get("urlParams")) {
     const urlParams = new URLSearchParams(window.location.search);
     player.set("urlParams", Object.fromEntries(urlParams.entries()));

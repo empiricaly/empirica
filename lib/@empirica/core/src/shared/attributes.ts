@@ -9,6 +9,9 @@ export interface AttributeChange {
   /** deletedAt is the time when the Attribute was deleted. int64 Date + Time
    * value given in Epoch with ns precision */
   deletedAt?: number;
+  /** createdAt is the time the Attribute was created. int64 Date + Time
+   * value given in Epoch with ns precision */
+  createdAt?: Date;
   /** id is the identifier for the Attribute. */
   id: string;
   /** index is the index of the attribute if the value is a vector. */
@@ -222,7 +225,7 @@ export interface AttributeOptions {
 
 export class Attribute {
   private attr?: AttributeChange;
-  private attrs?: (AttributeChange | null)[];
+  private attrs?: Attribute[];
 
   private val = new BehaviorSubject<JsonValue | undefined>(undefined);
 
@@ -234,6 +237,10 @@ export class Attribute {
 
   get id() {
     return this.attr?.id;
+  }
+
+  get createdAt() {
+    return this.attr?.createdAt;
   }
 
   get obs(): Observable<JsonValue | undefined> {
@@ -248,14 +255,28 @@ export class Attribute {
     return this.attr?.nodeID || this.attr?.node?.id;
   }
 
+  // items returns the attribute changes for the current attribute, if it is a
+  // vector. Otherwise it returns null;
+  get items() {
+    if (!this.attrs) {
+      return null;
+    }
+
+    return this.attrs;
+  }
+
   set(value: JsonValue, ao?: Partial<AttributeOptions>) {
-    const attrProps = this.prepSet(value, ao);
+    const attrProps = this._prepSet(value, ao);
     this.setAttributes([attrProps]);
     trace(`SET ${this.key} = ${value} (${this.scopeID})`);
   }
 
-  prepSet(value: JsonValue, ao?: Partial<AttributeOptions>): SetAttributeInput {
-    if (ao?.index !== undefined) {
+  _prepSet(
+    value: JsonValue,
+    ao?: Partial<AttributeOptions>,
+    item?: boolean
+  ): SetAttributeInput {
+    if (!item && ao?.index !== undefined) {
       const index = ao!.index!;
 
       if (!this.attrs) {
@@ -266,19 +287,15 @@ export class Attribute {
         this.attrs.length = index! + 1;
       }
 
-      if (this.attrs[index]) {
-        this.attrs![index]!.val = JSON.stringify(value);
-      } else {
-        this.attrs[index] = {
-          key: this.key,
-          val: JSON.stringify(value),
-          nodeID: this.scopeID,
-          vector: true,
-          index,
-          id: "nope",
-          version: 1,
-        };
+      if (!this.attrs[index]) {
+        this.attrs[index] = new Attribute(
+          this.setAttributes,
+          this.scopeID,
+          this.key
+        );
       }
+
+      this.attrs![index]!._prepSet(value, ao, true);
       const v = this._recalcVectorVal();
       this.val.next(v);
     } else {
@@ -304,19 +321,19 @@ export class Attribute {
     return attrProps;
   }
 
-  private _recalcVectorVal() {
+  private _recalcVectorVal(): JsonValue {
     return this.attrs!.map((a) =>
-      !a || a.val == undefined ? null : JSON.parse(a.val)
+      !a || a.val == undefined ? null : a.value || null
     );
   }
 
   // internal only
-  _update(attr?: AttributeChange) {
+  _update(attr?: AttributeChange, item?: boolean) {
     if (attr && this.attr && this.attr.id === attr.id) {
       return;
     }
 
-    if (attr && attr.vector) {
+    if (attr && attr.vector && !item) {
       // TODO check if is vector
 
       if (attr.index === undefined) {
@@ -329,10 +346,17 @@ export class Attribute {
       }
 
       while (this.attrs.length < attr.index! + 1) {
-        this.attrs.push(null);
+        const newAttr = new Attribute(
+          this.setAttributes,
+          this.scopeID,
+          this.key
+        );
+        this.attrs.push(newAttr);
       }
 
-      this.attrs[attr.index!] = attr;
+      const newAttr = new Attribute(this.setAttributes, this.scopeID, this.key);
+      newAttr._update(attr, true);
+      this.attrs[attr.index!] = newAttr;
       const value = this._recalcVectorVal();
       this.val.next(value);
 
