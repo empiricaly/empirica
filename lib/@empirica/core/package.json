@@ -157,7 +157,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsup --entry.index src/index.ts --entry.user src/admin/user.ts --entry.admin src/admin/index.ts --entry.admin-classic src/admin/classic/index.ts --entry.player src/player/index.ts --entry.player-react src/player/react/index.ts --entry.player-classic src/player/classic/index.ts --entry.player-classic-react src/player/classic/react/index.ts --entry.console src/utils/console.ts --dts --format esm,cjs --clean --sourcemap true",
+    "build": "tsup",
     "check": "tsc --noEmit",
     "test:real": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true c8 -r lcov -r html ava -v",
     "test": "echo 'tests temporarily disabled'",
@@ -173,20 +173,25 @@
     "@types/sinon": "10.0.11",
     "@types/stream-buffers": "3.0.4",
     "@types/tmp": "0.2.3",
+    "@unocss/postcss": "0.51.4",
     "ava": "4.3.0",
     "c8": "7.11.3",
     "global-jsdom": "8.4.0",
     "jsdom": "20.0.0",
+    "postcss": "8.4.21",
     "prettier": "2.7.1",
     "sinon": "14.0.0",
     "tmp": "0.2.1",
     "ts-node": "10.8.1",
-    "tsup": "6.2.3",
-    "typescript": "4.7.4"
+    "tsup": "6.7.0",
+    "typescript": "4.7.4",
+    "unocss": "0.51.4",
+    "@julr/unocss-preset-forms": "0.0.5"
   },
   "dependencies": {
     "@empirica/tajriba": "1.0.1",
     "@swc/helpers": "0.4.2",
+    "@unocss/reset": "^0.51.4",
     "archiver": "5.3.1",
     "rxjs": "7.5.5",
     "stream-buffers": "3.0.2",

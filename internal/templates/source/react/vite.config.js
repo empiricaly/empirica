@@ -2,7 +2,7 @@ import reactRefresh from "@vitejs/plugin-react-refresh";
 import { resolve } from "path";
 import { defineConfig, searchForWorkspaceRoot } from "vite";
 import restart from "vite-plugin-restart";
-import windi from "vite-plugin-windicss";
+import UnoCSS from "unocss/vite";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -38,12 +38,12 @@ export default defineConfig({
   plugins: [
     restart({
       restart: [
-        "./windi.config.cjs",
+        "./uno.config.cjs",
         "./node_modules/@empirica/core/dist/**/*.{js,ts,jsx,tsx}",
         "./node_modules/@empirica/core/assets/**/*.css",
       ],
     }),
-    windi(),
+    UnoCSS(),
     reactRefresh(),
   ],
   define: {
