@@ -8,6 +8,11 @@ export type Attributable = {
   get: (key: string) => JsonValue | undefined;
   getAttribute: (key: string) => Attribute | undefined;
   set: (key: string, value: JsonValue, ao?: Partial<AttributeOptions>) => void;
+  append: (
+    key: string,
+    value: JsonValue,
+    ao?: Partial<AttributeOptions>
+  ) => void;
 };
 
 export interface ScopeIdent {

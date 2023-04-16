@@ -11,7 +11,7 @@ export interface AttributeChange {
   deletedAt?: number;
   /** createdAt is the time the Attribute was created. int64 Date + Time
    * value given in Epoch with ns precision */
-  createdAt?: Date;
+  createdAt?: string;
   /** id is the identifier for the Attribute. */
   id: string;
   /** index is the index of the attribute if the value is a vector. */
@@ -240,7 +240,7 @@ export class Attribute {
   }
 
   get createdAt() {
-    return this.attr?.createdAt;
+    return this.attr ? new Date(this.attr!.createdAt!) : null;
   }
 
   get obs(): Observable<JsonValue | undefined> {

@@ -1,4 +1,12 @@
-import React, { FormEvent, KeyboardEvent, MouseEvent, useState } from "react";
+import React, {
+  FormEvent,
+  KeyboardEvent,
+  MouseEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { Attribute } from "../../../../shared/attributes";
 import { Attributable } from "../../../../shared/scopes";
 import { Loading } from "../../../react";
 import { WithChildren } from "../../../react/helpers";
@@ -10,49 +18,118 @@ export type ChatProps = WithChildren<{
   loading?: React.ElementType;
 }>;
 
+export type Message = {
+  text: string;
+  sender: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
+};
+
 export function Chat({
   scope,
   scopeKey = "messages",
   loading: LoadingComp = Loading,
 }: ChatProps) {
-  const handleNewMessage = (msg: string) => {
-    console.log("New Message:", msg);
-  };
-
-  return (
-    <div className="h-full w-full flex flex-col">
-      <div className="h-full">
-        <Messages scope={scope} scopeKey={scopeKey} loading={LoadingComp} />
-      </div>
-
-      <Input onNewMessage={handleNewMessage} />
-    </div>
-  );
-}
-
-type MessageProps = WithChildren<{
-  scope: Attributable;
-  scopeKey: string;
-  loading?: React.ElementType;
-}>;
-
-function Messages({
-  scope,
-  scopeKey = "messages",
-  loading: LoadingComp = Loading,
-}: MessageProps) {
   const player = usePlayer();
 
   if (!scope || !player) {
     return <LoadingComp />;
   }
 
-  player.getAttribute("avatar");
-  const msgs = scope.getAttribute(scopeKey);
+  const handleNewMessage = (text: string) => {
+    scope.append(scopeKey, {
+      text,
+      sender: {
+        id: player!.id,
+        name: player!.get("name") || player!.id,
+        avatar: player!.get("avatar"),
+      },
+    } as Message);
+  };
 
-  console.log(msgs);
+  const msgs = scope.getAttribute(scopeKey)?.items || [];
 
-  return null;
+  return (
+    <div className="h-full w-full flex flex-col">
+      <Messages msgs={msgs} />
+
+      <Input onNewMessage={handleNewMessage} />
+    </div>
+  );
+}
+
+type MessagesProps = WithChildren<{
+  msgs: Attribute[];
+}>;
+
+function Messages(props: MessagesProps) {
+  const { msgs } = props;
+  const scroller = useRef<HTMLDivElement>(null);
+  const [msgCount, setMsgCount] = useState(0);
+
+  useEffect(() => {
+    if (!scroller.current) {
+      return;
+    }
+
+    if (msgCount !== msgs.length) {
+      setMsgCount(msgs.length);
+      scroller.current.scrollTop = scroller.current.scrollHeight;
+    }
+  }, [scroller, props, msgCount]);
+
+  return (
+    <div className="h-full overflow-auto pl-2 pr-4 pb-2" ref={scroller}>
+      {msgs.map((msg) => (
+        <MessageComp key={msg.id} attribute={msg} />
+      ))}
+    </div>
+  );
+}
+
+type MessageProps = WithChildren<{
+  attribute: Attribute;
+}>;
+
+function MessageComp({ attribute }: MessageProps) {
+  const msg = attribute.value as Message;
+  const ts = attribute.createdAt;
+
+  let avatar = msg.sender.avatar;
+  if (!avatar) {
+    avatar = `https://avatars.dicebear.com/api/identicon/${msg.sender.id}.svg`;
+  }
+
+  let avatarImage = (
+    <img
+      className="inline-block h-9 w-9 rounded-full"
+      src={avatar}
+      alt={msg.sender.id}
+    />
+  );
+  if (!avatar.startsWith("http")) {
+    avatarImage = (
+      <div className="inline-block h-9 w-9 rounded-full">{avatar}</div>
+    );
+  }
+
+  return (
+    <div className="flex items-start my-2">
+      <div className="flex-shrink-0">{avatarImage}</div>
+      <div className="ml-3 text-sm">
+        <p>
+          <span className="font-semibold text-gray-900 group-hover:text-gray-800">
+            {msg.sender.name}
+          </span>
+
+          <span className="pl-2 text-gray-400">{ts && relTime(ts)}</span>
+        </p>
+        <p className="text-gray-900 group-hover:text-gray-800">{msg.text}</p>
+      </div>
+    </div>
+  );
 }
 
 type InputProps = WithChildren<{
@@ -94,7 +171,6 @@ function Input({ onNewMessage }: InputProps) {
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    console.log(e.key);
     if (e.key === "Enter" && e.shiftKey === false) {
       handleSubmit(e);
       resize(e);
@@ -132,3 +208,67 @@ function Input({ onNewMessage }: InputProps) {
     </form>
   );
 }
+
+function relTime(date: Date) {
+  const difference = (new Date().getTime() - date.getTime()) / 1000;
+
+  if (difference < 60) {
+    return `now`;
+  } else if (difference < 3600) {
+    return `${Math.floor(difference / 60)}m`;
+  } else if (difference < 86400) {
+    return `${Math.floor(difference / 3600)}h`;
+  } else if (difference < 2620800) {
+    return `${Math.floor(difference / 86400)} days ago`;
+  } else if (difference < 31449600) {
+    return `${Math.floor(difference / 2620800)} months ago`;
+  } else {
+    return `${Math.floor(difference / 31449600)} years ago`;
+  }
+}
+
+// function getRelativeTimeString(
+//   date: Date | number,
+//   lang = navigator.language
+// ): string {
+//   // Allow dates or times to be passed
+//   const timeMs = typeof date === "number" ? date : date.getTime();
+
+//   // Get the amount of seconds between the given date and now
+//   const deltaSeconds = Math.round((timeMs - Date.now()) / 1000);
+
+//   // Array reprsenting one minute, hour, day, week, month, etc in seconds
+//   const cutoffs = [
+//     60,
+//     3600,
+//     86400,
+//     86400 * 7,
+//     86400 * 30,
+//     86400 * 365,
+//     Infinity,
+//   ];
+
+//   // Array equivalent to the above but in the string representation of the units
+//   const units: Intl.RelativeTimeFormatUnit[] = [
+//     "second",
+//     "minute",
+//     "hour",
+//     "day",
+//     "week",
+//     "month",
+//     "year",
+//   ];
+
+//   // Grab the ideal cutoff unit
+//   const unitIndex = cutoffs.findIndex(
+//     (cutoff) => cutoff > Math.abs(deltaSeconds)
+//   );
+
+//   // Get the divisor to divide from the seconds. E.g. if our unit is "day" our divisor
+//   // is one day in seconds, so we can divide our seconds by this to get the # of days
+//   const divisor = unitIndex ? cutoffs[unitIndex - 1] : 1;
+
+//   // Intl.RelativeTimeFormat do its magic
+//   const rtf = new Intl.RelativeTimeFormat(lang, { numeric: "auto" });
+//   return rtf.format(Math.floor(deltaSeconds / divisor!), units[unitIndex]!);
+// }
