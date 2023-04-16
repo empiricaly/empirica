@@ -99,7 +99,7 @@ ports:
   - name: Web App
     description: The Empirica dev web server
     port: 3000
-    onOpen: open-browser
+    onOpen: ignore
   - name: Vite Server
     description: The Vite Server for hot reload
     port: 8844

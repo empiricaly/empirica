@@ -234,7 +234,7 @@ func (ui *UI) process(update update) {
 	case Restarted:
 		ui.printRefresh(update.component.Name)
 	case Log, Logerr:
-		if !ui.allReady && !ui.debug {
+		if !ui.allReady && !ui.debug && update.kind != Logerr {
 			return
 		}
 
