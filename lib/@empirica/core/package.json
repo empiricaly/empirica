@@ -189,7 +189,7 @@
     "@julr/unocss-preset-forms": "0.0.5"
   },
   "dependencies": {
-    "@empirica/tajriba": "1.0.1",
+    "@empirica/tajriba": "1.1.0",
     "@swc/helpers": "0.4.2",
     "@unocss/reset": "^0.51.4",
     "archiver": "5.3.1",
