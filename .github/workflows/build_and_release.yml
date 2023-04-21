@@ -141,10 +141,6 @@ jobs:
         working-directory: ./e2e-tests
         run: curl https://get.empirica.dev | sh
       - name: "E2E tests: install dependencies"
-        working-directory: ./e2e-tests
-        run: npm ci --workspaces=false
-      - name: "E2E tests: install @empirica core dependencies"
-        working-directory: ./lib/@empirica/core
         run: npm ci
       
       - name: "E2E tests: Get installed Playwright version"
