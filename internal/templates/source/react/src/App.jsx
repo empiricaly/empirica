@@ -24,7 +24,7 @@ export default function App() {
   return (
     <EmpiricaParticipant url={url} ns={playerKey} modeFunc={EmpiricaClassic}>
       <div className="h-screen relative">
-        <EmpiricaMenu />
+        <EmpiricaMenu position="bottom-left" />
         <div className="h-full overflow-auto">
           <EmpiricaContext introSteps={introSteps} exitSteps={exitSteps}>
             <Game />
