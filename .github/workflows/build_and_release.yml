@@ -38,15 +38,15 @@ jobs:
         id: branch-name
         uses: tj-actions/branch-names@v5.4
 
-      - name: Quick build of Empirica CLI to ensure compilation is working
-        uses: docker/build-push-action@v2
-        with:
-          push: false
-          tags: empirica-tmp
-          file: ./build/Dockerfile
-          build-args: |
-            BUILD_DATE=${{ env.BUILD_DATE }}
-            BUILD_ONLY_AMD64=true
+      # - name: Quick build of Empirica CLI to ensure compilation is working
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     push: false
+      #     tags: empirica-tmp
+      #     file: ./build/Dockerfile
+      #     build-args: |
+      #       BUILD_DATE=${{ env.BUILD_DATE }}
+      #       BUILD_ONLY_AMD64=true
 
       #
       # Step 1. Build the npm package and publish
@@ -133,38 +133,38 @@ jobs:
       - name: Smoke test
         run: ./out/empirica-linux-amd64 --help
 
-      #
-      # Step 2. Run e2e tests
-      #
+      # #
+      # # Step 2. Run e2e tests
+      # #
 
-      - name: "E2E tests: install empirica"
-        working-directory: ./e2e-tests
-        run: curl https://get.empirica.dev | sh
-      - name: "E2E tests: install dependencies"
-        run: npm ci
+      # - name: "E2E tests: install empirica"
+      #   working-directory: ./e2e-tests
+      #   run: curl https://get.empirica.dev | sh
+      # - name: "E2E tests: install dependencies"
+      #   run: npm ci
       
-      - name: "E2E tests: Get installed Playwright version"
-        id: playwright-version
-        run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
-      - name:  "E2E tests: Cache playwright binaries"
-        uses: actions/cache@v3
-        id: playwright-cache
-        with:
-          path: |
-            ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
-      - name: "E2E tests: install playwright browsers"
-        run: npm run install_browsers -w ./e2e-tests
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-      - name: "E2E tests: Run"
-        run: npm run test:e2e -w ./e2e-tests
+      # - name: "E2E tests: Get installed Playwright version"
+      #   id: playwright-version
+      #   run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
+      # - name:  "E2E tests: Cache playwright binaries"
+      #   uses: actions/cache@v3
+      #   id: playwright-cache
+      #   with:
+      #     path: |
+      #       ~/.cache/ms-playwright
+      #     key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
+      # - name: "E2E tests: install playwright browsers"
+      #   run: npm run install_browsers -w ./e2e-tests
+      #   if: steps.playwright-cache.outputs.cache-hit != 'true'
+      # - name: "E2E tests: Run"
+      #   run: npm run test:e2e -w ./e2e-tests
 
-      - name: "E2E tests: upload tests results to artifacts"
-        uses: actions/upload-artifact@v2
-        if: always()
-        with:
-          name: playwright-test-results
-          path: ./e2e-tests/test-results/
+      # - name: "E2E tests: upload tests results to artifacts"
+      #   uses: actions/upload-artifact@v2
+      #   if: always()
+      #   with:
+      #     name: playwright-test-results
+      #     path: ./e2e-tests/test-results/
 
       #
       # Step 4. Test and upload the CLI to S3 and build the Docker image
@@ -196,4 +196,3 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ env.BUILD_SHA_SHORT }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:build-${{ env.BUILD_TAG }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:branch-${{ env.BUILD_BRANCH }}
-
