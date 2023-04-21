@@ -53,7 +53,7 @@ jobs:
       #
       - name: "Build core package: install dependencies"
         if: github.ref == 'refs/heads/main'
-        run: npm --workspace false ci
+        run: npm ci
 
       - name: "Build packages: Create Release Pull Request or Publish to npm"
         if: github.ref == 'refs/heads/main'
