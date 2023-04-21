@@ -1,3 +1,11 @@
+---
+"@empirica/core": minor
+---
+
+New `<Chat>` component! Similar to Chat in v1, it is now part of Empirica core.
+You can use it like this:
+
+```jsx
 import { Chat, useGame } from "@empirica/core/player/classic/react";
 
 import React from "react";
@@ -20,3 +28,7 @@ export function Game() {
     </div>
   );
 }
+```
+
+The `Chat` component currently takes two props, `scope` and `attribute`, but we
+will add more features in the future.

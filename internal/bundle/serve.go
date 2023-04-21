@@ -115,11 +115,11 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMo
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start tajriba")
 	}
-	defer taj.Close(ctx)
+	defer taj.Close()
 
-	err = tajriba.Init(ctx, conf.Tajriba, schema, s.Router)
+	err = taj.Init(schema, s.Router)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to start tajriba")
+		return errors.Wrap(err, "init tajriba")
 	}
 
 	if err := s.Start(ctx); err != nil {

@@ -308,6 +308,7 @@ export function attrChange(
             kind: nodeKind,
           },
       deleted: false,
+      createdAt: new Date(),
       isNew: false,
       vector: false,
       version: 1,

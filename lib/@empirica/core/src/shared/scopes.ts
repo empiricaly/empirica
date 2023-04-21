@@ -6,7 +6,13 @@ import { JsonValue } from "../utils/json";
 
 export type Attributable = {
   get: (key: string) => JsonValue | undefined;
+  getAttribute: (key: string) => Attribute | undefined;
   set: (key: string, value: JsonValue, ao?: Partial<AttributeOptions>) => void;
+  append: (
+    key: string,
+    value: JsonValue,
+    ao?: Partial<AttributeOptions>
+  ) => void;
 };
 
 export interface ScopeIdent {
@@ -238,7 +244,7 @@ export class Scope<
       nextProps.push(
         this.attributes
           .attribute(this.scope.id, attr.key)
-          .prepSet(attr.value, attr.ao)
+          ._prepSet(attr.value, attr.ao)
       );
     }
 

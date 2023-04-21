@@ -14,3 +14,4 @@ export {
   isProduction,
   isTest,
 } from "./utils";
+import "./index.css";

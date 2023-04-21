@@ -31,7 +31,7 @@ func (r *Runner) Close(ctx context.Context) {
 	}
 
 	if r.taj != nil {
-		r.taj.Close(ctx)
+		r.taj.Close()
 		log.Debug().Msg("empirica: tajriba stopped")
 	}
 }
@@ -88,7 +88,7 @@ func Start(ctx context.Context, config *Config, usingConfigFile bool) (*Runner, 
 		return nil, errors.Wrap(err, "enable server")
 	}
 
-	err = tajriba.Init(ctx, config.Tajriba, schema, r.server.Router)
+	err = r.taj.Init(schema, r.server.Router)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start tajriba")
 	}
