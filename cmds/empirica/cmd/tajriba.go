@@ -63,7 +63,7 @@ func addTajribaCommand(parent *cobra.Command) error {
 			ctx, cancel = context.WithTimeout(context.Background(), closeMaxCuration)
 			defer cancel()
 
-			t.Close(ctx)
+			t.Close()
 
 			return nil
 		},
