@@ -166,6 +166,7 @@
     "prepublish": "npm run build"
   },
   "devDependencies": {
+    "@julr/unocss-preset-forms": "0.0.5",
     "@testing-library/react": "13.3.0",
     "@types/archiver": "5.3.1",
     "@types/node": "18.0.0",
@@ -185,8 +186,7 @@
     "ts-node": "10.8.1",
     "tsup": "6.7.0",
     "typescript": "4.7.4",
-    "unocss": "0.51.4",
-    "@julr/unocss-preset-forms": "0.0.5"
+    "unocss": "0.51.4"
   },
   "dependencies": {
     "@empirica/tajriba": "1.1.0",
