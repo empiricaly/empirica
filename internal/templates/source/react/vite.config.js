@@ -18,9 +18,6 @@ export default defineConfig({
       allow: [
         // search up for workspace root
         searchForWorkspaceRoot(process.cwd()),
-        // @empirica/core lookup for windi
-        "./node_modules/@empirica/core/dist/**/*.{js,ts,jsx,tsx}",
-        "./node_modules/@empirica/core/assets/**/*.css",
       ],
     },
   },
@@ -28,18 +25,11 @@ export default defineConfig({
     minify: false,
   },
   clearScreen: false,
-  resolve: {
-    alias: {
-      $components: resolve("src/components"),
-      $assets: resolve("src/assets"),
-    },
-  },
-  // logLevel: "warn",
   plugins: [
     restart({
       restart: [
         "./uno.config.cjs",
-        "./node_modules/@empirica/core/dist/**/*.{js,ts,jsx,tsx}",
+        "./node_modules/@empirica/core/dist/**/*.{js,ts,jsx,tsx,css}",
         "./node_modules/@empirica/core/assets/**/*.css",
       ],
     }),

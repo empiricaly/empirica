@@ -6,3 +6,16 @@ find the full documentation for it [in our repository](https://github.com/change
 
 We have a quick list of common questions to get you started engaging with this project in
 [our documentation](https://github.com/changesets/changesets/blob/main/docs/common-questions.md)
+
+Since we only have one package in this repo, we will only have one package in
+changesets.
+
+```md
+---
+"@empirica/core": minor
+---
+
+---
+
+## "@empirica/core": patch
+```
