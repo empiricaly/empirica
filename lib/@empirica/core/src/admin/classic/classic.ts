@@ -45,8 +45,8 @@ export type ClassicConfig = {
   // Disable game creation on new batch.
   disableGameCreation?: boolean;
 
-  // By default if all existing games are complete, the batch ends. 
-  // This option disables this pattern so that we can leave a batch open indefinitely. 
+  // By default if all existing games are complete, the batch ends.
+  // This option disables this pattern so that we can leave a batch open indefinitely.
   // It enables to spawn new games for people who arrive later, even if all previous games had already finished.
   disableBatchAutoend?: boolean;
 };
@@ -55,7 +55,7 @@ export function Classic({
   disableAssignment,
   disableIntroCheck,
   disableGameCreation,
-  disableBatchAutoend = false
+  disableBatchAutoend = false,
 }: ClassicConfig = {}) {
   return function (_: ListenersCollector<Context, ClassicKinds>) {
     const online = new Map<string, Participant>();
@@ -342,7 +342,8 @@ export function Classic({
             player.set("ended", `game ${status}`);
           }
 
-          const finishedBatch = !disableBatchAutoend && game.batch!.games.every((g) => g.hasEnded);
+          const finishedBatch =
+            !disableBatchAutoend && game.batch!.games.every((g) => g.hasEnded);
 
           if (finishedBatch) {
             game.batch!.end("all games finished");
@@ -622,7 +623,12 @@ export function Classic({
           return;
         }
 
-        const haveAllPlayersSubmitted = players.every((p) => p.stage!.get("submit") || p.get("ended") || !online.has(p.get('participantID')?.toString() as string));
+        const haveAllPlayersSubmitted = players.every(
+          (p) =>
+            p.get("ended") ||
+            !online.has(p.get("participantID")?.toString() as string) ||
+            p.stage?.get("submit")
+        );
 
         if (haveAllPlayersSubmitted) {
           ctx.addTransitions([
@@ -721,7 +727,6 @@ export function Classic({
     _.on(
       TajribaEvent.TransitionAdd,
       (_, { step, transition: { from, to } }: TransitionAdd) => {
-        console.log("stage transition check");
         const stage = stageForStepID.get(step.id);
         if (!stage) {
           return;
