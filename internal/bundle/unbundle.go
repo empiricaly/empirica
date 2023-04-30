@@ -90,6 +90,10 @@ func prepDotEmpirica(inConf *empirica.Config, dir string, devMode bool) (*empiri
 		conf.Tajriba.Store.File = inConf.Tajriba.Store.File
 	}
 
+	if err := os.MkdirAll(path.Join(dst, settings.LocalDir), os.ModePerm); err != nil {
+		return nil, errors.Wrap(err, "create local dir")
+	}
+
 	if err := os.MkdirAll(path.Dir(conf.Tajriba.Store.File), os.ModePerm); err != nil {
 		return nil, errors.Wrap(err, "create storage dir")
 	}

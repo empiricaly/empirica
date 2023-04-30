@@ -1,4 +1,5 @@
 import fs from "fs/promises";
+import path from "path";
 import { BehaviorSubject, merge, Observable, SubscriptionLike } from "rxjs";
 import { TajribaConnection } from "../shared/tajriba_connection";
 import { error } from "../utils/console";
@@ -131,6 +132,9 @@ export class FileTokenStorage {
 
   private async writeToken(token: string) {
     try {
+      // Ensure directory exists
+      const dir = path.dirname(this.serviceTokenFile);
+      await fs.mkdir(dir, { recursive: true });
       await fs.writeFile(this.serviceTokenFile, token);
     } catch (err) {
       error(`token: write token file ${(err as Error).message}`);
