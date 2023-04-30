@@ -1,5 +1,13 @@
 # @empirica/core
 
+## 1.3.1
+
+### Patch Changes
+
+- 308e75b: Make sure that the folder that will contain the callbacks session token is
+  created before trying to save the token.
+- c443f51: Ensure stage submit happening after stage end will not throw.
+
 ## 1.3.0
 
 ### Minor Changes
