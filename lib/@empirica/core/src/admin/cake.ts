@@ -21,7 +21,7 @@ import { Transition } from "./transitions";
 
 // Cake triggers callbacks, respecting listener placement
 
-interface unsuber {
+export interface unsuber {
   unsubscribe(): void;
 }
 

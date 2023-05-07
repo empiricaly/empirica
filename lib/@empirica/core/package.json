@@ -158,6 +158,9 @@
   },
   "scripts": {
     "build": "tsup",
+    "docsh": "typedoc --plugin typedoc-plugin-markdown --help",
+    "docso": "typedoc --plugin typedoc-plugin-markdown --out ../../../../docsv2/api --kindsWithOwnFile none src/admin/user.ts src/admin/index.ts src/admin/classic/index.ts src/player/index.ts src/player/react/index.ts src/player/classic/index.ts src/player/classic/react/index.ts src/utils/console.ts ",
+    "docsy": "typedoc --out ../../../../docsv2/api src/admin/user.ts src/admin/index.ts src/admin/classic/index.ts src/player/index.ts src/player/react/index.ts src/player/classic/index.ts src/player/classic/react/index.ts src/utils/console.ts ",
     "check": "tsc --noEmit",
     "test:real": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true c8 -r lcov -r html ava -v",
     "test": "echo 'tests temporarily disabled'",
@@ -185,6 +188,8 @@
     "tmp": "0.2.1",
     "ts-node": "10.8.1",
     "tsup": "6.7.0",
+    "typedoc": "0.24.6",
+    "typedoc-plugin-markdown": "4.0.0-next.10",
     "typescript": "4.7.4",
     "unocss": "0.51.4"
   },

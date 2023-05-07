@@ -12,11 +12,17 @@ import { ParticipantConnection, ParticipantSession } from "./connection";
 import { TajribaProvider } from "./provider";
 
 export class ParticipantContext {
+  /** @internal */
   readonly tajriba: TajribaConnection;
+  /** @internal */
   readonly participant: ParticipantConnection;
+  /** @internal */
   readonly session: ParticipantSession;
+  /** @internal */
   readonly resetSession: Subject<void>;
+  /** @internal */
   readonly provider = bsu<TajribaProvider>();
+  /** @internal */
   readonly globals = bsu<Globals>();
 
   constructor(url: string, ns: string) {

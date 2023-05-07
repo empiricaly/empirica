@@ -101,11 +101,16 @@ export class ListenersCollector<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
+  /** @internal */
   readonly starts: SimpleListener<Context, Kinds>[] = [];
+  /** @internal */
   readonly readys: SimpleListener<Context, Kinds>[] = [];
+  /** @internal */
   readonly tajEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
+  /** @internal */
   readonly kindListeners: KindEventListener<EvtCtxCallback<Context, Kinds>>[] =
     [];
+  /** @internal */
   readonly attributeListeners: AttributeEventListener<
     EvtCtxCallback<Context, Kinds>
   >[] = [];
@@ -285,7 +290,7 @@ export class ListenersCollector<
 }
 
 // Collects event listeners.
-class ListenersCollectorProxy<
+export class ListenersCollectorProxy<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > extends ListenersCollector<Context, Kinds> {
@@ -333,7 +338,7 @@ class ListenersCollectorProxy<
 
 // Context passed to listerners on new event allowing to subscrive to more data
 // and access data.
-interface SubscriptionCollector {
+export interface SubscriptionCollector {
   scopeSub: (...inputs: Partial<ScopeSubscriptionInput>[]) => void;
   participantsSub: () => void;
   transitionsSub: (stepID: string) => void;
@@ -346,8 +351,11 @@ export class EventContext<
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
   constructor(
+    /** @internal */
     private subs: SubscriptionCollector,
+    /** @internal */
     private taj: TajribaAdminAccess,
+    /** @internal */
     private scopes: Scopes<Context, Kinds>
   ) {}
 

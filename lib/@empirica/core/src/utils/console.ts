@@ -19,7 +19,7 @@ enum Color {
 }
 
 export type LogLine = { level: string; args: any[] };
-class LogsMock {
+export class LogsMock {
   public logs: LogLine[] = [];
 
   log(line: LogLine) {

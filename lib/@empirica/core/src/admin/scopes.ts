@@ -44,6 +44,7 @@ export class Scopes<
     super(scopesObs, donesObs, ctx, kinds, attributes);
   }
 
+  /** @internal */
   subscribeKind(kind: keyof Kinds): Observable<ScopeMsg<Context, Kinds>> {
     let sub = this.kindSubs.get(kind);
     if (!sub) {
