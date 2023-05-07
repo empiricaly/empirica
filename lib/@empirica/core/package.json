@@ -158,9 +158,6 @@
   },
   "scripts": {
     "build": "tsup",
-    "docsh": "typedoc --plugin typedoc-plugin-markdown --help",
-    "docso": "typedoc --plugin typedoc-plugin-markdown --out ../../../../docsv2/api --kindsWithOwnFile none src/admin/user.ts src/admin/index.ts src/admin/classic/index.ts src/player/index.ts src/player/react/index.ts src/player/classic/index.ts src/player/classic/react/index.ts src/utils/console.ts ",
-    "docsy": "typedoc --out ../../../../docsv2/api src/admin/user.ts src/admin/index.ts src/admin/classic/index.ts src/player/index.ts src/player/react/index.ts src/player/classic/index.ts src/player/classic/react/index.ts src/utils/console.ts ",
     "check": "tsc --noEmit",
     "test:real": "NODE_NO_WARNINGS=1 TS_NODE_FILES=true TS_NODE_TRANSPILE_ONLY=true c8 -r lcov -r html ava -v",
     "test": "echo 'tests temporarily disabled'",
