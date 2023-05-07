@@ -19,7 +19,7 @@ export { TajribaConnection } from "../shared/tajriba_connection";
 export type { Json, JsonArray, JsonValue } from "../utils/json";
 export { AttributeMsg, Attributes } from "./attributes";
 export { AdminConnection } from "./connection";
-export { TajribaAdminAccess } from "./context";
+export { AdminContext, TajribaAdminAccess } from "./context";
 export type {
   AddLinkPayload,
   AddScopePayload,
@@ -29,10 +29,10 @@ export type {
 } from "./context";
 export {
   EventContext,
+  EvtCtxCallback,
   ListenersCollector,
   ListenersCollectorProxy,
   TajribaEvent,
-  EvtCtxCallback,
 } from "./events";
 export type { Subscriber } from "./events";
 export { Globals } from "./globals";
