@@ -7,7 +7,7 @@ import { JsonValue } from "../../utils/json";
 import { AddScopePayload, StepPayload } from "../context";
 import { EventContext } from "../events";
 import { Scope } from "../scopes";
-import { AttributeInput, attrs, scopeConstructor } from "./helpers";
+import { AttrInput, attrs, scopeConstructor } from "./helpers";
 
 const isString = z.string().parse;
 const isOptionalNumber = z.number().optional().parse;
@@ -44,9 +44,9 @@ export class Batch extends Scope<Context, ClassicKinds> {
     return this.scopesByKindMatching<Game>("game", "batchID", this.id);
   }
 
-  addGame(attributes: { [key: string]: JsonValue } | AttributeInput[]) {
+  addGame(attributes: { [key: string]: JsonValue } | AttrInput[]) {
     if (!Array.isArray(attributes)) {
-      const newAttr: AttributeInput[] = [];
+      const newAttr: AttrInput[] = [];
       for (const key in attributes) {
         newAttr.push({
           key,
@@ -351,9 +351,9 @@ export class Game extends BatchOwned {
     ]);
   }
 
-  addRound(attributes: { [key: string]: JsonValue } | AttributeInput[]) {
+  addRound(attributes: { [key: string]: JsonValue } | AttrInput[]) {
     if (!Array.isArray(attributes)) {
-      const newAttr: AttributeInput[] = [];
+      const newAttr: AttrInput[] = [];
       for (const key in attributes) {
         newAttr.push({
           key,
@@ -423,10 +423,10 @@ export class Game extends BatchOwned {
     const stageAdds: AddScopeInput[] = [];
 
     const addStage = (
-      attributes: { [key: string]: JsonValue } | AttributeInput[]
+      attributes: { [key: string]: JsonValue } | AttrInput[]
     ) => {
       if (!Array.isArray(attributes)) {
-        const newAttr: AttributeInput[] = [];
+        const newAttr: AttrInput[] = [];
         for (const key in attributes) {
           newAttr.push({
             key,
@@ -730,9 +730,9 @@ export class Round extends GameOwned {
     return stages;
   }
 
-  addStage(attributes: { [key: string]: JsonValue } | AttributeInput[]) {
+  addStage(attributes: { [key: string]: JsonValue } | AttrInput[]) {
     if (!Array.isArray(attributes)) {
-      const newAttr: AttributeInput[] = [];
+      const newAttr: AttrInput[] = [];
       for (const key in attributes) {
         newAttr.push({
           key,

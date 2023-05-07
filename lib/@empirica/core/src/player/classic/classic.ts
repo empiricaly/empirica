@@ -91,12 +91,12 @@ export class Stage extends Scope<Context, EmpiricaClassicKinds> {
 }
 
 // TODO update context
-class Context {
+export class Context {
   public game?: Game | null;
   public stage?: Stage | null;
 }
 
-type EmpiricaClassicKinds = {
+export type EmpiricaClassicKinds = {
   game: Constructor<Game>;
   player: Constructor<Player>;
   playerGame: Constructor<PlayerGame>;

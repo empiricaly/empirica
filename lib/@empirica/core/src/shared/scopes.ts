@@ -163,7 +163,7 @@ export class Scopes<
   }
 }
 
-type AttributeInput = {
+export type AttributeInput = {
   key: string;
   value: JsonValue;
   ao?: Partial<AttributeOptions>;

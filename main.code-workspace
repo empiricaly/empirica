@@ -1,11 +1,14 @@
 {
-	"folders": [
-		{
-			"path": "."
-		},
-		{
-			"path": "../tajriba"
-		}
-	],
-	"settings": {}
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "../tajriba"
+    },
+    {
+      "path": "../docsv2"
+    }
+  ],
+  "settings": {}
 }

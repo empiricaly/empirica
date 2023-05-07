@@ -1,4 +1,4 @@
-export { AdminContext, ListenersCollector } from "./admin";
+export { ListenersCollector } from "./admin";
 export {
   Classic,
   classicKinds,
