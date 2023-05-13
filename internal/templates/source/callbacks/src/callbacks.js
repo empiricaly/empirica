@@ -1,6 +1,8 @@
 import { ClassicListenersCollector } from "@empirica/core/admin/classic";
 export const Empirica = new ClassicListenersCollector();
 
+console.log(process.env.HEYO);
+
 Empirica.onGameStart(({ game }) => {
   const round = game.addRound({
     name: "Round 1 - Jelly Beans",

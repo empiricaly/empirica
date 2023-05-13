@@ -2,7 +2,7 @@
   "name": "react",
   "private": true,
   "scripts": {
-    "dev": "NODE_ENV=\"development\" vite",
+    "dev": "env $(cat ../.env | grep -v \"#\" | xargs) vite",
     "dev:prod": "NODE_ENV=\"production\" vite",
     "build": "vite build",
     "serve": "vite preview"

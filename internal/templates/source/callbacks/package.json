@@ -2,7 +2,7 @@
   "name": "empirica-server",
   "private": true,
   "scripts": {
-    "dev": "npm run build && node --trace-warnings --enable-source-maps dist/index.js",
+    "dev": "npm run build && env $(cat ../.env | grep -v \"#\" | xargs) node --trace-warnings --enable-source-maps dist/index.js",
     "build": "rsync -aP --exclude=node_modules --exclude=*.js -m src/* dist/ && esbuild src/index.js --log-level=warning --platform=node --define:process.env.NODE_ENV='\"production\"' --bundle --minify --outfile=dist/index.js --sourcemap",
     "serve": "node --trace-warnings --enable-source-maps index.js"
   },
