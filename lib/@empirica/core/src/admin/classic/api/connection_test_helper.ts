@@ -72,8 +72,10 @@ export async function startTajriba(
     configFile,
     "--log.level",
     logLevel,
+    "--log.json",
     "--tajriba.log.level",
     logLevel,
+    "--tajriba.log.json",
     "--tajriba.server.addr",
     ":0",
   ];
