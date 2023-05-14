@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/empiricaly/empirica/internal/settings"
+	logger "github.com/empiricaly/empirica/internal/utils/log"
 	"github.com/empiricaly/tajriba"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -29,6 +30,11 @@ func addTajribaCommand(parent *cobra.Command) error {
 			}
 
 			econf := getConfig()
+
+			err := logger.Init(econf.Log)
+			if err != nil {
+				return errors.Wrap(err, "init logs")
+			}
 
 			conf := econf.Tajriba
 

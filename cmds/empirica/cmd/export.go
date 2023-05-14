@@ -52,16 +52,25 @@ func addExportCommand(parent *cobra.Command) error {
 			// don't have to manage versions... Should optimize later.
 			if _, err := os.Stat(exportScriptDir); err == nil {
 
-				// Check if version is identical to server/package.json
-				versExport := experiment.GetVersion(exportScriptDir, experiment.EmpiricaPackageName)
-				if versExport.Resolved != versServer.Resolved {
+				if versServer == nil {
 					os.RemoveAll(exportScriptDir)
+				} else {
+					// Check if version is identical to server/package.json
+					versExport := experiment.GetVersion(exportScriptDir, experiment.EmpiricaPackageName)
+					if versExport.Resolved != versServer.Resolved {
+						os.RemoveAll(exportScriptDir)
+					}
 				}
 			}
 
-			version := versServer.Resolved
-			if version == "not found" {
-				version = "latest"
+			var version string
+			if versServer == nil {
+				version = "link"
+			} else {
+				version := versServer.Resolved
+				if version == "not found" {
+					version = "latest"
+				}
 			}
 
 			if _, err := os.Stat(exportScriptDir); err != nil {
@@ -69,12 +78,19 @@ func addExportCommand(parent *cobra.Command) error {
 					return errors.Wrap(err, "export: copy export script")
 				}
 
-				if err := experiment.RunCmdSilent(ctx, exportScriptDir, "npm", "install", "--silent"); err != nil {
-					return errors.Wrap(err, "server")
-				}
+				if version == "link" {
+					if err := experiment.RunCmd(ctx, exportScriptDir, "empirica", "npm", "link", "@empirica/core"); err != nil {
+						return errors.Wrap(err, "server")
+					}
+				} else {
 
-				if err := experiment.RunCmdSilent(ctx, exportScriptDir, "npm", "install", "--silent", "-E", "@empirica/core@"+version); err != nil {
-					return errors.Wrap(err, "upgrade client")
+					if err := experiment.RunCmdSilent(ctx, exportScriptDir, "empirica", "npm", "install", "--silent"); err != nil {
+						return errors.Wrap(err, "server")
+					}
+
+					if err := experiment.RunCmdSilent(ctx, exportScriptDir, "empirica", "npm", "install", "--silent", "-E", "@empirica/core@"+version); err != nil {
+						return errors.Wrap(err, "upgrade client")
+					}
 				}
 			}
 
