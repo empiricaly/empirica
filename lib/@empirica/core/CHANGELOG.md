@@ -1,5 +1,12 @@
 # @empirica/core
 
+## 1.3.2
+
+### Patch Changes
+
+- c3f017c: Export broken after logging separation with Tajriba. Fixes #299
+- 39b83f1: Fixed an issue where components passed into intro and exit steps that were using closure would hard reload when attributes were updated on game or player. Fixes #263.
+
 ## 1.3.1
 
 ### Patch Changes
