@@ -14,8 +14,10 @@ changesets.
 ---
 "@empirica/core": minor
 ---
-
+```
+  
+```md
 ---
-
-## "@empirica/core": patch
+"@empirica/core": patch
+---
 ```
