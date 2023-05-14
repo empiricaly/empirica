@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Attributable } from "../../../shared/scopes";
 import { error } from "../../../utils/console";
 import { WithChildren } from "../../react/helpers";
@@ -27,6 +27,25 @@ export function Steps({
   let obj: Attributable;
   const game = useGame();
   const player = usePlayer();
+  const [stps, setStps] = useState<React.ElementType[]>([]);
+  const [stpsSet, setStpsSet] = useState<boolean>(false);
+
+  useEffect(() => {
+    let s: React.ElementType[];
+    if (typeof steps === "function") {
+      s = steps({ game, player })!;
+    } else {
+      s = steps;
+    }
+    setStps(s);
+    setStpsSet(true);
+  }, [steps]);
+
+  useEffect(() => {
+    if (stpsSet && (!stps || stps.length === 0)) {
+      obj.set(doneKey, true);
+    }
+  }, [stps]);
 
   // Find state receiver
   if (object) {
@@ -43,36 +62,10 @@ export function Steps({
     return <>{children}</>;
   }
 
-  // Static steps
-  let actualSteps = steps as React.ElementType[];
-
-  // Dynamic steps
-  if (typeof steps === "function") {
-    actualSteps = steps({ game, player })!;
-    if (!actualSteps) {
-      obj.set(doneKey, true);
-
-      return <>{children}</>;
-    }
-  }
-
   const index = (obj.get(progressKey) as number) || 0;
-  if (actualSteps.length === 0 || index >= actualSteps.length) {
-    obj.set(doneKey, true);
-
-    return <>{children}</>;
-  }
-
-  const Step = actualSteps[index];
-
-  if (!Step) {
-    error("missing step at index");
-
-    return <div>Step missing</div>;
-  }
 
   const next = () => {
-    if (index + 1 >= actualSteps.length) {
+    if (index + 1 >= stps.length) {
       obj.set(doneKey, true);
     } else {
       obj.set(progressKey, index + 1);
@@ -84,6 +77,11 @@ export function Steps({
       obj.set(progressKey, index - 1);
     }
   };
+
+  const Step = stps[index];
+  if (!Step) {
+    return <></>;
+  }
 
   return <Step index={index} previous={previous} next={next}></Step>;
 }
