@@ -42,23 +42,23 @@ func ReleaseFilePath() string {
 	return path.Join(settings.EmpiricaDir, settings.BuildSelectionFile)
 }
 
-func FindReleaseFilePath() (string, error) {
-	p, err := FindEmpiricaDir()
+func FindReleaseFilePath() (string, string, error) {
+	p, base, err := FindEmpiricaDir()
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return path.Join(p, settings.BuildSelectionFile), nil
+	return path.Join(p, settings.BuildSelectionFile), base, nil
 }
 
-func FindEmpiricaDir() (string, error) {
-	if _, err := os.Stat(settings.EmpiricaDir); err == nil {
-		return settings.EmpiricaDir, nil
-	}
-
+func FindEmpiricaDir() (string, string, error) {
 	dir, err := os.Getwd()
 	if err != nil || dir == "/" {
-		return "", ErrEmpiricaDirNotFound
+		return "", "", ErrEmpiricaDirNotFound
+	}
+
+	if _, err := os.Stat(settings.EmpiricaDir); err == nil {
+		return settings.EmpiricaDir, dir, nil
 	}
 
 	dir = filepath.Dir(dir)
@@ -69,13 +69,13 @@ func FindEmpiricaDir() (string, error) {
 		}
 
 		if _, err := os.Stat(dir + "/" + settings.EmpiricaDir); err == nil {
-			return dir + "/" + settings.EmpiricaDir, nil
+			return dir + "/" + settings.EmpiricaDir, dir, nil
 		}
 
 		dir = filepath.Dir(dir)
 	}
 
-	return "", ErrEmpiricaDirNotFound
+	return "", dir, ErrEmpiricaDirNotFound
 }
 
 const filePerm = 0o600 // -rw-------
@@ -129,32 +129,9 @@ func BinaryVersion() (*Build, error) {
 			Interface("build", build).
 			Msg("proxy: using build from env var")
 	} else {
-		relPath, err := FindReleaseFilePath()
+		build, _, err := GetProjectRelease()
 		if err != nil {
-			return nil, ErrBuildMissing
-		}
-
-		content, err := ioutil.ReadFile(relPath)
-		if err != nil {
-			if errors.Is(err, os.ErrNotExist) {
-				log.Debug().
-					Err(err).
-					Str("path", ReleaseFilePath()).
-					Msg("proxy: no release file")
-			} else {
-				return nil, errors.Wrap(err, "read release file")
-			}
-
-			return nil, ErrBuildMissing
-		}
-
-		err = yaml.Unmarshal(content, build)
-		if err != nil {
-			return nil, errors.Wrap(err, "read yaml release file")
-		}
-
-		if build.Empty() {
-			return nil, ErrBuildEmpty
+			return nil, err
 		}
 
 		log.Debug().
@@ -163,6 +140,42 @@ func BinaryVersion() (*Build, error) {
 	}
 
 	return build, nil
+}
+
+// Return project build and root path, or and error if we're not in a project or
+// we could not parse the release file.
+func GetProjectRelease() (*Build, string, error) {
+	build := &Build{}
+
+	relPath, base, err := FindReleaseFilePath()
+	if err != nil {
+		return nil, "", ErrBuildMissing
+	}
+
+	content, err := ioutil.ReadFile(relPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			log.Debug().
+				Err(err).
+				Str("path", ReleaseFilePath()).
+				Msg("proxy: no release file")
+		} else {
+			return nil, "", errors.Wrap(err, "read release file")
+		}
+
+		return nil, "", ErrBuildMissing
+	}
+
+	err = yaml.Unmarshal(content, build)
+	if err != nil {
+		return nil, "", errors.Wrap(err, "read yaml release file")
+	}
+
+	if build.Empty() {
+		return nil, base, ErrBuildEmpty
+	}
+
+	return build, base, nil
 }
 
 func binaryDir() string {

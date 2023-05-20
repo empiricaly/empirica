@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"path"
+
+	"github.com/empiricaly/empirica/internal/build"
 	"github.com/empiricaly/empirica/internal/experiment"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -30,6 +33,12 @@ func addUpgradeCommand(parent *cobra.Command) error {
 				return errors.Wrap(err, "parse global flag")
 			}
 
+			// If we're not inside a project, we're global
+			_, basePath, err := build.GetProjectRelease()
+			if err != nil {
+				global = true
+			}
+
 			if global {
 				return experiment.UpgradeCommandGlobal(ctx, version)
 			}
@@ -49,13 +58,13 @@ func addUpgradeCommand(parent *cobra.Command) error {
 			}
 
 			if !commandOnly {
-				if err := experiment.UpgradePackages(ctx, version, conf.Player.Path, conf.Callbacks.Path); err != nil {
+				if err := experiment.UpgradePackages(ctx, version, path.Join(basePath, conf.Player.Path), path.Join(basePath, conf.Callbacks.Path)); err != nil {
 					return errors.Wrap(err, "upgrade packages")
 				}
 			}
 
 			if !packagesOnly {
-				if err := experiment.UpgradeCommand(ctx, version, conf.Player.Path); err != nil {
+				if err := experiment.UpgradeCommand(ctx, version, path.Join(basePath, conf.Player.Path)); err != nil {
 					return errors.Wrap(err, "upgrade command")
 				}
 			}
