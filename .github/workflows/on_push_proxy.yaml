@@ -16,7 +16,7 @@ jobs:
   proxy:
     name: Build and upload proxy
     runs-on: ubuntu-latest
-    if: github.repository == 'empiricaly/empirica' && github.event.pull_request.draft == false
+    if: github.repository == 'empiricaly/empirica' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout
         uses: actions/checkout@v2

@@ -33,12 +33,49 @@ const (
 )
 
 var (
-	ErrBuildMissing = errors.New("build info missing")
-	ErrBuildEmpty   = errors.New("build info empty")
+	ErrBuildMissing        = errors.New("build info missing")
+	ErrBuildEmpty          = errors.New("build info empty")
+	ErrEmpiricaDirNotFound = errors.New("empirica dir not found")
 )
 
 func ReleaseFilePath() string {
-	return settings.EmpiricaDir + "/" + settings.BuildSelectionFile
+	return path.Join(settings.EmpiricaDir, settings.BuildSelectionFile)
+}
+
+func FindReleaseFilePath() (string, error) {
+	p, err := FindEmpiricaDir()
+	if err != nil {
+		return "", err
+	}
+
+	return path.Join(p, settings.BuildSelectionFile), nil
+}
+
+func FindEmpiricaDir() (string, error) {
+	if _, err := os.Stat(settings.EmpiricaDir); err == nil {
+		return settings.EmpiricaDir, nil
+	}
+
+	dir, err := os.Getwd()
+	if err != nil || dir == "/" {
+		return "", ErrEmpiricaDirNotFound
+	}
+
+	dir = filepath.Dir(dir)
+
+	for {
+		if dir == "/" {
+			break
+		}
+
+		if _, err := os.Stat(dir + "/" + settings.EmpiricaDir); err == nil {
+			return dir + "/" + settings.EmpiricaDir, nil
+		}
+
+		dir = filepath.Dir(dir)
+	}
+
+	return "", ErrEmpiricaDirNotFound
 }
 
 const filePerm = 0o600 // -rw-------
@@ -92,7 +129,12 @@ func BinaryVersion() (*Build, error) {
 			Interface("build", build).
 			Msg("proxy: using build from env var")
 	} else {
-		content, err := ioutil.ReadFile(ReleaseFilePath())
+		relPath, err := FindReleaseFilePath()
+		if err != nil {
+			return nil, ErrBuildMissing
+		}
+
+		content, err := ioutil.ReadFile(relPath)
 		if err != nil {
 			if errors.Is(err, os.ErrNotExist) {
 				log.Debug().
@@ -308,6 +350,11 @@ func DownloadBinary(build *Build, asProd bool) (string, error) {
 		return "", errors.New("no new binary paths found")
 	}
 
+	fileBytes, err := ioutil.ReadFile(resp.Filename)
+	if err != nil {
+		return "", errors.New("failed to read new binary")
+	}
+
 	for _, fileName := range binpaths {
 		dst, err := filepath.Abs(fileName)
 		if err != nil {
@@ -319,7 +366,7 @@ func DownloadBinary(build *Build, asProd bool) (string, error) {
 			return "", errors.Wrap(err, "create binary dir")
 		}
 
-		if err := os.Link(resp.Filename, dst); err != nil {
+		if err = ioutil.WriteFile(dst, fileBytes, 0o750); err != nil {
 			if errors.Is(err, os.ErrExist) {
 				if err = os.Remove(dst); err != nil {
 					return "", errors.Wrap(err, "remove old binary file")

@@ -46,6 +46,10 @@ func root(args []string) error {
 		return errors.Wrap(err, "get binary")
 	}
 
+	log.Debug().
+		Str("path", path).
+		Msg("proxy: chosen binary path")
+
 	c := exec.CommandContext(ctx, path, args...)
 
 	c.Stderr = os.Stderr
