@@ -219,7 +219,7 @@ jobs:
 
       - name: Publish API docs
         run: |
-          cd lib/@empirica/core
+          cd empirica/lib/@empirica/core
           npm i
           ./docs.sh
           mv docs ../../../../docsv2/api
