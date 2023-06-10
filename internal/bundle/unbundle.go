@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/empiricaly/empirica"
+	"github.com/empiricaly/empirica/internal/server"
 	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/klauspost/compress/gzip"
 	"github.com/klauspost/compress/zstd"
@@ -81,6 +82,10 @@ func prepDotEmpirica(inConf *empirica.Config, dir string, devMode bool) (*empiri
 	conf.Production = !devMode
 	conf.Server.Production = !devMode
 	conf.Tajriba.Server.Production = !devMode
+
+	if conf.Server.Addr == server.DefaultAddr {
+		conf.Server.Addr = inConf.Server.Addr
+	}
 
 	if inConf.Tajriba.Store.UseMemory {
 		conf.Tajriba.Store.UseMemory = true
