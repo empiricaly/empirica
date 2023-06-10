@@ -42,11 +42,23 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMo
 		}
 
 		var args []string
+		cmd := parts[0]
 		if len(parts) > 1 {
-			args = parts[1:]
+			if parts[0] == "npm" {
+				cmd = "empirica"
+				args = parts
+			} else {
+				args = parts[1:]
+			}
 		}
 
 		args = append(args, "--token", conf.Callbacks.Token)
+
+		addr := conf.Server.Addr
+		if strings.HasPrefix(addr, ":") {
+			addr = "http://localhost" + addr + "/query"
+		}
+		args = append(args, "--url", addr)
 
 		if conf.Callbacks.SessionToken != "" {
 			p := conf.Callbacks.SessionToken
@@ -59,12 +71,11 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMo
 			args = append(args, "--sessionTokenPath", p)
 		}
 
-		log.Trace().
-			Strs("args", args).
-			Str("cmd", parts[0]).
+		log.Debug().
+			Str("cmd", strings.Join(append([]string{cmd}, args...), " ")).
 			Msg("serve: start server command")
 
-		c := exec.CommandContext(ctx, parts[0], args...)
+		c := exec.CommandContext(ctx, cmd, args...)
 
 		p := path.Join(dir, "callbacks")
 

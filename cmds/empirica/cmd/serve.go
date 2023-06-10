@@ -47,10 +47,6 @@ func addServeCommand(parent *cobra.Command) error {
 			conf := getConfig()
 			conf.Server.Addr = addr
 
-			conf.Production = !devMode
-			conf.Server.Production = !devMode
-			conf.Tajriba.Server.Production = !devMode
-
 			return bundle.Serve(ctx, conf, in, clean, devMode)
 		},
 	}
