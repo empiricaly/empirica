@@ -886,6 +886,10 @@ export class Stage extends GameOwned {
     return this.scopeByKey<Round>("roundID");
   }
 
+  isCurrent() {
+    return this.currentGame?.get("stageID") === this.id;
+  }
+
   end(status: EndedStatuses, reason: string) {
     if (this.get("ended")) {
       return;

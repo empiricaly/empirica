@@ -1,6 +1,6 @@
 import { AddStepInput, State, Step, Transition } from "@empirica/tajriba";
 import { z } from "zod";
-import { debug, error } from "../../utils/console";
+import { debug, error, trace } from "../../utils/console";
 import { StepPayload } from "../context";
 import { EventContext, ListenersCollector, TajribaEvent } from "../events";
 import { ClassicKinds, Context, Game, Player } from "./models";
@@ -19,13 +19,10 @@ export type LobbyConfig = {};
 export function Lobby(_: LobbyConfig = {}) {
   return function (_: ListenersCollector<Context, ClassicKinds>) {
     _.on("player", "introDone", async (ctx, { player }: { player: Player }) => {
-      debug("lobby: lobby intro done");
       const game = player.currentGame;
       if (!game) {
         return;
       }
-
-      debug("lobby: lobby intro done", game.batch?.inspect());
 
       switch (game.lobbyConfig.kind) {
         case "shared":
@@ -80,6 +77,8 @@ async function setupIndividualLobbyTimeout(
     player.get(lobbyTimerKey) &&
     player.get(individualTimerGameKey) === game.id
   ) {
+    trace("lobby: individual timer already set", game.lobbyConfig);
+
     return;
   }
 
@@ -163,7 +162,7 @@ async function setupSharedLobbyTimeout(
   game: Game
 ) {
   if (game.get(lobbyTimerKey)) {
-    debug("lobby: lobby already exists", game.lobbyConfig);
+    trace("lobby: lobby already exists", game.lobbyConfig);
 
     return;
   }

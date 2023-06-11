@@ -223,8 +223,6 @@ export class Cake<
 
         if (scope) {
           for (const callback of callbacks()) {
-            debug("scope callback", kind);
-
             try {
               await callback.callback(this.evtctx, { [kind]: scope });
             } catch (err) {

@@ -64,10 +64,14 @@ export class Attributes extends SharedAttributes {
     return sub!;
   }
 
-  protected next() {
+  protected next(scopeIDs: string[]) {
     const byKind = new Map<string, AttributeChange[]>();
 
-    for (const [_, attrs] of this.updates) {
+    for (const [scopeID, attrs] of this.updates) {
+      if (!scopeIDs.includes(scopeID)) {
+        continue;
+      }
+
       for (const [_, attr] of attrs) {
         if (typeof attr === "boolean") {
           continue;
@@ -96,11 +100,16 @@ export class Attributes extends SharedAttributes {
           warn(`found attribute change without node ID`);
           continue;
         }
+
+        if (!scopeIDs.includes(attr.nodeID || attr.node!.id)) {
+          continue;
+        }
+
         updates.push([kind, attr.key, attr]);
       }
     }
 
-    super.next();
+    super.next(scopeIDs);
 
     for (const [kind, key, attrChange] of updates) {
       // Forcing nodeID because we already tested it above.

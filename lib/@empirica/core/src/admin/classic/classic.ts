@@ -459,6 +459,7 @@ export function Classic({
 
       if (game.hasStarted) {
         trace("introDone: game already started");
+
         return;
       }
 
@@ -616,6 +617,10 @@ export function Classic({
       "submit",
       (ctx, { playerStage, submit }: PlayerStageSubmit) => {
         if (!submit) return;
+
+        if (!playerStage.stage || !playerStage.stage.isCurrent()) {
+          return;
+        }
 
         const players = playerStage.player!.currentGame!.players;
         if (players.length === 0) {
