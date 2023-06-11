@@ -35,7 +35,7 @@ export class Scopes<
 
   constructor(
     scopesObs: Observable<ScopeUpdate>,
-    donesObs: Observable<void>,
+    donesObs: Observable<string[]>,
     ctx: Context,
     kinds: Kinds,
     attributes: Attributes,
@@ -54,13 +54,16 @@ export class Scopes<
       const scopes = this.byKind(kind);
 
       setTimeout(() => {
+        if (scopes.size === 0) {
+          sub!.next({ done: true });
+
+          return;
+        }
+
         let count = 0;
         for (const [_, scope] of scopes) {
           count++;
           sub!.next({ scope, done: scopes.size === count });
-        }
-        if (scopes.size === 0) {
-          sub!.next({ done: scopes.size === count });
         }
       }, 0);
     }
@@ -68,7 +71,7 @@ export class Scopes<
     return sub!;
   }
 
-  protected next() {
+  protected next(scopeIDs: string[]) {
     for (const [_, scopeReplaySubject] of this.scopes) {
       const scope = scopeReplaySubject.getValue();
       if (scope._updated) {
@@ -79,7 +82,7 @@ export class Scopes<
       }
     }
 
-    super.next();
+    super.next(scopeIDs);
   }
 
   protected create(

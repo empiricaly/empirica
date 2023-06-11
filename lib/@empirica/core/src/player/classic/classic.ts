@@ -129,8 +129,8 @@ export function EmpiricaClassic(
   participantID: string,
   provider: TajribaProvider
 ): EmpiricaClassicContext {
-  const attributesDones = new Subject<void>();
-  const scopesDones = new Subject<void>();
+  const attributesDones = new Subject<string[]>();
+  const scopesDones = new Subject<string[]>();
 
   const ctx = new Context();
   const attributes = new Attributes(
@@ -180,21 +180,34 @@ export function EmpiricaClassic(
       const updated = getMainObjects(participantID, scopes, attributes);
       ctx.game = updated.game;
       ctx.stage = updated.stage;
+      const scopesUpdated = [];
 
       if (scopeChanged(current.game, updated.game)) {
         ret.game.next(updated.game);
+        if (updated.game) {
+          scopesUpdated.push(updated.game.id);
+        }
       }
 
       if (scopeChanged(current.player, updated.player)) {
         ret.player.next(updated.player);
+        if (updated.player) {
+          scopesUpdated.push(updated.player.id);
+        }
       }
 
       if (scopeChanged(current.round, updated.round)) {
         ret.round.next(updated.round);
+        if (updated.round) {
+          scopesUpdated.push(updated.round.id);
+        }
       }
 
       if (scopeChanged(current.stage, updated.stage) || steps.hadUpdates()) {
         ret.stage.next(updated.stage);
+        if (updated.stage) {
+          scopesUpdated.push(updated.stage.id);
+        }
       }
 
       let playersChanged = false;
@@ -218,14 +231,15 @@ export function EmpiricaClassic(
 
         if (p) {
           players.push(p);
+          scopesUpdated.push(p.id);
         }
       }
       if (playersChanged) {
         ret.players.next(players);
       }
 
-      scopesDones.next();
-      attributesDones.next();
+      scopesDones.next(scopesUpdated);
+      attributesDones.next(scopesUpdated);
     },
   });
 

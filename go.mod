@@ -11,8 +11,7 @@ require (
 	github.com/charmbracelet/bubbletea v0.22.0
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/cortesi/moddwatch v0.0.0-20210323234936-df014e95c743
-	github.com/davecgh/go-spew v1.1.1
-	github.com/empiricaly/tajriba v1.1.1
+	github.com/empiricaly/tajriba v1.2.0
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/json-iterator/go v1.1.12
@@ -43,6 +42,7 @@ require (
 	github.com/charmbracelet/harmonica v0.2.0 // indirect
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/go-logr/logr v1.2.3 // indirect

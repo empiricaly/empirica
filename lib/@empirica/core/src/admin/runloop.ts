@@ -47,7 +47,7 @@ export class Runloop<
   private transitions = new Subject<Transition>();
   private scopesSub = new Subject<ScopeUpdate>();
   private attributesSub = new Subject<AttributeUpdate>();
-  private donesSub = new Subject<void>();
+  private donesSub = new Subject<string[]>();
   private attributes: Attributes;
   private finalizers: Finalizer[] = [];
   private groupPromises: Promise<{ id: string }[]>[] = [];
@@ -259,7 +259,7 @@ export class Runloop<
           });
         }
 
-        this.donesSub.next();
+        this.donesSub.next(scopes.map((s) => s.id));
 
         return scopes;
       })
@@ -366,7 +366,7 @@ export class Runloop<
     let resolve: (value: void) => void;
     const prom = new Promise((r) => (resolve = r));
     this.taj.scopedAttributes(filters).subscribe({
-      next: ({ attribute, done }) => {
+      next: ({ attribute, scopesUpdated, done }) => {
         if (attribute) {
           if (attribute.node.__typename !== "Scope") {
             error(`scoped attribute with non-scope node`);
@@ -386,7 +386,12 @@ export class Runloop<
 
         if (done) {
           resolve();
-          this.donesSub.next();
+          if (!scopesUpdated) {
+            error(`scopesUpdated is empty`);
+            return;
+          }
+
+          this.donesSub.next(scopesUpdated);
         }
       },
     });

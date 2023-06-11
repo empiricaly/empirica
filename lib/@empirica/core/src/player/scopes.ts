@@ -15,7 +15,7 @@ export class Scopes<
 > extends SharedScopes<Context, Kinds, Scope<Context, Kinds>> {
   constructor(
     scopesObs: Observable<ScopeUpdate>,
-    donesObs: Observable<void>,
+    donesObs: Observable<string[]>,
     ctx: Context,
     kinds: Kinds,
     attributes: Attributes,

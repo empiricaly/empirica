@@ -48,7 +48,7 @@ export class Attributes {
 
   constructor(
     attributesObs: Observable<AttributeUpdate>,
-    donesObs: Observable<void>,
+    donesObs: Observable<string[]>,
     readonly setAttributes: (input: SetAttributeInput[]) => Promise<unknown>
   ) {
     attributesObs.subscribe({
@@ -58,7 +58,9 @@ export class Attributes {
     });
 
     donesObs.subscribe({
-      next: this.next.bind(this),
+      next: (scopeIDs) => {
+        this.next(scopeIDs);
+      },
     });
   }
 
@@ -168,8 +170,12 @@ export class Attributes {
     return this.updates.has(scopeID);
   }
 
-  protected next() {
+  protected next(scopeIDs: string[]) {
     for (const [scopeID, attrs] of this.updates) {
+      if (!scopeIDs.includes(scopeID)) {
+        return;
+      }
+
       let scopeMap = this.attrs.get(scopeID);
 
       if (!scopeMap) {

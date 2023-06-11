@@ -41,7 +41,7 @@ export class Scopes<
 
   constructor(
     scopesObs: Observable<ScopeUpdate>,
-    donesObs: Observable<void>,
+    donesObs: Observable<string[]>,
     protected ctx: Context,
     protected kinds: Kinds,
     protected attributes: Attributes
@@ -53,7 +53,9 @@ export class Scopes<
     });
 
     donesObs.subscribe({
-      next: this.next.bind(this),
+      next: (scopeIDs) => {
+        this.next(scopeIDs);
+      },
     });
   }
 
@@ -79,11 +81,14 @@ export class Scopes<
     return this.kindUpdated.has(kind);
   }
 
-  protected next() {
+  protected next(scopeIDs: string[]) {
     this.kindUpdated.clear();
     for (const [_, scopeSubject] of this.scopes) {
       const scope = scopeSubject.getValue();
-      if (scope._updated || this.attributes.scopeWasUpdated(scope.id)) {
+      if (
+        (scope._updated || this.attributes.scopeWasUpdated(scope.id)) &&
+        scopeIDs.includes(scope.id)
+      ) {
         scope._updated = false;
         scopeSubject.next(scope);
       }
