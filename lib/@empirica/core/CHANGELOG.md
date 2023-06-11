@@ -1,5 +1,20 @@
 # @empirica/core
 
+## 1.3.4
+
+### Patch Changes
+
+- 56b7c88: On a server restart (callbacks), we were not waiting for all the attributes to
+  be loaded on a scope before running callbacks. This could lead to errors when
+  trying to access attributes that were not yet loaded. Notably, the `on.once`
+  callbacks would run multiple times, instead of... once.
+
+  We also had a bug in the `on.once` callbacks, where we were not checking the
+  correct attribute key to see if the callback had already been run. (☉_☉)
+
+- ac3bb60: The `serve` command would ignore the `--addr` flag to specify the address to
+  listen on. This is now fixed. Thanks to @malsobay for the report. Fixes #315.
+
 ## 1.3.3
 
 ### Patch Changes
