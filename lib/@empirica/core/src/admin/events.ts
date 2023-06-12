@@ -87,7 +87,10 @@ function unique<
 
     await callback(ctx, props);
 
-    scope.set(`ran-${PlacementString(placement)}-${attr.id}`, true);
+    scope.set(`ran-${PlacementString(placement)}-${attr.id}`, true, {
+      immutable: true,
+      private: true,
+    });
   };
 }
 
