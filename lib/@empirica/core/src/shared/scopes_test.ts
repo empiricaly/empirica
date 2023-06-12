@@ -21,8 +21,8 @@ function setupScopes() {
 
   const ctx = new Context();
 
-  const attributesDones = new Subject<void>();
-  const scopesDones = new Subject<void>();
+  const attributesDones = new Subject<string[]>();
+  const scopesDones = new Subject<string[]>();
 
   const attributes = new Attributes(
     provider.attributes,
@@ -39,9 +39,9 @@ function setupScopes() {
   );
 
   provider.dones.subscribe({
-    next() {
-      scopesDones.next();
-      attributesDones.next();
+    next(scopeIDs) {
+      scopesDones.next(scopeIDs);
+      attributesDones.next(scopeIDs);
     },
   });
 

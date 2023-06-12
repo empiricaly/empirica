@@ -1,4 +1,4 @@
-import { BehaviorSubject, Subject } from "rxjs";
+import { BehaviorSubject, Observable, Subject } from "rxjs";
 import { Attributes } from "../../shared/attributes";
 import { Globals } from "../../shared/globals";
 import { Constructor } from "../../shared/helpers";
@@ -138,7 +138,10 @@ export function EmpiricaClassic(
     attributesDones,
     provider.setAttributes
   );
-  const steps = new Steps(provider.steps, provider.dones);
+  const steps = new Steps(
+    provider.steps,
+    provider.dones as unknown as Observable<void>
+  );
   const scopes = new Scopes(
     provider.scopes,
     scopesDones,
@@ -174,7 +177,7 @@ export function EmpiricaClassic(
     },
   });
 
-  let scopesUpdated: string[] = [];
+  let scopesUpdated = new Set<string>();
   provider.attributes.subscribe({
     next: (attr) => {
       const nodeID = attr.attribute.node?.id || attr.attribute.nodeID;
@@ -182,7 +185,7 @@ export function EmpiricaClassic(
         return;
       }
 
-      scopesUpdated.push(nodeID);
+      scopesUpdated.add(nodeID);
     },
   });
 
@@ -236,9 +239,10 @@ export function EmpiricaClassic(
         ret.players.next(players);
       }
 
-      scopesDones.next(scopesUpdated);
-      attributesDones.next(scopesUpdated);
-      scopesUpdated = [];
+      const scopeIDs = Array.from(scopesUpdated);
+      scopesDones.next(scopeIDs);
+      attributesDones.next(scopeIDs);
+      scopesUpdated.clear();
     },
   });
 

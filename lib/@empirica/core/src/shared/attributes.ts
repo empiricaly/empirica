@@ -173,7 +173,7 @@ export class Attributes {
   protected next(scopeIDs: string[]) {
     for (const [scopeID, attrs] of this.updates) {
       if (!scopeIDs.includes(scopeID)) {
-        return;
+        continue;
       }
 
       let scopeMap = this.attrs.get(scopeID);
@@ -201,7 +201,9 @@ export class Attributes {
       }
     }
 
-    this.updates.clear();
+    for (const scopeID of scopeIDs) {
+      this.updates.delete(scopeID);
+    }
   }
 }
 
