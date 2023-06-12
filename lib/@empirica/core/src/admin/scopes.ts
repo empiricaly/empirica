@@ -74,11 +74,12 @@ export class Scopes<
   protected next(scopeIDs: string[]) {
     for (const [_, scopeReplaySubject] of this.scopes) {
       const scope = scopeReplaySubject.getValue();
-      if (scope._updated) {
+      if (this.newScopes.get(scope.id) && scopeIDs.includes(scope.id)) {
         const kindSub = this.kindSubs.get(scope.kind);
         if (kindSub) {
           kindSub.next({ scope, done: true });
         }
+        this.newScopes.set(scope.id, false);
       }
     }
 

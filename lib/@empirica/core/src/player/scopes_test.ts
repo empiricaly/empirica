@@ -1,5 +1,5 @@
 import test from "ava";
-import { Subject } from "rxjs";
+import { Observable, Subject } from "rxjs";
 import { Steps } from "../player/steps";
 import { Attributes } from "../shared/attributes";
 import { Scope, Scopes } from "./scopes";
@@ -45,10 +45,13 @@ function setupScopes() {
   const { provider, changes } = setupProvider();
 
   const ctx = new Context();
-  const steps = new Steps(provider.steps, provider.dones);
+  const steps = new Steps(
+    provider.steps,
+    provider.dones as unknown as Observable<void>
+  );
 
-  const attributesDones = new Subject<void>();
-  const scopesDones = new Subject<void>();
+  const attributesDones = new Subject<string[]>();
+  const scopesDones = new Subject<string[]>();
 
   const attributes = new Attributes(
     provider.attributes,
@@ -66,9 +69,9 @@ function setupScopes() {
   );
 
   provider.dones.subscribe({
-    next() {
-      scopesDones.next();
-      attributesDones.next();
+    next(scopeIDs) {
+      scopesDones.next(scopeIDs);
+      attributesDones.next(scopeIDs);
     },
   });
 

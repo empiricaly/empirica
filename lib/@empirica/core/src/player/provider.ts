@@ -20,13 +20,14 @@ export class TajribaProvider {
   public attributes = new Subject<AttributeUpdate>();
   public participants = new Subject<ParticipantUpdate>();
   public steps = new Subject<StepUpdate>();
-  public dones = new Subject<void>();
+  public dones = new Subject<string[]>();
 
   constructor(
     changes: Observable<ChangePayload>,
     readonly globals: Observable<SubAttributesPayload>,
     readonly setAttributes: (input: SetAttributeInput[]) => Promise<any>
   ) {
+    let scopeIDs: string[] = [];
     changes.pipe(groupBy((chg) => chg?.change?.__typename)).subscribe({
       next: (group) => {
         switch (group.key) {
@@ -47,7 +48,7 @@ export class TajribaProvider {
                 }
 
                 if (msg.done) {
-                  this.dones.next();
+                  this.dones.next(scopeIDs);
                 }
               },
             });
@@ -63,14 +64,17 @@ export class TajribaProvider {
                 ) {
                   trace("AttributeChange empty");
                 } else {
+                  const atChange = <AttributeChange>msg.change;
+                  scopeIDs.push(atChange.nodeID || atChange.node!.id);
                   this.attributes.next({
-                    attribute: <AttributeChange>msg.change,
+                    attribute: atChange,
                     removed: msg.removed,
                   });
                 }
 
                 if (msg.done) {
-                  this.dones.next();
+                  this.dones.next(scopeIDs);
+                  scopeIDs = [];
                 }
               },
             });
@@ -93,7 +97,7 @@ export class TajribaProvider {
                 }
 
                 if (msg.done) {
-                  this.dones.next();
+                  this.dones.next([]);
                 }
               },
             });
@@ -116,7 +120,7 @@ export class TajribaProvider {
                 }
 
                 if (msg.done) {
-                  this.dones.next();
+                  this.dones.next([]);
                 }
               },
             });
@@ -126,7 +130,7 @@ export class TajribaProvider {
             group.subscribe({
               next: (change) => {
                 if (change.done) {
-                  this.dones.next();
+                  this.dones.next([]);
                 }
               },
             });

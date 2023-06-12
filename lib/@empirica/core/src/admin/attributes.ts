@@ -115,7 +115,10 @@ export class Attributes extends SharedAttributes {
       // Forcing nodeID because we already tested it above.
       const nodeID = attrChange.nodeID || attrChange.node!.id;
 
-      // Forcing attr because we already tested it above.
+      if (!scopeIDs.includes(nodeID)) {
+        continue;
+      }
+
       const attr = this.attrs.get(nodeID)!.get(key)!;
       const sub = this.attribSubs.get(kind)?.get(key);
       if (sub) {

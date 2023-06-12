@@ -36,6 +36,8 @@ export class Scopes<
   Skope extends Scope<Context, Kinds> = Scope<Context, Kinds>
 > {
   protected scopes = new Map<string, BehaviorSubject<Skope>>();
+  // newScopes is used to track scopes that have appeared for the first time.
+  protected newScopes = new Map<string, boolean>();
   protected scopesByKind = new Map<keyof Kinds, Map<string, Skope>>();
   protected kindUpdated = new Set<keyof Kinds>();
 
@@ -147,6 +149,7 @@ export class Scopes<
     const obj = this.create(scopeClass, scope);
     const subj = new BehaviorSubject(obj);
     this.scopes.set(scope.id, subj);
+    this.newScopes.set(scope.id, true);
 
     let skm = this.scopesByKind.get(kind);
     if (!skm) {

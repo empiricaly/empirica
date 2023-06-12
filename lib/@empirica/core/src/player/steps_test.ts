@@ -1,11 +1,15 @@
 import test from "ava";
 import { setNow, Steps, StepTick } from "./steps";
 import { partChange, setupProvider, stepChange } from "../shared/test_helpers";
+import { Observable } from "rxjs";
 
 function setupSteps() {
   const { provider, changes } = setupProvider();
 
-  const steps = new Steps(provider.steps, provider.dones);
+  const steps = new Steps(
+    provider.steps,
+    provider.dones as unknown as Observable<void>
+  );
 
   return { changes, steps };
 }
