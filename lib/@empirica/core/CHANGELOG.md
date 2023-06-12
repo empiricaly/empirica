@@ -1,5 +1,12 @@
 # @empirica/core
 
+## 1.3.5
+
+### Patch Changes
+
+- 229069a: Player scopes updated was not tracking composite scopes (playerRound,
+  playerStage...) correctly. This is now fixed.
+
 ## 1.3.4
 
 ### Patch Changes
