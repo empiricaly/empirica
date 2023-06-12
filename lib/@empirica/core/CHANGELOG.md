@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.3.6
+
+### Patch Changes
+
+- 4970481: Fixes to the scope updates tracking released in the previous version.
+
 ## 1.3.5
 
 ### Patch Changes
