@@ -203,6 +203,13 @@ func (cb *Callbacks) watchLoop(ctx context.Context, modchan chan *moddwatch.Mod,
 	}
 }
 
+const (
+	minRetryBackoff = 500 * time.Millisecond
+	maxRetryBackoff = 5 * time.Second
+	retryFactor     = 1.5
+	retyrJitter     = false
+)
+
 func (cb *Callbacks) run(ctx context.Context) {
 	cb.Lock()
 	cb.running = true
@@ -215,12 +222,13 @@ func (cb *Callbacks) run(ctx context.Context) {
 	}()
 
 	connRetry := &backoff.Backoff{
-		Min:    500 * time.Millisecond,
-		Max:    12 * time.Second,
-		Factor: 1.5,
-		Jitter: true,
+		Min:    minRetryBackoff,
+		Max:    maxRetryBackoff,
+		Factor: retryFactor,
+		Jitter: retyrJitter,
 	}
 
+	shouldExit := false
 	hardExits := 0
 	lastHardExit := time.Now()
 
@@ -228,6 +236,10 @@ func (cb *Callbacks) run(ctx context.Context) {
 		c, err := cb.runOnce(ctx)
 		if err != nil {
 			d := connRetry.Duration()
+
+			if hardExits, shouldExit = checkHardExit(lastHardExit, hardExits, err); shouldExit {
+				return
+			}
 
 			if !errors.Is(err, context.Canceled) {
 				log.Error().
@@ -272,17 +284,7 @@ func (cb *Callbacks) run(ctx context.Context) {
 			if errors.As(err, &exitError) {
 				cb.c = nil
 
-				if time.Since(lastHardExit) > 5*time.Second {
-					hardExits = 0
-				}
-
-				hardExits++
-
-				if hardExits > 2 {
-					log.Error().
-						Err(err).
-						Msg("callbacks: exited")
-
+				if hardExits, shouldExit = checkHardExit(lastHardExit, hardExits, err); shouldExit {
 					return
 				}
 			}
@@ -305,6 +307,33 @@ func (cb *Callbacks) run(ctx context.Context) {
 			}
 		}
 	}
+}
+
+const (
+	maxHardExits    = 3
+	maxHardExitTime = time.Second * 6
+)
+
+func checkHardExit(lastHardExit time.Time, hardExits int, err error) (int, bool) {
+	if time.Since(lastHardExit) > maxHardExitTime {
+		hardExits = 0
+	}
+
+	hardExits++
+
+	if hardExits > maxHardExits-1 {
+		log.Error().
+			Err(err).
+			Msg("callbacks: repeatedly exited, giving up")
+
+		return hardExits, true
+	}
+
+	log.Error().
+		Err(err).
+		Msg("callbacks: exited, retrying")
+
+	return hardExits, false
 }
 
 func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
