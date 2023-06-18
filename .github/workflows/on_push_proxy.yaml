@@ -1,22 +1,23 @@
 name: Build Proxy
 
 on:
-  # pull_request:
-  #   paths:
-  #     - "cmds/proxy/**"
-  #     - ".github/workflows/on_push_proxy.yaml"
-  #     - ".github/actions/upload-empirica-cli/**"
   push:
+    branches:
+      - main
     paths:
       - "cmds/proxy/**"
       - ".github/workflows/on_push_proxy.yaml"
       - ".github/actions/upload-empirica-cli/**"
 
+concurrency: 
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+      
 jobs:
   proxy:
     name: Build and upload proxy
     runs-on: ubuntu-latest
-    if: github.repository == 'empiricaly/empirica' && github.ref == 'refs/heads/main'
+    if: github.repository == 'empiricaly/empirica'
     steps:
       - name: Checkout
         uses: actions/checkout@v2

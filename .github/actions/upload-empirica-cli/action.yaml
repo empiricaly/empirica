@@ -27,6 +27,9 @@ inputs:
   AWS_SECRET_ACCESS_KEY:
     description: "AWS Secret Access Key"
     required: true
+  path:
+    description: "Input directory"
+    required: true
 runs:
   using: "node16"
   main: "dist/index.js"
