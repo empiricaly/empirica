@@ -19,14 +19,11 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  release:
-    name: Build CLI command, run tests and release packages
+  npm:
+    name: Build npm package
     runs-on: ubuntu-latest
     if: github.repository == 'empiricaly/empirica' && github.event.pull_request.draft == false
     steps:
-      #
-      # Step 0. Setup and test if Empirica compiles successfully
-      #
       - name: Checkout Repo
         uses: actions/checkout@v3
 
@@ -39,19 +36,6 @@ jobs:
         id: branch-name
         uses: tj-actions/branch-names@v5.4
 
-      # - name: Quick build of Empirica CLI to ensure compilation is working
-      #   uses: docker/build-push-action@v2
-      #   with:
-      #     push: false
-      #     tags: empirica-tmp
-      #     file: ./build/Dockerfile
-      #     build-args: |
-      #       BUILD_DATE=${{ env.BUILD_DATE }}
-      #       BUILD_ONLY_AMD64=true
-
-      #
-      # Step 1. Build the npm package and publish
-      #
       - name: "Build core package: install dependencies"
         if: github.ref == 'refs/heads/main'
         run: npm ci
@@ -67,33 +51,44 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Get @empirica/core package version
-        id: core-version
+        id: version
         working-directory: ./lib/@empirica/core
-        run: echo "EMPIRICA_CORE_VERSION=v$(node -e "console.log(require('./package.json').version)")" >> $GITHUB_ENV
+        run: echo "VERSION=v$(node -e "console.log(require('./package.json').version)")" >> $GITHUB_OUTPUT
+
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+      published: ${{ steps.changesets.outputs.published }}
+
+  go:
+    name: Build Go binary
+    runs-on: ubuntu-latest
+    needs: [npm]
+    if: github.repository == 'empiricaly/empirica' && github.event.pull_request.draft == false
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
 
       # We will use the result to determine if we need to create a release or not
       - name: "Build core package: Create release tag"
-        if: steps.changesets.outputs.published == 'true'
+        if: needs.npm.outputs.published == 'true'
         id: create_tag
         uses: jaywcjlove/create-tag-action@v1.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          version: ${{ env.EMPIRICA_CORE_VERSION }}
+          version: ${{ needs.npm.outputs.version }}
 
-      #
-      # Step 1. Build the Empirica cmd and run smoke test
-      #
       - name: Set GITHUB_ENV
         run: |
           echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
           echo "BUILD_SHA=$(git rev-list -1 HEAD)" >> $GITHUB_ENV
           echo "BUILD_SHA_SHORT=$(git rev-parse --short=7 ${{ github.sha }})" >> $GITHUB_ENV
+
       # If tag has been created, we assume we need to release a version
       - name: Check if tag has been created
         if: steps.create_tag.outputs.successful
         run: |
           echo "BUILD_BRANCH=`echo "main" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
-          echo "BUILD_TAG=${{ env.EMPIRICA_CORE_VERSION }}" >> $GITHUB_ENV
+          echo "BUILD_TAG=${{ needs.npm.outputs.version }}" >> $GITHUB_ENV
 
       # If tag hasn't been created, create a CalVer version
       - name: Use actual branch name.
@@ -114,7 +109,7 @@ jobs:
           echo BUILD_SHA=${{ env.BUILD_SHA_SHORT }}
           echo BUILD_BRANCH=${{ env.BUILD_BRANCH }}
           echo BUILD_TAG=${{ env.BUILD_TAG }}
-          echo EMPIRICA_CORE_VERSION=${{ env.EMPIRICA_CORE_VERSION }}
+          echo EMPIRICA_CORE_VERSION=${{ needs.npm.outputs.version }}
 
       - name: Cache Go build
         uses: actions/cache@v3
@@ -137,7 +132,7 @@ jobs:
         uses: redhat-actions/buildah-build@v2
         with:
           image: empirica-tmp
-          containerfiles: ./build/Dockerfile
+          containerfiles: ./build/Containerfile
           extra-args: |
             --volume /home/runner/out:/out
             --volume /home/runner/gocache:/opt/app-root/src/.cache/go-build
@@ -150,43 +145,6 @@ jobs:
 
       - name: Smoke test
         run: /home/runner/out/empirica-linux-amd64 --help
-
-      # #
-      # # Step 2. Run e2e tests
-      # #
-
-      # - name: "E2E tests: install empirica"
-      #   working-directory: ./e2e-tests
-      #   run: curl https://get.empirica.dev | sh
-      # - name: "E2E tests: install dependencies"
-      #   run: npm ci
-
-      # - name: "E2E tests: Get installed Playwright version"
-      #   id: playwright-version
-      #   run: echo "PLAYWRIGHT_VERSION=$(node -e "console.log(require('./package-lock.json').packages['node_modules/@playwright/test'].version)")" >> $GITHUB_ENV
-      # - name:  "E2E tests: Cache playwright binaries"
-      #   uses: actions/cache@v3
-      #   id: playwright-cache
-      #   with:
-      #     path: |
-      #       ~/.cache/ms-playwright
-      #     key: ${{ runner.os }}-playwright-${{ env.PLAYWRIGHT_VERSION }}
-      # - name: "E2E tests: install playwright browsers"
-      #   run: npm run install_browsers -w ./e2e-tests
-      #   if: steps.playwright-cache.outputs.cache-hit != 'true'
-      # - name: "E2E tests: Run"
-      #   run: npm run test:e2e -w ./e2e-tests
-
-      # - name: "E2E tests: upload tests results to artifacts"
-      #   uses: actions/upload-artifact@v2
-      #   if: always()
-      #   with:
-      #     name: playwright-test-results
-      #     path: ./e2e-tests/test-results/
-
-      #
-      # Step 4. Test and upload the CLI to S3 and build the Docker image
-      #
 
       - name: Upload binaries to S3
         uses: ./.github/actions/upload-empirica-cli
@@ -210,7 +168,7 @@ jobs:
         uses: redhat-actions/buildah-build@v2
         id: build-image
         with:
-          containerfiles: ./build/Dockerfile.empirica
+          containerfiles: ./build/Containerfile.empirica
           # context: /home/runner/out
           context: ../../../out
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
@@ -229,15 +187,11 @@ jobs:
           tags: ${{ steps.build-image.outputs.tags }}
           registry: ${{ env.REGISTRY }}
 
-    outputs:
-      published: ${{ steps.changesets.outputs.published }}
-      version: ${{ env.EMPIRICA_CORE_VERSION }}
-
   docs:
     name: Publish api docs
     runs-on: ubuntu-latest
-    needs: [release]
-    if: needs.release.outputs.published == 'true'
+    needs: [npm, go]
+    if: needs.npm.outputs.published == 'true'
     steps:
       - name: Checkout empirica repo
         uses: actions/checkout@v3
@@ -262,5 +216,5 @@ jobs:
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add .
-          git commit -m "update api docs ${{ needs.release.outputs.version }}"
+          git commit -m "update api docs ${{ needs.npm.outputs.version }}"
           git push

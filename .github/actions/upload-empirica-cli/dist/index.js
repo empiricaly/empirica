@@ -20617,26 +20617,8 @@ async function run(core, github, S3, fs) {
   const uploads = [];
   for (const params of uploadParams) {
     core.info(`New Upload: ${JSON.stringify(params, undefined, 2)}`);
-
     params.Body = fs.createReadStream(params.Body);
-
-    uploads.push(
-      new Promise((resolve, reject) => {
-        s3.upload(params, (err, data) => {
-          if (err) {
-            core.error(err);
-            reject(err);
-
-            return;
-          }
-
-          core.info(`uploaded - ${data.Key}`);
-          core.info(`located - ${data.Location}`);
-
-          resolve(data.Location);
-        });
-      })
-    );
+    uploads.push(upload(S3, s3Config, core, params));
   }
 
   if (!withVariants) {
@@ -20674,64 +20656,19 @@ async function run(core, github, S3, fs) {
 
   for (const params of variantUploads) {
     core.info(`New Upload: ${JSON.stringify(params, undefined, 2)}`);
-
     params.Body = fs.createReadStream(params.Body);
-
-    uploads.push(
-      new Promise((resolve, reject) => {
-        s3.upload(params, (err, data) => {
-          if (err) {
-            core.error(err);
-            reject(err);
-
-            return;
-          }
-
-          core.info(`uploaded - ${data.Key}`);
-          core.info(`located - ${data.Location}`);
-
-          resolve(data.Location);
-        });
-      })
-    );
+    uploads.push(upload(S3, s3Config, core, params));
   }
 
   await Promise.all(uploads);
-
-  // const variantUploads = createVariantCopies(
-  //   files,
-  //   bucket,
-  //   rootPath,
-  //   fileName,
-  //   attr
-  // );
-
-  // const variations = [];
-
-  // for (const params of variantUploads) {
-  // variations.push(
-  //   new Promise((resolve) => {
-  //     core.info(`New Copy: ${JSON.stringify(params, undefined, 2)}`);
-
-  //     s3.copyObject(params, (err, data) => {
-  //       if (err) core.error(err);
-  //       core.info(`copied - ${params.CopySource} to ${params.Key}`);
-  //       resolve(null);
-  //     });
-  //   })
-  // );
-  // }
-
-  // await Promise.all(variations);
 }
-
 
 function getBuildAttributes(gitRef, gitSHA, githubEvent, githubRun) {
   let tag = process.env.BUILD_TAG;
   let branch = process.env.BUILD_BRANCH || "unknown";
   let version = "unknown";
 
-  if (semver.valid(tag)) {
+  if (tag && semver.valid(tag)) {
     version = tag;
   }
 
@@ -20916,6 +20853,64 @@ function createVariantUploads(
 
   return variations;
 }
+
+function upload(S3, s3Config, core, params) {
+  retryOperation(
+    () => {
+      uploadObject(S3, s3Config, core, params);
+    },
+    1000,
+    5,
+    () => {
+      core.info(`retrying - ${params.Key}`);
+    }
+  )
+    .then(() => {
+      core.error(`uploaded - ${params.Key}`);
+    })
+    .catch((err) => {
+      core.error(`failed - ${params.Key}`);
+      core.error(err);
+    });
+}
+
+function uploadObject(S3, s3Config, core, params) {
+  const s3 = new S3(s3Config);
+  return new Promise((resolve, reject) => {
+    s3.upload(params, (err, data) => {
+      if (err) {
+        reject(err);
+
+        return;
+      }
+
+      core.info(`uploaded - ${data.Key}`);
+
+      resolve(data);
+    });
+  });
+}
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const retryOperation = (operation, delay, retries, retrying) =>
+  new Promise((resolve, reject) => {
+    return operation()
+      .then(resolve)
+      .catch((reason) => {
+        if (retries > 0) {
+          if (retrying) {
+            retrying();
+          }
+
+          return wait(delay)
+            .then(retryOperation.bind(null, operation, delay, retries - 1))
+            .then(resolve)
+            .catch(reject);
+        }
+        return reject(reason);
+      });
+  });
 
 module.exports = {
   run,
