@@ -309,7 +309,7 @@ function createVariantUploads(
 function upload(S3, s3Config, core, params) {
   retryOperation(
     () => {
-      uploadObject(S3, s3Config, core, params);
+      return uploadObject(S3, s3Config, core, params);
     },
     1000,
     5,
