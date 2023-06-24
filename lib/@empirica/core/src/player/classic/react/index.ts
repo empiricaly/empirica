@@ -51,3 +51,4 @@ export {
   useStage,
   useStageTimer,
 } from "./hooks";
+import "./slider.css";
