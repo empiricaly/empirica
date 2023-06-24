@@ -211,7 +211,8 @@ jobs:
         id: build-image
         with:
           containerfiles: ./build/Dockerfile.empirica
-          context: /home/runner/out
+          # context: /home/runner/out
+          context: ../../../out
           image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             latest

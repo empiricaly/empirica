@@ -9,10 +9,10 @@ on:
       - ".github/workflows/on_push_proxy.yaml"
       - ".github/actions/upload-empirica-cli/**"
 
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-      
+
 jobs:
   proxy:
     name: Build and upload proxy
@@ -53,6 +53,7 @@ jobs:
         with:
           bucket: empirica
           withVariants: false
+          path: ./out
           root: proxy
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
