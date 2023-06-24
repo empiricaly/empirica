@@ -1,5 +1,26 @@
 # @empirica/core
 
+## 1.3.7
+
+### Patch Changes
+
+- 900b70a: Use `@empirica/core@latest` for `empirica export` if the version is not found.
+  We used to `npm link` to the local version, assuming we were in development
+  mode. To use the locally linked version, use `export EMPIRICA_DEV=1`.
+- 900b70a: Improve server restart mechanics. The server will only try to restart
+  automatically 3 times, and then it will stop. This is to prevent the server from
+  getting stuck in a restart loop. It will only do this if the restart is
+  happening less than 5 seconds after the previous restart.
+
+  We have also improved the error management for new projects. See
+  `internal/templates/source/callbacks/package.json` and
+  `internal/templates/source/callbacks/src/index.js` if you want to replicate the
+  changes in your already created project.
+
+- 900b70a: Enforce a max duration for stages. It is set to 1 billion seconds (~31 years) in
+  order to safely stay under the max value of a Go time.Duration object. See #319
+  for details.
+
 ## 1.3.6
 
 ### Patch Changes
