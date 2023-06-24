@@ -360,7 +360,9 @@ const retryOperation = (operation, delay, retries, retrying) =>
           }
 
           return wait(delay)
-            .then(retryOperation.bind(null, operation, delay, retries - 1))
+            .then(() => {
+              return retryOperation(operation, delay, retries - 1, retrying);
+            })
             .then(resolve)
             .catch(reject);
         }
