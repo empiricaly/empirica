@@ -307,23 +307,27 @@ function createVariantUploads(
 }
 
 function upload(S3, s3Config, core, params) {
-  return retryOperation(
-    () => {
-      return uploadObject(S3, s3Config, core, params);
-    },
-    1000,
-    5,
-    () => {
-      core.info(`retrying - ${params.Key}`);
-    }
-  )
-    .then(() => {
-      core.error(`uploaded - ${params.Key}`);
-    })
-    .catch((err) => {
-      core.error(`failed - ${params.Key}`);
-      core.error(err);
-    });
+  return new Promise((resolve, reject) => {
+    retryOperation(
+      () => {
+        return uploadObject(S3, s3Config, core, params);
+      },
+      1000,
+      5,
+      () => {
+        core.info(`retrying - ${params.Key}`);
+      }
+    )
+      .then(() => {
+        core.error(`uploaded - ${params.Key}`);
+        resolve(params);
+      })
+      .catch((err) => {
+        core.error(`failed - ${params.Key}`);
+        core.error(err);
+        reject(err);
+      });
+  });
 }
 
 function uploadObject(S3, s3Config, core, params) {
@@ -360,6 +364,7 @@ const retryOperation = (operation, delay, retries, retrying) =>
             .then(resolve)
             .catch(reject);
         }
+
         return reject(reason);
       });
   });
