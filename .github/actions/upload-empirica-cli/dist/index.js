@@ -20569,6 +20569,14 @@ async function run(core, github, S3, fs) {
   const AWS_SECRET_ACCESS_KEY = core.getInput("AWS_SECRET_ACCESS_KEY", {
     required: true,
   });
+  let sourceDir = core.getInput("path", {
+    required: true,
+  });
+
+  if (!sourceDir.startsWith("/")) {
+    sourceDir = path.join(process.cwd(), sourceDir);
+  }
+
   const withVariantsStr = core.getInput("withVariants");
   const withVariants = withVariantsStr === "true";
 
@@ -20593,8 +20601,6 @@ async function run(core, github, S3, fs) {
     `${fileName}-darwin-arm64`,
     // `${fileName}-windows-amd64`,
   ];
-
-  const sourceDir = path.join(process.cwd(), "out");
 
   const uploadParams = getUploadParams(
     sourceDir,
