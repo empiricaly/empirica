@@ -37,7 +37,7 @@ jobs:
         with:
           push: false
           tags: empirica-tmp
-          file: ./build/Dockerfile.proxy
+          file: ./build/Containerfile.proxy
           build-args: |
             BUILD_DATE=${{ env.BUILD_DATE }}
             BUILD_SHA=${{ env.BUILD_SHA_SHORT }}

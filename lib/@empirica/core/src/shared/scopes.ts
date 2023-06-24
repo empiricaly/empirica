@@ -238,7 +238,7 @@ export class Scope<
     ao?: Partial<AttributeOptions>
   ) {
     if (typeof keyOrAttributes === "string") {
-      if (!value) {
+      if (value === undefined) {
         value = null;
       }
 
