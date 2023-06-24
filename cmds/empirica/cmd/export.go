@@ -51,7 +51,6 @@ func addExportCommand(parent *cobra.Command) error {
 			// (re-)create export dir. We always reexport for simplicity, so we
 			// don't have to manage versions... Should optimize later.
 			if _, err := os.Stat(exportScriptDir); err == nil {
-
 				if versServer == nil {
 					os.RemoveAll(exportScriptDir)
 				} else {
@@ -64,10 +63,16 @@ func addExportCommand(parent *cobra.Command) error {
 			}
 
 			var version string
-			if versServer == nil {
+			if versServer == nil && os.Getenv("EMPIRICA_DEV") != "" {
 				version = "link"
+
+				log.Warn().
+					Str("package", experiment.EmpiricaPackageName).
+					Str("EMPIRICA_DEV", "true").
+					Msg("export: using locally linked package")
 			} else {
 				version := versServer.Resolved
+
 				if version == "not found" {
 					version = "latest"
 				}
@@ -83,7 +88,6 @@ func addExportCommand(parent *cobra.Command) error {
 						return errors.Wrap(err, "server")
 					}
 				} else {
-
 					if err := experiment.RunCmdSilent(ctx, exportScriptDir, "empirica", "npm", "install", "--silent"); err != nil {
 						return errors.Wrap(err, "server")
 					}

@@ -45,7 +45,7 @@ RUN curl https://get.volta.sh | bash
 
 # Copy empirica from expect build location. This is the location used by the
 # Github Actions workflow.
-COPY ./out/empirica-linux-amd64 /usr/local/bin/empirica
+COPY empirica-linux-amd64 /usr/local/bin/empirica
 
 # Default executable is empirica. Using CMD so it's easily overridable. Using
 # exec mode to avoid problems with signals. Child images can override this

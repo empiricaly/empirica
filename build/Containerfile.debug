@@ -1,0 +1,21 @@
+# This is a debug image used to quickly test empirica installation in a clean
+# environment.
+#
+# Usage:
+# 
+#   docker build -t empirica-debug -f build/Containerfile.debug .
+#   docker run -it --rm -p 3000:3000 -p 8844:8844 empirica-debug
+#   
+#   # In in the container
+#   curl https://get.empirica.dev | sh
+#   # ...
+# 
+FROM ubuntu:jammy
+
+# Install curl rsync jq
+RUN apt-get update \
+  && apt-get install -y curl rsync jq \
+  && rm -rf /var/lib/apt/lists/* \
+  && apt-get clean \
+  && apt-get autoremove -y
+

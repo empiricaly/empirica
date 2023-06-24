@@ -58,6 +58,7 @@ function pnow() {
   if (mockNow !== null) {
     return mockNow;
   } else {
+    // TODO sync time
     return performance.now();
   }
 }

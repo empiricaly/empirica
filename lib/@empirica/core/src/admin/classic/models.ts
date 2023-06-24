@@ -13,7 +13,7 @@ const isString = z.string().parse;
 const isOptionalNumber = z.number().optional().parse;
 
 export const endedStatuses = ["ended", "terminated", "failed"];
-export type EndedStatuses = typeof endedStatuses[number];
+export type EndedStatuses = (typeof endedStatuses)[number];
 
 const reservedKeys = [
   "batchID",
@@ -719,6 +719,16 @@ export class PlayerStage extends GameOwned {
   }
 }
 
+// We don't want stages that are too short since we're getting close to the
+// limits of the precision of loose distributed time synchronization.
+const minStageDuration = 5;
+
+// This is about 31 years. I think that's enough. The main reason for this is to
+// prevent https://github.com/empiricaly/empirica/issues/319 where someone had
+// set the duration to 9999999999, which is >317 years, which is beyond what the
+// Go server time.Duration can handle, and it was exploding.
+const maxStageDuration = 1_000_000_000;
+
 export class Round extends GameOwned {
   get stages() {
     const stages = this.scopesByKindMatching<Stage>(
@@ -744,7 +754,12 @@ export class Round extends GameOwned {
     }
 
     const durAttr = attributes.find((a) => a.key === "duration");
-    const res = z.number().int().gte(5).safeParse(durAttr?.value);
+    const res = z
+      .number()
+      .int()
+      .gte(minStageDuration)
+      .lte(maxStageDuration)
+      .safeParse(durAttr?.value);
     if (!res.success) {
       throw new Error(`stage duration invalid: ${res.error}`);
     }
