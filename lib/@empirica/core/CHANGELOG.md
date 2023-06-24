@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.3.8
+
+### Patch Changes
+
+- c7bd8e6: Falsey values were casted to null on `.set()` since the addition of `.append()`.
+
 ## 1.3.7
 
 ### Patch Changes
