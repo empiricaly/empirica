@@ -1,5 +1,16 @@
 # @empirica/core
 
+## 1.4.0
+
+### Minor Changes
+
+- 1e40bf0: Minor Player UI Improvements:
+
+  - slider css in the empirica core package
+  - lighter header
+  - better score and timer font configuration
+  - remove chat in solo games
+
 ## 1.3.8
 
 ### Patch Changes
