@@ -10,7 +10,7 @@ on:
       - "**.md"
       - ".github/workflows/on_push_proxy.yaml"
 
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
@@ -126,7 +126,7 @@ jobs:
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-        
+
       - name: Create cache dirs
         run: |
           mkdir -p /home/runner/gocache
@@ -136,7 +136,7 @@ jobs:
       - name: Build Empirica server
         uses: redhat-actions/buildah-build@v2
         with:
-          tags: empirica-tmp
+          image: empirica-tmp
           containerfiles: ./build/Dockerfile
           extra-args: |
             --volume /home/runner/out:/out
@@ -218,7 +218,7 @@ jobs:
             sha-${{ env.BUILD_SHA_SHORT }}
             build-${{ env.BUILD_TAG }}
             branch-${{ env.BUILD_BRANCH }}
-            
+
       # We push, even if later tests do not pass, so that we can debug
       - name: Push to quay.io
         id: push-to-registry
