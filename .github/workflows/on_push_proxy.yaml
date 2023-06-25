@@ -21,9 +21,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v5.4
+
       - name: Set GITHUB_ENV
         run: |
           echo "BUILD_BRANCH=`echo "${{ steps.branch-name.outputs.current_branch }}" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
@@ -32,6 +34,7 @@ jobs:
           echo "BUILD_SHA=$(git rev-list -1 HEAD)" >> $GITHUB_ENV
           echo "BUILD_SHA_SHORT=$(git rev-parse --short=7 ${{ github.sha }})" >> $GITHUB_ENV
           echo "BUILD_NUM=${{ github.run_number }}" >> $GITHUB_ENV
+
       - name: Build
         uses: docker/build-push-action@v2
         with:
@@ -44,10 +47,12 @@ jobs:
             BUILD_NUM=${{ env.BUILD_NUM }}
             BUILD_BRANCH=${{ env.BUILD_BRANCH }}
             BUILD_TAG=${{ env.BUILD_TAG }}
+
       - name: Copy binaries from image
         run: |
           mkdir out
           docker run --rm empirica-tmp tar -cC /out . | tar -xC $(pwd)/out
+
       - name: Upload binaries to S3
         uses: ./.github/actions/upload-empirica-cli
         with:
