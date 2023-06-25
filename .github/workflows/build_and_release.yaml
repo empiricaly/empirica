@@ -210,7 +210,7 @@ jobs:
           cd empirica/lib/@empirica/core
           npm i
           ./docs.sh
-          mv docs ../../../../docsv2/api
+          cp -r docs ../../../../docsv2/api
           cp README.md ../../../../docsv2/api/
           cd ../../../../docsv2
           git config user.name github-actions
