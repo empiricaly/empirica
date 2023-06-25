@@ -8,7 +8,9 @@
 #   
 #   # In in the container
 #   curl https://get.empirica.dev | sh
-#   # ...
+#   empirica create app
+#   cd app
+#   empirica
 # 
 FROM ubuntu:jammy
 

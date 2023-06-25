@@ -129,7 +129,8 @@ func BinaryVersion() (*Build, error) {
 			Interface("build", build).
 			Msg("proxy: using build from env var")
 	} else {
-		build, _, err := GetProjectRelease()
+		var err error
+		build, _, err = GetProjectRelease()
 		if err != nil {
 			return nil, err
 		}
