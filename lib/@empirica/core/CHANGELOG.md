@@ -1,5 +1,12 @@
 # @empirica/core
 
+## 1.4.1
+
+### Patch Changes
+
+- 079267f: The game is now assigned to the player as soon as they are assigned to a game,
+  which means the game will be available in the introduction steps.
+
 ## 1.4.0
 
 ### Minor Changes
