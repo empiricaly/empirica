@@ -4,6 +4,10 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - "cmds/proxy/**"
+      - "**.md"
+      - ".github/workflows/on_push_proxy.yaml"
   pull_request:
     paths-ignore:
       - "cmds/proxy/**"

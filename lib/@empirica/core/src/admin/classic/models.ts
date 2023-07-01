@@ -221,7 +221,13 @@ export class Game extends BatchOwned {
   // Add player to running game
   private async addPlayer(player: Player) {
     if (!this.isRunning) {
-      // await this.addPlayerToGroup(player);
+      await this.addLinks([
+        {
+          link: true,
+          participantIDs: [player.participantID!],
+          nodeIDs: [this.id],
+        },
+      ]);
 
       return;
     }
@@ -296,7 +302,13 @@ export class Game extends BatchOwned {
   // Remove player from running game
   private async removePlayer(player: Player) {
     if (!this.isRunning) {
-      // await this.removePlayerFromGroup(player);
+      await this.addLinks([
+        {
+          link: false,
+          participantIDs: [player.participantID!],
+          nodeIDs: [this.id],
+        },
+      ]);
 
       return;
     }
