@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/empiricaly/empirica"
+	cloudcmd "github.com/empiricaly/empirica/cmds/empirica/cmd/cloud"
 	"github.com/empiricaly/empirica/internal/settings"
 	logger "github.com/empiricaly/empirica/internal/utils/log"
 	"github.com/pkg/errors"
@@ -133,6 +134,7 @@ func Execute() {
 	failedStart(addExportCommand(rootCmd))
 
 	failedStart(addUtilsCommands(rootCmd))
+	failedStart(cloudcmd.AddCloudCommand(rootCmd))
 
 	cobra.OnInitialize(initConfig(rootCmd, usingConfigFile))
 
