@@ -113,8 +113,7 @@ export function EmpiricaContext({
     );
   }
 
-  // To satisfy TS... We already know by this point we must have player...
-  if (!player) {
+  if (!player || !game) {
     return <LoadingComp />;
   }
 
@@ -168,7 +167,11 @@ function EmpiricaInnerContext({
   const stage = useStage();
   const round = useRound();
 
-  if (!game || (!Boolean(game.get("status")) && unmanagedGame)) {
+  if (!game) {
+    return <LoadingComp />;
+  }
+
+  if (!Boolean(game.get("status"))) {
     return <Lobby />;
   }
 
