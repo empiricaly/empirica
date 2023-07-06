@@ -168,7 +168,7 @@ function EmpiricaInnerContext({
   const stage = useStage();
   const round = useRound();
 
-  if (!game) {
+  if (!game || (!Boolean(game.get("status")) && unmanagedGame)) {
     return <Lobby />;
   }
 
