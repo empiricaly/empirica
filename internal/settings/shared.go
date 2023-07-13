@@ -25,6 +25,16 @@ func SharedDataDir() string {
 	return path.Join(xdg.DataHome, "empirica")
 }
 
+// ConfigHomeDir returns the path where Empirica config files should be stored.
+func ConfigHomeDir() string {
+	return path.Join(xdg.ConfigHome, "empirica")
+}
+
+// CacheHomeDir returns the path where Empirica cache files should be stored.
+func CacheHomeDir() string {
+	return path.Join(xdg.CacheHome, "empirica")
+}
+
 // VoltaDir is the directory for the Volta installation.
 func VoltaDir() string {
 	return path.Join(SharedDataDir(), "volta")

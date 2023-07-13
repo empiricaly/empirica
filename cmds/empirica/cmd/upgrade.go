@@ -39,8 +39,17 @@ func addUpgradeCommand(parent *cobra.Command) error {
 				global = true
 			}
 
+			if version == "latest" {
+				version, err = build.CurrentLatestRelease()
+				if err != nil {
+					return errors.Wrap(err, "get latest version")
+				}
+			}
+
 			if global {
-				return experiment.UpgradeCommandGlobal(ctx, version)
+				_, err := experiment.UpgradeCommandGlobal(ctx, version)
+
+				return errors.Wrap(err, "upgrade globally")
 			}
 
 			commandOnly, err := cmd.Flags().GetBool("commandOnly")
@@ -58,13 +67,18 @@ func addUpgradeCommand(parent *cobra.Command) error {
 			}
 
 			if !commandOnly {
-				if err := experiment.UpgradePackages(ctx, version, path.Join(basePath, conf.Player.Path), path.Join(basePath, conf.Callbacks.Path)); err != nil {
+				if err := experiment.UpgradePackages(
+					ctx,
+					version,
+					path.Join(basePath, conf.Player.Path),
+					path.Join(basePath, conf.Callbacks.Path),
+				); err != nil {
 					return errors.Wrap(err, "upgrade packages")
 				}
 			}
 
 			if !packagesOnly {
-				if err := experiment.UpgradeCommand(ctx, version, path.Join(basePath, conf.Player.Path)); err != nil {
+				if err := experiment.UpgradeCommand(ctx, version, basePath); err != nil {
 					return errors.Wrap(err, "upgrade command")
 				}
 			}

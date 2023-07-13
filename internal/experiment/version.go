@@ -5,6 +5,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/empiricaly/empirica/internal/build"
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	// "github.com/davecgh/go-spew/spew"
@@ -27,7 +28,7 @@ func GetSimpleComponent(full bool) []*SimpleComponent {
 	for _, name := range []string{"client", "server"} {
 		dir := "./" + name
 
-		v := GetVersion(dir, EmpiricaPackageName)
+		v := GetVersion(dir, build.EmpiricaPackageName)
 		if v != nil {
 			comps = append(comps, &SimpleComponent{
 				Name:     name,
@@ -56,8 +57,6 @@ func (v *PackageVersion) String() string {
 
 	return v.Configured + " -> " + v.Requested + " -> " + v.Resolved
 }
-
-const EmpiricaPackageName = "@empirica/core"
 
 func GetVersion(dir, pkg string) *PackageVersion {
 	pkgj, _, err := getPackageJSON(dir)

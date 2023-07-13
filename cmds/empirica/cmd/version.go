@@ -46,7 +46,7 @@ func addVersionCommand(parent *cobra.Command) error {
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		Args:          cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			outputJSON, err := cmd.Flags().GetBool("json")
 			if err != nil {
 				return errors.Wrap(err, "parse json flag")

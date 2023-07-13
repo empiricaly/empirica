@@ -6,7 +6,6 @@ import (
 	"github.com/empiricaly/empirica/internal/build"
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
-	"gopkg.in/yaml.v3"
 )
 
 func UpgradePackages(ctx context.Context, version, playerPath, callbacksPath string) error {
@@ -25,59 +24,45 @@ func UpgradePackages(ctx context.Context, version, playerPath, callbacksPath str
 	return nil
 }
 
-func UpgradeCommand(ctx context.Context, version, clientDir string) error {
-	if version == "latest" {
-		v := GetVersion(clientDir, EmpiricaPackageName)
-		if v == nil {
-			return errors.New("could not find @empirica/core package in package.json")
+func UpgradeCommand(ctx context.Context, version, baseDir string) error {
+	b, err := UpgradeCommandGlobal(ctx, version)
+	if err != nil {
+		return errors.Wrap(err, "upgrade globally")
+	}
+
+	pb, _, err := build.GetProjectRelease()
+	if err != nil {
+		return errors.Wrap(err, "get project release")
+	}
+
+	if pb.Version != b.Version {
+		if err := build.SaveReleaseFileVersion(baseDir, b); err != nil {
+			return errors.Wrap(err, "save release version")
 		}
 
-		version = "v" + v.Resolved
-	}
-
-	binPath, err := build.DownloadBinary(&build.Build{Version: version}, false)
-	if err != nil {
-		return errors.Wrap(err, "download binary")
-	}
-
-	vers, err := build.GetBinaryBuild(binPath)
-	if err != nil {
-		return errors.Wrap(err, "get bin build")
-	}
-
-	if err := build.SaveReleaseFileVersion(clientDir+"/..", vers); err != nil {
-		return errors.Wrap(err, "save release version")
+		log.Info().Msgf("empirica command upgraded to v%s", version)
+	} else {
+		log.Info().Msgf("empirica command already using latest version (v%s)", version)
 	}
 
 	return nil
 }
 
-func UpgradeCommandGlobal(ctx context.Context, version string) error {
-	bd := build.NewProdBuild()
-	if version != "" && version != "latest" {
-		bd = new(build.Build)
-		if err := yaml.Unmarshal([]byte(version), bd); err != nil {
-			return errors.Wrap(err, "read version arg")
-		}
-
-		if bd.Empty() {
-			return errors.New("version is empty")
-		}
-
-		log.Debug().
-			Interface("build", bd).
-			Msg("proxy: using build from env var")
-	}
-
-	binPath, err := build.DownloadBinary(bd, true)
+func UpgradeCommandGlobal(_ context.Context, version string) (*build.Build, error) {
+	b, err := build.Parse(version)
 	if err != nil {
-		return errors.Wrap(err, "download binary")
+		return nil, errors.Wrap(err, "parse version")
 	}
 
-	_, err = build.GetBinaryBuild(binPath)
-	if err != nil {
-		return errors.Wrap(err, "get bin build")
+	_, exists, _ := build.BinaryVersionExists(b)
+	if !exists {
+		_, err := build.DownloadBinary(b)
+		if err != nil {
+			return nil, errors.Wrap(err, "download binary")
+		}
+	} else {
+		log.Info().Msgf("empirica command v%s already installed", version)
 	}
 
-	return nil
+	return b, nil
 }

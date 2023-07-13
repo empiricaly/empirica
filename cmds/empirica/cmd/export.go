@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/empiricaly/empirica/internal/build"
 	"github.com/empiricaly/empirica/internal/experiment"
 	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/empiricaly/empirica/internal/templates"
@@ -46,7 +47,7 @@ func addExportCommand(parent *cobra.Command) error {
 			exportScriptDir := path.Join(localDir, "export")
 
 			serverDir := path.Join(wd, "server")
-			versServer := experiment.GetVersion(serverDir, experiment.EmpiricaPackageName)
+			versServer := experiment.GetVersion(serverDir, build.EmpiricaPackageName)
 
 			// (re-)create export dir. We always reexport for simplicity, so we
 			// don't have to manage versions... Should optimize later.
@@ -55,7 +56,7 @@ func addExportCommand(parent *cobra.Command) error {
 					os.RemoveAll(exportScriptDir)
 				} else {
 					// Check if version is identical to server/package.json
-					versExport := experiment.GetVersion(exportScriptDir, experiment.EmpiricaPackageName)
+					versExport := experiment.GetVersion(exportScriptDir, build.EmpiricaPackageName)
 					if versExport.Resolved != versServer.Resolved {
 						os.RemoveAll(exportScriptDir)
 					}
@@ -67,7 +68,7 @@ func addExportCommand(parent *cobra.Command) error {
 				version = "link"
 
 				log.Warn().
-					Str("package", experiment.EmpiricaPackageName).
+					Str("package", build.EmpiricaPackageName).
 					Str("EMPIRICA_DEV", "true").
 					Msg("export: using locally linked package")
 			} else {
