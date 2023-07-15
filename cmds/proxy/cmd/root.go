@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	UseDebugEnvVar    = "EMPIRICA_PROXY_USE_DEBUG"
 	LogsEnabledEnvVar = "EMPIRICA_PROXY_LOGS_ENABLED"
 	LogsNoTTYEnvVar   = "EMPIRICA_PROXY_LOGS_NO_TTY"
 	LogsJSONEnvVar    = "EMPIRICA_PROXY_LOGS_JSON"
@@ -23,6 +24,7 @@ func root(args []string) error {
 	ctx := initContext()
 
 	logenv := os.Getenv(LogsEnabledEnvVar)
+	useDebug := os.Getenv(UseDebugEnvVar)
 
 	logconf := &logger.Config{
 		Level:    "fatal",
@@ -41,9 +43,16 @@ func root(args []string) error {
 		log.Fatal().Err(err).Msg("empirica: failed to init logging")
 	}
 
-	path, err := build.LookupBinary()
-	if err != nil {
-		return errors.Wrap(err, "get binary")
+	var path string
+	var err error
+
+	if useDebug == "1" {
+		path = "emp"
+	} else {
+		path, err = build.LookupBinary()
+		if err != nil {
+			return errors.Wrap(err, "get binary")
+		}
 	}
 
 	log.Debug().
