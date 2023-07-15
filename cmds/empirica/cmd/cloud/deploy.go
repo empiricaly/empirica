@@ -101,6 +101,7 @@ func postBundle(projectID, bundle, apiEndpoint string) error {
 	}
 	defer file.Close()
 
+	fmt.Println("")
 	fmt.Println("Uploading bundle...")
 
 	reader, writer := io.Pipe()
