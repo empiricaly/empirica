@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "cmds/proxy/**"
+      - "internal/build/**"
       - ".github/workflows/on_push_proxy.yaml"
       - ".github/actions/upload-empirica-cli/**"
 

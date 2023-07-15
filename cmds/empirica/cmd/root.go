@@ -132,6 +132,7 @@ func Execute() {
 	failedStart(addVersionCommand(rootCmd))
 	failedStart(addTajribaCommand(rootCmd))
 	failedStart(addExportCommand(rootCmd))
+	failedStart(addPathsCommand(rootCmd))
 
 	failedStart(addUtilsCommands(rootCmd))
 	failedStart(cloudcmd.AddCloudCommand(rootCmd))

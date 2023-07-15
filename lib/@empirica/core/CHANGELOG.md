@@ -1,5 +1,12 @@
 # @empirica/core
 
+## 1.4.2
+
+### Patch Changes
+
+- 41f154a: The intro steps should wait for the game to be loaded before rendering.
+- 41f154a: Show the lobby if the game is available but the game is not started yet.
+
 ## 1.4.1
 
 ### Patch Changes
