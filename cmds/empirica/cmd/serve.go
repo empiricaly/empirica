@@ -10,8 +10,8 @@ import (
 
 func addServeCommand(parent *cobra.Command) error {
 	cmd := &cobra.Command{
-		Use:   "serve",
-		Short: "Serve bundle",
+		Use:   "serve [bundle]",
+		Short: "Serve bundle in production mode",
 		// 	Long: ``,
 		SilenceUsage:  true,
 		SilenceErrors: true,
