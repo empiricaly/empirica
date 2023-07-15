@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.4.4
+
+### Patch Changes
+
+- 1fff425: This release introduces a very early closed preview of empirica deployments. This is very different from the final version, it is not meant for general use, and comes with no guarantee of working whatsoever.
+
 ## 1.4.3
 
 ### Patch Changes
