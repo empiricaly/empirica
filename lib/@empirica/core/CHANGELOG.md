@@ -1,5 +1,14 @@
 # @empirica/core
 
+## 1.4.3
+
+### Patch Changes
+
+- 52f3097: Fix `empirica upgrade` and overall simplify and fix binary downloading and
+  caching.
+
+  The caching directory for binaries changed to `$XDG_CACHE_HOME/empirica`.
+
 ## 1.4.2
 
 ### Patch Changes
