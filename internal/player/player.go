@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"path"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/empiricaly/empirica/internal/term"
@@ -38,9 +37,6 @@ func Build(ctx context.Context, config *Config) error {
 	}
 
 	c := exec.CommandContext(ctx, parts[0], args...)
-	c.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig: syscall.SIGKILL,
-	}
 
 	c.Stderr = os.Stderr
 	c.Stdout = os.Stdout
@@ -168,9 +164,6 @@ func (p *Player) runDevCmd(ctx context.Context) (*exec.Cmd, error) {
 	log.Trace().Str("cmd", strings.Join(parts, " ")).Msg("player: run player dev command")
 
 	c := exec.CommandContext(ctx, parts[0], args...)
-	c.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig: syscall.SIGKILL,
-	}
 
 	c.Stderr = os.Stderr
 	c.Stdout = p.stdout

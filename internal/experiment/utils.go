@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/briandowns/spinner"
@@ -36,9 +35,6 @@ func RunCmdSilent(ctx context.Context, dir, command string, args ...string) erro
 
 func runCmdSilence(ctx context.Context, dir string, silent bool, command string, args ...string) error {
 	c := exec.CommandContext(ctx, command, args...)
-	c.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig: syscall.SIGKILL,
-	}
 
 	if !silent {
 		c.Stderr = os.Stderr
