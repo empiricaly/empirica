@@ -60,6 +60,9 @@ func root(args []string) error {
 		Msg("proxy: chosen binary path")
 
 	c := exec.CommandContext(ctx, path, args...)
+	c.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig: syscall.SIGKILL,
+	}
 
 	c.Stderr = os.Stderr
 	c.Stdout = os.Stdout

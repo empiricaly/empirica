@@ -50,6 +50,9 @@ func Build(ctx context.Context, config *Config) error {
 	}
 
 	c := exec.CommandContext(ctx, parts[0], args...)
+	c.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig: syscall.SIGKILL,
+	}
 
 	c.Stderr = os.Stderr
 	c.Stdout = os.Stdout
@@ -354,7 +357,9 @@ func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 	}
 
 	c := exec.CommandContext(ctx, parts[0], remainder...) // #nosec G204
-	c.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pgid: 0}
+	c.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig: syscall.SIGKILL,
+	}
 
 	c.Stderr = cb.stderr
 	c.Stdout = cb.stdout
