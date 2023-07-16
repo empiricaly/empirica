@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.4.6
+
+### Patch Changes
+
+- 88934e6: Fix EmpiricaMenu SVG React warnings.
+
 ## 1.4.5
 
 ### Patch Changes
