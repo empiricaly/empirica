@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path"
 	"strings"
+	"syscall"
 
 	"github.com/adrg/xdg"
 	"github.com/pkg/errors"
@@ -84,6 +85,9 @@ func InstallVolta(ctx context.Context) error {
 
 func runCmd(ctx context.Context, dir, command string, args ...string) error {
 	c := exec.CommandContext(ctx, command, args...)
+	c.SysProcAttr = &syscall.SysProcAttr{
+		Pdeathsig: syscall.SIGKILL,
+	}
 
 	c.Stderr = os.Stderr
 	c.Stdout = os.Stdout
