@@ -1,5 +1,13 @@
 # @empirica/core
 
+## 1.4.5
+
+### Patch Changes
+
+- 079092b: Make admin buttons look right again.
+- 079092b: `EmpiricaMenu` component improvements. Add `top` and `bottom` positions. Improve
+  styling and readability. Use Lucide icons.
+
 ## 1.4.4
 
 ### Patch Changes
