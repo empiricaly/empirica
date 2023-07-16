@@ -50,10 +50,6 @@ func Build(ctx context.Context, config *Config) error {
 	}
 
 	c := exec.CommandContext(ctx, parts[0], args...)
-	c.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid:   true,
-		Pdeathsig: syscall.SIGKILL,
-	}
 
 	c.Stderr = os.Stderr
 	c.Stdout = os.Stdout
@@ -120,14 +116,6 @@ const (
 )
 
 func (cb *Callbacks) sigint() {
-	if cb.c == nil {
-		log.Debug().Msg("callback: no process to send signal to")
-
-		return
-	}
-
-	log.Debug().Msg("callback: cancelling process")
-
 	pgid, err := syscall.Getpgid(cb.c.Process.Pid)
 	if err != nil {
 		log.Debug().Err(err).Msg("callback: failed to send signal")
@@ -139,9 +127,9 @@ func (cb *Callbacks) sigint() {
 		log.Debug().Err(err).Msg("callback: failed to send signal")
 	}
 
-	if err := cb.c.Process.Signal(os.Interrupt); err != nil {
-		log.Debug().Err(err).Msg("callback: failed to send signal")
-	}
+	// if err := cb.c.Process.Signal(os.Interrupt); err != nil {
+	// 	log.Debug().Err(err).Msg("callback: failed to send signal")
+	// }
 
 	cb.c = nil
 }
@@ -283,9 +271,7 @@ func (cb *Callbacks) run(ctx context.Context) {
 
 		select {
 		case <-ctx.Done():
-			cb.Lock()
 			cb.sigint()
-			cb.Unlock()
 
 			return
 		case err = <-waiting:
@@ -296,9 +282,7 @@ func (cb *Callbacks) run(ctx context.Context) {
 
 			var exitError *exec.ExitError
 			if errors.As(err, &exitError) {
-				cb.Lock()
 				cb.c = nil
-				cb.Unlock()
 
 				if hardExits, shouldExit = checkHardExit(lastHardExit, hardExits, err); shouldExit {
 					return
@@ -370,10 +354,7 @@ func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 	}
 
 	c := exec.CommandContext(ctx, parts[0], remainder...) // #nosec G204
-	c.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid:   true,
-		Pdeathsig: syscall.SIGKILL,
-	}
+	c.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pgid: 0}
 
 	c.Stderr = cb.stderr
 	c.Stdout = cb.stdout

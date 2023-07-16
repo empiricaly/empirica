@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"path"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/empiricaly/empirica/internal/build"
@@ -146,9 +145,6 @@ func addExportCommand(parent *cobra.Command) error {
 				Msg("exporting data")
 
 			c := exec.CommandContext(ctx, "empirica", exportArgs...)
-			c.SysProcAttr = &syscall.SysProcAttr{
-				Pdeathsig: syscall.SIGKILL,
-			}
 
 			c.Stderr = os.Stderr
 			c.Stdout = os.Stdout

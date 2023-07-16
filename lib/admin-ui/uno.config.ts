@@ -1,4 +1,3 @@
-import { presetForms } from "@julr/unocss-preset-forms";
 import {
   defineConfig,
   presetAttributify,
@@ -9,18 +8,9 @@ import {
   transformerDirectives,
   transformerVariantGroup,
 } from "unocss";
+import { presetForms } from "@julr/unocss-preset-forms";
 
 export default defineConfig({
-  safelist: [
-    ...["blue", "green", "yellow", "grey"]
-      .map((color) => [
-        `border-${color}-600`,
-        `text-${color}-600`,
-        `bg-${color}-600`,
-        `hover:bg-${color}-700`,
-      ])
-      .flat(),
-  ],
   theme: {
     colors: {
       empirica: {
@@ -40,14 +30,14 @@ export default defineConfig({
   presets: [
     presetUno(),
     presetForms(),
-    // presetAttributify(),
-    // presetIcons(),
+    presetAttributify(),
+    presetIcons(),
     presetTypography(),
-    // presetWebFonts({
-    //   fonts: {
-    //     // ...
-    //   },
-    // }),
+    presetWebFonts({
+      fonts: {
+        // ...
+      },
+    }),
   ],
   transformers: [transformerDirectives(), transformerVariantGroup()],
 });
