@@ -8,7 +8,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/empiricaly/empirica"
 	"github.com/empiricaly/empirica/internal/server"
@@ -77,9 +76,6 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMo
 			Msg("serve: start server command")
 
 		c := exec.CommandContext(ctx, cmd, args...)
-		c.SysProcAttr = &syscall.SysProcAttr{
-			Pdeathsig: syscall.SIGKILL,
-		}
 
 		p := path.Join(dir, "callbacks")
 
