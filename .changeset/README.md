@@ -15,9 +15,28 @@ changesets.
 "@empirica/core": minor
 ---
 ```
-  
+
 ```md
 ---
 "@empirica/core": patch
 ---
 ```
+
+# Prereleases
+
+1. Every time we want to make a pre-release, we create a names prerelease/...
+   branch with the feature we want to release (for example,
+   prerelease/engine-rewrite)
+1. In the prerelease branch, we enter pre mode. Normally we want to set the npm
+   tag to be next (npm run changeset pre enter next), but if we want to have
+   concurrent tags, we can have them (npm run changeset pre enter other_tag)
+1. We PR into the prerelease branch, and we merge to the prerelease branch.
+1. Like with main, every time we merge to the prerelease branch, a Version
+   Package PR will be created, that we can merge back a prerelease into the
+   prerelease branch to publish the prerelease.
+1. When the release branch is finished and ready to go into main, we exit pre
+   mode (yarn changeset pre exit) and we create a PR from the release branch
+   into main.
+1. If we forget to exit pre mode, the "Check pre-release" workflow will catch it
+   and generate an error. We should be aware of this error, as we don't
+   currently have anything blocking us from merging a prerelease into main.
