@@ -1,5 +1,14 @@
 # @empirica/core
 
+## 1.4.7-next.0
+
+### Patch Changes
+
+- 266f2d4: This fixes a bug where the stage starting callbacks could go out of order and
+  cause the game to lock up. This would only manifest itself when new stages were
+  added in the previous stage's `onEnd` callback. This fix improves event ordering
+  overall.
+
 ## 1.4.6
 
 ### Patch Changes
