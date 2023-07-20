@@ -5,5 +5,7 @@
     "empirica-e2e-tests": "1.0.0",
     "@empirica/core": "1.4.6"
   },
-  "changesets": []
+  "changesets": [
+    "ensure-stage-start"
+  ]
 }
