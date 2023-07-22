@@ -1,5 +1,13 @@
 # @empirica/core
 
+## 1.5.0-next.1
+
+### Minor Changes
+
+- 1cced1a: Ignore missing game in if `unamangedGame` flag set on `<EmpiricaContext>`. It is
+  up to the developer to handle the game not being present. This could potentially
+  be a breaking change.
+
 ## 1.4.7-next.0
 
 ### Patch Changes
