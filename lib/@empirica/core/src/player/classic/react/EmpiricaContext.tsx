@@ -27,14 +27,14 @@ export interface EmpiricaContextProps {
   loading?: React.ElementType;
   connecting?: React.ElementType;
 
-  // An unmanaged game will render the children as soon as the Game is available
-  // whether the round or stage are available or not. It is up to the developer
-  // to handle the presence of the round and stage.
-  // Everything else is still managed: the consent, the player, the intro
-  // steps, the lobby, and the game.
+  // An unmanaged game will render the children whether the game, round or stage
+  // are available or not. It is up to the developer to handle the presence of
+  // the game, round and stage. Other parts are still managed: the consent, the
+  // player creation, the intro and exit steps.
   // This is not recommended for most games.
-  // This is useful for games that want to persist render state between rounds
-  // or stages. E.g. keep a video chat up between stages.
+  // This is useful for experiments that implement custom assignment and games
+  // that want to persist render state between rounds or stages. E.g.: keep a
+  // video chat up between stages.
   unmanagedGame: boolean;
 
   // Unmanaged assignement will render the children as soon as the player is
@@ -113,7 +113,7 @@ export function EmpiricaContext({
     );
   }
 
-  if (!player || !game) {
+  if (!player || (!unmanagedGame && !game)) {
     return <LoadingComp />;
   }
 
@@ -168,7 +168,11 @@ function EmpiricaInnerContext({
   const round = useRound();
 
   if (!game) {
-    return <LoadingComp />;
+    if (unmanagedGame) {
+      return <>{children}</>;
+    } else {
+      return <LoadingComp />;
+    }
   }
 
   if (!Boolean(game.get("status"))) {
