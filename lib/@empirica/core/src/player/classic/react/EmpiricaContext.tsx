@@ -128,6 +128,10 @@ export function EmpiricaContext({
   }
 
   if (game && game.hasEnded) {
+    if (!player.get("ended")) {
+      return <LoadingComp />;
+    }
+
     return <Exit exitSteps={exitSteps} finished={finished} />;
   }
 
@@ -163,6 +167,7 @@ function EmpiricaInnerContext({
   loading: LoadingComp,
   unmanagedGame = false,
 }: EmpiricaInnerContextProps) {
+  const player = usePlayer();
   const game = useGame();
   const stage = useStage();
   const round = useRound();
@@ -180,6 +185,10 @@ function EmpiricaInnerContext({
   }
 
   if (game.hasEnded) {
+    if (!player?.get("ended")) {
+      return <LoadingComp />;
+    }
+
     return <Exit exitSteps={exitSteps} finished={finished} />;
   }
 
