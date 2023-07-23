@@ -6,6 +6,7 @@
     "@empirica/core": "1.4.6"
   },
   "changesets": [
+    "absolute-attr-event-ordering",
     "ensure-stage-start",
     "ignore-missing-game-unamanged-game"
   ]

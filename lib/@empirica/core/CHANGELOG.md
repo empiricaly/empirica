@@ -1,5 +1,12 @@
 # @empirica/core
 
+## 1.5.0-next.2
+
+### Patch Changes
+
+- 30e95b4: This ensures all attribute events are absolutely ordered. It also fixes an issue
+  where uniq events were not being recorded correctly.
+
 ## 1.5.0-next.1
 
 ### Minor Changes
