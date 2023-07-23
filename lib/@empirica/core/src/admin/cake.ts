@@ -265,6 +265,8 @@ export class Cake<
     }
   }
 
+  prevAttr: PromiseHandle | undefined = promiseHandle();
+
   attributeListeners = new Map<
     string,
     AttributeEventListener<EvtCtxCallback<Context, Kinds>>[]
@@ -278,8 +280,6 @@ export class Cake<
   ) {
     let handle: PromiseHandle | undefined = promiseHandle();
 
-    let prev: PromiseHandle | undefined = promiseHandle();
-
     const unsub = this.attributeSubscription(kind, key).subscribe(
       async ({ attribute, done }) => {
         if (this.stopped) {
@@ -292,12 +292,12 @@ export class Cake<
 
         if (attribute) {
           let next = promiseHandle();
-          if (prev) {
-            const p = prev;
-            prev = next;
+          if (this.prevAttr) {
+            const p = this.prevAttr;
+            this.prevAttr = next;
             await p;
           } else {
-            prev = next;
+            this.prevAttr = next;
           }
 
           const k = <string>kind + "-" + key;
@@ -305,6 +305,7 @@ export class Cake<
           const props: { [key: string]: any } = {
             [key]: attribute.value,
             attribute,
+            attrId: attribute.id,
           };
 
           if (attribute.nodeID) {

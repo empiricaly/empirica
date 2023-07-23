@@ -81,13 +81,16 @@ function unique<
   return async (ctx: EventContext<Context, Kinds>, props: any) => {
     const attr = props.attribute as Attribute;
     const scope = props[kind] as Scope<Context, Kinds>;
-    if (!attr.id || scope.get(`ran-${PlacementString(placement)}-${attr.id}`)) {
+    if (
+      !attr.id ||
+      scope.get(`ran-${PlacementString(placement)}-${props.attrId}`)
+    ) {
       return;
     }
 
     await callback(ctx, props);
 
-    scope.set(`ran-${PlacementString(placement)}-${attr.id}`, true);
+    scope.set(`ran-${PlacementString(placement)}-${props.attrId}`, true);
   };
 }
 
