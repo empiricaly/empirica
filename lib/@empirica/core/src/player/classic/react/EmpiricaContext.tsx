@@ -21,8 +21,8 @@ export interface EmpiricaContextProps {
   consent?: React.ElementType<ConsentProps>;
   playerCreate?: React.ElementType<PlayerCreateProps>;
   lobby?: React.ElementType;
-  introSteps: React.ElementType[] | StepsFunc;
-  exitSteps: React.ElementType[] | StepsFunc;
+  introSteps?: React.ElementType[] | StepsFunc;
+  exitSteps?: React.ElementType[] | StepsFunc;
   finished?: React.ElementType;
   loading?: React.ElementType;
   connecting?: React.ElementType;
@@ -35,24 +35,24 @@ export interface EmpiricaContextProps {
   // This is useful for experiments that implement custom assignment and games
   // that want to persist render state between rounds or stages. E.g.: keep a
   // video chat up between stages.
-  unmanagedGame: boolean;
+  unmanagedGame?: boolean;
 
   // Unmanaged assignement will render the children as soon as the player is
   // connected. It is up to the developer to handle everything after the player
   // is connected: intro steps, lobby, game, round, stage and exit steps.
-  unmanagedAssignment: boolean;
+  unmanagedAssignment?: boolean;
 
   // Disable the consent screen. It is up to the developer to handle the consent
   // screen.
-  disableConsent: boolean;
+  disableConsent?: boolean;
 
   // Disable the NoGames screen. It is up to the developer to handle the NoGames
   // condition.
-  disableNoGames: boolean;
+  disableNoGames?: boolean;
 
   // Disable capturing URL params (?what=hello&some=thing) onto the Player under
   // the `urlParams` key.
-  disableURLParamsCapture: boolean;
+  disableURLParamsCapture?: boolean;
 }
 
 export function EmpiricaContext({
