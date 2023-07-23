@@ -8,6 +8,7 @@
   "changesets": [
     "absolute-attr-event-ordering",
     "ensure-stage-start",
-    "ignore-missing-game-unamanged-game"
+    "ignore-missing-game-unamanged-game",
+    "player-ended-present"
   ]
 }
