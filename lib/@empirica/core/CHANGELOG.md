@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.5.0-next.3
+
+### Patch Changes
+
+- 776f11b: Require `player.get("ended")` to be present in order to show exit steps.
+
 ## 1.5.0-next.2
 
 ### Patch Changes
