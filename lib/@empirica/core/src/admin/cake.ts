@@ -15,7 +15,7 @@ import {
 } from "./events";
 import { subscribeAsync } from "./observables";
 import { Connection, ConnectionMsg } from "./participants";
-import { promiseHandle, PromiseHandle } from "./promises";
+import { PromiseHandle, promiseHandle } from "./promises";
 import { Scope, ScopeMsg } from "./scopes";
 import { Transition } from "./transitions";
 
@@ -265,6 +265,8 @@ export class Cake<
     }
   }
 
+  prevAttr: PromiseHandle | undefined = promiseHandle();
+
   attributeListeners = new Map<
     string,
     AttributeEventListener<EvtCtxCallback<Context, Kinds>>[]
@@ -277,6 +279,7 @@ export class Cake<
     until?: Attribute
   ) {
     let handle: PromiseHandle | undefined = promiseHandle();
+
     const unsub = this.attributeSubscription(kind, key).subscribe(
       async ({ attribute, done }) => {
         if (this.stopped) {
@@ -288,11 +291,21 @@ export class Cake<
         }
 
         if (attribute) {
+          let next = promiseHandle();
+          if (this.prevAttr) {
+            const p = this.prevAttr;
+            this.prevAttr = next;
+            await p;
+          } else {
+            this.prevAttr = next;
+          }
+
           const k = <string>kind + "-" + key;
 
           const props: { [key: string]: any } = {
             [key]: attribute.value,
             attribute,
+            attrId: attribute.id,
           };
 
           if (attribute.nodeID) {

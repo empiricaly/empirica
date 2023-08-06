@@ -42,11 +42,11 @@ jobs:
         uses: tj-actions/branch-names@v5.4
 
       - name: "Build core package: install dependencies"
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/prerelease/')
         run: npm ci
 
       - name: "Build packages: Create Release Pull Request or Publish to npm"
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/prerelease/')
         id: changesets
         uses: changesets/action@v1
         with:

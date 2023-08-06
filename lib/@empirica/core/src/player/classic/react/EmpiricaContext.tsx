@@ -21,38 +21,38 @@ export interface EmpiricaContextProps {
   consent?: React.ElementType<ConsentProps>;
   playerCreate?: React.ElementType<PlayerCreateProps>;
   lobby?: React.ElementType;
-  introSteps: React.ElementType[] | StepsFunc;
-  exitSteps: React.ElementType[] | StepsFunc;
+  introSteps?: React.ElementType[] | StepsFunc;
+  exitSteps?: React.ElementType[] | StepsFunc;
   finished?: React.ElementType;
   loading?: React.ElementType;
   connecting?: React.ElementType;
 
-  // An unmanaged game will render the children as soon as the Game is available
-  // whether the round or stage are available or not. It is up to the developer
-  // to handle the presence of the round and stage.
-  // Everything else is still managed: the consent, the player, the intro
-  // steps, the lobby, and the game.
+  // An unmanaged game will render the children whether the game, round or stage
+  // are available or not. It is up to the developer to handle the presence of
+  // the game, round and stage. Other parts are still managed: the consent, the
+  // player creation, the intro and exit steps.
   // This is not recommended for most games.
-  // This is useful for games that want to persist render state between rounds
-  // or stages. E.g. keep a video chat up between stages.
-  unmanagedGame: boolean;
+  // This is useful for experiments that implement custom assignment and games
+  // that want to persist render state between rounds or stages. E.g.: keep a
+  // video chat up between stages.
+  unmanagedGame?: boolean;
 
   // Unmanaged assignement will render the children as soon as the player is
   // connected. It is up to the developer to handle everything after the player
   // is connected: intro steps, lobby, game, round, stage and exit steps.
-  unmanagedAssignment: boolean;
+  unmanagedAssignment?: boolean;
 
   // Disable the consent screen. It is up to the developer to handle the consent
   // screen.
-  disableConsent: boolean;
+  disableConsent?: boolean;
 
   // Disable the NoGames screen. It is up to the developer to handle the NoGames
   // condition.
-  disableNoGames: boolean;
+  disableNoGames?: boolean;
 
   // Disable capturing URL params (?what=hello&some=thing) onto the Player under
   // the `urlParams` key.
-  disableURLParamsCapture: boolean;
+  disableURLParamsCapture?: boolean;
 }
 
 export function EmpiricaContext({
@@ -113,7 +113,7 @@ export function EmpiricaContext({
     );
   }
 
-  if (!player || !game) {
+  if (!player || (!unmanagedGame && !game)) {
     return <LoadingComp />;
   }
 
@@ -128,6 +128,10 @@ export function EmpiricaContext({
   }
 
   if (game && game.hasEnded) {
+    if (!player.get("ended")) {
+      return <LoadingComp />;
+    }
+
     return <Exit exitSteps={exitSteps} finished={finished} />;
   }
 
@@ -163,12 +167,17 @@ function EmpiricaInnerContext({
   loading: LoadingComp,
   unmanagedGame = false,
 }: EmpiricaInnerContextProps) {
+  const player = usePlayer();
   const game = useGame();
   const stage = useStage();
   const round = useRound();
 
   if (!game) {
-    return <LoadingComp />;
+    if (unmanagedGame) {
+      return <>{children}</>;
+    } else {
+      return <LoadingComp />;
+    }
   }
 
   if (!Boolean(game.get("status"))) {
@@ -176,6 +185,10 @@ function EmpiricaInnerContext({
   }
 
   if (game.hasEnded) {
+    if (!player?.get("ended")) {
+      return <LoadingComp />;
+    }
+
     return <Exit exitSteps={exitSteps} finished={finished} />;
   }
 

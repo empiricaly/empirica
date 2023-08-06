@@ -1,0 +1,14 @@
+{
+  "mode": "exit",
+  "tag": "next",
+  "initialVersions": {
+    "empirica-e2e-tests": "1.0.0",
+    "@empirica/core": "1.4.6"
+  },
+  "changesets": [
+    "absolute-attr-event-ordering",
+    "ensure-stage-start",
+    "ignore-missing-game-unamanged-game",
+    "player-ended-present"
+  ]
+}

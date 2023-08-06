@@ -12,12 +12,12 @@ import {
   Batch,
   ClassicKinds,
   Context,
-  evt,
   Game,
   Player,
   PlayerStage,
   Round,
   Stage,
+  evt,
 } from "./models";
 import { batchConfigSchema, treatmentSchema } from "./schemas";
 
@@ -557,11 +557,17 @@ export function Classic({
       async (_, { stage, start }: BeforeStageStart) => {
         if (!start) return;
 
+        if (stage.get("initialized")) {
+          return;
+        }
+
         const game = isGame(stage.currentGame);
 
         for (const player of game.players) {
           await stage.createPlayerStage(player);
         }
+
+        stage.set("initialized", true, { private: true, immutable: true });
       }
     );
 
@@ -576,16 +582,10 @@ export function Classic({
       (ctx, { stage, start }: AfterStageStart) => {
         if (!start) return;
 
-        // NOTE: this is a hack to get the stage to start only once
-        // TODO ensure that this is only called once.
-        // Currently, it is can  be called multiple times wit the start == true
-        // value, despite the unique.before hook above. This is because the
-        // unique.before hook is not called when the attribute is set to true
-        // but meanwhile the value is becomes true.
-        if (stage.get("started")) {
+        if (stage.get("started") || !stage.get("initialized")) {
           return;
         }
-        stage.set("started", true);
+        stage.set("started", true, { private: true, immutable: true });
 
         const game = isGame(stage.currentGame);
 
