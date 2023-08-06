@@ -1,5 +1,24 @@
 # @empirica/core
 
+## 1.5.0
+
+### Minor Changes
+
+- 68756ba: Ignore missing game in if `unamangedGame` flag set on `<EmpiricaContext>`. It is
+  up to the developer to handle the game not being present. This could potentially
+  be a breaking change.
+
+### Patch Changes
+
+- 68756ba: This ensures all attribute events are absolutely ordered. It also fixes an issue
+  where uniq events were not being recorded correctly.
+- 68756ba: This fixes a bug where the stage starting callbacks could go out of order and
+  cause the game to lock up. This would only manifest itself when new stages were
+  added in the previous stage's `onEnd` callback. This fix improves event ordering
+  overall.
+- 68756ba: Require `player.get("ended")` to be present in order to show exit steps.
+- 8390a56: Upgrade tajriba to v1.2.1.
+
 ## 1.5.0-next.3
 
 ### Patch Changes
