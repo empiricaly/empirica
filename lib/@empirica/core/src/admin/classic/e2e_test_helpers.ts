@@ -21,12 +21,12 @@ import { Classic } from "./classic";
 import { ClassicLoader } from "./loader";
 import {
   ClassicKinds,
-  classicKinds,
   Context,
   EndedStatuses,
   Game,
+  classicKinds,
 } from "./models";
-import { treatmentSchema } from "./schemas";
+import { factorsSchema } from "./schemas";
 
 const VERBOSE = false;
 const INVERTED = false;
@@ -604,11 +604,11 @@ export async function makePlayer(
   return plyr;
 }
 
-type TreatmentSchema = z.infer<typeof treatmentSchema>;
+type FactorsSchema = z.infer<typeof factorsSchema>;
 export function completeBatchConfig(
   playerCount: number,
   games: number = 1,
-  treatments: TreatmentSchema[] = [{}]
+  treatments: FactorsSchema[] = [{}]
 ) {
   return {
     kind: "complete",
