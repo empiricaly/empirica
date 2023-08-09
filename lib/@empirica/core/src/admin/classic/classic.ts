@@ -19,7 +19,7 @@ import {
   Stage,
   evt,
 } from "./models";
-import { batchConfigSchema, treatmentSchema } from "./schemas";
+import { batchConfigSchema, factorsSchema } from "./schemas";
 
 // const isBatch = z.instanceof(Batch).parse;
 const isGame = z.instanceof(Game).parse;
@@ -252,11 +252,16 @@ export function Classic({
       switch (config.kind) {
         case "simple":
           for (let i = 0; i < config.config.count; i++) {
-            const treatment = pickRandom(config.config.treatments).factors;
+            const treatment = pickRandom(config.config.treatments);
             batch.addGame([
               {
                 key: "treatment",
-                value: treatment,
+                value: treatment.factors,
+                immutable: true,
+              },
+              {
+                key: "treatmentName",
+                value: treatment.name || "",
                 immutable: true,
               },
             ]);
@@ -270,6 +275,11 @@ export function Classic({
                 {
                   key: "treatment",
                   value: t.treatment.factors,
+                  immutable: true,
+                },
+                {
+                  key: "treatmentName",
+                  value: t.treatment.name || "",
                   immutable: true,
                 },
               ]);
@@ -445,7 +455,7 @@ export function Classic({
       }
 
       const game = isGame(player.currentGame);
-      const treatment = treatmentSchema.parse(game.get("treatment"));
+      const treatment = factorsSchema.parse(game.get("treatment"));
       const playerCount = treatment["playerCount"] as number;
       const readyPlayers = game.players.filter(
         (p) => p.get("introDone") && !p.get("ended")

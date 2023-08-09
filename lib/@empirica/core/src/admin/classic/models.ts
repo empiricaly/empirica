@@ -183,6 +183,7 @@ export class Game extends BatchOwned {
     const previousGameTreatment = player.get("treatment");
 
     const treatment = this.get("treatment");
+    const treatmentName = this.get("treatmentName");
     if (!treatment) {
       warn(`game without treatment: ${this.id}`);
     }
@@ -190,6 +191,9 @@ export class Game extends BatchOwned {
     player.set("gameID", this.id);
     if (treatment) {
       player.set("treatment", treatment);
+    }
+    if (treatmentName) {
+      player.set("treatmentName", treatmentName);
     }
 
     if (
