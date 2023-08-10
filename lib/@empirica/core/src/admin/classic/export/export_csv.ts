@@ -1,8 +1,9 @@
 import archiver, { Archiver } from "archiver";
 import fs from "fs";
-import streams from "stream-buffers";
+import { Readable } from "stream";
 import { promiseHandle } from "../../promises";
 import { Conn, Scope } from "../api/api";
+import { humanBytes } from "./bytes";
 
 export const BOM = "\uFEFF";
 
@@ -12,7 +13,9 @@ export async function exportCSV(conn: Conn, output: string) {
 
   const prom = promiseHandle();
   stream.on("close", function () {
-    console.log("Finalizing archive (" + archive.pointer() + " bytes)");
+    console.log(
+      "Finalizing archive (" + humanBytes(archive.pointer(), true, 2) + ")"
+    );
     prom.result();
   });
 
@@ -27,8 +30,6 @@ export async function exportCSV(conn: Conn, output: string) {
 
   // pipe archive data to the file
   archive.pipe(stream);
-
-  // file.put(encodeCells(keys.concat(dataKeys.map((k) => `data.${k}`))));
 
   const a = archive;
   await processType(a, "batches", conn.batches.bind(conn));
@@ -45,25 +46,32 @@ export async function exportCSV(conn: Conn, output: string) {
   await prom.promise;
 }
 
+const changedAtSuffix = "LastChangedAt";
+
 async function processType<T extends Scope>(
   archive: Archiver,
   fileName: string,
   it: () => AsyncGenerator<T, void, unknown>
 ) {
-  console.log("processing", fileName);
+  console.log("Processing", fileName);
   const file = newFile(archive, fileName, "csv");
 
   const keys = new Set<string>();
+  const cols = new Set<string>();
   for await (const record of it()) {
     for (const attr of record.attributes) {
       keys.add(attr.key);
+      cols.add(attr.key);
+      cols.add(attr.key + changedAtSuffix);
     }
   }
 
   const keyArr = Array.from(keys.values());
-  file.put(encodeCells(keyArr));
+  file.push(encodeCells(Array.from(cols.values())));
 
+  let counter = 0;
   for await (const record of it()) {
+    counter++;
     const attrs = record.attributes;
 
     const line: (string | undefined)[] = [];
@@ -71,6 +79,7 @@ async function processType<T extends Scope>(
       for (const attr of attrs) {
         if (attr.key === key) {
           line.push(cast(attr.value));
+          line.push(cast(attr.createdAt));
 
           continue LOOP;
         }
@@ -79,16 +88,21 @@ async function processType<T extends Scope>(
       line.push(undefined);
     }
 
-    file.put(encodeCells(line));
+    file.push(encodeCells(line));
   }
+  console.log(` -> ${counter} ${counter === 1 ? "record" : "records"}`);
 
-  file.stop();
+  file.push(null);
+}
+
+class FileReadable extends Readable {
+  _read() {}
 }
 
 function newFile(archive: Archiver, name: string, extension: string) {
-  const file = new streams.ReadableStreamBuffer();
+  const file = new FileReadable({});
   archive.append(file, { name: `${name}.${extension}` });
-  file.put(BOM);
+  file.push(BOM);
   return file;
 }
 
