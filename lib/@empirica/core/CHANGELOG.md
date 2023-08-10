@@ -1,5 +1,18 @@
 # @empirica/core
 
+## 1.6.0
+
+### Minor Changes
+
+- ae675d8: Add a `[field name]LastChangedAt` for each field in the CSV export. This field
+  contains the timestamp of the last change to the field.
+- ecd0768: Add `treatmentName`, that contains the name of the treatment, to the game and
+  player.
+
+### Patch Changes
+
+- ae675d8: Improved CSV formatting in export.
+
 ## 1.5.0
 
 ### Minor Changes
