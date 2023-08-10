@@ -105,24 +105,24 @@ export const encodeCells = (line: any[]) => {
       continue;
     }
 
-    row[i] = JSON.stringify(row[i]); // was cast(row[i]);
+    const shouldQuote =
+      row[i].indexOf(",") !== -1 || // Contains a comma
+      row[i].indexOf("\r\n") !== -1 || // Contains a CRLF
+      row[i].indexOf(quoteMark) !== -1; // Contains a quote mark
 
-    if (row[i].indexOf(quoteMark) !== -1) {
-      row[i] = row[i].replace(quoteRegex, doubleQuoteMark);
-    }
+    row[i] = row[i].replace(quoteRegex, doubleQuoteMark);
 
-    if (row[i].indexOf(",") !== -1 || row[i].indexOf("\\n") !== -1) {
+    if (shouldQuote) {
       row[i] = quoteMark + row[i] + quoteMark;
     }
   }
 
-  return row.join(",") + "\n";
+  return row.join(",") + "\r\n";
 };
 
 const cast = (out: any): string => {
   if (Array.isArray(out)) {
-    // The cast here will flatten arrays but will still catch dates correctly
-    return out.map((a) => cast(a)).join(",");
+    return JSON.stringify(out);
   } else if (out instanceof Date) {
     return out.toISOString();
   } else if (typeof out === "object" && out !== null) {
