@@ -19,6 +19,8 @@ export async function runExport(
 ) {
   const taj = await connect(url, token, srtoken);
 
+  console.log("\nExporting", format.toUpperCase(), "to", output, "\n");
+
   switch (format) {
     case ExportFormat.CSV:
       await exportCSV(taj, output);
@@ -31,6 +33,4 @@ export async function runExport(
   }
 
   taj.stop();
-
-  console.log("finished");
 }
