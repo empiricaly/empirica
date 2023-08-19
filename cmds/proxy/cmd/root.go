@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/empiricaly/empirica/internal/build"
@@ -86,7 +87,7 @@ func root(args []string) error {
 }
 
 func failedStart(err error) {
-	if err != nil {
+	if err != nil && errors.Is(err, context.Canceled) && strings.Contains(err.Error(), "signal: killed") {
 		log.Fatal().Err(err).Msg("empirica: failed to start")
 	}
 }

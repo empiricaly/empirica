@@ -1,6 +1,7 @@
 package build
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -45,6 +46,10 @@ const shaLen = 7
 
 func VersionString() string {
 	return Current().String()
+}
+
+func VersionJSON() ([]byte, error) {
+	return json.Marshal(Current())
 }
 
 type Build struct {

@@ -36,20 +36,18 @@ func defineRoot() (*cobra.Command, *bool, error) {
 		},
 	}
 
-	err := empirica.ConfigFlags(cmd)
-	if err != nil {
+	if err := empirica.ConfigFlags(cmd); err != nil {
 		return nil, nil, errors.Wrap(err, "define flags")
 	}
 
-	cmd.PersistentFlags().String("config", "", fmt.Sprintf("config file (default is %s/empirica.toml)", settings.EmpiricaDir))
-
-	err = viper.BindPFlags(cmd.Flags())
-	if err != nil {
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
 		return nil, nil, errors.Wrap(err, "bind root flags")
 	}
 
-	err = viper.BindPFlags(cmd.PersistentFlags())
-	if err != nil {
+	cfgDesc := fmt.Sprintf("config file (default is %s/empirica.toml)", settings.EmpiricaDir)
+	cmd.PersistentFlags().String("config", "", cfgDesc)
+
+	if err := viper.BindPFlags(cmd.PersistentFlags()); err != nil {
 		return nil, nil, errors.Wrap(err, "bind root persistent flags")
 	}
 
