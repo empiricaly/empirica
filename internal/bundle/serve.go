@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/empiricaly/empirica"
+	"github.com/empiricaly/empirica/internal/build"
 	"github.com/empiricaly/empirica/internal/server"
 	"github.com/empiricaly/empirica/internal/templates"
 	"github.com/empiricaly/tajriba"
@@ -33,7 +34,7 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMo
 		log.Fatal().Err(err).Msg("invalid config")
 	}
 
-	go func() {
+	go func(ctx context.Context) {
 		parts := strings.Split(conf.Callbacks.ServeCmd, " ")
 		if len(parts) == 0 {
 			log.Error().Msg("callbacks: empty serve command")
@@ -100,7 +101,7 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMo
 
 			log.Error().Err(err).Msg("serve: failed server command")
 		}
-	}()
+	}(ctx)
 
 	s, err := server.Prepare(conf.Server)
 	if err != nil {
@@ -137,8 +138,14 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMo
 		return errors.Wrap(err, "start server")
 	}
 
+	bver, err := build.VersionJSON()
+	if err != nil {
+		log.Error().Err(err).Msg("serve: failed to get build version")
+	}
+
 	log.Info().
-		Msg("empirica: server started")
+		RawJSON("build", bver).
+		Msg("tajriba: server started")
 
 	s.Wait()
 
