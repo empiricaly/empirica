@@ -1,3 +1,4 @@
 trigger
 node_modules
 modd.conf
+dist
