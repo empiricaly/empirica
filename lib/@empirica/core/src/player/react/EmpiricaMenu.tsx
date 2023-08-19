@@ -56,6 +56,7 @@ export function EmpiricaMenu({ position = "bottom-left" }: EmpiricaMenuProps) {
       },
       icon: <Logo />,
       title: "Empirica",
+      inDevOnly: position === "top" || position === "bottom",
     },
     {
       onClick: () => createNewParticipant(),

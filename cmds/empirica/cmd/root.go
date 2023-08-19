@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -158,7 +159,9 @@ func initConfig(rootCmd *cobra.Command, usingConfigFile *bool) func() {
 			viper.SetConfigName("empirica")
 		}
 
-		viper.AutomaticEnv() // read in environment variables that match
+		viper.SetEnvPrefix("empirica")
+		viper.AutomaticEnv()
+		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 		// If a config file is found, read it in.
 		if err := viper.ReadInConfig(); err == nil {
