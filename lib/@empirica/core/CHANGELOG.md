@@ -1,5 +1,45 @@
 # @empirica/core
 
+## 1.6.1
+
+### Patch Changes
+
+- 0f7f99c: You can now add a user with flags from the command line:
+
+  ```bash
+  empirica --tajriba.auth.username "erica" --tajriba.auth.name "Erica" --tajriba.auth.password "mypassword"
+  ```
+
+  You can also use environment variables:
+
+  ```bash
+  export EMPIRICA_TAJRIBA_AUTH_USERNAME="erica"
+  export EMPIRICA_TAJRIBA_AUTH_NAME="Erica"
+  export EMPIRICA_TAJRIBA_AUTH_PASSWORD="mypassword"
+  empirica
+  ```
+
+- f12c6a9: Add version logging on `empirica serve`.
+- 0f7f99c: Added support for environment variables for configuring Empirica. For example,
+  you can now set the `tajriba.store.file` config option with the
+  `EMPIRICA_TAJRIBA_AUTH_USERNAME` environment variable instead of using the
+  `--tajriba.store.file` command line option.
+
+  Any command line or empirica file options can be set with environment variables
+  by replacing the `.` with `_`, uppercasing the name, and prefixing it with
+  `EMPIRICA_`. Examples:
+
+  - `--log.level` becomes `EMPIRICA_LOG_LEVEL`
+  - `--server.addr` becomes `EMPIRICA_SERVER_ADDR`
+  - `--production` becomes `EMPIRICA_PRODUCTION`
+
+- ecc92b8: Fix adding new stages dynamically at the end of a stage.
+- 0f7f99c: Increase max line size in tajriba.json to 1MB. This can be usefule when storing
+  very large attribute values.
+- 0f7f99c: Hide the Empirica menu in prod when it is centered (top or bottom) as it's
+  distrating.
+- f12c6a9: `empirica serve` now respects the `--tajriba.store.file` command line flag.
+
 ## 1.6.0
 
 ### Minor Changes
