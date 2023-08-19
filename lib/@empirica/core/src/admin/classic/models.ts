@@ -792,8 +792,8 @@ export class Round extends GameOwned {
       throw new Error("missing game ID on round");
     }
 
-    const stageIndex = z.number().parse(this.get("stageIndex") || -1) + 1;
-    this.set("stageIndex", stageIndex);
+    const stageIndex = isOptionalNumber(this.get("stageIndex")) || 0;
+    this.set("stageIndex", stageIndex + 1);
 
     const [scope, accessors] = scopeConstructor({
       kind: "stage",
