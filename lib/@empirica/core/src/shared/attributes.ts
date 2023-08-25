@@ -284,6 +284,10 @@ export class Attribute {
     ao?: Partial<AttributeOptions>,
     item?: boolean
   ): SetAttributeInput {
+    if (!item && ao?.append && ao!.index === undefined) {
+      ao!.index = this.attrs?.length || 0;
+    }
+
     if (!item && ao?.index !== undefined) {
       const index = ao!.index!;
 
