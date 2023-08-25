@@ -1,5 +1,17 @@
 # @empirica/core
 
+## 1.6.2
+
+### Patch Changes
+
+- f87c756: Fix misaligned CSV export. Some fields were not aligned with the headers.
+- 05212b8: Fix missing scope in vector attribute callbacks.
+
+  E.g.: In `Empirica.on("stage", "chat", (ctx, { stage, chat }) => {`, where
+  "chat" is a vector attribute, `stage` was undefined.
+
+- 05212b8: Fix vector attribute invalid get-after-set value.
+
 ## 1.6.1
 
 ### Patch Changes
