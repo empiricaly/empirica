@@ -260,7 +260,7 @@ export class Attribute {
   }
 
   get nodeID() {
-    return this.attr?.nodeID || this.attr?.node?.id;
+    return this.scopeID;
   }
 
   // items returns the attribute changes for the current attribute, if it is a
