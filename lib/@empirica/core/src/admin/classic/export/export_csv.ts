@@ -86,11 +86,12 @@ async function processType<T extends Scope>(
       }
 
       line.push(undefined);
+      line.push(undefined);
     }
 
     file.push(encodeCells(line));
   }
-  console.log(` -> ${counter} ${counter === 1 ? "record" : "records"}`);
+  console.log(` -> ${counter} ${counter === 1 ? "record" : "records"} found.`);
 
   file.push(null);
 }

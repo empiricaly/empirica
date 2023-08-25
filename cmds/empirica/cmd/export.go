@@ -64,7 +64,7 @@ func addExportCommand(parent *cobra.Command) error {
 			}
 
 			var version string
-			if versServer == nil && os.Getenv("EMPIRICA_DEV") != "" {
+			if os.Getenv("EMPIRICA_DEV") != "" {
 				version = "link"
 
 				log.Warn().
