@@ -113,6 +113,30 @@ export class ListenersCollector<
     EvtCtxCallback<Context, Kinds>
   >[] = [];
 
+  /** @internal */
+  private flusher: Flusher | undefined;
+
+  /** @internal */
+  setFlusher(flusher: Flusher) {
+    this.flusher = flusher;
+  }
+
+  async flush(): Promise<void> {
+    if (!this.flusher) {
+      return;
+    }
+
+    await this.flusher.flush();
+  }
+
+  flushAfter(cb: () => Promise<void>): (() => Promise<void>) | void {
+    if (!this.flusher) {
+      return;
+    }
+
+    return this.flusher.flushAfter(cb);
+  }
+
   get unique() {
     return new ListenersCollectorProxy<Context, Kinds>(this);
   }
@@ -354,8 +378,18 @@ export class EventContext<
     /** @internal */
     private taj: TajribaAdminAccess,
     /** @internal */
-    private scopes: Scopes<Context, Kinds>
+    private scopes: Scopes<Context, Kinds>,
+    /** @internal */
+    private flusher: Flusher
   ) {}
+
+  async flush(): Promise<void> {
+    await this.flusher.flush();
+  }
+
+  flushAfter(cb: () => Promise<void>): (() => Promise<void>) | void {
+    return this.flusher.flushAfter(cb);
+  }
 
   scopesByKind<T extends Scope<Context, Kinds>>(kind: keyof Kinds) {
     return this.scopes.byKind<T>(kind) as Map<string, T>;
@@ -424,5 +458,33 @@ export class EventContext<
   /* c8 ignore next 3 */
   get globals() {
     return this.taj.globals;
+  }
+}
+
+export class Flusher {
+  constructor(
+    /** @internal */
+    private postCallback: (() => Promise<void>) | undefined
+  ) {}
+
+  async flush(): Promise<void> {
+    if (!this.postCallback) {
+      return;
+    }
+
+    await this.postCallback();
+  }
+
+  flushAfter(cb: () => Promise<void>): (() => Promise<void>) | void {
+    if (!this.postCallback) {
+      return;
+    }
+
+    return async () => {
+      await cb();
+      if (this.postCallback) {
+        await this.postCallback();
+      }
+    };
   }
 }

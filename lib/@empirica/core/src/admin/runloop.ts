@@ -28,7 +28,12 @@ import {
   StepPayload,
   TajribaAdminAccess,
 } from "./context";
-import { EventContext, ListenersCollector, Subscriber } from "./events";
+import {
+  EventContext,
+  Flusher,
+  ListenersCollector,
+  Subscriber,
+} from "./events";
 import { Globals } from "./globals";
 import { awaitObsValue, subscribeAsync } from "./observables";
 import { ConnectionMsg, Participant, participantsSub } from "./participants";
@@ -100,7 +105,12 @@ export class Runloop<
       mut
     );
 
-    this.evtctx = new EventContext(this.subs, mut, this.scopes);
+    this.evtctx = new EventContext(
+      this.subs,
+      mut,
+      this.scopes,
+      new Flusher(this.postCallback.bind(this, true))
+    );
     this.cake = new Cake(
       this.evtctx,
       this.scopes.scope.bind(this.scopes),
