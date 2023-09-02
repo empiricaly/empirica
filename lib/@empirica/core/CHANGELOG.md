@@ -1,5 +1,12 @@
 # @empirica/core
 
+## 1.7.1
+
+### Patch Changes
+
+- b6cc07f: Fix issue where mutliple appends were called in a row on the same key and only
+  the last item was added.
+
 ## 1.7.0
 
 ### Minor Changes
