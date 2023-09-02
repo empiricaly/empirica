@@ -199,16 +199,31 @@ export class Runloop<
       // If the same key is set twice within the same loop, only send 1
       // setAttribute update.
       const uniqueAttrs: { [key: string]: SetAttributeInput } = {};
+      let appendCount = 0;
       for (const attr of this.attributeInputs) {
         if (!attr.nodeID) {
           error(`runloop: attribute without nodeID: ${JSON.stringify(attr)}`);
           continue;
         }
 
-        uniqueAttrs[`${attr.nodeID}-${attr.key}`] = attr;
+        let key = `${attr.nodeID}-${attr.key}`;
+
+        if (attr.append) {
+          key += `-${appendCount++}`;
+        }
+
+        if (attr.index !== undefined) {
+          key += `-${attr.index}`;
+        }
+
+        console.log(key);
+
+        uniqueAttrs[key] = attr;
       }
 
       const attrs = Object.values(uniqueAttrs);
+
+      console.log(attrs);
 
       promises.push(this.taj.setAttributes(attrs));
       this.attributeInputs = [];
