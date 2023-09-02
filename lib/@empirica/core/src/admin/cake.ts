@@ -7,6 +7,7 @@ import {
   AttributeEventListener,
   EventContext,
   EvtCtxCallback,
+  Flusher,
   KindEventListener,
   ListenersCollector,
   ListernerPlacement,
@@ -55,6 +56,7 @@ export class Cake<
   }
 
   async add(listeners: ListenersCollector<Context, Kinds>) {
+    listeners.setFlusher(new Flusher(this.postCallback));
     for (const start of listeners.starts) {
       debug("start callback");
       try {

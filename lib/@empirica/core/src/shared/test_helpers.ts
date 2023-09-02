@@ -16,10 +16,10 @@ import {
 } from "@empirica/tajriba";
 import { ExecutionContext } from "ava";
 import { Observable, Subject } from "rxjs";
-import { fake, replace, SinonSpy } from "sinon";
+import { SinonSpy, fake, replace } from "sinon";
 import { Scopes } from "../admin";
 import { Finalizer, TajribaAdminAccess } from "../admin/context";
-import { EventContext } from "../admin/events";
+import { EventContext, Flusher } from "../admin/events";
 import { Globals } from "../admin/globals";
 import { ScopeSubscriptionInput } from "../admin/subscriptions";
 import { TokenProvider } from "../admin/token_file";
@@ -623,7 +623,8 @@ export function setupEventContext() {
   const ctx = new EventContext<Context, AdminKinds>(
     coll,
     mut,
-    <Scopes<Context, AdminKinds>>{}
+    <Scopes<Context, AdminKinds>>{},
+    new Flusher(async () => {}) // Flushing cannot be used in tests.
   );
 
   return { coll, res, ctx, called, globals };
