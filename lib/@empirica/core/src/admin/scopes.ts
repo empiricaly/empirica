@@ -15,6 +15,7 @@ import {
 } from "../shared/scopes";
 import { Attributes } from "./attributes";
 import { Finalizer, TajribaAdminAccess } from "./context";
+import { Flusher } from "./events";
 
 export type ScopeMsg<
   Context,
@@ -39,9 +40,19 @@ export class Scopes<
     ctx: Context,
     kinds: Kinds,
     attributes: Attributes,
-    readonly taj: TajribaAdminAccess
+    readonly taj: TajribaAdminAccess,
+    /** @internal */
+    private flusher: Flusher
   ) {
     super(scopesObs, donesObs, ctx, kinds, attributes);
+  }
+
+  async flush(): Promise<void> {
+    await this.flusher.flush();
+  }
+
+  flushAfter(cb: () => Promise<void>): (() => Promise<void>) | void {
+    return this.flusher.flushAfter(cb);
   }
 
   /** @internal */
@@ -114,6 +125,14 @@ export class Scope<
   ) {
     super(ctx, scope, attributes);
     this.taj = scopes.taj;
+  }
+
+  async flush(): Promise<void> {
+    await this.scopes.flush();
+  }
+
+  flushAfter(cb: () => Promise<void>): (() => Promise<void>) | void {
+    return this.scopes.flushAfter(cb);
   }
 
   protected scopeByID<T extends Scope<Context, Kinds>>(

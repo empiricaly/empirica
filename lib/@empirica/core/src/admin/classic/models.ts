@@ -174,7 +174,17 @@ export class Game extends BatchOwned {
     }
   }
 
+  // Assigns a player to the game.
+  // This will remove the player from any previous game it was assigned to.
   async assignPlayer(player: Player) {
+    await this._assignPlayer(player);
+    this.flush();
+  }
+
+  /**
+   * @internal
+   */
+  async _assignPlayer(player: Player) {
     if (this.hasEnded) {
       throw new Error("cannot assign player to ended Game");
     }

@@ -102,7 +102,8 @@ export class Runloop<
       this.ctx,
       this.kinds,
       this.attributes,
-      mut
+      mut,
+      new Flusher(this.postCallback.bind(this, true))
     );
 
     this.evtctx = new EventContext(
@@ -268,6 +269,7 @@ export class Runloop<
       warn(err.message);
       return [];
     });
+
     this.scopePromises.push(
       addScopes.then((scopes) => {
         for (const scope of scopes) {

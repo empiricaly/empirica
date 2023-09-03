@@ -107,7 +107,7 @@ export function Classic({
 
         const game = pickRandom(availableGames);
 
-        await game.assignPlayer(player);
+        await game._assignPlayer(player);
 
         return;
       }

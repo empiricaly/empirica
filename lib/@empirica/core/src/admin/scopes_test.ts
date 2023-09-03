@@ -19,6 +19,7 @@ import { Attributes } from "./attributes";
 import { Finalizer, TajribaAdminAccess } from "./context";
 import { Globals } from "./globals";
 import { Scope, ScopeMsg, Scopes } from "./scopes";
+import { Flusher } from "./events";
 
 export class AdminBatch extends Scope<Context, AdminKinds> {}
 export class AdminGame extends Scope<Context, AdminKinds> {
@@ -117,7 +118,8 @@ function setupScopes() {
     ctx,
     adminKinds,
     attributes,
-    mut
+    mut,
+    new Flusher(async () => {}) // Flushing cannot be used in tests.
   );
 
   provider.dones.subscribe({
