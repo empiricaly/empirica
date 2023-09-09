@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.7.2
+
+### Patch Changes
+
+- 4490fd3: Remove unnecessary debug logs.
+
 ## 1.7.1
 
 ### Patch Changes
