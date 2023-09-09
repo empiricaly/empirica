@@ -216,14 +216,10 @@ export class Runloop<
           key += `-${attr.index}`;
         }
 
-        console.log(key);
-
         uniqueAttrs[key] = attr;
       }
 
       const attrs = Object.values(uniqueAttrs);
-
-      console.log(attrs);
 
       promises.push(this.taj.setAttributes(attrs));
       this.attributeInputs = [];
