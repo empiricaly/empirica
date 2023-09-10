@@ -12,7 +12,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/cortesi/moddwatch v0.0.0-20210323234936-df014e95c743
 	github.com/davecgh/go-spew v1.1.1
-	github.com/empiricaly/tajriba v1.3.1
+	github.com/empiricaly/tajriba v1.4.0
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/json-iterator/go v1.1.12
@@ -37,6 +37,8 @@ require (
 )
 
 require (
+	aidanwoods.dev/go-paseto v1.5.0 // indirect
+	aidanwoods.dev/go-result v0.1.0 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/agnivade/levenshtein v1.1.1 // indirect
 	github.com/bmatcuk/doublestar v1.3.4 // indirect
@@ -86,7 +88,7 @@ require (
 	golang.org/x/crypto v0.12.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.14.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/tools v0.11.1 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
 )

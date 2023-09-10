@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"os"
+
 	"github.com/empiricaly/empirica"
 	"github.com/empiricaly/empirica/internal/bundle"
 	"github.com/empiricaly/empirica/internal/settings"
@@ -53,6 +55,13 @@ func addServeCommand(parent *cobra.Command) error {
 	}
 
 	cmd.Flags().Bool("clean", false, "cleanup old installation")
+
+	// HACK: conflicting args between 2 calls, same flags. cobra/viper "bug"?
+	if len(os.Args) < 2 || os.Args[1] != "serve" {
+		parent.AddCommand(cmd)
+
+		return nil
+	}
 
 	if err := empirica.ConfigFlags(cmd); err != nil {
 		return errors.Wrap(err, "define flags")
