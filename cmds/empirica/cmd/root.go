@@ -37,12 +37,15 @@ func defineRoot() (*cobra.Command, *bool, error) {
 		},
 	}
 
-	if err := empirica.ConfigFlags(cmd); err != nil {
-		return nil, nil, errors.Wrap(err, "define flags")
-	}
+	// HACK: conflicting args between 2 calls, same flags. cobra/viper "bug"?
+	if len(os.Args) < 2 || os.Args[1] != "serve" {
+		if err := empirica.ConfigFlags(cmd); err != nil {
+			return nil, nil, errors.Wrap(err, "define flags")
+		}
 
-	if err := viper.BindPFlags(cmd.Flags()); err != nil {
-		return nil, nil, errors.Wrap(err, "bind root flags")
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return nil, nil, errors.Wrap(err, "bind root flags")
+		}
 	}
 
 	cfgDesc := fmt.Sprintf("config file (default is %s/empirica.toml)", settings.EmpiricaDir)
