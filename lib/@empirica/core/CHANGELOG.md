@@ -1,5 +1,35 @@
 # @empirica/core
 
+## 1.8.0
+
+### Minor Changes
+
+- ac1eb2f: Added the ability to limit the number of concurrent players and users that can
+  join a server. This can be useful when you want to run a study with a limited
+  number of participants, or when you want to limit the number of concurrent
+  participants to avoid overloading your server.
+
+  The 2 new flags are:
+
+  - `--tajriba.server.maxParticipants`: the maximum number of players that can
+    join a server at once.
+  - `--tajriba.server.maxUsers`: the maximum number of users that can join a
+    server at once.
+
+  There is limited support for these flags in the UI. The player will simply not
+  get passed the player registration form if the server is full. And the user will
+  not be able to login.
+
+- ac1eb2f: Added the ability to authenticate as a user (admin) with a PASETO token instead
+  of a password. This is only available on Tajriba, and not in the admin UI yet.
+
+### Patch Changes
+
+- 10de4bb: Improve the admin batch UI. Games are now collapsed by default and can be
+  revealed with a click, and games are displayed in a table instead of cards.
+- ac1eb2f: Fixed an issue where flags between the root `empirica` command the `empirica
+serve` command were conflicting.
+
 ## 1.7.2
 
 ### Patch Changes
