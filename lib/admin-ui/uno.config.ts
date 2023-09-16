@@ -1,11 +1,8 @@
 import { presetForms } from "@julr/unocss-preset-forms";
 import {
   defineConfig,
-  presetAttributify,
-  presetIcons,
   presetTypography,
   presetUno,
-  presetWebFonts,
   transformerDirectives,
   transformerVariantGroup,
 } from "unocss";
@@ -18,6 +15,8 @@ export default defineConfig({
         `text-${color}-600`,
         `bg-${color}-600`,
         `hover:bg-${color}-700`,
+        `bg-${color}-100`,
+        `text-${color}-800`,
       ])
       .flat(),
   ],
