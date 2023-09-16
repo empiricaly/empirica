@@ -31,22 +31,3 @@
     </span>
   </span>
 {/each}
-<!-- 
-      // check for object/array type data
-      if (val === Object(val)) {
-        // Object
-        if (!val.length) {
-          let tempVal = [];
-          for (const k in val) {
-            tempVal.push(k + ": " + val[k]);
-          }
-
-          val = "{" + tempVal.join(", ") + "}";
-        } else {
-          // array object here
-          val = "[" + val.join(", ") + "]";
-        }
-      }
-
-      factorArr.push(key + ": " + val);
-     -->
