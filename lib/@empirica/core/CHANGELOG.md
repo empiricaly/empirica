@@ -1,5 +1,14 @@
 # @empirica/core
 
+## 1.8.2
+
+### Patch Changes
+
+- 6ee08a3: Improvements to websocket buffering:
+  - increased buffer size
+  - added a check to close the connection if the buffer keeps increasing in size
+    for 10s straight.
+
 ## 1.8.1
 
 ### Patch Changes
