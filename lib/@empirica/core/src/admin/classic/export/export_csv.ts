@@ -67,7 +67,12 @@ async function processType<T extends Scope>(
   }
 
   const keyArr = Array.from(keys.values());
-  file.push(encodeCells(Array.from(cols.values())));
+  keyArr.unshift("id");
+
+  const colsArr = Array.from(cols.values());
+  colsArr.unshift("id");
+
+  file.push(encodeCells(colsArr));
 
   let counter = 0;
   for await (const record of it()) {
@@ -76,6 +81,11 @@ async function processType<T extends Scope>(
 
     const line: (string | undefined)[] = [];
     LOOP: for (const key of keyArr) {
+      if (key === "id") {
+        line.push(record.id);
+        continue;
+      }
+
       for (const attr of attrs) {
         if (attr.key === key) {
           line.push(cast(attr.value));
