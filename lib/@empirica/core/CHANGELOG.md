@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.8.3
+
+### Patch Changes
+
+- 0d412f8: Add missing ids to export.
+
 ## 1.8.2
 
 ### Patch Changes
