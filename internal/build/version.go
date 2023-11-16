@@ -1,11 +1,13 @@
 package build
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/masterminds/semver"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 // Version return the build version (vX.Y.Z) at build time. Returns "" if this
@@ -46,6 +48,10 @@ func VersionString() string {
 	return Current().String()
 }
 
+func VersionJSON() ([]byte, error) {
+	return json.Marshal(Current())
+}
+
 type Build struct {
 	DevBuild string `json:"dev,omitempty" yaml:"dev,omitempty"`
 	Version  string `json:"version,omitempty" yaml:"version,omitempty"`
@@ -58,6 +64,59 @@ type Build struct {
 	// These are used internally for the build resolver.
 	prod bool `json:"-" yaml:"-"`
 	dev  bool `json:"-" yaml:"-"`
+}
+
+type Builds []*Build
+
+func (b Builds) Len() int {
+	return len(b)
+}
+
+func (b Builds) Less(i, j int) bool {
+	bi := b[i].Semver()
+	bj := b[j].Semver()
+
+	if bi == nil && bj == nil {
+		return false
+	}
+
+	if bi == nil {
+		return true
+	}
+
+	if bj == nil {
+		return false
+	}
+
+	return bi.LessThan(bj)
+}
+
+func (b Builds) Swap(i, j int) {
+	b[i], b[j] = b[j], b[i]
+}
+
+func NewVersionBuild(vers string) *Build {
+	if !strings.HasPrefix(vers, "v") {
+		vers = "v" + vers
+	}
+
+	return &Build{Version: vers}
+}
+
+func Parse(vstr string) (*Build, error) {
+	version, err := semver.NewVersion(vstr)
+	if err == nil {
+		return &Build{Version: "v" + version.String()}, nil
+	}
+
+	var b Build
+
+	err = yaml.Unmarshal([]byte(vstr), &b)
+	if err != nil {
+		return nil, errors.Wrap(err, "parse build")
+	}
+
+	return &b, nil
 }
 
 func NewProdBuild() *Build {
@@ -77,6 +136,15 @@ func Current() *Build {
 		Branch:   Branch,
 		Time:     Time,
 	}
+}
+
+func (b *Build) Semver() *semver.Version {
+	vers, err := semver.NewVersion(b.Version)
+	if err != nil {
+		return nil
+	}
+
+	return vers
 }
 
 func (b *Build) Empty() bool {
@@ -127,22 +195,6 @@ func (b *Build) PathComponents(generic bool) (components []string, err error) {
 		comps = append(comps, "version/"+b.Version)
 	}
 
-	if b.SHA != "" {
-		comps = append(comps, "sha/"+b.SHA)
-	}
-
-	if b.BuildNum != "" {
-		comps = append(comps, "build/"+b.BuildNum)
-	}
-
-	if b.Tag != "" {
-		comps = append(comps, "tag/"+b.Tag)
-	}
-
-	if b.Branch != "" {
-		comps = append(comps, "branch/"+b.Branch)
-	}
-
 	if !generic {
 		if b.prod {
 			comps = append(comps, "prod")
@@ -163,10 +215,6 @@ func (b *Build) PathComponents(generic bool) (components []string, err error) {
 func (b *Build) String() string {
 	if b.Empty() {
 		return "No version information found\n"
-	}
-
-	if b.DevBuild == " true" {
-		return "This is a development build\n"
 	}
 
 	var str strings.Builder

@@ -1,8 +1,9 @@
 import archiver, { Archiver } from "archiver";
 import fs from "fs";
-import streams from "stream-buffers";
+import { Readable } from "stream";
 import { promiseHandle } from "../../promises";
 import { Conn, Scope } from "../api/api";
+import { humanBytes } from "./bytes";
 
 export const BOM = "\uFEFF";
 
@@ -12,7 +13,9 @@ export async function exportCSV(conn: Conn, output: string) {
 
   const prom = promiseHandle();
   stream.on("close", function () {
-    console.log("Finalizing archive (" + archive.pointer() + " bytes)");
+    console.log(
+      "Finalizing archive (" + humanBytes(archive.pointer(), true, 2) + ")"
+    );
     prom.result();
   });
 
@@ -27,8 +30,6 @@ export async function exportCSV(conn: Conn, output: string) {
 
   // pipe archive data to the file
   archive.pipe(stream);
-
-  // file.put(encodeCells(keys.concat(dataKeys.map((k) => `data.${k}`))));
 
   const a = archive;
   await processType(a, "batches", conn.batches.bind(conn));
@@ -45,50 +46,74 @@ export async function exportCSV(conn: Conn, output: string) {
   await prom.promise;
 }
 
+const changedAtSuffix = "LastChangedAt";
+
 async function processType<T extends Scope>(
   archive: Archiver,
   fileName: string,
   it: () => AsyncGenerator<T, void, unknown>
 ) {
-  console.log("processing", fileName);
+  console.log("Processing", fileName);
   const file = newFile(archive, fileName, "csv");
 
   const keys = new Set<string>();
+  const cols = new Set<string>();
   for await (const record of it()) {
     for (const attr of record.attributes) {
       keys.add(attr.key);
+      cols.add(attr.key);
+      cols.add(attr.key + changedAtSuffix);
     }
   }
 
   const keyArr = Array.from(keys.values());
-  file.put(encodeCells(keyArr));
+  keyArr.unshift("id");
 
+  const colsArr = Array.from(cols.values());
+  colsArr.unshift("id");
+
+  file.push(encodeCells(colsArr));
+
+  let counter = 0;
   for await (const record of it()) {
+    counter++;
     const attrs = record.attributes;
 
     const line: (string | undefined)[] = [];
     LOOP: for (const key of keyArr) {
+      if (key === "id") {
+        line.push(record.id);
+        continue;
+      }
+
       for (const attr of attrs) {
         if (attr.key === key) {
           line.push(cast(attr.value));
+          line.push(cast(attr.createdAt));
 
           continue LOOP;
         }
       }
 
       line.push(undefined);
+      line.push(undefined);
     }
 
-    file.put(encodeCells(line));
+    file.push(encodeCells(line));
   }
+  console.log(` -> ${counter} ${counter === 1 ? "record" : "records"} found.`);
 
-  file.stop();
+  file.push(null);
+}
+
+class FileReadable extends Readable {
+  _read() {}
 }
 
 function newFile(archive: Archiver, name: string, extension: string) {
-  const file = new streams.ReadableStreamBuffer();
+  const file = new FileReadable({});
   archive.append(file, { name: `${name}.${extension}` });
-  file.put(BOM);
+  file.push(BOM);
   return file;
 }
 
@@ -105,24 +130,24 @@ export const encodeCells = (line: any[]) => {
       continue;
     }
 
-    row[i] = JSON.stringify(row[i]); // was cast(row[i]);
+    const shouldQuote =
+      row[i].indexOf(",") !== -1 || // Contains a comma
+      row[i].indexOf("\r\n") !== -1 || // Contains a CRLF
+      row[i].indexOf(quoteMark) !== -1; // Contains a quote mark
 
-    if (row[i].indexOf(quoteMark) !== -1) {
-      row[i] = row[i].replace(quoteRegex, doubleQuoteMark);
-    }
+    row[i] = row[i].replace(quoteRegex, doubleQuoteMark);
 
-    if (row[i].indexOf(",") !== -1 || row[i].indexOf("\\n") !== -1) {
+    if (shouldQuote) {
       row[i] = quoteMark + row[i] + quoteMark;
     }
   }
 
-  return row.join(",") + "\n";
+  return row.join(",") + "\r\n";
 };
 
 const cast = (out: any): string => {
   if (Array.isArray(out)) {
-    // The cast here will flatten arrays but will still catch dates correctly
-    return out.map((a) => cast(a)).join(",");
+    return JSON.stringify(out);
   } else if (out instanceof Date) {
     return out.toISOString();
   } else if (typeof out === "object" && out !== null) {

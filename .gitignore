@@ -1,9 +1,7 @@
 .DS_Store
-*.code-workspace
 *.db
 *.tgz
 *.tar.zst
-.empirica
 tajriba.json
 internal/vendored/transport
 yarn-error.log
@@ -16,3 +14,6 @@ playwright-report
 test-results
 e2e-tests/test-experiment-*
 e2e-tests/cache
+
+out
+NOTES

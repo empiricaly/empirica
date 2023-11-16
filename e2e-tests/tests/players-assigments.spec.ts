@@ -23,7 +23,7 @@ test.describe("Assignments in Empirica", () => {
   test("creates a simple batch with 2 games for solo players, 2 players are assigned to two games", async ({
     browser,
   }) => {
-    const batchesPage = new BatchesAdminPage({
+    const batchesPage = testFactory.createPage(BatchesAdminPage,{
       browser,
       baseUrl,
     });
@@ -43,12 +43,12 @@ test.describe("Assignments in Empirica", () => {
 
     await batchesPage.startGame();
 
-    const player1Page = new ExperimentPage({
+    const player1Page = testFactory.createPage(ExperimentPage, {
       browser,
       baseUrl,
     });
 
-    const player2Page = new ExperimentPage({
+    const player2Page = testFactory.createPage(ExperimentPage, {
       browser,
       baseUrl,
     });

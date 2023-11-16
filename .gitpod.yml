@@ -1,0 +1,139 @@
+workspaceLocation: empirica/main.code-workspace # Relative to /workspace dir
+additionalRepositories:
+  - url: https://github.com/empiricaly/tajriba.git
+    # checkoutLocation is relative to /workspaces
+    checkoutLocation: tajriba
+
+tasks:
+  - name: Shell
+    init: |
+      go install github.com/cortesi/modd/cmd/modd@latest
+      go install github.com/go-bindata/go-bindata/go-bindata@latest
+      go install github.com/abice/go-enum@latest
+      go install github.com/onsi/ginkgo/v2/ginkgo@latest
+      curl https://get.volta.sh | bash
+      volta install node
+      sudo apt update
+      sudo apt install rsync expect -y
+      gp sync-done modd
+      git config --global gpg.format ssh
+      git config --global user.signingkey "$SSH_SIGNING_KEY"
+      git config --global commit.gpgsign true
+    command: bash
+  - name: Get Go deps
+    init: |
+      go mod download
+      go work init . ../tajriba
+      gp sync-done deps-empirica
+  - name: Get Go deps (tajriba)
+    before: cd ../tajriba
+    init: |
+      go mod download
+      gp sync-done deps-tajriba
+  - name: Link tajriba npm
+    before: cd ../tajriba/lib/tajriba
+    init: |
+      npm install
+      npm link
+      gp sync-done npm-link-tajriba
+  - name: Link core npm
+    before: cd lib/@empirica/core
+    init: |
+      gp sync-await npm-link-tajriba
+      npm install
+      npm link @empirica/tajriba
+      npm link
+      gp sync-done npm-link-empirica-core
+  - name: Link callbacks
+    before: cd internal/templates/source/callbacks
+    init: |
+      gp sync-await npm-link-empirica-core
+      npm install
+      npm link @empirica/core
+      gp sync-done npm-link-callbacks
+  - name: Link react
+    before: cd internal/templates/source/react
+    init: |
+      gp sync-await npm-link-empirica-core
+      npm install
+      npm link @empirica/core
+      gp sync-done npm-link-react
+
+  - name: Build admin ui
+    before: cd lib/admin-ui
+    init: |
+      gp sync-await npm-link-empirica-core
+      gp sync-await npm-link-tajriba
+      npm install
+      npm run build
+      gp sync-done admin-ui-build
+    command: npm run dev
+  - name: Tajriba
+    before: cd ../tajriba
+    init: |
+      gp sync-await modd
+      gp sync-await deps-tajriba
+    command: bash
+  - name: Tajriba.js
+    before: cd ../tajriba/lib/tajriba
+    init: |
+      gp sync-await modd
+      gp sync-await npm-link-tajriba
+    command: bash
+  - name: Empirica.js modd
+    before: cd lib/@empirica/core
+    init: |
+      gp sync-await modd
+      gp sync-await npm-link-empirica-core
+    command: modd
+  - name: Empirica modd
+    init: |
+      gp sync-await modd
+      gp sync-await deps-empirica
+      gp sync-await npm-link-callbacks
+      gp sync-await npm-link-react
+      gp sync-await admin-ui-build
+    command: modd
+
+ports:
+  - name: Web App
+    description: The Empirica dev web server
+    port: 3000
+    onOpen: ignore
+  - name: Vite Server
+    description: The Vite Server for hot reload
+    port: 8844
+    onOpen: ignore
+
+vscode:
+  extensions:
+    - "aaron-bond.better-comments"
+    - "akmarnafi.comment-headers"
+    - "axelrindle.duplicate-file"
+    - "bradlc.vscode-tailwindcss"
+    - "ChristophLipp.shruggoff"
+    - "eamodio.gitlens"
+    - "eriklynd.json-tools"
+    - "esbenp.prettier-vscode"
+    - "formulahendry.auto-rename-tag"
+    - "GitHub.codespaces"
+    - "GitHub.copilot"
+    - "GitHub.remotehub"
+    - "github.vscode-github-actions"
+    - "GitHub.vscode-pull-request-github"
+    - "golang.go"
+    - "jobe451.lorem-whatever"
+    - "kumar-harsh.graphql-for-vscode"
+    - "marclipovsky.string-manipulation"
+    - "mitchdenny.ecdc"
+    - "mohsen1.prettify-json"
+    - "mrmlnc.vscode-duplicate"
+    - "ms-azuretools.vscode-docker"
+    - "oderwat.indent-rainbow"
+    - "ow.vscode-subword-navigation"
+    - "stackbreak.comment-divider"
+    - "stkb.rewrap"
+    - "svelte.svelte-vscode"
+    - "Tyriar.lorem-ipsum"
+    - "wmaurer.change-case"
+    - "tamasfe.even-better-toml"

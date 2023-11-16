@@ -56,7 +56,7 @@ export function scopeConstructor(input: AddScopeInput) {
   ] as const;
 }
 
-export type AttributeInput = {
+export type AttrInput = {
   append?: boolean;
   immutable?: boolean;
   index?: number;
@@ -68,7 +68,7 @@ export type AttributeInput = {
   vector?: boolean;
 };
 
-export function attrs(attrs: AttributeInput[]) {
+export function attrs(attrs: AttrInput[]) {
   const result: SetAttributeInput[] = [];
 
   for (const attr of attrs) {
@@ -80,7 +80,6 @@ export function attrs(attrs: AttributeInput[]) {
       nodeID,
       private: privat,
       protected: protecte,
-      vector,
       value,
     } = attr;
 
@@ -92,7 +91,6 @@ export function attrs(attrs: AttributeInput[]) {
       nodeID,
       private: privat,
       protected: protecte,
-      vector,
       val: JSON.stringify(value),
     });
   }

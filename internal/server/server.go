@@ -222,6 +222,10 @@ func forwardIndexReq(u *url.URL, connRetry *backoff.Backoff, w http.ResponseWrit
 
 	w.WriteHeader(res.StatusCode)
 
+	if res.Body == nil {
+		return
+	}
+
 	if _, err := io.Copy(w, res.Body); err != nil {
 		log.Error().Err(err).Msg("server: send response for index failed")
 	}

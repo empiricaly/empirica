@@ -81,18 +81,16 @@ function unique<
   return async (ctx: EventContext<Context, Kinds>, props: any) => {
     const attr = props.attribute as Attribute;
     const scope = props[kind] as Scope<Context, Kinds>;
-    if (!attr.id || scope.get(`ran-${attr.id}`)) {
+    if (
+      !attr.id ||
+      scope.get(`ran-${PlacementString(placement)}-${props.attrId}`)
+    ) {
       return;
     }
 
     await callback(ctx, props);
 
-    // console.log(
-    //   `ran-${PlacementString(placement)}-${attr.id}`,
-    //   scope.id,
-    //   attr.key
-    // );
-    scope.set(`ran-${PlacementString(placement)}-${attr.id}`, true);
+    scope.set(`ran-${PlacementString(placement)}-${props.attrId}`, true);
   };
 }
 
@@ -101,14 +99,43 @@ export class ListenersCollector<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
+  /** @internal */
   readonly starts: SimpleListener<Context, Kinds>[] = [];
+  /** @internal */
   readonly readys: SimpleListener<Context, Kinds>[] = [];
+  /** @internal */
   readonly tajEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
+  /** @internal */
   readonly kindListeners: KindEventListener<EvtCtxCallback<Context, Kinds>>[] =
     [];
+  /** @internal */
   readonly attributeListeners: AttributeEventListener<
     EvtCtxCallback<Context, Kinds>
   >[] = [];
+
+  /** @internal */
+  private flusher: Flusher | undefined;
+
+  /** @internal */
+  setFlusher(flusher: Flusher) {
+    this.flusher = flusher;
+  }
+
+  async flush(): Promise<void> {
+    if (!this.flusher) {
+      return;
+    }
+
+    await this.flusher.flush();
+  }
+
+  flushAfter(cb: () => Promise<void>): (() => Promise<void>) | void {
+    if (!this.flusher) {
+      return;
+    }
+
+    return this.flusher.flushAfter(cb);
+  }
 
   get unique() {
     return new ListenersCollectorProxy<Context, Kinds>(this);
@@ -285,7 +312,7 @@ export class ListenersCollector<
 }
 
 // Collects event listeners.
-class ListenersCollectorProxy<
+export class ListenersCollectorProxy<
   Context,
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > extends ListenersCollector<Context, Kinds> {
@@ -333,7 +360,7 @@ class ListenersCollectorProxy<
 
 // Context passed to listerners on new event allowing to subscrive to more data
 // and access data.
-interface SubscriptionCollector {
+export interface SubscriptionCollector {
   scopeSub: (...inputs: Partial<ScopeSubscriptionInput>[]) => void;
   participantsSub: () => void;
   transitionsSub: (stepID: string) => void;
@@ -346,10 +373,23 @@ export class EventContext<
   Kinds extends { [key: string]: ScopeConstructor<Context, Kinds> }
 > {
   constructor(
+    /** @internal */
     private subs: SubscriptionCollector,
+    /** @internal */
     private taj: TajribaAdminAccess,
-    private scopes: Scopes<Context, Kinds>
+    /** @internal */
+    private scopes: Scopes<Context, Kinds>,
+    /** @internal */
+    private flusher: Flusher
   ) {}
+
+  async flush(): Promise<void> {
+    await this.flusher.flush();
+  }
+
+  flushAfter(cb: () => Promise<void>): (() => Promise<void>) | void {
+    return this.flusher.flushAfter(cb);
+  }
 
   scopesByKind<T extends Scope<Context, Kinds>>(kind: keyof Kinds) {
     return this.scopes.byKind<T>(kind) as Map<string, T>;
@@ -418,5 +458,33 @@ export class EventContext<
   /* c8 ignore next 3 */
   get globals() {
     return this.taj.globals;
+  }
+}
+
+export class Flusher {
+  constructor(
+    /** @internal */
+    private postCallback: (() => Promise<void>) | undefined
+  ) {}
+
+  async flush(): Promise<void> {
+    if (!this.postCallback) {
+      return;
+    }
+
+    await this.postCallback();
+  }
+
+  flushAfter(cb: () => Promise<void>): (() => Promise<void>) | void {
+    if (!this.postCallback) {
+      return;
+    }
+
+    return async () => {
+      await cb();
+      if (this.postCallback) {
+        await this.postCallback();
+      }
+    };
   }
 }

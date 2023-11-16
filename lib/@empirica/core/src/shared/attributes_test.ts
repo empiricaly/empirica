@@ -395,7 +395,7 @@ test("Attribute returns nodeID", (t) => {
 
   const attr = new Attribute(setAttr, "abc", "a");
 
-  t.is(attr.nodeID, undefined);
+  t.is(attr.nodeID, "abc");
 
   attr._update({
     id: "1",

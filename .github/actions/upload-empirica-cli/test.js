@@ -203,7 +203,7 @@ test("getUploadParams", (t) => {
   );
 });
 
-test("getAttributes", (t) => {
+test("getRunAttributes", (t) => {
   const cases = [
     {
       in: {

@@ -1,18 +1,43 @@
-export { Attribute } from "../shared/attributes";
-export type { AttributeOptions } from "../shared/attributes";
-export type { ScopeUpdate } from "../shared/scopes";
+export type {
+  AttributeChange,
+  AttributeOptions,
+  AttributeUpdate,
+  Attribute as SharedAttribute,
+  Attributes as SharedAttributes,
+} from "../shared/attributes";
+export { Globals as SharedGlobals } from "../shared/globals";
+export type { Constructor } from "../shared/helpers";
+export type {
+  Attributable,
+  AttributeInput,
+  ScopeConstructor,
+  ScopeIdent,
+  ScopeUpdate,
+  Scope as SharedScope,
+} from "../shared/scopes";
 export { TajribaConnection } from "../shared/tajriba_connection";
-export { Attributes } from "./attributes";
+export type { Json, JsonArray, JsonValue } from "../utils/json";
+export { AttributeMsg, Attributes } from "./attributes";
 export { AdminConnection } from "./connection";
-export { AdminContext } from "./context";
-export { EventContext, ListenersCollector, TajribaEvent } from "./events";
+export { AdminContext, TajribaAdminAccess } from "./context";
+export type {
+  AddLinkPayload,
+  AddScopePayload,
+  AddTransitionPayload,
+  Finalizer,
+  StepPayload,
+} from "./context";
+export {
+  EventContext,
+  EvtCtxCallback,
+  ListenersCollector,
+  ListenersCollectorProxy,
+  TajribaEvent,
+} from "./events";
 export type { Subscriber } from "./events";
+export { Globals } from "./globals";
 export { participantsSub } from "./participants";
-export type { Participant } from "./participants";
-export { Runloop } from "./runloop";
+export type { Connection, ConnectionMsg, Participant } from "./participants";
 export { Scope, Scopes } from "./scopes";
-export { Subscriptions } from "./subscriptions";
-export type { ScopeSubscriptionInput, Subs } from "./subscriptions";
-export { FileTokenStorage, TokenProvider } from "./token_file";
-export { transitionsSub } from "./transitions";
-export type { Transition } from "./transitions";
+export type { KV, ScopeSubscriptionInput, Subs } from "./subscriptions";
+export type { Step } from "./transitions";

@@ -26,6 +26,8 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+const DefaultAddr = ":3000"
+
 // ConfigFlags helps configure cobra and viper flags.
 func ConfigFlags(cmd *cobra.Command, prefix string) error {
 	if cmd == nil {
@@ -39,7 +41,7 @@ func ConfigFlags(cmd *cobra.Command, prefix string) error {
 	viper.SetDefault(prefix, &Config{})
 
 	flag := prefix + ".addr"
-	sval := ":3000"
+	sval := DefaultAddr
 	cmd.Flags().StringP(flag, "s", sval, "Address of the server")
 	viper.SetDefault(flag, sval)
 

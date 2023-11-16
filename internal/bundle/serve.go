@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/empiricaly/empirica"
+	"github.com/empiricaly/empirica/internal/build"
 	"github.com/empiricaly/empirica/internal/server"
 	"github.com/empiricaly/empirica/internal/templates"
 	"github.com/empiricaly/tajriba"
@@ -33,7 +34,7 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMo
 		log.Fatal().Err(err).Msg("invalid config")
 	}
 
-	go func() {
+	go func(ctx context.Context) {
 		parts := strings.Split(conf.Callbacks.ServeCmd, " ")
 		if len(parts) == 0 {
 			log.Error().Msg("callbacks: empty serve command")
@@ -42,11 +43,23 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMo
 		}
 
 		var args []string
+		cmd := parts[0]
 		if len(parts) > 1 {
-			args = parts[1:]
+			if parts[0] == "npm" {
+				cmd = "empirica"
+				args = parts
+			} else {
+				args = parts[1:]
+			}
 		}
 
 		args = append(args, "--token", conf.Callbacks.Token)
+
+		addr := conf.Server.Addr
+		if strings.HasPrefix(addr, ":") {
+			addr = "http://localhost" + addr + "/query"
+		}
+		args = append(args, "--url", addr)
 
 		if conf.Callbacks.SessionToken != "" {
 			p := conf.Callbacks.SessionToken
@@ -59,12 +72,11 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMo
 			args = append(args, "--sessionTokenPath", p)
 		}
 
-		log.Trace().
-			Strs("args", args).
-			Str("cmd", parts[0]).
+		log.Debug().
+			Str("cmd", strings.Join(append([]string{cmd}, args...), " ")).
 			Msg("serve: start server command")
 
-		c := exec.CommandContext(ctx, parts[0], args...)
+		c := exec.CommandContext(ctx, cmd, args...)
 
 		p := path.Join(dir, "callbacks")
 
@@ -89,7 +101,7 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMo
 
 			log.Error().Err(err).Msg("serve: failed server command")
 		}
-	}()
+	}(ctx)
 
 	s, err := server.Prepare(conf.Server)
 	if err != nil {
@@ -107,25 +119,33 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMo
 	s.Router.GET("/dev", server.DevCheck(conf.Production))
 	s.Router.GET("/treatments", server.ReadTreatments(conf.Server.Treatments))
 	s.Router.PUT("/treatments", server.WriteTreatments(conf.Server.Treatments))
+	s.Router.GET("/lobbies", server.ReadLobbies(conf.Server.Lobbies))
+	s.Router.PUT("/lobbies", server.WriteLobbies(conf.Server.Lobbies))
 	s.Router.ServeFiles("/admin/*filepath", templates.HTTPFS("admin-ui"))
 
 	ctx, taj, schema, err := tajriba.Setup(ctx, conf.Tajriba, false)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to start tajriba")
 	}
-	defer taj.Close(ctx)
+	defer taj.Close()
 
-	err = tajriba.Init(ctx, conf.Tajriba, schema, s.Router)
+	err = taj.Init(schema, s.Router)
 	if err != nil {
-		log.Fatal().Err(err).Msg("failed to start tajriba")
+		return errors.Wrap(err, "init tajriba")
 	}
 
 	if err := s.Start(ctx); err != nil {
 		return errors.Wrap(err, "start server")
 	}
 
+	bver, err := build.VersionJSON()
+	if err != nil {
+		log.Error().Err(err).Msg("serve: failed to get build version")
+	}
+
 	log.Info().
-		Msg("empirica: server started")
+		RawJSON("build", bver).
+		Msg("tajriba: server started")
 
 	s.Wait()
 

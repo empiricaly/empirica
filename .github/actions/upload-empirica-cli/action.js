@@ -23,6 +23,14 @@ async function run(core, github, S3, fs) {
   const AWS_SECRET_ACCESS_KEY = core.getInput("AWS_SECRET_ACCESS_KEY", {
     required: true,
   });
+  let sourceDir = core.getInput("path", {
+    required: true,
+  });
+
+  if (!sourceDir.startsWith("/")) {
+    sourceDir = path.join(process.cwd(), sourceDir);
+  }
+
   const withVariantsStr = core.getInput("withVariants");
   const withVariants = withVariantsStr === "true";
 
@@ -39,16 +47,12 @@ async function run(core, github, S3, fs) {
     s3Config.signatureVersion = awsSignatureVersion;
   }
 
-  const s3 = new S3(s3Config);
-
   const files = [
     `${fileName}-linux-amd64`,
     `${fileName}-darwin-amd64`,
     `${fileName}-darwin-arm64`,
     // `${fileName}-windows-amd64`,
   ];
-
-  const sourceDir = path.join(process.cwd(), "out");
 
   const uploadParams = getUploadParams(
     sourceDir,
@@ -65,26 +69,8 @@ async function run(core, github, S3, fs) {
   const uploads = [];
   for (const params of uploadParams) {
     core.info(`New Upload: ${JSON.stringify(params, undefined, 2)}`);
-
     params.Body = fs.createReadStream(params.Body);
-
-    uploads.push(
-      new Promise((resolve, reject) => {
-        s3.upload(params, (err, data) => {
-          if (err) {
-            core.error(err);
-            reject(err);
-
-            return;
-          }
-
-          core.info(`uploaded - ${data.Key}`);
-          core.info(`located - ${data.Location}`);
-
-          resolve(data.Location);
-        });
-      })
-    );
+    uploads.push(upload(S3, s3Config, core, params));
   }
 
   if (!withVariants) {
@@ -93,7 +79,7 @@ async function run(core, github, S3, fs) {
     return;
   }
 
-  const attr = getAttributes(
+  const attr = getBuildAttributes(
     github.context.ref,
     github.context.sha,
     github.context.eventName,
@@ -122,85 +108,20 @@ async function run(core, github, S3, fs) {
 
   for (const params of variantUploads) {
     core.info(`New Upload: ${JSON.stringify(params, undefined, 2)}`);
-
     params.Body = fs.createReadStream(params.Body);
-
-    uploads.push(
-      new Promise((resolve, reject) => {
-        s3.upload(params, (err, data) => {
-          if (err) {
-            core.error(err);
-            reject(err);
-
-            return;
-          }
-
-          core.info(`uploaded - ${data.Key}`);
-          core.info(`located - ${data.Location}`);
-
-          resolve(data.Location);
-        });
-      })
-    );
+    uploads.push(upload(S3, s3Config, core, params));
   }
 
   await Promise.all(uploads);
-
-  // const variantUploads = createVariantCopies(
-  //   files,
-  //   bucket,
-  //   rootPath,
-  //   fileName,
-  //   attr
-  // );
-
-  // const variations = [];
-
-  // for (const params of variantUploads) {
-  // variations.push(
-  //   new Promise((resolve) => {
-  //     core.info(`New Copy: ${JSON.stringify(params, undefined, 2)}`);
-
-  //     s3.copyObject(params, (err, data) => {
-  //       if (err) core.error(err);
-  //       core.info(`copied - ${params.CopySource} to ${params.Key}`);
-  //       resolve(null);
-  //     });
-  //   })
-  // );
-  // }
-
-  // await Promise.all(variations);
 }
 
-function getAttributes(gitRef, gitSHA, githubEvent, githubRun) {
-  let tag = "unknown";
-  let branch = "unknown";
+function getBuildAttributes(gitRef, gitSHA, githubEvent, githubRun) {
+  let tag = process.env.BUILD_TAG;
+  let branch = process.env.BUILD_BRANCH || "unknown";
   let version = "unknown";
-  if (gitRef.startsWith("refs/tags/")) {
-    const tagParts = gitRef.split("/");
-    tag = tagParts.slice(2).join("/");
 
-    if (semver.valid(tag)) {
-      version = tag;
-    }
-  } else {
-    if (githubEvent === "pull_request") {
-      branch = process.env.GITHUB_HEAD_REF || "not_found";
-    } else {
-      // Other events where we have to extract branch from the ref
-      // Ref example: refs/heads/main, refs/tags/X
-      const branchParts = gitRef.split("/");
-      branch = branchParts.slice(2).join("/");
-    }
-  }
-
-  branch = branch.replace("/", "-");
-  tag = tag.replace("/", "-");
-
-  // If tag and branch are the same, we are on a tag, we assume branc is main.
-  if (tag === branch) {
-    branch = "main";
+  if (tag && semver.valid(tag)) {
+    version = tag;
   }
 
   const sha = gitSHA.substring(0, 7);
@@ -385,10 +306,75 @@ function createVariantUploads(
   return variations;
 }
 
+function upload(S3, s3Config, core, params) {
+  return new Promise((resolve, reject) => {
+    retryOperation(
+      () => {
+        return uploadObject(S3, s3Config, core, params);
+      },
+      1000,
+      5,
+      () => {
+        core.info(`retrying - ${params.Key}`);
+      }
+    )
+      .then(() => {
+        core.error(`uploaded - ${params.Key}`);
+        resolve(params);
+      })
+      .catch((err) => {
+        core.error(`failed - ${params.Key}`);
+        core.error(err);
+        reject(err);
+      });
+  });
+}
+
+function uploadObject(S3, s3Config, core, params) {
+  const s3 = new S3(s3Config);
+  return new Promise((resolve, reject) => {
+    s3.upload(params, (err, data) => {
+      if (err) {
+        reject(err);
+
+        return;
+      }
+
+      core.info(`uploaded - ${data.Key}`);
+
+      resolve(data);
+    });
+  });
+}
+
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const retryOperation = (operation, delay, retries, retrying) =>
+  new Promise((resolve, reject) => {
+    return operation()
+      .then(resolve)
+      .catch((reason) => {
+        if (retries > 0) {
+          if (retrying) {
+            retrying();
+          }
+
+          return wait(delay)
+            .then(() => {
+              return retryOperation(operation, delay, retries - 1, retrying);
+            })
+            .then(resolve)
+            .catch(reject);
+        }
+
+        return reject(reason);
+      });
+  });
+
 module.exports = {
   run,
   getUploadParams,
-  getAttributes,
+  getBuildAttributes,
   createVariantUploads,
   createVariantCopies,
 };

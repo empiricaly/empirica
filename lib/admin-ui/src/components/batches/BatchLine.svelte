@@ -1,16 +1,19 @@
 <script>
   import { currentAdmin } from "../../utils/auth.js";
+  import { formatFactorsToString } from "../../utils/treatments.js";
+  import ArrowIcon from "../ArrowIcon.svelte";
+  import PlayIcon from "../PlayIcon.svelte";
+  import StopIcon from "../StopIcon.svelte";
   import Badge from "../common/Badge.svelte";
   import Button from "../common/Button.svelte";
   import TimeSince from "../common/TimeSince.svelte";
   import GamesLine from "../games/GamesLine.svelte";
-  import PlayIcon from "../PlayIcon.svelte";
-  import StopIcon from "../StopIcon.svelte";
-  import FactorsString from "../treatments/FactorsString.svelte";
 
   export let batch;
   export let games;
   export let players;
+
+  let showGames = false;
 
   const config = batch.get("config");
   let gameCount = "unknown";
@@ -94,26 +97,33 @@
     <div class="flex items-top px-4 py-4 sm:px-6">
       <div class="flex min-w-0 flex-1 items-baseline">
         <div class="flex-shrink-0 -mt-1 h-min flex space-x-1 items-baseline">
-          <Badge color={statusColor}>
-            {status}
-          </Badge>
+          <div class="flex flex-col items-end w-20">
+            <Badge color={statusColor}>
+              {status}
+            </Badge>
+
+            <button
+              class={`w-3 h-3 mr-2 mt-3 transition-transform text-gray-500 ${
+                showGames ? "rotate-180" : "rotate-90"
+              }`}
+              on:click={() => {
+                showGames = !showGames;
+              }}
+            >
+              <ArrowIcon />
+            </button>
+          </div>
         </div>
-        <div class="min-w-0 flex-1 px-4 ">
+        <div class="min-w-0 flex-1 px-4">
           <div>
-            <div class="truncate text-sm  flex space-x-1 items-baseline">
+            <div class="truncate flex space-x-1 items-baseline">
               <div class="font-medium text-empirica-600">
                 {config.kind}
               </div>
-              {#if config.kind === "simple"}
-                <Badge>
-                  {gameCount}
-                  {gameCount === 1 ? "game" : "games"}
-                </Badge>
-              {/if}
 
               {#if status === "Running" || status === "Ended" || status === "Terminated" || status === "Failed"}
                 {#if batch.attrs["status"]}
-                  <div class="text-xs">
+                  <div class="pl-4">
                     {#if status === "Running"}
                       Started
                     {:else if status === "Ended"}
@@ -131,44 +141,71 @@
                 {/if}
               {/if}
             </div>
-            <p class="mt-2 flex items-center text-sm text-gray-500">
-              <span class="truncate">
-                <div class="flex flex-col divide-transparent divide-y-2 w-full">
-                  {#if config.kind === "complete"}
-                    {#each config.config.treatments as treatment}
-                      <div class="flex items-center space-y-1">
-                        <Badge>
-                          {treatment.count}
-                          {treatment.count === 1 ? "game" : "games"}
-                        </Badge>
-                        <div class="ml-2 overflow-ellipsis font-bold italic">
-                          {treatment.treatment.name}
-                        </div>
-                        <div class="ml-2 truncate overflow-ellipsis opacity-60">
+            <div class="mt-2 text-sm text-gray-500">
+              <div class="flex flex-col divide-transparent divide-y-2 w-full">
+                {#if config.kind === "custom"}
+                  <pre>{JSON.stringify(config.config, null, 2)}</pre>
+                {/if}
+                {#if config.kind === "complete"}
+                  {#each config.config.treatments as treatment}
+                    <div class="flex items-center space-y-1">
+                      <Badge>
+                        {treatment.count}
+                        {treatment.count === 1 ? "game" : "games"}
+                      </Badge>
+                      <div
+                        class="ml-2 overflow-ellipsis font-medium"
+                        title={formatFactorsToString(
+                          treatment.treatment.factors,
+                          "\n"
+                        )}
+                      >
+                        {treatment.treatment.name}
+                      </div>
+                      <!-- <div class="ml-2 truncate overflow-ellipsis opacity-60">
                           <FactorsString
                             factors={treatment.treatment.factors}
                           />
+                        </div> -->
+                    </div>
+                  {/each}
+                {:else if config.kind === "simple"}
+                  <div class="flex space-x-2">
+                    <div class="inline-block">
+                      <Badge>
+                        {gameCount}
+                        {gameCount === 1 ? "game" : "games"}
+                      </Badge>
+                    </div>
+                    <div>
+                      {#each config.config.treatments as treatment}
+                        <div class="flex items-center space-y-1">
+                          <div
+                            class="ml-2 overflow-ellipsis font-medium"
+                            title={formatFactorsToString(
+                              treatment.factors,
+                              "\n"
+                            )}
+                          >
+                            {treatment.name}
+                          </div>
+                          <!-- <div
+                            class="ml-2 truncate overflow-ellipsis opacity-60"
+                          >
+                            <FactorsString factors={treatment.factors} />
+                          </div> -->
                         </div>
-                      </div>
-                    {/each}
-                  {:else if config.kind === "simple"}
-                    {#each config.config.treatments as treatment}
-                      <div class="flex items-center space-y-1">
-                        <div class="ml-2 overflow-ellipsis font-bold italic">
-                          {treatment.name}
-                        </div>
-                        <div class="ml-2 truncate overflow-ellipsis opacity-60">
-                          <FactorsString factors={treatment.factors} />
-                        </div>
-                      </div>
-                    {/each}
-                  {/if}
-                </div>
-                {#if status === "Running"}
+                      {/each}
+                    </div>
+                  </div>
+                {/if}
+              </div>
+              <div class="mt-4">
+                {#if showGames}
                   <GamesLine {batch} {games} {players} />
                 {/if}
-              </span>
-            </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

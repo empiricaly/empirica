@@ -7,6 +7,7 @@ import {
 import React from "react";
 import { Avatar } from "../components/Avatar";
 import { Button } from "../components/Button";
+import "../../node_modules/@empirica/core/dist/player-classic-react.css";
 
 export function JellyBeans() {
   const player = usePlayer();

@@ -1,45 +1,59 @@
-import { useEffect, useState } from "react";
-import { BehaviorSubject, Observable } from "rxjs";
+import { useEffect, useRef, useState } from "react";
+import { BehaviorSubject, Observable, Subscription } from "rxjs";
 import { ParticipantModeContext } from "../../context";
 import { useParticipantContext } from "../../react/hooks";
 import type { StepTick } from "../../steps";
 import { EmpiricaClassicContext, Game, Player, Round, Stage } from "../classic";
 
 export function usePlayer() {
-  return usePartModeCtxKey<EmpiricaClassicContext, "player", Player>("player");
+  return usePartModeCtxKey<EmpiricaClassicContext, "player", Player | null>(
+    "player"
+  );
 }
 
 export function useGame() {
-  return usePartModeCtxKey<EmpiricaClassicContext, "game", Game>("game");
+  return usePartModeCtxKey<EmpiricaClassicContext, "game", Game | null>("game");
 }
 
 export function useRound() {
-  return usePartModeCtxKey<EmpiricaClassicContext, "round", Round>("round");
+  return usePartModeCtxKey<EmpiricaClassicContext, "round", Round | null>(
+    "round"
+  );
 }
 
 export function useStage() {
-  return usePartModeCtxKey<EmpiricaClassicContext, "stage", Stage>("stage");
+  return usePartModeCtxKey<EmpiricaClassicContext, "stage", Stage | null>(
+    "stage"
+  );
 }
 
 export function useStageTimer() {
   const stage = useStage();
+
   const [val, setVal] = useState<{ tick: StepTick | undefined }>({
     tick: stage?.timer?.current,
   });
+
+  const timerSubscription = useRef<Subscription | null>(null);
 
   useEffect(() => {
     if (!stage || !stage.timer) {
       return;
     }
 
-    const sub = stage.timer.obs().subscribe({
-      next(val) {
-        setVal({ tick: val });
-      },
-    });
+    if (timerSubscription.current === null) {
+      timerSubscription.current = stage.timer.obs().subscribe({
+        next(val) {
+          setVal({ tick: val });
+        },
+      });
+    }
 
-    return sub.unsubscribe.bind(sub);
-  }, [stage]);
+    return () => {
+      timerSubscription?.current?.unsubscribe.bind(timerSubscription.current);
+      timerSubscription.current = null;
+    };
+  }, [stage?.timer]);
 
   return val.tick;
 }

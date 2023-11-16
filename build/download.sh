@@ -166,9 +166,11 @@ Now you need to do the following:
   Run the following as root:
         cp "$BIN_FILE" /usr/local/bin/empirica
 EOF
-fi
 
 cleanUp
+
+fi
+
 
 trap - EXIT
 }

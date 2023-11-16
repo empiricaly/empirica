@@ -7,13 +7,13 @@ import { JsonValue } from "../../utils/json";
 import { AddScopePayload, StepPayload } from "../context";
 import { EventContext } from "../events";
 import { Scope } from "../scopes";
-import { AttributeInput, attrs, scopeConstructor } from "./helpers";
+import { AttrInput, attrs, scopeConstructor } from "./helpers";
 
 const isString = z.string().parse;
 const isOptionalNumber = z.number().optional().parse;
 
 export const endedStatuses = ["ended", "terminated", "failed"];
-export type EndedStatuses = typeof endedStatuses[number];
+export type EndedStatuses = (typeof endedStatuses)[number];
 
 const reservedKeys = [
   "batchID",
@@ -44,9 +44,9 @@ export class Batch extends Scope<Context, ClassicKinds> {
     return this.scopesByKindMatching<Game>("game", "batchID", this.id);
   }
 
-  addGame(attributes: { [key: string]: JsonValue } | AttributeInput[]) {
+  addGame(attributes: { [key: string]: JsonValue } | AttrInput[]) {
     if (!Array.isArray(attributes)) {
-      const newAttr: AttributeInput[] = [];
+      const newAttr: AttrInput[] = [];
       for (const key in attributes) {
         newAttr.push({
           key,
@@ -183,6 +183,7 @@ export class Game extends BatchOwned {
     const previousGameTreatment = player.get("treatment");
 
     const treatment = this.get("treatment");
+    const treatmentName = this.get("treatmentName");
     if (!treatment) {
       warn(`game without treatment: ${this.id}`);
     }
@@ -190,6 +191,9 @@ export class Game extends BatchOwned {
     player.set("gameID", this.id);
     if (treatment) {
       player.set("treatment", treatment);
+    }
+    if (treatmentName) {
+      player.set("treatmentName", treatmentName);
     }
 
     if (
@@ -221,7 +225,13 @@ export class Game extends BatchOwned {
   // Add player to running game
   private async addPlayer(player: Player) {
     if (!this.isRunning) {
-      // await this.addPlayerToGroup(player);
+      await this.addLinks([
+        {
+          link: true,
+          participantIDs: [player.participantID!],
+          nodeIDs: [this.id],
+        },
+      ]);
 
       return;
     }
@@ -296,7 +306,13 @@ export class Game extends BatchOwned {
   // Remove player from running game
   private async removePlayer(player: Player) {
     if (!this.isRunning) {
-      // await this.removePlayerFromGroup(player);
+      await this.addLinks([
+        {
+          link: false,
+          participantIDs: [player.participantID!],
+          nodeIDs: [this.id],
+        },
+      ]);
 
       return;
     }
@@ -351,9 +367,9 @@ export class Game extends BatchOwned {
     ]);
   }
 
-  addRound(attributes: { [key: string]: JsonValue } | AttributeInput[]) {
+  addRound(attributes: { [key: string]: JsonValue } | AttrInput[]) {
     if (!Array.isArray(attributes)) {
-      const newAttr: AttributeInput[] = [];
+      const newAttr: AttrInput[] = [];
       for (const key in attributes) {
         newAttr.push({
           key,
@@ -423,10 +439,10 @@ export class Game extends BatchOwned {
     const stageAdds: AddScopeInput[] = [];
 
     const addStage = (
-      attributes: { [key: string]: JsonValue } | AttributeInput[]
+      attributes: { [key: string]: JsonValue } | AttrInput[]
     ) => {
       if (!Array.isArray(attributes)) {
-        const newAttr: AttributeInput[] = [];
+        const newAttr: AttrInput[] = [];
         for (const key in attributes) {
           newAttr.push({
             key,
@@ -719,6 +735,16 @@ export class PlayerStage extends GameOwned {
   }
 }
 
+// We don't want stages that are too short since we're getting close to the
+// limits of the precision of loose distributed time synchronization.
+const minStageDuration = 5;
+
+// This is about 31 years. I think that's enough. The main reason for this is to
+// prevent https://github.com/empiricaly/empirica/issues/319 where someone had
+// set the duration to 9999999999, which is >317 years, which is beyond what the
+// Go server time.Duration can handle, and it was exploding.
+const maxStageDuration = 1_000_000_000;
+
 export class Round extends GameOwned {
   get stages() {
     const stages = this.scopesByKindMatching<Stage>(
@@ -730,9 +756,9 @@ export class Round extends GameOwned {
     return stages;
   }
 
-  addStage(attributes: { [key: string]: JsonValue } | AttributeInput[]) {
+  addStage(attributes: { [key: string]: JsonValue } | AttrInput[]) {
     if (!Array.isArray(attributes)) {
-      const newAttr: AttributeInput[] = [];
+      const newAttr: AttrInput[] = [];
       for (const key in attributes) {
         newAttr.push({
           key,
@@ -744,7 +770,12 @@ export class Round extends GameOwned {
     }
 
     const durAttr = attributes.find((a) => a.key === "duration");
-    const res = z.number().int().gte(5).safeParse(durAttr?.value);
+    const res = z
+      .number()
+      .int()
+      .gte(minStageDuration)
+      .lte(maxStageDuration)
+      .safeParse(durAttr?.value);
     if (!res.success) {
       throw new Error(`stage duration invalid: ${res.error}`);
     }
@@ -761,8 +792,8 @@ export class Round extends GameOwned {
       throw new Error("missing game ID on round");
     }
 
-    const stageIndex = z.number().parse(this.get("stageIndex") || -1) + 1;
-    this.set("stageIndex", stageIndex);
+    const stageIndex = isOptionalNumber(this.get("stageIndex")) || 0;
+    this.set("stageIndex", stageIndex + 1);
 
     const [scope, accessors] = scopeConstructor({
       kind: "stage",
@@ -884,6 +915,10 @@ export class Round extends GameOwned {
 export class Stage extends GameOwned {
   get round() {
     return this.scopeByKey<Round>("roundID");
+  }
+
+  isCurrent() {
+    return this.currentGame?.get("stageID") === this.id;
   }
 
   end(status: EndedStatuses, reason: string) {

@@ -130,7 +130,7 @@ test("Globals should be observable, pre-init", (t) => {
 test("Globals itself should be observable", (t) => {
   const { globs, globals } = setupGlobals();
 
-  const vals: Globals[] = [];
+  const vals: (Globals | undefined)[] = [];
   globals.self!.subscribe({
     next(val) {
       vals.push(val);

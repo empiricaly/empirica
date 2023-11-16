@@ -1,4 +1,4 @@
-import { BehaviorSubject, Subject } from "rxjs";
+import { BehaviorSubject, Observable, Subject } from "rxjs";
 import { Attributes } from "../../shared/attributes";
 import { Globals } from "../../shared/globals";
 import { Constructor } from "../../shared/helpers";
@@ -91,12 +91,12 @@ export class Stage extends Scope<Context, EmpiricaClassicKinds> {
 }
 
 // TODO update context
-class Context {
-  public game?: Game;
-  public stage?: Stage;
+export class Context {
+  public game?: Game | null;
+  public stage?: Stage | null;
 }
 
-type EmpiricaClassicKinds = {
+export type EmpiricaClassicKinds = {
   game: Constructor<Game>;
   player: Constructor<Player>;
   playerGame: Constructor<PlayerGame>;
@@ -117,20 +117,20 @@ export const kinds = {
 };
 
 export type EmpiricaClassicContext = {
-  game: BehaviorSubject<Game | undefined>;
-  player: BehaviorSubject<Player | undefined>;
-  players: BehaviorSubject<Player[]>;
-  round: BehaviorSubject<Round | undefined>;
-  stage: BehaviorSubject<Stage | undefined>;
-  globals: BehaviorSubject<Globals>;
+  game: BehaviorSubject<Game | null | undefined>;
+  player: BehaviorSubject<Player | null | undefined>;
+  players: BehaviorSubject<Player[] | undefined>;
+  round: BehaviorSubject<Round | null | undefined>;
+  stage: BehaviorSubject<Stage | null | undefined>;
+  globals: BehaviorSubject<Globals | undefined>;
 };
 
 export function EmpiricaClassic(
   participantID: string,
   provider: TajribaProvider
 ): EmpiricaClassicContext {
-  const attributesDones = new Subject<void>();
-  const scopesDones = new Subject<void>();
+  const attributesDones = new Subject<string[]>();
+  const scopesDones = new Subject<string[]>();
 
   const ctx = new Context();
   const attributes = new Attributes(
@@ -138,7 +138,10 @@ export function EmpiricaClassic(
     attributesDones,
     provider.setAttributes
   );
-  const steps = new Steps(provider.steps, provider.dones);
+  const steps = new Steps(
+    provider.steps,
+    provider.dones as unknown as Observable<void>
+  );
   const scopes = new Scopes(
     provider.scopes,
     scopesDones,
@@ -152,11 +155,11 @@ export function EmpiricaClassic(
   const glob = new Globals(provider.globals);
 
   const ret = {
-    game: new BehaviorSubject<Game | undefined>(undefined),
-    player: new BehaviorSubject<Player | undefined>(undefined),
-    players: new BehaviorSubject<Player[]>([]),
-    round: new BehaviorSubject<Round | undefined>(undefined),
-    stage: new BehaviorSubject<Stage | undefined>(undefined),
+    game: new BehaviorSubject<Game | null | undefined>(undefined),
+    player: new BehaviorSubject<Player | null | undefined>(undefined),
+    players: new BehaviorSubject<Player[] | undefined>(undefined),
+    round: new BehaviorSubject<Round | null | undefined>(undefined),
+    stage: new BehaviorSubject<Stage | null | undefined>(undefined),
     globals: glob.self,
   };
 
@@ -171,6 +174,18 @@ export function EmpiricaClassic(
           participantIDs.add(participant.id);
         }
       }
+    },
+  });
+
+  let scopesUpdated = new Set<string>();
+  provider.attributes.subscribe({
+    next: (attr) => {
+      const nodeID = attr.attribute.node?.id || attr.attribute.nodeID;
+      if (!nodeID) {
+        return;
+      }
+
+      scopesUpdated.add(nodeID);
     },
   });
 
@@ -199,8 +214,8 @@ export function EmpiricaClassic(
 
       let playersChanged = false;
       const players: Player[] = [];
-      for (let i = 0; i < updated.players.length; i++) {
-        let p = updated.players[i];
+      for (let i = 0; i < (updated.players || []).length; i++) {
+        let p = updated.players![i];
 
         if (p) {
           const partID = attributes.nextAttributeValue(
@@ -212,7 +227,7 @@ export function EmpiricaClassic(
           }
         }
 
-        if (!playersChanged && scopeChanged(p, current.players[i])) {
+        if (!playersChanged && scopeChanged(p, (current.players || [])[i])) {
           playersChanged = true;
         }
 
@@ -224,8 +239,10 @@ export function EmpiricaClassic(
         ret.players.next(players);
       }
 
-      scopesDones.next();
-      attributesDones.next();
+      const scopeIDs = Array.from(scopesUpdated);
+      scopesDones.next(scopeIDs);
+      attributesDones.next(scopeIDs);
+      scopesUpdated.clear();
     },
   });
 
@@ -233,18 +250,22 @@ export function EmpiricaClassic(
 }
 
 type mainObjects = {
-  game?: Game;
-  player?: Player;
-  round?: Round;
-  stage?: Stage;
-  players: Player[];
+  game?: Game | null;
+  player?: Player | null;
+  round?: Round | null;
+  stage?: Stage | null;
+  players?: Player[];
 };
 
 function scopeChanged(
-  current?: Scope<Context, EmpiricaClassicKinds>,
-  updated?: Scope<Context, EmpiricaClassicKinds>
+  current?: Scope<Context, EmpiricaClassicKinds> | null,
+  updated?: Scope<Context, EmpiricaClassicKinds> | null
 ): boolean {
   if (!current && !updated) {
+    if (current === undefined && updated === null) {
+      return true;
+    }
+
     return false;
   }
 
@@ -274,6 +295,10 @@ function getMainObjects(
 
   const res: mainObjects = {
     players: Array.from(players.values()) as Player[],
+    game: null,
+    player: null,
+    round: null,
+    stage: null,
   };
 
   if (players.size === 0) {
@@ -294,7 +319,7 @@ function getMainObjects(
     return res;
   }
 
-  for (const player of res.players) {
+  for (const player of res.players || []) {
     const key = `playerGameID-${res.game.id}`;
     if (!nextScopeByKey(scopes, attributes, player, key)) {
       return res;
@@ -306,7 +331,7 @@ function getMainObjects(
     return res;
   }
 
-  for (const player of res.players) {
+  for (const player of res.players || []) {
     const key = `playerStageID-${res.stage.id}`;
     if (!nextScopeByKey(scopes, attributes, player, key)) {
       delete res.stage;
@@ -319,7 +344,7 @@ function getMainObjects(
     return res;
   }
 
-  for (const player of res.players) {
+  for (const player of res.players || []) {
     const key = `playerRoundID-${res.round.id}`;
     if (!nextScopeByKey(scopes, attributes, player, key)) {
       delete res.stage;
@@ -339,8 +364,8 @@ function nextScopeByKey(
 ) {
   const id = attributes.nextAttributeValue(scope.id, key);
   if (!id || typeof id !== "string") {
-    return;
+    return null;
   }
 
-  return scopes.scope(id);
+  return scopes.scope(id) || null;
 }

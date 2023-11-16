@@ -35,7 +35,7 @@ export class Scopes<
 
   constructor(
     scopesObs: Observable<ScopeUpdate>,
-    donesObs: Observable<void>,
+    donesObs: Observable<string[]>,
     ctx: Context,
     kinds: Kinds,
     attributes: Attributes,
@@ -44,6 +44,7 @@ export class Scopes<
     super(scopesObs, donesObs, ctx, kinds, attributes);
   }
 
+  /** @internal */
   subscribeKind(kind: keyof Kinds): Observable<ScopeMsg<Context, Kinds>> {
     let sub = this.kindSubs.get(kind);
     if (!sub) {
@@ -53,13 +54,16 @@ export class Scopes<
       const scopes = this.byKind(kind);
 
       setTimeout(() => {
+        if (scopes.size === 0) {
+          sub!.next({ done: true });
+
+          return;
+        }
+
         let count = 0;
         for (const [_, scope] of scopes) {
           count++;
           sub!.next({ scope, done: scopes.size === count });
-        }
-        if (scopes.size === 0) {
-          sub!.next({ done: scopes.size === count });
         }
       }, 0);
     }
@@ -67,18 +71,19 @@ export class Scopes<
     return sub!;
   }
 
-  protected next() {
+  protected next(scopeIDs: string[]) {
     for (const [_, scopeReplaySubject] of this.scopes) {
       const scope = scopeReplaySubject.getValue();
-      if (scope._updated) {
+      if (this.newScopes.get(scope.id) && scopeIDs.includes(scope.id)) {
         const kindSub = this.kindSubs.get(scope.kind);
         if (kindSub) {
           kindSub.next({ scope, done: true });
         }
+        this.newScopes.set(scope.id, false);
       }
     }
 
-    super.next();
+    super.next(scopeIDs);
   }
 
   protected create(

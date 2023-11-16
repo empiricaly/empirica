@@ -28,7 +28,12 @@ import {
   StepPayload,
   TajribaAdminAccess,
 } from "./context";
-import { EventContext, ListenersCollector, Subscriber } from "./events";
+import {
+  EventContext,
+  Flusher,
+  ListenersCollector,
+  Subscriber,
+} from "./events";
 import { Globals } from "./globals";
 import { awaitObsValue, subscribeAsync } from "./observables";
 import { ConnectionMsg, Participant, participantsSub } from "./participants";
@@ -47,7 +52,7 @@ export class Runloop<
   private transitions = new Subject<Transition>();
   private scopesSub = new Subject<ScopeUpdate>();
   private attributesSub = new Subject<AttributeUpdate>();
-  private donesSub = new Subject<void>();
+  private donesSub = new Subject<string[]>();
   private attributes: Attributes;
   private finalizers: Finalizer[] = [];
   private groupPromises: Promise<{ id: string }[]>[] = [];
@@ -100,7 +105,12 @@ export class Runloop<
       mut
     );
 
-    this.evtctx = new EventContext(this.subs, mut, this.scopes);
+    this.evtctx = new EventContext(
+      this.subs,
+      mut,
+      this.scopes,
+      new Flusher(this.postCallback.bind(this, true))
+    );
     this.cake = new Cake(
       this.evtctx,
       this.scopes.scope.bind(this.scopes),
@@ -189,13 +199,24 @@ export class Runloop<
       // If the same key is set twice within the same loop, only send 1
       // setAttribute update.
       const uniqueAttrs: { [key: string]: SetAttributeInput } = {};
+      let appendCount = 0;
       for (const attr of this.attributeInputs) {
         if (!attr.nodeID) {
           error(`runloop: attribute without nodeID: ${JSON.stringify(attr)}`);
           continue;
         }
 
-        uniqueAttrs[`${attr.nodeID}-${attr.key}`] = attr;
+        let key = `${attr.nodeID}-${attr.key}`;
+
+        if (attr.append) {
+          key += `-${appendCount++}`;
+        }
+
+        if (attr.index !== undefined) {
+          key += `-${attr.index}`;
+        }
+
+        uniqueAttrs[key] = attr;
       }
 
       const attrs = Object.values(uniqueAttrs);
@@ -259,7 +280,7 @@ export class Runloop<
           });
         }
 
-        this.donesSub.next();
+        this.donesSub.next(scopes.map((s) => s.id));
 
         return scopes;
       })
@@ -366,7 +387,7 @@ export class Runloop<
     let resolve: (value: void) => void;
     const prom = new Promise((r) => (resolve = r));
     this.taj.scopedAttributes(filters).subscribe({
-      next: ({ attribute, done }) => {
+      next: ({ attribute, scopesUpdated, done }) => {
         if (attribute) {
           if (attribute.node.__typename !== "Scope") {
             error(`scoped attribute with non-scope node`);
@@ -386,7 +407,12 @@ export class Runloop<
 
         if (done) {
           resolve();
-          this.donesSub.next();
+          if (!scopesUpdated) {
+            error(`scopesUpdated is empty`);
+            return;
+          }
+
+          this.donesSub.next(scopesUpdated);
         }
       },
     });

@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/empiricaly/empirica"
+	"github.com/empiricaly/empirica/internal/server"
 	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/klauspost/compress/gzip"
 	"github.com/klauspost/compress/zstd"
@@ -82,12 +83,20 @@ func prepDotEmpirica(inConf *empirica.Config, dir string, devMode bool) (*empiri
 	conf.Server.Production = !devMode
 	conf.Tajriba.Server.Production = !devMode
 
+	if conf.Server.Addr == server.DefaultAddr {
+		conf.Server.Addr = inConf.Server.Addr
+	}
+
 	if inConf.Tajriba.Store.UseMemory {
 		conf.Tajriba.Store.UseMemory = true
 	}
 
 	if inConf.Tajriba.Store.File != empirica.DefaultStoreFile {
 		conf.Tajriba.Store.File = inConf.Tajriba.Store.File
+	}
+
+	if err := os.MkdirAll(path.Join(dst, settings.LocalDir), os.ModePerm); err != nil {
+		return nil, errors.Wrap(err, "create local dir")
 	}
 
 	if err := os.MkdirAll(path.Dir(conf.Tajriba.Store.File), os.ModePerm); err != nil {

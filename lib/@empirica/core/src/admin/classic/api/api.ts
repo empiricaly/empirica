@@ -43,6 +43,10 @@ export class Attribute {
     }
   }
 
+  get createdAt() {
+    return this.edge.createdAt;
+  }
+
   get id() {
     return this.edge.id;
   }

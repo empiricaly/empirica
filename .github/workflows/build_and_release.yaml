@@ -1,0 +1,223 @@
+name: Build CLI command, run tests and release packages
+
+on:
+  push:
+    branches:
+      - main
+      - "prerelease/**"
+    paths-ignore:
+      - "cmds/proxy/**"
+      - ".github/workflows/on_push_proxy.yaml"
+  pull_request:
+    paths-ignore:
+      - "cmds/proxy/**"
+      - ".github/workflows/on_push_proxy.yaml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  npm:
+    name: Build npm package
+    runs-on: ubuntu-latest
+    if: github.repository == 'empiricaly/empirica' && github.event.pull_request.draft == false
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js 16.x
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
+
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5.4
+
+      - name: "Build core package: install dependencies"
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/prerelease/')
+        run: npm ci
+
+      - name: "Build packages: Create Release Pull Request or Publish to npm"
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/prerelease/')
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          publish: npm run release:core
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Get @empirica/core package version
+        id: version
+        working-directory: ./lib/@empirica/core
+        run: echo "VERSION=v$(node -e "console.log(require('./package.json').version)")" >> $GITHUB_OUTPUT
+
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
+      published: ${{ steps.changesets.outputs.published }}
+
+  go:
+    name: Build Go binary
+    runs-on: ubuntu-latest
+    needs: [npm]
+    if: github.repository == 'empiricaly/empirica' && github.event.pull_request.draft == false
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      # We will use the result to determine if we need to create a release or not
+      - name: "Build core package: Create release tag"
+        if: needs.npm.outputs.published == 'true'
+        id: create_tag
+        uses: jaywcjlove/create-tag-action@v1.2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ needs.npm.outputs.version }}
+
+      - name: Set GITHUB_ENV
+        run: |
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+          echo "BUILD_SHA=$(git rev-list -1 HEAD)" >> $GITHUB_ENV
+          echo "BUILD_SHA_SHORT=$(git rev-parse --short=7 ${{ github.sha }})" >> $GITHUB_ENV
+
+      # If tag has been created, we assume we need to release a version
+      - name: Check if tag has been created
+        if: steps.create_tag.outputs.successful
+        run: |
+          echo "BUILD_BRANCH=`echo "main" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
+          echo "BUILD_TAG=${{ needs.npm.outputs.version }}" >> $GITHUB_ENV
+
+      # If tag hasn't been created, create a CalVer version
+      - name: Use actual branch name.
+        if: steps.create_tag.outputs.successful != 'true'
+        working-directory: ./build
+        run: |
+          echo "BUILD_TAG=$(sh generate_calver.sh)" >> $GITHUB_ENV
+
+      # Otherwise use the actual branch name
+      - name: Use actual branch name.
+        if: steps.create_tag.outputs.successful != 'true'
+        run: |
+          echo "BUILD_BRANCH=`echo "${{ steps.branch-name.outputs.current_branch }}" | sed -r 's,/,-,g'`" >> $GITHUB_ENV
+
+      - name: Log build variables
+        run: |
+          echo BUILD_DATE=${{ env.BUILD_DATE }}
+          echo BUILD_SHA=${{ env.BUILD_SHA_SHORT }}
+          echo BUILD_BRANCH=${{ env.BUILD_BRANCH }}
+          echo BUILD_TAG=${{ env.BUILD_TAG }}
+          echo EMPIRICA_CORE_VERSION=${{ needs.npm.outputs.version }}
+
+      - name: Cache Go build
+        uses: actions/cache@v3
+        id: build-cache
+        with:
+          path: |
+            /home/runner/gocache
+            /home/runner/gomodcache
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Create cache dirs
+        run: |
+          mkdir -p /home/runner/gocache
+          mkdir -p /home/runner/gomodcache
+          mkdir -p /home/runner/out
+
+      - name: Build Empirica server
+        uses: redhat-actions/buildah-build@v2
+        with:
+          image: empirica-tmp
+          containerfiles: ./build/Containerfile
+          extra-args: |
+            --volume /home/runner/out:/out
+            --volume /home/runner/gocache:/opt/app-root/src/.cache/go-build
+            --volume /home/runner/gomodcache:/opt/app-root/src/go/pkg/mod
+          build-args: |
+            BUILD_DATE=${{ env.BUILD_DATE }}
+            BUILD_SHA=${{ env.BUILD_SHA_SHORT }}
+            BUILD_BRANCH=${{ env.BUILD_BRANCH }}
+            BUILD_TAG=${{ env.BUILD_TAG }}
+
+      - name: Smoke test
+        run: /home/runner/out/empirica-linux-amd64 --help
+
+      - name: Upload binaries to S3
+        uses: ./.github/actions/upload-empirica-cli
+        with:
+          bucket: empirica
+          root: empirica
+          path: /home/runner/out
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          awsEndpoint: https://f120117e0fd797d29319953881b7634c.r2.cloudflarestorage.com
+          awsSignatureVersion: v4
+
+      - name: Log in to the Container registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        uses: redhat-actions/buildah-build@v2
+        id: build-image
+        with:
+          containerfiles: ./build/Containerfile.empirica
+          # context: /home/runner/out
+          context: ../../../out
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            latest
+            sha-${{ env.BUILD_SHA_SHORT }}
+            build-${{ env.BUILD_TAG }}
+            branch-${{ env.BUILD_BRANCH }}
+
+      # We push, even if later tests do not pass, so that we can debug
+      - name: Push to quay.io
+        id: push-to-registry
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          image: ${{ steps.build-image.outputs.image }}
+          tags: ${{ steps.build-image.outputs.tags }}
+          registry: ${{ env.REGISTRY }}
+
+  docs:
+    name: Publish api docs
+    runs-on: ubuntu-latest
+    needs: [npm, go]
+    if: needs.npm.outputs.published == 'true'
+    steps:
+      - name: Checkout empirica repo
+        uses: actions/checkout@v3
+        with:
+          path: empirica
+
+      - name: Checkout empirica docs v2 repo
+        uses: actions/checkout@v3
+        with:
+          repository: empiricaly/docsv2
+          token: ${{ secrets.EMPIRICA_DOCS_PAT }}
+          path: docsv2
+
+      - name: Publish API docs
+        run: |
+          cd empirica/lib/@empirica/core
+          npm i
+          ./docs.sh
+          cp -r docs ../../../../docsv2/api
+          cp README.md ../../../../docsv2/api/
+          cd ../../../../docsv2
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .
+          git commit -m "update api docs ${{ needs.npm.outputs.version }}"
+          git push

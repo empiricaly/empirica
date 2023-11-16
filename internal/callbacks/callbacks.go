@@ -31,6 +31,8 @@ type Callbacks struct {
 	comp         *term.Component
 	isDefaultCmd bool
 
+	running bool
+
 	deadlock.Mutex
 }
 
@@ -109,7 +111,7 @@ func (cb *Callbacks) start(ctx context.Context) error {
 }
 
 const (
-	lullTime   = time.Millisecond * 100
+	lullTime   = time.Millisecond * 500
 	watchChBuf = 1024
 )
 
@@ -164,49 +166,80 @@ func (cb *Callbacks) watch(ctx context.Context) error {
 		return errors.Wrap(err, "start watcher")
 	}
 
-	go func() {
-		for {
-			select {
-			case mod, ok := <-modchan:
-				if mod == nil || !ok {
-					log.Trace().Msgf("callbacks: watch ending")
-
-					continue
-				}
-
-				log.Trace().Str("mod", mod.String()).Msg("callbacks: mod")
-
-				cb.Lock()
-
-				if cb.c != nil {
-					cb.sigint()
-				}
-
-				cb.Unlock()
-			case <-ctx.Done():
-				watcher.Stop()
-				log.Debug().Msg("callbacks: watcher done")
-
-				return
-			}
-		}
-	}()
+	go cb.watchLoop(ctx, modchan, watcher)
 
 	return nil
 }
 
-func (cb *Callbacks) run(ctx context.Context) {
-	connRetry := &backoff.Backoff{
-		Min:    500 * time.Millisecond,
-		Max:    12 * time.Second,
-		Factor: 1.5,
-		Jitter: true,
+func (cb *Callbacks) watchLoop(ctx context.Context, modchan chan *moddwatch.Mod, watcher *moddwatch.Watcher) {
+	for {
+		select {
+		case mod, ok := <-modchan:
+			if mod == nil || !ok {
+				log.Trace().Msgf("callbacks: watch ending")
+
+				continue
+			}
+
+			log.Trace().Str("mod", mod.String()).Msg("callbacks: mod")
+
+			cb.Lock()
+
+			if cb.c != nil {
+				cb.sigint()
+			} else if !cb.running {
+				if err := cb.start(ctx); err != nil {
+					log.Error().Err(err).Msg("callbacks: start")
+				}
+			}
+
+			cb.Unlock()
+		case <-ctx.Done():
+			watcher.Stop()
+			log.Debug().Msg("callbacks: watcher done")
+
+			return
+		}
 	}
+}
+
+const (
+	minRetryBackoff = 500 * time.Millisecond
+	maxRetryBackoff = 5 * time.Second
+	retryFactor     = 1.5
+	retyrJitter     = false
+)
+
+func (cb *Callbacks) run(ctx context.Context) {
+	cb.Lock()
+	cb.running = true
+	cb.Unlock()
+
+	defer func() {
+		cb.Lock()
+		cb.running = false
+		cb.Unlock()
+	}()
+
+	connRetry := &backoff.Backoff{
+		Min:    minRetryBackoff,
+		Max:    maxRetryBackoff,
+		Factor: retryFactor,
+		Jitter: retyrJitter,
+	}
+
+	shouldExit := false
+	hardExits := 0
+	lastHardExit := time.Now()
 
 	for {
 		c, err := cb.runOnce(ctx)
 		if err != nil {
 			d := connRetry.Duration()
+
+			if hardExits, shouldExit = checkHardExit(lastHardExit, hardExits, err); shouldExit {
+				return
+			}
 
 			if !errors.Is(err, context.Canceled) {
 				log.Error().
@@ -239,12 +272,22 @@ func (cb *Callbacks) run(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			cb.sigint()
+
 			return
 		case err = <-waiting:
 		}
 
 		if err != nil {
 			errs := err.Error()
+
+			var exitError *exec.ExitError
+			if errors.As(err, &exitError) {
+				cb.c = nil
+
+				if hardExits, shouldExit = checkHardExit(lastHardExit, hardExits, err); shouldExit {
+					return
+				}
+			}
 
 			if errors.Is(err, context.Canceled) ||
 				strings.Contains(errs, "signal: interrupt") ||
@@ -266,27 +309,38 @@ func (cb *Callbacks) run(ctx context.Context) {
 	}
 }
 
+const (
+	maxHardExits    = 3
+	maxHardExitTime = time.Second * 6
+)
+
+func checkHardExit(lastHardExit time.Time, hardExits int, err error) (int, bool) {
+	if time.Since(lastHardExit) > maxHardExitTime {
+		hardExits = 0
+	}
+
+	hardExits++
+
+	if hardExits > maxHardExits-1 {
+		log.Error().
+			Err(err).
+			Msg("callbacks: repeatedly exited, giving up")
+
+		return hardExits, true
+	}
+
+	log.Error().
+		Err(err).
+		Msg("callbacks: exited, retrying")
+
+	return hardExits, false
+}
+
 func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 	cmd := cb.config.DevCmd
 
 	if cmd == defaultDevCommand {
-		lvl := zerolog.GlobalLevel()
-		cmd = cmd + " --loglevel " + lvl.String()
-
-		if cb.config.Token != "" {
-			cmd = cmd + " --token " + cb.config.Token
-		}
-
-		if cb.config.SessionToken != "" {
-			p := cb.config.SessionToken
-			if !strings.HasPrefix(p, "/") {
-				pp, err := filepath.Abs(p)
-				if err == nil {
-					p = pp
-				}
-			}
-			cmd = cmd + " --sessionTokenPath " + p
-		}
+		cmd = cb.enrichCmd(cmd)
 	}
 
 	parts := strings.Split(cmd, " ")
@@ -294,16 +348,12 @@ func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 		return nil, errors.New("empty callbacks devcmd")
 	}
 
-	var args []string
+	var remainder []string
 	if len(parts) > 1 {
-		args = parts[1:]
+		remainder = parts[1:]
 	}
 
-	// parts = append([]string{"-c"}, cmd)
-	// spew.Dump(parts)
-	// c := exec.CommandContext(ctx, "bash", parts...)
-
-	c := exec.CommandContext(ctx, parts[0], args...)
+	c := exec.CommandContext(ctx, parts[0], remainder...) // #nosec G204
 	c.SysProcAttr = &syscall.SysProcAttr{Setpgid: true, Pgid: 0}
 
 	c.Stderr = cb.stderr
@@ -315,6 +365,29 @@ func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 	}
 
 	return c, nil
+}
+
+func (cb *Callbacks) enrichCmd(cmd string) string {
+	lvl := zerolog.GlobalLevel()
+	cmd = cmd + " --loglevel " + lvl.String()
+
+	if cb.config.Token != "" {
+		cmd = cmd + " --token " + cb.config.Token
+	}
+
+	if cb.config.SessionToken != "" {
+		p := cb.config.SessionToken
+		if !strings.HasPrefix(p, "/") {
+			pp, err := filepath.Abs(p)
+			if err == nil {
+				p = pp
+			}
+		}
+
+		cmd = cmd + " --sessionTokenPath " + p
+	}
+
+	return cmd
 }
 
 type callbacksWriter struct {

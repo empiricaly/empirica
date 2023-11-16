@@ -6,7 +6,13 @@ import { JsonValue } from "../utils/json";
 
 export type Attributable = {
   get: (key: string) => JsonValue | undefined;
+  getAttribute: (key: string) => Attribute | undefined;
   set: (key: string, value: JsonValue, ao?: Partial<AttributeOptions>) => void;
+  append: (
+    key: string,
+    value: JsonValue,
+    ao?: Partial<AttributeOptions>
+  ) => void;
 };
 
 export interface ScopeIdent {
@@ -30,12 +36,14 @@ export class Scopes<
   Skope extends Scope<Context, Kinds> = Scope<Context, Kinds>
 > {
   protected scopes = new Map<string, BehaviorSubject<Skope>>();
+  // newScopes is used to track scopes that have appeared for the first time.
+  protected newScopes = new Map<string, boolean>();
   protected scopesByKind = new Map<keyof Kinds, Map<string, Skope>>();
   protected kindUpdated = new Set<keyof Kinds>();
 
   constructor(
     scopesObs: Observable<ScopeUpdate>,
-    donesObs: Observable<void>,
+    donesObs: Observable<string[]>,
     protected ctx: Context,
     protected kinds: Kinds,
     protected attributes: Attributes
@@ -47,7 +55,9 @@ export class Scopes<
     });
 
     donesObs.subscribe({
-      next: this.next.bind(this),
+      next: (scopeIDs) => {
+        this.next(scopeIDs);
+      },
     });
   }
 
@@ -73,11 +83,14 @@ export class Scopes<
     return this.kindUpdated.has(kind);
   }
 
-  protected next() {
+  protected next(scopeIDs: string[]) {
     this.kindUpdated.clear();
     for (const [_, scopeSubject] of this.scopes) {
       const scope = scopeSubject.getValue();
-      if (scope._updated || this.attributes.scopeWasUpdated(scope.id)) {
+      if (
+        (scope._updated || this.attributes.scopeWasUpdated(scope.id)) &&
+        scopeIDs.includes(scope.id)
+      ) {
         scope._updated = false;
         scopeSubject.next(scope);
       }
@@ -136,6 +149,7 @@ export class Scopes<
     const obj = this.create(scopeClass, scope);
     const subj = new BehaviorSubject(obj);
     this.scopes.set(scope.id, subj);
+    this.newScopes.set(scope.id, true);
 
     let skm = this.scopesByKind.get(kind);
     if (!skm) {
@@ -156,6 +170,12 @@ export class Scopes<
     return new scopeClass!(this.ctx, scope, this.attributes) as Skope;
   }
 }
+
+export type AttributeInput = {
+  key: string;
+  value: JsonValue;
+  ao?: Partial<AttributeOptions>;
+};
 
 export class Scope<
   Context,
@@ -210,7 +230,41 @@ export class Scope<
     return this.attributes.attribute(this.scope.id, key).obs;
   }
 
-  set(key: string, value: JsonValue, ao?: Partial<AttributeOptions>) {
+  set(values: AttributeInput[]): void;
+  set(key: string, value: JsonValue, ao?: Partial<AttributeOptions>): void;
+  set(
+    keyOrAttributes: string | AttributeInput[],
+    value?: JsonValue,
+    ao?: Partial<AttributeOptions>
+  ) {
+    if (typeof keyOrAttributes === "string") {
+      if (value === undefined) {
+        value = null;
+      }
+
+      return this.attributes
+        .attribute(this.scope.id, keyOrAttributes)
+        .set(value, ao);
+    }
+
+    const nextProps = [];
+    for (const attr of keyOrAttributes) {
+      nextProps.push(
+        this.attributes
+          .attribute(this.scope.id, attr.key)
+          ._prepSet(attr.value, attr.ao)
+      );
+    }
+
+    this.attributes.setAttributes(nextProps);
+  }
+
+  append(key: string, value: JsonValue, ao?: Partial<AttributeOptions>) {
+    if (!ao) {
+      ao = {};
+    }
+    ao.append = true;
+
     return this.attributes.attribute(this.scope.id, key).set(value, ao);
   }
 

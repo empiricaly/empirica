@@ -9,6 +9,9 @@ export interface AttributeChange {
   /** deletedAt is the time when the Attribute was deleted. int64 Date + Time
    * value given in Epoch with ns precision */
   deletedAt?: number;
+  /** createdAt is the time the Attribute was created. int64 Date + Time
+   * value given in Epoch with ns precision */
+  createdAt?: string;
   /** id is the identifier for the Attribute. */
   id: string;
   /** index is the index of the attribute if the value is a vector. */
@@ -45,7 +48,7 @@ export class Attributes {
 
   constructor(
     attributesObs: Observable<AttributeUpdate>,
-    donesObs: Observable<void>,
+    donesObs: Observable<string[]>,
     readonly setAttributes: (input: SetAttributeInput[]) => Promise<unknown>
   ) {
     attributesObs.subscribe({
@@ -55,7 +58,9 @@ export class Attributes {
     });
 
     donesObs.subscribe({
-      next: this.next.bind(this),
+      next: (scopeIDs) => {
+        this.next(scopeIDs);
+      },
     });
   }
 
@@ -149,7 +154,11 @@ export class Attributes {
     if (removed) {
       scopeMap.set(attr.key, true);
     } else {
-      scopeMap.set(attr.key, attr);
+      let key = attr.key;
+      if (attr.index !== undefined && attr.index !== null) {
+        key = `${key}[${attr.index}]`;
+      }
+      scopeMap.set(key, attr);
     }
   }
 
@@ -161,8 +170,12 @@ export class Attributes {
     return this.updates.has(scopeID);
   }
 
-  protected next() {
+  protected next(scopeIDs: string[]) {
     for (const [scopeID, attrs] of this.updates) {
+      if (!scopeIDs.includes(scopeID)) {
+        continue;
+      }
+
       let scopeMap = this.attrs.get(scopeID);
 
       if (!scopeMap) {
@@ -171,15 +184,16 @@ export class Attributes {
       }
 
       for (const [key, attrOrDel] of attrs) {
-        let attr = scopeMap.get(key);
         if (typeof attrOrDel === "boolean") {
+          let attr = scopeMap.get(key);
           if (attr) {
             attr._update(undefined);
           }
         } else {
+          let attr = scopeMap.get(attrOrDel.key);
           if (!attr) {
-            attr = new Attribute(this.setAttributes, scopeID, key);
-            scopeMap.set(key, attr);
+            attr = new Attribute(this.setAttributes, scopeID, attrOrDel.key);
+            scopeMap.set(attrOrDel.key, attr);
           }
 
           attr._update(attrOrDel);
@@ -187,7 +201,9 @@ export class Attributes {
       }
     }
 
-    this.updates.clear();
+    for (const scopeID of scopeIDs) {
+      this.updates.delete(scopeID);
+    }
   }
 }
 
@@ -203,8 +219,6 @@ export interface AttributeOptions {
   protected: boolean;
   /** Immutable creates an Attribute that cannot be updated. */
   immutable: boolean;
-  /** Vector indicates the value is a vector. */
-  vector: boolean;
   /**
    * Index, only used if the Attribute is a vector, indicates which index to
    * update the value at.
@@ -219,6 +233,8 @@ export interface AttributeOptions {
 
 export class Attribute {
   private attr?: AttributeChange;
+  private attrs?: Attribute[];
+
   private val = new BehaviorSubject<JsonValue | undefined>(undefined);
 
   constructor(
@@ -231,6 +247,10 @@ export class Attribute {
     return this.attr?.id;
   }
 
+  get createdAt() {
+    return this.attr ? new Date(this.attr!.createdAt!) : null;
+  }
+
   get obs(): Observable<JsonValue | undefined> {
     return this.val;
   }
@@ -240,11 +260,64 @@ export class Attribute {
   }
 
   get nodeID() {
-    return this.attr?.nodeID || this.attr?.node?.id;
+    return this.scopeID;
+  }
+
+  // items returns the attribute changes for the current attribute, if it is a
+  // vector. Otherwise it returns null;
+  get items() {
+    if (!this.attrs) {
+      return null;
+    }
+
+    return this.attrs;
   }
 
   set(value: JsonValue, ao?: Partial<AttributeOptions>) {
-    this.val.next(value);
+    const attrProps = this._prepSet(value, ao);
+    this.setAttributes([attrProps]);
+    trace(`SET ${this.key} = ${value} (${this.scopeID})`);
+  }
+
+  _prepSet(
+    value: JsonValue,
+    ao?: Partial<AttributeOptions>,
+    item?: boolean
+  ): SetAttributeInput {
+    if (ao?.append !== undefined && ao!.index !== undefined) {
+      error(`cannot set both append and index`);
+
+      throw new Error(`cannot set both append and index`);
+    }
+
+    if (!item && (ao?.index !== undefined || ao?.append)) {
+      let index = ao!.index || 0;
+      if (ao?.append) {
+        index = this.attrs?.length || 0;
+      }
+
+      if (!this.attrs) {
+        this.attrs = [];
+      }
+
+      // if (index + 1 > (this.attrs?.length || 0)) {
+      //   this.attrs.length = index! + 1;
+      // }
+
+      if (!this.attrs[index]) {
+        this.attrs[index] = new Attribute(
+          this.setAttributes,
+          this.scopeID,
+          this.key
+        );
+      }
+
+      this.attrs![index]!._prepSet(value, ao, true);
+      const v = this._recalcVectorVal();
+      this.val.next(v);
+    } else {
+      this.val.next(value);
+    }
 
     const attrProps: SetAttributeInput = {
       key: this.key,
@@ -259,17 +332,51 @@ export class Attribute {
       attrProps.protected = ao.protected;
       attrProps.immutable = ao.immutable;
       attrProps.append = ao.append;
-      attrProps.vector = ao.vector;
       attrProps.index = ao.index;
     }
 
-    this.setAttributes([attrProps]);
-    trace(`SET ${this.key} = ${value} (${this.scopeID})`);
+    return attrProps;
+  }
+
+  private _recalcVectorVal(): JsonValue {
+    return this.attrs!.map((a) =>
+      !a || a.val == undefined ? null : a.value || null
+    );
   }
 
   // internal only
-  _update(attr?: AttributeChange) {
+  _update(attr?: AttributeChange, item?: boolean) {
     if (attr && this.attr && this.attr.id === attr.id) {
+      return;
+    }
+
+    if (attr && attr.vector && !item) {
+      // TODO check if is vector
+
+      if (attr.index === undefined) {
+        error(`vector attribute missing index`);
+        return;
+      }
+
+      if (this.attrs == undefined) {
+        this.attrs = [];
+      }
+
+      while (this.attrs.length < attr.index! + 1) {
+        const newAttr = new Attribute(
+          this.setAttributes,
+          this.scopeID,
+          this.key
+        );
+        this.attrs.push(newAttr);
+      }
+
+      const newAttr = new Attribute(this.setAttributes, this.scopeID, this.key);
+      newAttr._update(attr, true);
+      this.attrs[attr.index!] = newAttr;
+      const value = this._recalcVectorVal();
+      this.val.next(value);
+
       return;
     }
 

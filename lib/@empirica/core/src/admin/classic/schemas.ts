@@ -1,7 +1,11 @@
 import { z } from "zod";
-// import { Game, Round, Stage } from "./models";
 
-export const treatmentSchema = z.record(z.string().min(1), z.any());
+export const factorsSchema = z.record(z.string().min(1), z.any());
+export const treatmentSchema = z.object({
+  factors: factorsSchema,
+  name: z.string().optional(),
+});
+
 export const batchConfigSchema = z.discriminatedUnion("kind", [
   z.object({
     kind: z.literal("custom"),
@@ -11,11 +15,7 @@ export const batchConfigSchema = z.discriminatedUnion("kind", [
     kind: z.literal("simple"),
     config: z.object({
       count: z.number().int().positive(),
-      treatments: z
-        .object({
-          factors: treatmentSchema,
-        })
-        .array(),
+      treatments: treatmentSchema.array(),
     }),
   }),
   z.object({
@@ -24,17 +24,9 @@ export const batchConfigSchema = z.discriminatedUnion("kind", [
       treatments: z
         .object({
           count: z.number().int().positive(),
-          treatment: z.object({
-            factors: treatmentSchema,
-          }),
+          treatment: treatmentSchema,
         })
         .array(),
     }),
   }),
 ]);
-
-// // const isBatch = z.instanceof(Batch).parse;
-// export const isGame = z.instanceof(Game).parse;
-// export const isRound = z.instanceof(Round).parse;
-// export const isStage = z.instanceof(Stage).parse;
-// export const isString = z.string().parse;

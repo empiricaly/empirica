@@ -1,6 +1,9 @@
 package cmd
 
 import (
+	"os"
+
+	"github.com/empiricaly/empirica"
 	"github.com/empiricaly/empirica/internal/bundle"
 	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/pkg/errors"
@@ -10,8 +13,8 @@ import (
 
 func addServeCommand(parent *cobra.Command) error {
 	cmd := &cobra.Command{
-		Use:   "serve",
-		Short: "Serve bundle",
+		Use:   "serve [bundle]",
+		Short: "Serve bundle in production mode",
 		// 	Long: ``,
 		SilenceUsage:  true,
 		SilenceErrors: true,
@@ -44,18 +47,25 @@ func addServeCommand(parent *cobra.Command) error {
 
 			in := args[0]
 
-			conf := getConfig()
+			conf := getConfig(true)
 			conf.Server.Addr = addr
-
-			conf.Production = !devMode
-			conf.Server.Production = !devMode
-			conf.Tajriba.Server.Production = !devMode
 
 			return bundle.Serve(ctx, conf, in, clean, devMode)
 		},
 	}
 
 	cmd.Flags().Bool("clean", false, "cleanup old installation")
+
+	// HACK: conflicting args between 2 calls, same flags. cobra/viper "bug"?
+	if len(os.Args) < 2 || os.Args[1] != "serve" {
+		parent.AddCommand(cmd)
+
+		return nil
+	}
+
+	if err := empirica.ConfigFlags(cmd); err != nil {
+		return errors.Wrap(err, "define flags")
+	}
 
 	flag := "addr"
 	sval := ":3000"
@@ -67,8 +77,7 @@ func addServeCommand(parent *cobra.Command) error {
 	cmd.Flags().Bool(flag, bval, "Start in dev mode (no auth)")
 	viper.SetDefault(flag, bval)
 
-	err := viper.BindPFlags(cmd.Flags())
-	if err != nil {
+	if err := viper.BindPFlags(cmd.Flags()); err != nil {
 		return errors.Wrap(err, "bind serve flags")
 	}
 

@@ -1,8 +1,11 @@
 <script>
+  import { formatFactorsToString } from "../../utils/treatments.js";
   import Badge from "../common/Badge.svelte";
-  import FactorsString from "../treatments/FactorsString.svelte";
+  import TimeSince from "../common/TimeSince.svelte";
+
   export let game;
   export let players;
+  export let playersStatusMap;
 
   let statusColor = "gray";
   let status = "Created";
@@ -14,6 +17,17 @@
       status = "Running";
       statusColor = "green";
     }
+  }
+
+  console.log(game);
+
+  function getPlayerIconClass(player) {
+    if (!player.online) return "text-red-400";
+    if (player.ready) return "text-green-400";
+
+    if (player.overflow) return "text-orange-300";
+
+    return "text-gray-400";
   }
 
   $: treatments = game.get("treatment");
@@ -37,49 +51,64 @@
         })
     : [];
 
-  let plyrs = [];
+  let playersList = [];
   $: {
     if (playerCount > 0 && p) {
-      plyrs = [];
+      playersList = [];
       for (let i = 0; i < Math.max(playerCount, p.length); i++) {
         const player = p[i];
-        plyrs.push({
+        playersList.push({
           player,
+          id: player && player.id,
           ready: player && player.get("introDone"),
           overflow: i + 1 > playerCount,
+          online: player && playersStatusMap.get(player.get("participantID")),
         });
       }
     }
   }
 </script>
 
-<li
-  class="divide-y divide-gray-200 rounded-lg bg-white shadow flex flex-col w-full items-between justify-between"
->
-  <div class="flex w-full items-between justify-between space-x-6 p-6">
-    <div class="flex-1 truncate">
-      <div class="flex items-center space-x-3">
-        <Badge color={statusColor}>
-          {status}
-        </Badge>
-      </div>
-      <p class="mt-1 truncate text-sm text-gray-500">
-        {#if treatments}
-          <FactorsString lines factors={treatments} />
-        {/if}
-      </p>
-    </div>
-  </div>
-  <div class="p-6 space-x-2 space-y-2">
-    {#each plyrs as plyr}
+<tr>
+  <!-- <td
+    class="whitespace-nowrap py-2 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0"
+  >
+    {game.get("index")}
+  </td> -->
+  <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">
+    <Badge color={statusColor}>
+      {status}
+    </Badge>
+  </td>
+  <td
+    class="whitespace-nowrap px-3 py-2 text-sm text-gray-500"
+    title={formatFactorsToString(game.get("treatment"), "\n")}
+  >
+    {game.get("treatmentName") || ""}
+  </td>
+  <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">
+    {#if game.get("start")}
+      <TimeSince time={new Date(game.attrs["start"]["createdAt"])} />
+    {/if}
+  </td>
+  <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">
+    {#if game.get("ended")}
+      <TimeSince time={new Date(game.attrs["ended"]["createdAt"])} />
+    {/if}
+  </td>
+  <td class="whitespace-nowrap px-3 py-2 text-sm text-gray-500">
+    {playersList.length}
+  </td>
+  <td
+    class="relative whitespace-nowrap py-2 pl-3 pr-4 text-sm
+  font-medium sm:pr-0 space-x-2 space-y-2"
+  >
+    {#each playersList as plyr}
       <div class="inline-block w-4 h-4">
         {#if plyr.player}
           <span
-            class={plyr.ready
-              ? "text-green-400"
-              : plyr.overflow
-              ? "text-orange-300"
-              : "text-gray-400"}
+            class={getPlayerIconClass(plyr)}
+            title={plyr.player.get("participantID")}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -106,5 +135,21 @@
         {/if}
       </div>
     {/each}
+  </td>
+
+  <!-- <div class="flex w-full items-between justify-between space-x-6 p-6">
+    <div class="flex-1 truncate">
+      <div class="flex items-center space-x-3">
+        <Badge color={statusColor}>
+          {status}
+        </Badge>
+      </div>
+      <p class="mt-1 truncate text-sm text-gray-500">
+        {#if treatments}
+          <FactorsString lines factors={treatments} />
+        {/if}
+      </p>
+    </div>
   </div>
-</li>
+  <div class="p-6 space-x-2 space-y-2" /> -->
+</tr>

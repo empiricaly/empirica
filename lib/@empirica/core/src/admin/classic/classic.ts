@@ -12,14 +12,14 @@ import {
   Batch,
   ClassicKinds,
   Context,
-  evt,
   Game,
   Player,
   PlayerStage,
   Round,
   Stage,
+  evt,
 } from "./models";
-import { batchConfigSchema, treatmentSchema } from "./schemas";
+import { batchConfigSchema, factorsSchema } from "./schemas";
 
 // const isBatch = z.instanceof(Batch).parse;
 const isGame = z.instanceof(Game).parse;
@@ -44,12 +44,18 @@ export type ClassicConfig = {
 
   // Disable game creation on new batch.
   disableGameCreation?: boolean;
+
+  // By default if all existing games are complete, the batch ends.
+  // This option disables this pattern so that we can leave a batch open indefinitely.
+  // It enables to spawn new games for people who arrive later, even if all previous games had already finished.
+  disableBatchAutoend?: boolean;
 };
 
 export function Classic({
   disableAssignment,
   disableIntroCheck,
   disableGameCreation,
+  disableBatchAutoend = false,
 }: ClassicConfig = {}) {
   return function (_: ListenersCollector<Context, ClassicKinds>) {
     const online = new Map<string, Participant>();
@@ -246,11 +252,16 @@ export function Classic({
       switch (config.kind) {
         case "simple":
           for (let i = 0; i < config.config.count; i++) {
-            const treatment = pickRandom(config.config.treatments).factors;
+            const treatment = pickRandom(config.config.treatments);
             batch.addGame([
               {
                 key: "treatment",
-                value: treatment,
+                value: treatment.factors,
+                immutable: true,
+              },
+              {
+                key: "treatmentName",
+                value: treatment.name || "",
                 immutable: true,
               },
             ]);
@@ -264,6 +275,11 @@ export function Classic({
                 {
                   key: "treatment",
                   value: t.treatment.factors,
+                  immutable: true,
+                },
+                {
+                  key: "treatmentName",
+                  value: t.treatment.name || "",
                   immutable: true,
                 },
               ]);
@@ -336,7 +352,9 @@ export function Classic({
             player.set("ended", `game ${status}`);
           }
 
-          const finishedBatch = game.batch!.games.every((g) => g.hasEnded);
+          const finishedBatch =
+            !disableBatchAutoend && game.batch!.games.every((g) => g.hasEnded);
+
           if (finishedBatch) {
             game.batch!.end("all games finished");
           }
@@ -437,7 +455,7 @@ export function Classic({
       }
 
       const game = isGame(player.currentGame);
-      const treatment = treatmentSchema.parse(game.get("treatment"));
+      const treatment = factorsSchema.parse(game.get("treatment"));
       const playerCount = treatment["playerCount"] as number;
       const readyPlayers = game.players.filter(
         (p) => p.get("introDone") && !p.get("ended")
@@ -451,6 +469,7 @@ export function Classic({
 
       if (game.hasStarted) {
         trace("introDone: game already started");
+
         return;
       }
 
@@ -548,11 +567,17 @@ export function Classic({
       async (_, { stage, start }: BeforeStageStart) => {
         if (!start) return;
 
+        if (stage.get("initialized")) {
+          return;
+        }
+
         const game = isGame(stage.currentGame);
 
         for (const player of game.players) {
           await stage.createPlayerStage(player);
         }
+
+        stage.set("initialized", true, { private: true, immutable: true });
       }
     );
 
@@ -567,16 +592,10 @@ export function Classic({
       (ctx, { stage, start }: AfterStageStart) => {
         if (!start) return;
 
-        // NOTE: this is a hack to get the stage to start only once
-        // TODO ensure that this is only called once.
-        // Currently, it is can  be called multiple times wit the start == true
-        // value, despite the unique.before hook above. This is because the
-        // unique.before hook is not called when the attribute is set to true
-        // but meanwhile the value is becomes true.
-        if (stage.get("started")) {
+        if (stage.get("started") || !stage.get("initialized")) {
           return;
         }
-        stage.set("started", true);
+        stage.set("started", true, { private: true, immutable: true });
 
         const game = isGame(stage.currentGame);
 
@@ -609,13 +628,24 @@ export function Classic({
       (ctx, { playerStage, submit }: PlayerStageSubmit) => {
         if (!submit) return;
 
+        if (!playerStage.stage || !playerStage.stage.isCurrent()) {
+          return;
+        }
+
         const players = playerStage.player!.currentGame!.players;
         if (players.length === 0) {
           warn("callbacks: no players onSubmit");
           return;
         }
 
-        if (players.every((p) => p.stage!.get("submit") || p.get("ended"))) {
+        const haveAllPlayersSubmitted = players.every(
+          (p) =>
+            p.get("ended") ||
+            !online.has(p.get("participantID")?.toString() as string) ||
+            p.stage?.get("submit")
+        );
+
+        if (haveAllPlayersSubmitted) {
           ctx.addTransitions([
             {
               from: State.Running,
@@ -712,7 +742,6 @@ export function Classic({
     _.on(
       TajribaEvent.TransitionAdd,
       (_, { step, transition: { from, to } }: TransitionAdd) => {
-        console.log("stage transition check");
         const stage = stageForStepID.get(step.id);
         if (!stage) {
           return;

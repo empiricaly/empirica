@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/empiricaly/empirica"
+	cloudcmd "github.com/empiricaly/empirica/cmds/empirica/cmd/cloud"
 	"github.com/empiricaly/empirica/internal/settings"
 	logger "github.com/empiricaly/empirica/internal/utils/log"
 	"github.com/pkg/errors"
@@ -35,20 +37,21 @@ func defineRoot() (*cobra.Command, *bool, error) {
 		},
 	}
 
-	err := empirica.ConfigFlags(cmd)
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "define flags")
+	// HACK: conflicting args between 2 calls, same flags. cobra/viper "bug"?
+	if len(os.Args) < 2 || os.Args[1] != "serve" {
+		if err := empirica.ConfigFlags(cmd); err != nil {
+			return nil, nil, errors.Wrap(err, "define flags")
+		}
+
+		if err := viper.BindPFlags(cmd.Flags()); err != nil {
+			return nil, nil, errors.Wrap(err, "bind root flags")
+		}
 	}
 
-	cmd.PersistentFlags().String("config", "", fmt.Sprintf("config file (default is %s/empirica.toml)", settings.EmpiricaDir))
+	cfgDesc := fmt.Sprintf("config file (default is %s/empirica.toml)", settings.EmpiricaDir)
+	cmd.PersistentFlags().String("config", "", cfgDesc)
 
-	err = viper.BindPFlags(cmd.Flags())
-	if err != nil {
-		return nil, nil, errors.Wrap(err, "bind root flags")
-	}
-
-	err = viper.BindPFlags(cmd.PersistentFlags())
-	if err != nil {
+	if err := viper.BindPFlags(cmd.PersistentFlags()); err != nil {
 		return nil, nil, errors.Wrap(err, "bind root persistent flags")
 	}
 
@@ -131,8 +134,10 @@ func Execute() {
 	failedStart(addVersionCommand(rootCmd))
 	failedStart(addTajribaCommand(rootCmd))
 	failedStart(addExportCommand(rootCmd))
+	failedStart(addPathsCommand(rootCmd))
 
 	failedStart(addUtilsCommands(rootCmd))
+	failedStart(cloudcmd.AddCloudCommand(rootCmd))
 
 	cobra.OnInitialize(initConfig(rootCmd, usingConfigFile))
 
@@ -157,7 +162,9 @@ func initConfig(rootCmd *cobra.Command, usingConfigFile *bool) func() {
 			viper.SetConfigName("empirica")
 		}
 
-		viper.AutomaticEnv() // read in environment variables that match
+		viper.SetEnvPrefix("empirica")
+		viper.AutomaticEnv()
+		viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 		// If a config file is found, read it in.
 		if err := viper.ReadInConfig(); err == nil {

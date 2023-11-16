@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/empiricaly/empirica/internal/build"
@@ -14,6 +15,7 @@ import (
 )
 
 const (
+	UseDebugEnvVar    = "EMPIRICA_PROXY_USE_DEBUG"
 	LogsEnabledEnvVar = "EMPIRICA_PROXY_LOGS_ENABLED"
 	LogsNoTTYEnvVar   = "EMPIRICA_PROXY_LOGS_NO_TTY"
 	LogsJSONEnvVar    = "EMPIRICA_PROXY_LOGS_JSON"
@@ -23,6 +25,7 @@ func root(args []string) error {
 	ctx := initContext()
 
 	logenv := os.Getenv(LogsEnabledEnvVar)
+	useDebug := os.Getenv(UseDebugEnvVar)
 
 	logconf := &logger.Config{
 		Level:    "fatal",
@@ -41,10 +44,21 @@ func root(args []string) error {
 		log.Fatal().Err(err).Msg("empirica: failed to init logging")
 	}
 
-	path, err := build.LookupBinary()
-	if err != nil {
-		return errors.Wrap(err, "get binary")
+	var path string
+	var err error
+
+	if useDebug == "1" {
+		path = "emp"
+	} else {
+		path, err = build.LookupBinary()
+		if err != nil {
+			return errors.Wrap(err, "get binary")
+		}
 	}
+
+	log.Debug().
+		Str("path", path).
+		Msg("proxy: chosen binary path")
 
 	c := exec.CommandContext(ctx, path, args...)
 
@@ -73,7 +87,7 @@ func root(args []string) error {
 }
 
 func failedStart(err error) {
-	if err != nil {
+	if err != nil && errors.Is(err, context.Canceled) && strings.Contains(err.Error(), "signal: killed") {
 		log.Fatal().Err(err).Msg("empirica: failed to start")
 	}
 }

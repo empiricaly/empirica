@@ -4,9 +4,10 @@ import {
   SetAttributeInput,
   SubAttributesPayload,
 } from "@empirica/tajriba";
-import { groupBy, Observable, Subject } from "rxjs";
+import { Observable, Subject, groupBy } from "rxjs";
 import { AttributeChange, AttributeUpdate } from "../shared/attributes";
 import { ScopeIdent, ScopeUpdate } from "../shared/scopes";
+import { trace } from "../utils/console";
 import { StepChange, StepUpdate } from "./steps";
 
 export interface ParticipantUpdate {
@@ -19,32 +20,35 @@ export class TajribaProvider {
   public attributes = new Subject<AttributeUpdate>();
   public participants = new Subject<ParticipantUpdate>();
   public steps = new Subject<StepUpdate>();
-  public dones = new Subject<void>();
+  public dones = new Subject<string[]>();
 
   constructor(
     changes: Observable<ChangePayload>,
     readonly globals: Observable<SubAttributesPayload>,
     readonly setAttributes: (input: SetAttributeInput[]) => Promise<any>
   ) {
-    changes.pipe(groupBy((chg) => chg.change.__typename)).subscribe({
+    let scopeIDs: string[] = [];
+    changes.pipe(groupBy((chg) => chg?.change?.__typename)).subscribe({
       next: (group) => {
         switch (group.key) {
           case "ScopeChange":
             group.subscribe({
-              next: (scope) => {
-                this.scopes.next({
-                  scope: <ScopeIdent>scope.change,
-                  removed: scope.removed,
-                });
+              next: (msg) => {
+                if (
+                  !msg.change ||
+                  msg.removed === null ||
+                  msg.removed === undefined
+                ) {
+                  trace("AttributeChange empty");
+                } else {
+                  this.scopes.next({
+                    scope: <ScopeIdent>msg.change,
+                    removed: msg.removed,
+                  });
+                }
 
-                // console.log(
-                //   "ScopeChange",
-                //   (<ScopeIdent>scope.change).kind,
-                //   scope.done
-                // );
-
-                if (scope.done) {
-                  this.dones.next();
+                if (msg.done) {
+                  this.dones.next(scopeIDs);
                 }
               },
             });
@@ -52,20 +56,25 @@ export class TajribaProvider {
             break;
           case "AttributeChange":
             group.subscribe({
-              next: (attribute) => {
-                this.attributes.next({
-                  attribute: <AttributeChange>attribute.change,
-                  removed: attribute.removed,
-                });
+              next: (msg) => {
+                if (
+                  !msg.change ||
+                  msg.removed === null ||
+                  msg.removed === undefined
+                ) {
+                  trace("AttributeChange empty");
+                } else {
+                  const atChange = <AttributeChange>msg.change;
+                  scopeIDs.push(atChange.nodeID || atChange.node!.id);
+                  this.attributes.next({
+                    attribute: atChange,
+                    removed: msg.removed,
+                  });
+                }
 
-                // console.log(
-                //   "AttributeChange",
-                //   (<AttributeChange>attribute.change).key,
-                //   attribute.done
-                // );
-
-                if (attribute.done) {
-                  this.dones.next();
+                if (msg.done) {
+                  this.dones.next(scopeIDs);
+                  scopeIDs = [];
                 }
               },
             });
@@ -73,20 +82,22 @@ export class TajribaProvider {
             break;
           case "ParticipantChange":
             group.subscribe({
-              next: (scope) => {
-                this.participants.next({
-                  participant: <ParticipantChange>scope.change,
-                  removed: scope.removed,
-                });
+              next: (msg) => {
+                if (
+                  !msg.change ||
+                  msg.removed === null ||
+                  msg.removed === undefined
+                ) {
+                  trace("ParticipantChange empty");
+                } else {
+                  this.participants.next({
+                    participant: <ParticipantChange>msg.change,
+                    removed: msg.removed,
+                  });
+                }
 
-                // console.log(
-                //   "ParticipantChange",
-                //   <ParticipantChange>scope.change,
-                //   scope.done
-                // );
-
-                if (scope.done) {
-                  this.dones.next();
+                if (msg.done) {
+                  this.dones.next([]);
                 }
               },
             });
@@ -94,14 +105,32 @@ export class TajribaProvider {
             break;
           case "StepChange":
             group.subscribe({
-              next: (scope) => {
-                this.steps.next({
-                  step: <StepChange>scope.change,
-                  removed: scope.removed,
-                });
+              next: (msg) => {
+                if (
+                  !msg.change ||
+                  msg.removed === null ||
+                  msg.removed === undefined
+                ) {
+                  trace("StepChange empty");
+                } else {
+                  this.steps.next({
+                    step: <StepChange>msg.change,
+                    removed: msg.removed,
+                  });
+                }
 
-                if (scope.done) {
-                  this.dones.next();
+                if (msg.done) {
+                  this.dones.next([]);
+                }
+              },
+            });
+
+            break;
+          default:
+            group.subscribe({
+              next: (change) => {
+                if (change.done) {
+                  this.dones.next([]);
                 }
               },
             });

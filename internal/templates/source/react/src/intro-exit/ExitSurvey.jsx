@@ -17,7 +17,7 @@ export function ExitSurvey({ next }) {
   const [education, setEducation] = useState("");
 
   function handleSubmit(event) {
-    event.preventDefault()
+    event.preventDefault();
     player.set("exitSurvey", {
       age,
       gender,

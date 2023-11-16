@@ -7,6 +7,7 @@ import {
   AttributeEventListener,
   EventContext,
   EvtCtxCallback,
+  Flusher,
   KindEventListener,
   ListenersCollector,
   ListernerPlacement,
@@ -15,13 +16,13 @@ import {
 } from "./events";
 import { subscribeAsync } from "./observables";
 import { Connection, ConnectionMsg } from "./participants";
-import { promiseHandle, PromiseHandle } from "./promises";
+import { PromiseHandle, promiseHandle } from "./promises";
 import { Scope, ScopeMsg } from "./scopes";
 import { Transition } from "./transitions";
 
 // Cake triggers callbacks, respecting listener placement
 
-interface unsuber {
+export interface unsuber {
   unsubscribe(): void;
 }
 
@@ -55,6 +56,7 @@ export class Cake<
   }
 
   async add(listeners: ListenersCollector<Context, Kinds>) {
+    listeners.setFlusher(new Flusher(this.postCallback));
     for (const start of listeners.starts) {
       debug("start callback");
       try {
@@ -223,8 +225,6 @@ export class Cake<
 
         if (scope) {
           for (const callback of callbacks()) {
-            debug("scope callback", kind);
-
             try {
               await callback.callback(this.evtctx, { [kind]: scope });
             } catch (err) {
@@ -267,6 +267,8 @@ export class Cake<
     }
   }
 
+  prevAttr: PromiseHandle | undefined = promiseHandle();
+
   attributeListeners = new Map<
     string,
     AttributeEventListener<EvtCtxCallback<Context, Kinds>>[]
@@ -279,6 +281,7 @@ export class Cake<
     until?: Attribute
   ) {
     let handle: PromiseHandle | undefined = promiseHandle();
+
     const unsub = this.attributeSubscription(kind, key).subscribe(
       async ({ attribute, done }) => {
         if (this.stopped) {
@@ -290,11 +293,21 @@ export class Cake<
         }
 
         if (attribute) {
+          let next = promiseHandle();
+          if (this.prevAttr) {
+            const p = this.prevAttr;
+            this.prevAttr = next;
+            await p;
+          } else {
+            this.prevAttr = next;
+          }
+
           const k = <string>kind + "-" + key;
 
           const props: { [key: string]: any } = {
             [key]: attribute.value,
             attribute,
+            attrId: attribute.id,
           };
 
           if (attribute.nodeID) {

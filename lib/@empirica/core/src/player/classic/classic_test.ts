@@ -39,7 +39,7 @@ test("ClassicMode should return player", (t) => {
   const { ctx, changes } = setupClassic();
   setupPlayer(changes);
 
-  t.is(ctx.players.getValue().length, 1);
+  t.is(ctx.players.getValue()!.length, 1);
   t.truthy(ctx.player.getValue());
   t.falsy(ctx.game.getValue());
   t.falsy(ctx.stage.getValue());
@@ -79,7 +79,7 @@ test("ClassicMode should return players", (t) => {
   setupPlayer(changes, "player2", "participant2");
   setupPlayer(changes, "player3", "participant3");
 
-  t.is(ctx.players.getValue().length, 3);
+  t.is(ctx.players.getValue()!.length, 3);
   t.truthy(ctx.player.getValue());
   t.falsy(ctx.game.getValue());
   t.falsy(ctx.stage.getValue());
@@ -92,7 +92,7 @@ test("ClassicMode should filter players on participants", (t) => {
   setupPlayer(changes, "player2", "participant2");
   setupPlayer(changes, "player3", "participant3");
 
-  t.is(ctx.players.getValue().length, 3);
+  t.is(ctx.players.getValue()!.length, 3);
 
   changes.next(partChange({ id: "participant2", removed: true }));
 });
@@ -100,7 +100,7 @@ test("ClassicMode should filter players on participants", (t) => {
 test("ClassicMode should update player", (t) => {
   const { ctx, changes } = setupClassic();
 
-  const vals: (Player | undefined)[] = [];
+  const vals: (Player | null | undefined)[] = [];
   ctx.player.subscribe({
     next(val) {
       vals.push(val);
@@ -124,7 +124,7 @@ test("ClassicMode should update player", (t) => {
 test("ClassicMode should update game", (t) => {
   const { ctx, changes } = setupClassic();
 
-  const vals: (Game | undefined)[] = [];
+  const vals: (Game | null | undefined)[] = [];
   ctx.game.subscribe({
     next(val) {
       vals.push(val);
@@ -164,7 +164,7 @@ test("ClassicMode should update game", (t) => {
 test("ClassicMode should update stage", (t) => {
   const { ctx, changes } = setupClassic();
 
-  const vals: (Stage | undefined)[] = [];
+  const vals: (Stage | null | undefined)[] = [];
   ctx.stage.subscribe({
     next(val) {
       vals.push(val);
@@ -226,8 +226,8 @@ test("ClassicMode game should have stage and round", (t) => {
   setupPlayerStage(changes);
 
   const game = ctx.game.getValue()!;
-  t.is(game.stage, ctx.stage.getValue());
-  t.is(game.round, ctx.round.getValue());
+  t.is(game.stage, ctx.stage.getValue()!);
+  t.is(game.round, ctx.round.getValue()!);
 });
 
 test("ClassicMode game should not have stage and round", (t) => {
@@ -239,8 +239,8 @@ test("ClassicMode game should not have stage and round", (t) => {
   const game = ctx.game.getValue()!;
   t.true(!game.stage);
   t.true(!game.round);
-  t.is(game.stage, ctx.stage.getValue());
-  t.is(game.round, ctx.round.getValue());
+  t.is(game.stage, ctx.stage.getValue()!);
+  t.is(game.round, ctx.round.getValue()!);
 });
 
 test("ClassicMode stage can have timer", (t) => {
@@ -283,7 +283,7 @@ test("ClassicMode game should update on attribute change", (t) => {
   setupGame(changes);
   setupPlayerGame(changes);
 
-  const vals: (Game | undefined)[] = [];
+  const vals: (Game | null | undefined)[] = [];
   ctx.game.subscribe({
     next(val) {
       vals.push(val);
@@ -329,7 +329,7 @@ test("ClassicMode player should update on PlayerGame change", (t) => {
     })
   );
 
-  const vals: (Player | undefined)[] = [];
+  const vals: (Player | null | undefined)[] = [];
   ctx.player.subscribe({
     next(val) {
       vals.push(val);

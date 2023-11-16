@@ -1,0 +1,31 @@
+{
+  "name": "empirica-monorepo",
+  "version": "1.0.0",
+  "description": "Monorepo for Empirica v2",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "release:core": "cd ./lib/@empirica/core && npm run build && cd ../../.. && changeset publish",
+    "install_browsers": "playwright install --with-deps",
+    "test:e2e": "playwright test --grep-invert @performance",
+    "bump": "changeset version",
+    "changeset": "changeset"
+  },
+  "workspaces": [
+    "e2e-tests",
+    "lib/@empirica/*"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/empiricaly/empirica.git"
+  },
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/empiricaly/empirica/issues"
+  },
+  "homepage": "https://github.com/empiricaly/empirica#readme",
+  "dependencies": {
+    "@changesets/cli": "^2.26.0"
+  }
+}
