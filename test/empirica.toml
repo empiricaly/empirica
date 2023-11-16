@@ -1,9 +1,0 @@
-name = "test_experiment"
-
-[tajriba.auth]
-srtoken = "HErChTCtHqDuhziZ"
-
-[[tajriba.auth.users]]
-name = "Admin"
-username = "admin"
-password = "testpw"
