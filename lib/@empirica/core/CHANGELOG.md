@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.8.5
+
+### Patch Changes
+
+- c3c1f2f: Reverting websocket changes back to empirica version 1.8.0.
+
 ## 1.8.4
 
 ### Patch Changes
