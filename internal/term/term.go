@@ -82,11 +82,16 @@ func (ui *UI) printRefresh(compName string) {
 
 	text := compName + " refreshed"
 
+	rightPad := ""
+	if len(text) < columnWidth {
+		rightPad = strings.Repeat(" ", columnWidth-len(text))
+	}
+
 	border := lipgloss.NewStyle().
 		Border(myCuteBorder, true, false, false, false).
 		BorderForeground(lipgloss.AdaptiveColor{Light: "#333", Dark: "#aaaaaa"}).
 		PaddingBottom(1).
-		Render(subtleStr(text) + strings.Repeat(" ", columnWidth-len(text)))
+		Render(subtleStr(text) + rightPad)
 
 	doc.WriteString(border)
 
