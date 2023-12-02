@@ -1,0 +1,6 @@
+version: v1.2.3
+sha: abcd123
+build: "42"
+tag: v1.2.3
+branch: thisbranch
+time: "2023-11-26T04:01:14Z"
