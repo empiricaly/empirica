@@ -1,5 +1,12 @@
 # @empirica/core
 
+## 1.8.6
+
+### Patch Changes
+
+- 685ceb4: Fix issue in Tajriba where the change queue could hit an out of bounds error.
+- 685ceb4: Fix `Max payload size exceeded` error when exporting data.
+
 ## 1.8.5
 
 ### Patch Changes
