@@ -146,6 +146,7 @@ export async function connect(
   clientName: string = "api"
 ): Promise<Conn> {
   const tajriba = await Tajriba.createAndAwait(tajURL);
+  tajriba.useHTTP = true;
 
   if (!token) {
     token = await tajriba.registerService(clientName, srtoken);

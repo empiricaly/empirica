@@ -1,12 +1,13 @@
 import { ParticipantIdent, Tajriba } from "@empirica/tajriba";
 import { bs } from "../utils/object";
+import { BehaviorSubject } from "rxjs";
 
 export const ErrNotConnected = new Error("not connected");
 
 export class TajribaConnection {
   readonly tajriba: Tajriba;
   private _connected = bs(false);
-  private _connecting = bs(true);
+  private _connecting: BehaviorSubject<boolean> = bs(true);
   private _stopped = bs(false);
 
   constructor(private url: string) {
