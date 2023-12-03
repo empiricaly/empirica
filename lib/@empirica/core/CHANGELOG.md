@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.8.7
+
+### Patch Changes
+
+- 3fe3191: Fix export version resolution logic.
+
 ## 1.8.6
 
 ### Patch Changes
