@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.8.9
+
+### Patch Changes
+
+- 282e6e6: Upgrade tajriba.js to v1.5.2.
+
 ## 1.8.8
 
 ### Patch Changes
