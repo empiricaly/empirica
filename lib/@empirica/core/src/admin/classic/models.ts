@@ -8,12 +8,13 @@ import { AddScopePayload, StepPayload } from "../context";
 import { EventContext } from "../events";
 import { Scope } from "../scopes";
 import { AttrInput, attrs, scopeConstructor } from "./helpers";
+import { debug, trace } from "console";
 
 const isString = z.string().parse;
 const isOptionalNumber = z.number().optional().parse;
 
 export const endedStatuses = ["ended", "terminated", "failed"];
-export type EndedStatuses = (typeof endedStatuses)[number];
+export type EndedStatuses = typeof endedStatuses[number];
 
 const reservedKeys = [
   "batchID",
@@ -936,7 +937,13 @@ export class Stage extends GameOwned {
         nodeID: this.get("timerID") as string,
         cause: reason,
       },
-    ]);
+    ])
+      .catch((err) => {
+        debug(`stage end: ${err}`);
+      })
+      .then(() => {
+        trace(`stage end, transitioned`);
+      });
   }
 
   async createPlayerStage(player: Player) {

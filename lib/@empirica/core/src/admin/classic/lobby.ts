@@ -92,14 +92,21 @@ async function setupIndividualLobbyTimeout(
   player.set(lobbyTimerKey, stepID);
   player.set(individualTimerGameKey, game.id);
 
-  ctx.addTransitions([
-    {
-      from: State.Created,
-      to: State.Running,
-      nodeID: stepID,
-      cause: "lobby timer start",
-    },
-  ]);
+  ctx
+    .addTransitions([
+      {
+        from: State.Created,
+        to: State.Running,
+        nodeID: stepID,
+        cause: "individual lobby timer start",
+      },
+    ])
+    .catch((err) => {
+      error(`individual lobby timer start: ${err}`);
+    })
+    .then(() => {
+      trace(`individual lobby timer start, transitioned`);
+    });
 }
 
 async function expiredIndividualLobbyTimeout(
@@ -177,18 +184,21 @@ async function setupSharedLobbyTimeout(
   debug("lobby: lobby created", stepID);
   game.set(lobbyTimerKey, stepID);
 
-  try {
-    await ctx.addTransitions([
+  await ctx
+    .addTransitions([
       {
         from: State.Created,
         to: State.Running,
         nodeID: stepID,
-        cause: "lobby timer start",
+        cause: "shared lobby timer start",
       },
-    ]);
-  } catch (e) {
-    debug("lobby: failed to start lobby timeout", e);
-  }
+    ])
+    .catch((err) => {
+      debug(`shared lobby timer start: ${err}`);
+    })
+    .then(() => {
+      trace(`shared lobby timer start, transitioned`);
+    });
 }
 
 async function expiredSharedLobbyTimeout(
