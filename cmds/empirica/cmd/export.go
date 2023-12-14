@@ -46,36 +46,49 @@ func addExportCommand(parent *cobra.Command) error {
 
 			exportScriptDir := path.Join(localDir, "export")
 
-			serverDir := path.Join(wd, "server")
-			versServer := experiment.GetVersion(serverDir, build.EmpiricaPackageName)
+			resolvedVersion := "not found"
+
+			vers, _, err := build.GetProjectRelease()
+			if err == nil {
+				resolvedVersion = vers.Version
+			} else {
+				serverDir := path.Join(wd, "server")
+				versServer := experiment.GetVersion(serverDir, build.EmpiricaPackageName)
+
+				if versServer != nil {
+					resolvedVersion = versServer.Resolved
+				} else {
+					buildVersion := build.Version()
+					if buildVersion != "" && strings.HasPrefix(buildVersion, "v") {
+						resolvedVersion = strings.TrimPrefix(buildVersion, "v")
+					}
+				}
+			}
 
 			// (re-)create export dir. We always reexport for simplicity, so we
 			// don't have to manage versions... Should optimize later.
 			if _, err := os.Stat(exportScriptDir); err == nil {
-				if versServer == nil {
+				if resolvedVersion == "" {
 					os.RemoveAll(exportScriptDir)
 				} else {
 					// Check if version is identical to server/package.json
 					versExport := experiment.GetVersion(exportScriptDir, build.EmpiricaPackageName)
-					if versExport.Resolved != versServer.Resolved {
+					if versExport.Resolved != resolvedVersion {
 						os.RemoveAll(exportScriptDir)
 					}
 				}
 			}
 
-			var version string
 			if os.Getenv("EMPIRICA_DEV") != "" {
-				version = "link"
+				resolvedVersion = "link"
 
 				log.Warn().
 					Str("package", build.EmpiricaPackageName).
 					Str("EMPIRICA_DEV", "true").
 					Msg("export: using locally linked package")
 			} else {
-				version := versServer.Resolved
-
-				if version == "not found" {
-					version = "latest"
+				if resolvedVersion == "not found" {
+					resolvedVersion = "latest"
 				}
 			}
 
@@ -84,7 +97,7 @@ func addExportCommand(parent *cobra.Command) error {
 					return errors.Wrap(err, "export: copy export script")
 				}
 
-				if version == "link" {
+				if resolvedVersion == "link" {
 					if err := experiment.RunCmd(ctx, exportScriptDir, "empirica", "npm", "link", "@empirica/core"); err != nil {
 						return errors.Wrap(err, "server")
 					}
@@ -93,7 +106,7 @@ func addExportCommand(parent *cobra.Command) error {
 						return errors.Wrap(err, "server")
 					}
 
-					if err := experiment.RunCmdSilent(ctx, exportScriptDir, "empirica", "npm", "install", "--silent", "-E", "@empirica/core@"+version); err != nil {
+					if err := experiment.RunCmdSilent(ctx, exportScriptDir, "empirica", "npm", "install", "--silent", "-E", "@empirica/core@"+resolvedVersion); err != nil {
 						return errors.Wrap(err, "upgrade client")
 					}
 				}

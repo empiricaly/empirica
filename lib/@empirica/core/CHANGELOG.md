@@ -1,5 +1,30 @@
 # @empirica/core
 
+## 1.8.9
+
+### Patch Changes
+
+- 282e6e6: Upgrade tajriba.js to v1.5.2.
+
+## 1.8.8
+
+### Patch Changes
+
+- 44c9486: Upgrade tajriba.js to version 1.5.0.
+
+## 1.8.7
+
+### Patch Changes
+
+- 3fe3191: Fix export version resolution logic.
+
+## 1.8.6
+
+### Patch Changes
+
+- 685ceb4: Fix issue in Tajriba where the change queue could hit an out of bounds error.
+- 685ceb4: Fix `Max payload size exceeded` error when exporting data.
+
 ## 1.8.5
 
 ### Patch Changes

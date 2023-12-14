@@ -1,6 +1,6 @@
 {
   "name": "@empirica/core",
-  "version": "1.8.5",
+  "version": "1.8.9",
   "description": "Empirica Core",
   "author": "Nicolas Paton <nicolas.paton@gmail.com>",
   "license": "Apache-2.0",
@@ -191,7 +191,7 @@
     "unocss": "0.51.4"
   },
   "dependencies": {
-    "@empirica/tajriba": "1.4.0",
+    "@empirica/tajriba": "1.5.3",
     "@swc/helpers": "0.4.2",
     "@unocss/reset": "^0.51.4",
     "archiver": "5.3.1",

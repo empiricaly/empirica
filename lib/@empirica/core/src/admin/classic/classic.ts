@@ -610,14 +610,21 @@ export function Classic({
 
         ctx.addLinks([{ link: true, participantIDs, nodeIDs }]);
 
-        ctx.addTransitions([
-          {
-            from: State.Created,
-            to: State.Running,
-            nodeID: timerID,
-            cause: "stage start",
-          },
-        ]);
+        ctx
+          .addTransitions([
+            {
+              from: State.Created,
+              to: State.Running,
+              nodeID: timerID,
+              cause: "stage start",
+            },
+          ])
+          .catch((err) => {
+            debug(`stage start: ${err}`);
+          })
+          .then(() => {
+            trace(`stage start, transitioned`);
+          });
       }
     );
 
@@ -646,15 +653,21 @@ export function Classic({
         );
 
         if (haveAllPlayersSubmitted) {
-          ctx.addTransitions([
-            {
-              from: State.Running,
-              to: State.Ended,
-              nodeID: isString(playerStage.stage!.get("timerID")),
-              cause: "players submitted",
-            },
-          ]);
-          trace(`all player submitted, transitioning`);
+          ctx
+            .addTransitions([
+              {
+                from: State.Running,
+                to: State.Ended,
+                nodeID: isString(playerStage.stage!.get("timerID")),
+                cause: "players submitted",
+              },
+            ])
+            .catch((err) => {
+              debug(`players submitted: ${err}`);
+            })
+            .then(() => {
+              trace(`all player submitted, transitioned`);
+            });
         } else {
           trace(`not all player submitted`);
         }
