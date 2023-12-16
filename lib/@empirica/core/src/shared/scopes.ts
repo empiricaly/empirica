@@ -249,11 +249,18 @@ export class Scope<
 
     const nextProps = [];
     for (const attr of keyOrAttributes) {
-      nextProps.push(
-        this.attributes
-          .attribute(this.scope.id, attr.key)
-          ._prepSet(attr.value, attr.ao)
-      );
+      const at = this.attributes
+        .attribute(this.scope.id, attr.key)
+        ._prepSet(attr.value, attr.ao);
+      if (!at) {
+        continue;
+      }
+
+      nextProps.push(at);
+    }
+
+    if (nextProps.length === 0) {
+      return;
     }
 
     this.attributes.setAttributes(nextProps);

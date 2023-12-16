@@ -275,6 +275,10 @@ export class Attribute {
 
   set(value: JsonValue, ao?: Partial<AttributeOptions>) {
     const attrProps = this._prepSet(value, ao);
+    if (!attrProps) {
+      return;
+    }
+
     this.setAttributes([attrProps]);
     trace(`SET ${this.key} = ${value} (${this.scopeID})`);
   }
@@ -283,7 +287,7 @@ export class Attribute {
     value: JsonValue,
     ao?: Partial<AttributeOptions>,
     item?: boolean
-  ): SetAttributeInput {
+  ): SetAttributeInput | undefined {
     if (ao?.append !== undefined && ao!.index !== undefined) {
       error(`cannot set both append and index`);
 
@@ -310,12 +314,21 @@ export class Attribute {
           this.scopeID,
           this.key
         );
+      } else {
+        const existing = this.attrs[index];
+        if (existing && existing.value === value) {
+          return;
+        }
       }
 
       this.attrs![index]!._prepSet(value, ao, true);
       const v = this._recalcVectorVal();
       this.val.next(v);
     } else {
+      if (this.value === value) {
+        return;
+      }
+
       this.val.next(value);
     }
 
