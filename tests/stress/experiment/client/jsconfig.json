@@ -1,7 +1,0 @@
-{
-  "compilerOptions": {
-    "module": "node16",
-    "moduleResolution": "nodenext",
-    "jsx": "react"
-  }
-}

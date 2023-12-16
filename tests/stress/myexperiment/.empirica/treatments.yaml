@@ -37,3 +37,10 @@ treatments:
       roundCount: 10
       stageCount: 3
       newKeyRate: 0.5
+  - name: Two players
+    desc: "Two players"
+    factors:
+      playerCount: 2
+      roundCount: 10
+      stageCount: 3
+      newKeyRate: 0.5

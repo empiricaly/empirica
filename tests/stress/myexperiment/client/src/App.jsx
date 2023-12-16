@@ -16,7 +16,7 @@ export default function App() {
       <div className="h-screen relative">
         <EmpiricaMenu position="bottom-left" />
         <div className="h-full overflow-auto">
-          <EmpiricaContext>
+          <EmpiricaContext disableConsent>
             <Game />
           </EmpiricaContext>
         </div>

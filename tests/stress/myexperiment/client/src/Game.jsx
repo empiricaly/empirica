@@ -6,6 +6,8 @@ export function Game() {
   const round = useRound();
   const { playerCount, newKeyRate } = game.get("treatment");
 
+  console.log("GAME");
+
   useEffect(() => {
     let i = 0;
     const interval = setInterval(() => {
@@ -16,5 +18,10 @@ export function Game() {
     return () => clearInterval(interval);
   }, []);
 
-  return <div>{playerCount}</div>;
+  return (
+    <div>
+      <h1 data-test="game-started">Game started</h1>
+      {playerCount}
+    </div>
+  );
 }
