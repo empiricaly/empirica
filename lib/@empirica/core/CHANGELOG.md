@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.8.10
+
+### Patch Changes
+
+- 98d72e9: Handle errors in step state transition requests.
+
 ## 1.8.9
 
 ### Patch Changes
