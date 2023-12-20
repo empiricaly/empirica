@@ -1,5 +1,21 @@
 # @empirica/core
 
+## 1.8.11
+
+### Patch Changes
+
+- a5ecdbd: Avoid re-setting a key to the same value from the client side. For example:
+
+  ```js
+  scope.set("key", "value");
+  scope.set("key", "value"); // no-op
+  ```
+
+  This is not only for sets in the same tick as shown here, but also across ticks.
+
+- a5ecdbd: Improve various concurrency issues.
+- a5ecdbd: When <Steps> has no steps, only set the doneKey once.
+
 ## 1.8.10
 
 ### Patch Changes
