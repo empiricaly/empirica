@@ -608,6 +608,71 @@ export class Game extends BatchOwned {
     stage.end("ended", reason);
   }
 
+  async createPlayerGames(players: Player[]) {
+    const scopes = [];
+    const batchID = isString(this.get("batchID"));
+
+    for (const player of players) {
+      const key = `playerGameID-${this.id}`;
+      if (player.get(key)) {
+        continue;
+      }
+
+      scopes.push({
+        kind: "playerGame",
+        attributes: attrs([
+          {
+            key: "batchID",
+            value: batchID,
+            immutable: true,
+          },
+          {
+            key: "gameID",
+            value: this.id,
+            immutable: true,
+          },
+          {
+            key: "playerID",
+            value: player.id,
+            immutable: true,
+          },
+        ]),
+      });
+    }
+
+    const playerGames = await this.addScopes(scopes);
+
+    if (playerGames.length < scopes.length) {
+      error(`failed to create playerGame`);
+
+      return;
+    }
+
+    for (let playerGame of playerGames) {
+      const playerIDEdge = playerGame.attributes.edges.find(
+        (e) => e.node.key === "playerID"
+      );
+
+      if (!playerIDEdge || !playerIDEdge.node.val) {
+        error(`failed to find playerID`);
+
+        continue;
+      }
+
+      const playerID = JSON.parse(playerIDEdge.node.val!);
+
+      const player = players.find((p) => p.id === playerID);
+
+      if (!player) {
+        error(`failed to find player`);
+
+        continue;
+      }
+
+      player.set(`playerGameID-${this.id}`, playerGame.id);
+    }
+  }
+
   async createPlayerGame(player: Player) {
     const key = `playerGameID-${this.id}`;
     if (player.get(key)) {

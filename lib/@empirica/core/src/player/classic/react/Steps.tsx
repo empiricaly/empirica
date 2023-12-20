@@ -42,7 +42,7 @@ export function Steps({
   }, [steps]);
 
   useEffect(() => {
-    if (stpsSet && (!stps || stps.length === 0)) {
+    if (obj && !obj.get(doneKey) && stpsSet && (!stps || stps.length === 0)) {
       obj.set(doneKey, true);
     }
   }, [stps]);

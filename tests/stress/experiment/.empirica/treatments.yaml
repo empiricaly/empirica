@@ -1,0 +1,60 @@
+factors:
+  - name: playerCount
+    desc: playerCount determines the number of Players are in a Game.
+    values:
+      - value: 1
+      - value: 2
+      - value: 3
+      - value: 5
+      - value: 8
+      - value: 10
+      - value: 13
+  - name: roundCount
+    desc: Number of rounds in a game
+    values:
+      - value: 10
+      - value: 50
+      - value: 100
+  - name: stageCount
+    desc: Number of stages in a round
+    values:
+      - value: 1
+      - value: 3
+      - value: 9
+  - name: newKeyRate
+    desc: Rate at which new keys are generated (per second)
+    values:
+      - value: 0.25
+      - value: 0.5
+      - value: 1
+      - value: 2
+
+treatments:
+  - name: 100player
+    desc: "100 Players"
+    factors:
+      playerCount: 100
+      roundCount: 10
+      stageCount: 3
+      newKeyRate: 0.5
+  - name: 40player
+    desc: "40 Players"
+    factors:
+      playerCount: 40
+      roundCount: 10
+      stageCount: 3
+      newKeyRate: 0.5
+  - name: 10player
+    desc: "10 Players"
+    factors:
+      playerCount: 10
+      roundCount: 10
+      stageCount: 3
+      newKeyRate: 0.5
+  - name: 2player
+    desc: "2 players"
+    factors:
+      playerCount: 2
+      roundCount: 10
+      stageCount: 3
+      newKeyRate: 0.5

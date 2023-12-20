@@ -12,7 +12,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/cortesi/moddwatch v0.0.0-20210323234936-df014e95c743
 	github.com/davecgh/go-spew v1.1.1
-	github.com/empiricaly/tajriba v1.5.3
+	github.com/empiricaly/tajriba v1.5.4
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/json-iterator/go v1.1.12
@@ -71,6 +71,7 @@ require (
 	github.com/oklog/ulid/v2 v2.1.0 // indirect
 	github.com/onsi/ginkgo/v2 v2.11.0 // indirect
 	github.com/onsi/gomega v1.27.8 // indirect
+	github.com/orcaman/concurrent-map/v2 v2.0.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.2 // indirect
 	github.com/petermattis/goid v0.0.0-20220712135657-ac599d9cba15 // indirect

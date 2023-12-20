@@ -5,5 +5,7 @@ import (
 )
 
 func main() {
+	// defer profile.Start(profile.ClockProfile, profile.NoShutdownHook).Stop()
+
 	cmd.Execute()
 }

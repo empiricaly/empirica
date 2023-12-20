@@ -81,10 +81,10 @@ export function Classic({
         }
 
         let availableGames = [];
-
         for (const game of batch.games) {
           if (
             !game.hasStarted &&
+            !game.get("starting") &&
             (!skipGameIDs || !skipGameIDs?.includes(game.id))
           ) {
             availableGames.push(game);
@@ -148,6 +148,18 @@ export function Classic({
         return;
       }
 
+      if (game.rounds.length === 0) {
+        return;
+      }
+
+      const round = isRound(game.rounds[0]);
+
+      if (round.stages.length === 0) {
+        return;
+      }
+
+      const stage = isStage(round.stages[0]);
+
       const groupID = isString(game.get("groupID"));
 
       const players = game.players.filter((p) => !p.get("ended"));
@@ -174,14 +186,6 @@ export function Classic({
 
       ctx.addLinks([{ link: true, participantIDs, nodeIDs }]);
 
-      const round = isRound(game.rounds[0]);
-
-      if (round.stages.length === 0) {
-        return;
-      }
-
-      const stage = isStage(round.stages[0]);
-
       game.set("stageID", stage.id);
 
       round.set("start", true);
@@ -193,7 +197,6 @@ export function Classic({
       const player = playersForParticipant.get(participant.id);
 
       if (!player) {
-        // console.log("CREATE PLAYER", participant.id);
         await ctx.addScopes([
           {
             attributes: attrs([
@@ -212,7 +215,6 @@ export function Classic({
           },
         ]);
       } else {
-        // console.log("ALREADY", participant.id, player.id);
         await assignplayer(ctx, player);
       }
     });
@@ -473,7 +475,10 @@ export function Classic({
         return;
       }
 
+      game.set("starting", true);
+
       const players = selectRandom(readyPlayers, playerCount);
+
       const playersIDS = players.map((p) => p.id);
       for (const plyr of game.players) {
         if (!playersIDS.includes(plyr.id)) {
@@ -495,9 +500,10 @@ export function Classic({
           return;
         }
 
-        for (const player of game.players) {
-          await game.createPlayerGame(player);
-        }
+        // await Promise.all(
+        //   game.players.map((player) => game.createPlayerGame(player))
+        // );
+        await game.createPlayerGames(game.players);
       }
     );
 
@@ -521,9 +527,9 @@ export function Classic({
 
         const game = isGame(round.currentGame);
 
-        for (const player of game.players) {
-          await round.createPlayerRound(player);
-        }
+        await Promise.all(
+          game.players.map((player) => round.createPlayerRound(player))
+        );
       }
     );
 
@@ -573,9 +579,9 @@ export function Classic({
 
         const game = isGame(stage.currentGame);
 
-        for (const player of game.players) {
-          await stage.createPlayerStage(player);
-        }
+        await Promise.all(
+          game.players.map((player) => stage.createPlayerStage(player))
+        );
 
         stage.set("initialized", true, { private: true, immutable: true });
       }
