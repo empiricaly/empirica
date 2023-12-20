@@ -17,7 +17,7 @@ export class Admin extends Actor {
   }
 }
 
-export const adminNewBatch = (treatment = "Experiment", gameCount = 1) =>
+export const adminNewBatch = (treatment = "10player", gameCount = 1) =>
   new Step("new batch", async (actor) => {
     // Open the new batch dialog
     await actor.page.getByTestId("newBatchButton").click();
@@ -68,4 +68,6 @@ export const adminNewBatch = (treatment = "Experiment", gameCount = 1) =>
     // Check that the batch has started
     await expect(line.getByTestId("stopButton")).toBeVisible();
     await expect(line.getByText("Running")).toBeVisible();
+
+    await actor.page.reload();
   });

@@ -30,15 +30,29 @@ factors:
       - value: 2
 
 treatments:
-  - name: Experiment
-    desc: "The experiment"
+  - name: 100player
+    desc: "100 Players"
+    factors:
+      playerCount: 100
+      roundCount: 10
+      stageCount: 3
+      newKeyRate: 0.5
+  - name: 40player
+    desc: "40 Players"
+    factors:
+      playerCount: 40
+      roundCount: 10
+      stageCount: 3
+      newKeyRate: 0.5
+  - name: 10player
+    desc: "10 Players"
     factors:
       playerCount: 10
       roundCount: 10
       stageCount: 3
       newKeyRate: 0.5
-  - name: Two players
-    desc: "Two players"
+  - name: 2player
+    desc: "2 players"
     factors:
       playerCount: 2
       roundCount: 10

@@ -36,12 +36,12 @@ export class Actor {
 
       ws.on("framesent", (event) => {
         for (const cb of this.wsSent) {
-          cb(event.payload);
+          cb(ws, event.payload);
         }
       });
       ws.on("framereceived", (event) => {
         for (const cb of this.wsReceived) {
-          cb(event.payload);
+          cb(ws, event.payload);
         }
       });
       ws.on("close", (ws) => {
@@ -53,11 +53,15 @@ export class Actor {
 
     await this.page.goto(this.url);
     console.info(
-      chalk.magentaBright(`-> ${this.name}`),
+      chalk.magentaBright(`☄ ${this.name}`),
       chalk.gray(`(${this.kind})`, chalk.gray(`created`))
     );
   }
 
+  /**
+   * Listen to WSs.
+   * @param {Object} cbs - Callbacks.
+   */
   listenWS({ open, sent, received, close }) {
     if (open) {
       this.wsOpen.push(open);
@@ -113,7 +117,9 @@ export class Actor {
       name = chalk.magentaBright(`(${this.name})`.padEnd(10, " "));
     }
 
-    return `${msgType} ${name} ${this.currentTS()}`;
+    const symbol = chalk.gray(local ? "·" : "»");
+
+    return `${symbol} ${msgType} ${name} ${this.currentTS()} `;
   }
 
   currentTS() {
@@ -130,7 +136,11 @@ export class Actor {
     const start = Date.now();
     this.currentStep = step;
     try {
-      console.info(chalk.greenBright(this.name), chalk.yellowBright(step.name));
+      console.info(
+        chalk.gray("⌁"),
+        chalk.greenBright(this.name),
+        chalk.yellowBright(step.name)
+      );
       await step.run(this);
     } catch (err) {
       error(
@@ -143,7 +153,7 @@ export class Actor {
 
     console.info(
       chalk.gray(
-        ` ${this.name} ${step.name} - finished in ${Date.now() - start}ms`
+        `⌀ ${this.name} ${step.name} - finished in ${Date.now() - start}ms`
       )
     );
   }

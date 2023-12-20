@@ -1,12 +1,12 @@
 lobbies:
-- name: Default shared fail
-  kind: shared
-  duration: 5m
-  strategy: fail
-- name: Default shared ignore
-  kind: shared
-  duration: 5m
-  strategy: ignore
-- name: Default individual
-  kind: individual
-  duration: 5m
+  - name: Default shared fail
+    kind: shared
+    duration: 50m
+    strategy: fail
+  - name: Default shared ignore
+    kind: shared
+    duration: 50m
+    strategy: ignore
+  - name: Default individual
+    kind: individual
+    duration: 50m
