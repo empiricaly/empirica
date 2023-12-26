@@ -14,10 +14,10 @@
 </script>
 
 <script>
-  import { formatLobby } from "../../utils/lobbies.js";
   import { push } from "svelte-spa-router";
   import { currentAdmin } from "../../utils/auth.js";
   import { validateBatchConfig } from "../../utils/batches.js";
+  import { formatLobby } from "../../utils/lobbies.js";
   import Alert from "../common/Alert.svelte";
   import ButtonGroup from "../common/ButtonGroup.svelte";
   import EmptyState from "../common/EmptyState.svelte";
@@ -47,7 +47,7 @@
     }
   }
 
-  async function handleSubmit() {
+  async function handleSubmit(event) {
     let config;
     switch (assignmentMethod) {
       case "simple":
@@ -57,20 +57,22 @@
         config = complete;
         break;
       case "custom":
-        config = custom;
+        window["rawCustomConfig"]
+          ? (config = custom.config)
+          : (config = custom);
         break;
       default:
         throw new Error("unknown assgnement method");
     }
 
-    console.info("submitting", JSON.stringify(config));
+    console.debug("submitting", JSON.stringify(config));
 
     const attributes = [
       { key: "config", val: JSON.stringify(config), immutable: true },
       { key: "status", val: JSON.stringify("created"), protected: true },
     ];
 
-    if (assignmentMethod !== "custom") {
+    if (assignmentMethod !== "custom" || window["rawCustomConfig"]) {
       attributes.push({
         key: "lobbyConfig",
         val: JSON.stringify(lobby),
@@ -87,7 +89,7 @@
         attributes,
       });
 
-      console.log("new batch", batch);
+      console.debug("new batch", batch);
       window.lastNewBatch = batch;
 
       newBatch = false;

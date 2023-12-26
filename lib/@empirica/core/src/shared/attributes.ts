@@ -236,6 +236,7 @@ export class Attribute {
   private attrs?: Attribute[];
 
   private val = new BehaviorSubject<JsonValue | undefined>(undefined);
+  private serVal?: string;
 
   constructor(
     private setAttributes: (input: SetAttributeInput[]) => Promise<unknown>,
@@ -294,6 +295,8 @@ export class Attribute {
       throw new Error(`cannot set both append and index`);
     }
 
+    const serVal = JSON.stringify(value);
+
     if (!item && (ao?.index !== undefined || ao?.append)) {
       let index = ao!.index || 0;
       if (ao?.append) {
@@ -316,7 +319,7 @@ export class Attribute {
         );
       } else {
         const existing = this.attrs[index];
-        if (existing && existing.value === value) {
+        if (existing && existing.serVal === serVal) {
           return;
         }
       }
@@ -325,17 +328,19 @@ export class Attribute {
       const v = this._recalcVectorVal();
       this.val.next(v);
     } else {
-      if (this.value === value) {
+      if (this.serVal === serVal) {
         return;
       }
 
       this.val.next(value);
     }
 
+    this.serVal = serVal;
+
     const attrProps: SetAttributeInput = {
       key: this.key,
       nodeID: this.scopeID,
-      val: JSON.stringify(value),
+      val: serVal,
     };
 
     if (ao) {
