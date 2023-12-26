@@ -33,12 +33,12 @@ test("1 x 10 player", async ({ browser }) => {
   await ctx.close();
 });
 
-test("10 full games, 2 players", async ({ browser }) => {
+test("2-round 5-stage-each game, 2 players", async ({ browser }) => {
   const ctx = new Context(browser);
 
   const playerCount = 2;
-  const roundCount = 1;
-  const stageCount = 10;
+  const roundCount = 2;
+  const stageCount = 5;
   const totalStages = roundCount * stageCount;
 
   await ctx.start();

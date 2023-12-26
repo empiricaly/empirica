@@ -228,6 +228,15 @@ export class Runloop<
     const res = await Promise.allSettled(promises);
     for (const r of res) {
       if (r.status === "rejected") {
+        // We can ignore invalid transition errors, as they are likely due to
+        // the same transition triggered concurrently from multiple places.
+        if (
+          r.reason instanceof String &&
+          r.reason.includes("invalid transition")
+        ) {
+          continue;
+        }
+
         warn(`failed load: ${r.reason}`);
       }
     }

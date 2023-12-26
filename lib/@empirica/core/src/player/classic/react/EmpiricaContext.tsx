@@ -13,7 +13,7 @@ import {
 } from "../../react/hooks";
 import { Lobby as DefaultLobby } from "./Lobby";
 import { Steps, StepsFunc } from "./Steps";
-import { useGame, usePlayer, useRound, useStage } from "./hooks";
+import { useGame, usePlayer, usePlayers, useRound, useStage } from "./hooks";
 
 export interface EmpiricaContextProps {
   children: React.ReactNode;
@@ -168,6 +168,7 @@ function EmpiricaInnerContext({
   unmanagedGame = false,
 }: EmpiricaInnerContextProps) {
   const player = usePlayer();
+  const players = usePlayers();
   const game = useGame();
   const stage = useStage();
   const round = useRound();
@@ -192,7 +193,7 @@ function EmpiricaInnerContext({
     return <Exit exitSteps={exitSteps} finished={finished} />;
   }
 
-  if (!unmanagedGame && (!stage || !round)) {
+  if (!unmanagedGame && (!stage || !round || !players)) {
     return <LoadingComp />;
   }
 

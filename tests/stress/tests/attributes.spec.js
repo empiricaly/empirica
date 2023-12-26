@@ -12,9 +12,7 @@ import { sleep } from "./utils";
 // test.
 test.describe.configure({ mode: "serial" });
 
-test.only("attribute as object, correct equality check", async ({
-  browser,
-}) => {
+test("attribute as object, correct equality check", async ({ browser }) => {
   const ctx = new Context(browser);
 
   const playerCount = 2;
