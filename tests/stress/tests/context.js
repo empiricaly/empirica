@@ -83,6 +83,12 @@ export class Context {
   async applyPlayers(step) {
     await applyAll(this.players, step);
   }
+
+  async expectPlayers(kind, key, value) {
+    for (const player of this.players) {
+      await player.expect(kind, key, value);
+    }
+  }
 }
 
 export function applyAll(actors, step) {

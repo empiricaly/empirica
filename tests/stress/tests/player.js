@@ -30,6 +30,93 @@ export class Player extends Actor {
     await expect(
       this.page.getByRole("heading", { name: "No experiments available" })
     ).toBeVisible();
+
+    const scopeChangeIcon = chalk.gray("←");
+    const name = chalk.greenBright(`(${this.name})`.padEnd(10, " "));
+
+    await this.page.exposeFunction(
+      "keyChanged",
+      (kind, key, value, scopeExists) => {
+        console.log(
+          scopeChangeIcon,
+          chalk.magenta("KEY"),
+          name,
+          this.currentTS(),
+          scopeExists
+            ? chalk.green(` ${kind} ${key}=${value} ✔`)
+            : chalk.red(` ${kind} ✘`)
+        );
+      }
+    );
+
+    await this.page.exposeFunction("scopeChanged", (kind, scopeExists) => {
+      console.log(
+        scopeChangeIcon,
+        chalk.blue("SCP"),
+        name,
+        this.currentTS(),
+        scopeExists ? chalk.green(` ${kind} ✔`) : chalk.red(` ${kind} ✘`)
+      );
+    });
+  }
+
+  async listenScope(kind) {
+    await this.page.evaluate((kind) => {
+      eval("window.empirica_test_collector")[kind].listenScope();
+    }, kind);
+  }
+
+  async listenKey(kind, key) {
+    await this.page.evaluate(
+      ({ kind, key }) => {
+        eval("window.empirica_test_collector")[kind].listenKey(key);
+      },
+      { kind, key }
+    );
+  }
+
+  async get(kind, key) {
+    return await this.page.evaluate(
+      ({ kind, key }) => eval("window.empirica_test_collector")[kind].get(key),
+      { kind, key }
+    );
+  }
+
+  async set(kind, key, value) {
+    await this.page.evaluate(
+      ({ kind, key, value }) => {
+        eval("window.empirica_test_collector")[kind].set(key, value);
+      },
+      { kind, key, value }
+    );
+  }
+
+  async expect(kind, key, value) {
+    const val = JSON.stringify(await this.get(kind, key));
+    const valueJSON = JSON.stringify(value);
+    if (val !== valueJSON) {
+      throw new Error(
+        `value was not as expected, expected: ${valueJSON}, got: ${val}`
+      );
+    }
+  }
+
+  // mutObj is a special function that allows to mutate an object at key in
+  // place (without overwriting the whole object). This is to trigger a case,
+  // where the value is not updated correctly, because equality check is done on
+  // the object reference, not the content.
+  // The value at key must of course be an object. This is only really useful
+  // for this one test.
+  async mutObj(kind, key, k, v) {
+    await this.page.evaluate(
+      ({ kind, key, k, v }) => {
+        const record = eval("window.empirica_test_collector")[kind];
+        const myobject = record.get(key);
+        myobject[k] = v;
+        record.set(key, myobject);
+      },
+      { kind, key, k, v }
+    );
   }
 
   logWS() {
@@ -37,22 +124,41 @@ export class Player extends Actor {
       received: playerReceivedPrinter(this),
     });
   }
+
+  listen() {
+    return Math.floor(Date.now() / 1000);
+  }
 }
 
-export const playerStart = new Step("start", async (actor) => {
+export const playerStart = new Step("start game", async (actor) => {
   // Fill the form
   actor.info("fill form");
   await actor.page.locator("input#playerID").fill(actor.uniqueID);
   await actor.page.locator(`button[type="submit"]`).click();
 
-  // Wait for the lobby to be visible
+  // Wait for first stage to be visible
   actor.info("signed in");
-  await actor.page.getByTestId("game-started").waitFor({ timeout: 3000000 });
+  await actor.page.getByTestId("stage-ongoing").waitFor({ timeout: 3000000 });
 
-  // Wait for the game to start
   actor.info("game started");
   await actor.screenshot("game started");
 });
+
+export const submitStage = new Step("submit stage", async (actor) => {
+  await actor.page.getByTestId("submit-stage").click();
+  await actor.page.getByTestId("submitted").waitFor({ timeout: 1000 });
+});
+
+export const waitNextStage = new Step("wait next stage", async (actor) => {
+  await actor.page.getByTestId("stage-ongoing").waitFor({ timeout: 100000 });
+});
+
+export const waitGameFinished = new Step(
+  "wait game finished",
+  async (actor) => {
+    await actor.page.getByTestId("game-finished").waitFor({ timeout: 100000 });
+  }
+);
 
 function playerReceivedPrinter(actor) {
   const scopes = new Map();
