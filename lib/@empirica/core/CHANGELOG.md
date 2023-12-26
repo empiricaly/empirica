@@ -1,5 +1,22 @@
 # @empirica/core
 
+## 1.8.12
+
+### Patch Changes
+
+- c20ca73: Fix setting attributes with the same mutated object as the current one.
+
+  For example, before this patch, the value would not be saved, since we are
+  reusing the same object, which we've only mutated in place:
+
+  ```js
+  const value = player.get("myobject");
+  value["mykey"] = "myvalue";
+  player.set("myobject", value);
+  ```
+
+- d1816ad: Ensure `usePlayers` never returns undefined (expect in unmanaged games).
+
 ## 1.8.11
 
 ### Patch Changes
