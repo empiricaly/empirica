@@ -168,10 +168,8 @@ function EmpiricaInnerContext({
   unmanagedGame = false,
 }: EmpiricaInnerContextProps) {
   const player = usePlayer();
-  const players = usePlayers();
   const game = useGame();
-  const stage = useStage();
-  const round = useRound();
+  const allReady = useAllReady();
 
   if (!game) {
     if (unmanagedGame) {
@@ -193,11 +191,11 @@ function EmpiricaInnerContext({
     return <Exit exitSteps={exitSteps} finished={finished} />;
   }
 
-  if (!unmanagedGame && (!stage || !round || !players)) {
-    return <LoadingComp />;
+  if (unmanagedGame || allReady) {
+    return <>{children}</>;
   }
 
-  return <>{children}</>;
+  return <LoadingComp />;
 }
 
 function Exit({
@@ -212,4 +210,41 @@ function Exit({
       <Finished />
     </Steps>
   );
+}
+
+function useAllReady() {
+  const player = usePlayer();
+  const players = usePlayers();
+  const game = useGame();
+  const stage = useStage();
+  const round = useRound();
+
+  if (
+    !player ||
+    !players ||
+    !stage ||
+    !round ||
+    !game ||
+    !player.game ||
+    !player.round ||
+    !player.stage
+  ) {
+    return false;
+  }
+
+  const treatment = game.get("treatment") as { playerCount: number };
+
+  const playerCount = treatment!["playerCount"];
+
+  if (players.length < playerCount) {
+    return false;
+  }
+
+  for (const p of players) {
+    if (!p.game || !p.round || !p.stage) {
+      return false;
+    }
+  }
+
+  return true;
 }

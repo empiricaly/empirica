@@ -16,11 +16,11 @@ export default function App() {
       <div className="h-screen relative">
         <EmpiricaMenu position="bottom-left" />
         <div className="h-full overflow-auto">
-          <EmpiricaContext disableConsent finished={Finished}>
-            <ErrorBoundarySimple>
+          <ErrorBoundarySimple>
+            <EmpiricaContext disableConsent finished={Finished}>
               <Game />
-            </ErrorBoundarySimple>
-          </EmpiricaContext>
+            </EmpiricaContext>
+          </ErrorBoundarySimple>
         </div>
       </div>
     </EmpiricaParticipant>
@@ -39,7 +39,7 @@ class ErrorBoundarySimple extends React.Component {
   state = { hasError: false };
 
   componentDidCatch(error) {
-    // report the error to your favorite Error Tracking tool (ex: Sentry, Bugsnag)
+    console.error("Error at ErrorBoundarySimple:");
     console.error(error);
   }
 

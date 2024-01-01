@@ -231,10 +231,32 @@ export function EmpiricaClassic(
           playersChanged = true;
         }
 
+        if (
+          !playersChanged &&
+          scopeChanged(p?.stage, (current.players || [])[i]?.stage)
+        ) {
+          playersChanged = true;
+        }
+
+        if (
+          !playersChanged &&
+          scopeChanged(p?.round, (current.players || [])[i]?.round)
+        ) {
+          playersChanged = true;
+        }
+
+        if (
+          !playersChanged &&
+          scopeChanged(p?.game, (current.players || [])[i]?.game)
+        ) {
+          playersChanged = true;
+        }
+
         if (p) {
           players.push(p);
         }
       }
+
       if (playersChanged) {
         ret.players.next(players);
       }
@@ -291,21 +313,22 @@ function getMainObjects(
   scopes: Scopes<Context, EmpiricaClassicKinds>,
   attributes: Attributes
 ): mainObjects {
-  const players = scopes.byKind("player");
+  const players = Array.from(scopes.byKind("player").values()) as Player[];
+  players.sort();
 
   const res: mainObjects = {
-    players: Array.from(players.values()) as Player[],
+    players,
     game: null,
     player: null,
     round: null,
     stage: null,
   };
 
-  if (players.size === 0) {
+  if (players.length === 0) {
     return res;
   }
 
-  res.player = Array.from(players.values()).find((p) => {
+  res.player = players.find((p) => {
     const pID = attributes.nextAttributeValue(p.id, "participantID") as string;
     return pID === participantID;
   }) as Player;
@@ -319,7 +342,7 @@ function getMainObjects(
     return res;
   }
 
-  for (const player of res.players || []) {
+  for (const player of players || []) {
     const key = `playerGameID-${res.game.id}`;
     if (!nextScopeByKey(scopes, attributes, player, key)) {
       return res;
@@ -331,7 +354,7 @@ function getMainObjects(
     return res;
   }
 
-  for (const player of res.players || []) {
+  for (const player of players || []) {
     const key = `playerStageID-${res.stage.id}`;
     if (!nextScopeByKey(scopes, attributes, player, key)) {
       delete res.stage;
@@ -344,7 +367,7 @@ function getMainObjects(
     return res;
   }
 
-  for (const player of res.players || []) {
+  for (const player of players || []) {
     const key = `playerRoundID-${res.round.id}`;
     if (!nextScopeByKey(scopes, attributes, player, key)) {
       delete res.stage;

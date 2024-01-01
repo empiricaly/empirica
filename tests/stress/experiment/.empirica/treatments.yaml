@@ -44,6 +44,13 @@ treatments:
       roundCount: 10
       stageCount: 3
       newKeyRate: 0.5
+  - name: 20player
+    desc: "20 Players"
+    factors:
+      playerCount: 20
+      roundCount: 10
+      stageCount: 3
+      newKeyRate: 0.5
   - name: 10player
     desc: "10 Players"
     factors:

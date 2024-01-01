@@ -42,13 +42,32 @@ class Scope {
   set(key, value) {
     this.scope?.set(key, value);
   }
+
+  get game() {
+    return this.getScoped("game");
+  }
+
+  get round() {
+    return this.getScoped("round");
+  }
+
+  get stage() {
+    return this.getScoped("stage");
+  }
+
+  getScoped(kind) {
+    return {
+      get: (key) => this.scope?.[kind]?.get(key),
+      set: (key, value) => this.scope?.[kind]?.set(key, value),
+    };
+  }
 }
 const coll = {
   game: new Scope("game"),
   round: new Scope("round"),
   stage: new Scope("stage"),
   player: new Scope("player"),
-  players: new Scope("players"),
+  players: [],
 };
 window.empirica_test_collector = coll;
 
@@ -81,10 +100,10 @@ function GameInner() {
   }, [player]);
 
   useEffect(() => {
-    coll.players.updateScope(players);
+    coll.players = players;
   }, [players]);
 
-  console.log("submitted", player.stage.get("submit"));
+  console.log("submitted", Boolean(player.stage), player?.stage?.get("submit"));
 
   return (
     <div>
@@ -117,7 +136,7 @@ export class Game extends React.Component {
     coll.round.updateScope(null);
     coll.stage.updateScope(null);
     coll.player.updateScope(null);
-    coll.players.updateScope(null);
+    coll.players = [];
   }
 
   render() {
