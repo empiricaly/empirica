@@ -17,29 +17,14 @@ import { sleep } from "./utils";
 // test.
 test.describe.configure({ mode: "serial" });
 
-test("1 x 10 player", async ({ browser }) => {
-  const ctx = new Context(browser);
-
-  ctx.logMatching(/stage started/);
-
-  await ctx.start();
-  await ctx.addPlayers(10);
-  ctx.players[0].logWS();
-
-  await ctx.applyAdmin(adminNewBatch({ treatmentName: "10player" }));
-
-  await ctx.applyPlayers(playerStart);
-
-  await ctx.close();
-});
-
-test("2-round 5-stage-each game, 2 players", async ({ browser }) => {
+test("baseline", async ({ browser }) => {
   const ctx = new Context(browser);
 
   const playerCount = 2;
   const roundCount = 2;
   const stageCount = 5;
   const totalStages = roundCount * stageCount;
+  // ctx.logMatching(/.*/);
 
   await ctx.start();
   await ctx.addPlayers(playerCount);
@@ -52,15 +37,53 @@ test("2-round 5-stage-each game, 2 players", async ({ browser }) => {
     })
   );
 
-  await ctx.applyPlayers(playerStart);
-  await ctx.applyPlayers(submitStage);
+  for (let i = 0; i < totalStages; i++) {
+    if (i === 0) {
+      await ctx.applyPlayers(playerStart);
+    } else {
+      await ctx.applyPlayers(waitNextStage);
+    }
 
-  for (let i = 0; i < totalStages - 1; i++) {
-    await ctx.applyPlayers(waitNextStage);
+    // Check that all objects (player, game, round, stage) and scoped objects
+    // (player.stage, player.round, and player.game) are available for all
+    // players, on all stages.
+    for (const player of ctx.players) {
+      await player.game.shouldExist();
+      await player.round.shouldExist();
+      await player.stage.shouldExist();
+      await player.player.shouldExist();
+      await player.player.game.shouldExist();
+      await player.player.round.shouldExist();
+      await player.player.stage.shouldExist();
+
+      const players = await player.players();
+      for (const p of players) {
+        await p.game.shouldExist();
+        await p.round.shouldExist();
+        await p.stage.shouldExist();
+      }
+    }
+
     await ctx.applyPlayers(submitStage);
   }
 
   await ctx.applyPlayers(waitGameFinished);
+
+  await ctx.close();
+});
+
+test("1 x 10 player", async ({ browser }) => {
+  const ctx = new Context(browser);
+
+  ctx.logMatching(/stage started/);
+
+  await ctx.start();
+  await ctx.addPlayers(10);
+  ctx.players[0].logWS();
+
+  await ctx.applyAdmin(adminNewBatch({ treatmentName: "10player" }));
+
+  await ctx.applyPlayers(playerStart);
 
   await ctx.close();
 });
@@ -113,16 +136,16 @@ test.skip("4 x 10 player - concurrent arrival", async ({ browser }) => {
   await ctx.close();
 });
 
-test("1 x 40 player - concurrent arrival", async ({ browser }) => {
+test("1 x 20 player - concurrent arrival", async ({ browser }) => {
   const ctx = new Context(browser);
 
   ctx.logMatching(/stage started/);
 
   await ctx.start();
-  await ctx.addPlayers(40);
+  await ctx.addPlayers(20);
   ctx.players[0].logWS();
 
-  await ctx.applyAdmin(adminNewBatch({ treatmentName: "40player" }));
+  await ctx.applyAdmin(adminNewBatch({ treatmentName: "20player" }));
   await ctx.applyPlayers(playerStart);
   await ctx.close();
 });

@@ -1,7 +1,7 @@
+import chalk from "chalk";
 import { Actor } from "./actor";
 import { Step } from "./step";
 const { expect } = require("@playwright/test");
-import chalk from "chalk";
 
 export class Player extends Actor {
   constructor(ctx, name) {
@@ -62,14 +62,14 @@ export class Player extends Actor {
 
   async listenScope(kind) {
     await this.page.evaluate((kind) => {
-      eval("window.empirica_test_collector")[kind].listenScope();
+      window["empirica_test_collector"][kind].listenScope();
     }, kind);
   }
 
   async listenKey(kind, key) {
     await this.page.evaluate(
       ({ kind, key }) => {
-        eval("window.empirica_test_collector")[kind].listenKey(key);
+        window["empirica_test_collector"][kind].listenKey(key);
       },
       { kind, key }
     );
@@ -77,7 +77,7 @@ export class Player extends Actor {
 
   async get(kind, key) {
     return await this.page.evaluate(
-      ({ kind, key }) => eval("window.empirica_test_collector")[kind].get(key),
+      ({ kind, key }) => window["empirica_test_collector"][kind].get(key),
       { kind, key }
     );
   }
@@ -85,10 +85,185 @@ export class Player extends Actor {
   async set(kind, key, value) {
     await this.page.evaluate(
       ({ kind, key, value }) => {
-        eval("window.empirica_test_collector")[kind].set(key, value);
+        window["empirica_test_collector"][kind].set(key, value);
       },
       { kind, key, value }
     );
+  }
+
+  getsetter(kind) {
+    const exists = async () => {
+      return await this.page.evaluate(
+        ({ kind }) => Boolean(window["empirica_test_collector"][kind]),
+        { kind }
+      );
+    };
+
+    return {
+      get: async (key) => await this.get(kind, key),
+      set: async (key, value) => await this.set(kind, key, value),
+      exists,
+      shouldExist: async () => {
+        if (!(await exists())) {
+          throw new Error(`expected ${kind} to exist`);
+        }
+      },
+    };
+  }
+
+  get game() {
+    return this.getsetter("game");
+  }
+
+  get player() {
+    const self = this;
+    return {
+      ...this.getsetter("player"),
+      get game() {
+        return self.getPlayerScopedGetsetter("game");
+      },
+      get round() {
+        return self.getPlayerScopedGetsetter("round");
+      },
+      get stage() {
+        return self.getPlayerScopedGetsetter("stage");
+      },
+    };
+  }
+
+  get round() {
+    return this.getsetter("round");
+  }
+
+  get stage() {
+    return this.getsetter("stage");
+  }
+
+  async players() {
+    const length = await this.page.evaluate(() => {
+      return window["empirica_test_collector"]["players"].length;
+    });
+
+    const self = this;
+
+    return {
+      [Symbol.iterator]() {
+        let index = 0;
+        return {
+          next() {
+            if (index >= length) {
+              return { done: true };
+            }
+
+            const i = index;
+            index++;
+
+            return {
+              value: {
+                get: async (key) => {
+                  return await this.page.evaluate(
+                    ({ i, key }) =>
+                      window["empirica_test_collector"]["players"][i].get(key),
+                    { i, key }
+                  );
+                },
+                set: async (key, value) => {
+                  return await this.page.evaluate(
+                    ({ i, key, value }) => {
+                      window["empirica_test_collector"]["players"][i].set(
+                        key,
+                        value
+                      );
+                    },
+                    { i, key, value }
+                  );
+                },
+                get game() {
+                  return self.getPlayersScopedGetsetter(i, "game");
+                },
+                get round() {
+                  return self.getPlayersScopedGetsetter(i, "round");
+                },
+                get stage() {
+                  return self.getPlayersScopedGetsetter(i, "stage");
+                },
+              },
+              done: false,
+            };
+          },
+        };
+      },
+    };
+  }
+
+  getPlayersScopedGetsetter(i, kind) {
+    const exists = async () => {
+      return await this.page.evaluate(
+        ({ kind, i }) =>
+          Boolean(window["empirica_test_collector"]["players"][i][kind]),
+        { kind, i }
+      );
+    };
+
+    return {
+      exists,
+      shouldExist: async () => {
+        if (!(await exists())) {
+          throw new Error(`expected ${kind} to exist`);
+        }
+      },
+      get: async (key) => {
+        return await this.page.evaluate(
+          ({ kind, i, key }) =>
+            window["empirica_test_collector"]["players"][i][kind].get(key),
+          { kind, i, key }
+        );
+      },
+      set: async (key, value) => {
+        return await this.page.evaluate(
+          ({ kind, i, key, value }) => {
+            window["empirica_test_collector"]["players"][i][kind].set(
+              key,
+              value
+            );
+          },
+          { kind, i, key, value }
+        );
+      },
+    };
+  }
+
+  getPlayerScopedGetsetter(kind) {
+    const exists = async () => {
+      return await this.page.evaluate(
+        ({ kind }) =>
+          Boolean(window["empirica_test_collector"]["player"][kind]),
+        { kind }
+      );
+    };
+    return {
+      exists,
+      shouldExist: async () => {
+        if (!(await exists())) {
+          throw new Error(`expected ${kind} to exist`);
+        }
+      },
+      get: async (key) => {
+        return await this.page.evaluate(
+          ({ kind, key }) =>
+            window["empirica_test_collector"]["player"][kind].get(key),
+          { kind, key }
+        );
+      },
+      set: async (key, value) => {
+        return await this.page.evaluate(
+          ({ kind, key, value }) => {
+            window["empirica_test_collector"]["player"][kind].set(key, value);
+          },
+          { kind, key, value }
+        );
+      },
+    };
   }
 
   async expect(kind, key, value) {
@@ -110,7 +285,7 @@ export class Player extends Actor {
   async mutObj(kind, key, k, v) {
     await this.page.evaluate(
       ({ kind, key, k, v }) => {
-        const record = eval("window.empirica_test_collector")[kind];
+        const record = window["empirica_test_collector"][kind];
         const myobject = record.get(key);
         myobject[k] = v;
         record.set(key, myobject);
@@ -145,18 +320,30 @@ export const playerStart = new Step("start game", async (actor) => {
 });
 
 export const submitStage = new Step("submit stage", async (actor) => {
-  await actor.page.getByTestId("submit-stage").click();
-  await actor.page.getByTestId("submitted").waitFor({ timeout: 1000 });
+  await actor.page.getByTestId("stage-ongoing").waitFor({ timeout: 5000 });
+  await actor.page
+    .getByTestId("submitted")
+    .waitFor({ timeout: 5000, state: "detached" });
+
+  await actor.page.getByTestId("submit-stage").click({ timeout: 5000 });
+
+  // We can't wait for this, because it will disappear very quickly...
+  // await actor.page.getByTestId("submitted").waitFor({ timeout: 5000 });
 });
 
 export const waitNextStage = new Step("wait next stage", async (actor) => {
-  await actor.page.getByTestId("stage-ongoing").waitFor({ timeout: 100000 });
+  // Make sure the previous stage is finished
+  await actor.page
+    .getByTestId("submitted")
+    .waitFor({ timeout: 5000, state: "detached" });
+
+  await actor.page.getByTestId("stage-ongoing").waitFor({ timeout: 5000 });
 });
 
 export const waitGameFinished = new Step(
   "wait game finished",
   async (actor) => {
-    await actor.page.getByTestId("game-finished").waitFor({ timeout: 100000 });
+    await actor.page.getByTestId("game-finished").waitFor({ timeout: 5000 });
   }
 );
 
