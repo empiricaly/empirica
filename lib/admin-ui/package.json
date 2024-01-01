@@ -29,8 +29,8 @@
     "url": "https://github.com/empiricaly/empirica/issues"
   },
   "volta": {
-    "node": "18.16.0",
-    "npm": "9.7.1"
+    "node": "20.10.0",
+    "npm": "10.2.3"
   },
   "devDependencies": {
     "@julr/unocss-preset-forms": "0.0.5",
