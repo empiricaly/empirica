@@ -1,5 +1,5 @@
 ---
-"@empirica/core": patch
+"@empirica/core": minor
 ---
 
 `empirica export` could fail with a "Premature close" error (#474). This seems
