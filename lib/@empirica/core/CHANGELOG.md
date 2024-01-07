@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.9.1
+
+### Patch Changes
+
+- fe46f00: Export vector attributes to CSV as arrays.
+
 ## 1.9.0
 
 ### Minor Changes
