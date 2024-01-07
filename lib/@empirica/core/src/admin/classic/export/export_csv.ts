@@ -13,7 +13,7 @@ export async function exportCSV(conn: Conn, output: string) {
 
   const prom = promiseHandle();
   stream.on("close", function () {
-    console.log(
+    console.info(
       "Finalizing archive (" + humanBytes(archive.pointer(), true, 2) + ")"
     );
     prom.result();
@@ -48,12 +48,19 @@ export async function exportCSV(conn: Conn, output: string) {
 
 const changedAtSuffix = "LastChangedAt";
 
+type Attr = {
+  isArray: boolean;
+  value: string;
+  values: any[];
+  createdAt: string;
+};
+
 async function processType<T extends Scope>(
   archive: Archiver,
   fileName: string,
   it: () => AsyncGenerator<T, void, unknown>
 ) {
-  console.log("Processing", fileName);
+  console.info("Processing", fileName);
   const file = newFile(archive, fileName, "csv");
 
   const keys = new Set<string>();
@@ -77,31 +84,83 @@ async function processType<T extends Scope>(
   let counter = 0;
   for await (const record of it()) {
     counter++;
-    const attrs = record.attributes;
+
+    const attrMap = new Map<string, Attr>();
+
+    for (const attr of record.attributes) {
+      const { key, value, createdAt, vector, index } = attr;
+
+      if (vector && index === undefined) {
+        console.error(`Vector attribute ${key} has no index on ${record.id}`);
+
+        continue;
+      }
+
+      let existing = attrMap.get(key);
+      if (!existing) {
+        existing = {
+          isArray: vector,
+          value: "",
+          values: [],
+          createdAt,
+        };
+
+        attrMap.set(key, existing);
+      } else if (!vector) {
+        console.error(`Duplicate attribute ${key} on ${record.id}`);
+
+        continue;
+      }
+
+      if (vector) {
+        if (!existing.isArray) {
+          console.error(`Mixed vector/scalar attribute ${key} on ${record.id}`);
+
+          continue;
+        }
+
+        if (existing.values[index!] !== undefined) {
+          console.error(
+            `Duplicate vector attribute ${key} index ${index} on ${record.id}`
+          );
+        }
+
+        existing.values[index!] = value;
+
+        if (existing.createdAt < createdAt) {
+          existing.createdAt = createdAt;
+        }
+      } else {
+        existing.value = cast(value);
+      }
+    }
 
     const line: (string | undefined)[] = [];
-    LOOP: for (const key of keyArr) {
+    for (const key of keyArr) {
       if (key === "id") {
         line.push(record.id);
         continue;
       }
 
-      for (const attr of attrs) {
-        if (attr.key === key) {
-          line.push(cast(attr.value));
-          line.push(cast(attr.createdAt));
+      const attr = attrMap.get(key);
 
-          continue LOOP;
+      if (attr) {
+        if (attr.isArray) {
+          line.push(cast(attr.values));
+        } else {
+          line.push(attr.value);
         }
-      }
 
-      line.push(undefined);
-      line.push(undefined);
+        line.push(attr.createdAt);
+      } else {
+        line.push(undefined);
+        line.push(undefined);
+      }
     }
 
     file.push(encodeCells(line));
   }
-  console.log(` -> ${counter} ${counter === 1 ? "record" : "records"} found.`);
+  console.info(` -> ${counter} ${counter === 1 ? "record" : "records"} found.`);
 
   file.push(null);
 }

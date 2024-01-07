@@ -12,7 +12,12 @@ export class Scope {
   private _attributes = new Map<string, Attribute>();
   constructor(protected conn: Conn, private edge: ScopeEdge) {
     for (const edge of this.edge.attributes.edges) {
-      this._attributes.set(edge.node.key, new Attribute(edge.node));
+      let key = edge.node.key;
+      if (edge.node.vector) {
+        key = `${key}.${edge.node.index}`;
+      }
+
+      this._attributes.set(key, new Attribute(edge.node));
     }
   }
 
@@ -45,6 +50,14 @@ export class Attribute {
 
   get createdAt() {
     return this.edge.createdAt;
+  }
+
+  get index() {
+    return this.edge.index;
+  }
+
+  get vector() {
+    return this.edge.vector;
   }
 
   get id() {
