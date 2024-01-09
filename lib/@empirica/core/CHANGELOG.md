@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.9.2
+
+### Patch Changes
+
+- 6974fe8: Upgrade node build to 20.10.0.
+
 ## 1.9.1
 
 ### Patch Changes
