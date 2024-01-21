@@ -123,14 +123,14 @@ func Unbundle(_ context.Context, config *empirica.Config, in string, clean, devM
 	dir := path.Join(os.TempDir(), hash)
 
 	if _, err := os.Stat(dir); err == nil {
-		log.Info().
+		log.Debug().
 			Str("target", dir).
-			Msg("unbundle: already installed")
+			Msg("serve: bundle already extracted")
 
 		if clean {
 			log.Info().
 				Str("target", dir).
-				Msg("unbundle: removing old installation")
+				Msg("serve: removing old bundle extraction")
 
 			if err := os.RemoveAll(dir); err != nil {
 				return "", nil, errors.Wrap(err, "remove previous installation")
@@ -145,9 +145,9 @@ func Unbundle(_ context.Context, config *empirica.Config, in string, clean, devM
 		}
 	}
 
-	log.Info().
+	log.Debug().
 		Str("target", dir).
-		Msg("unbundle: installing")
+		Msg("serve: extracting bundle")
 
 	if _, err := f.Seek(0, io.SeekStart); err != nil {
 		return "", nil, errors.Wrap(err, "rewind file")
@@ -220,7 +220,7 @@ func unbundleFile(tr *tar.Reader, header *tar.Header, dir string) error {
 		log.Trace().
 			Str("from", header.Name).
 			Str("to", target).
-			Msg("unbundle: copying file")
+			Msg("serve: copying file")
 
 		// Sanity check, we're still in our dir.
 		targetdir := path.Dir(target)
