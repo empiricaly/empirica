@@ -24,6 +24,8 @@ func addServeCommand(parent *cobra.Command) error {
 				return errors.New("missing project name")
 			}
 
+			conf := getConfig(true)
+
 			ctx := initContext()
 
 			clean, err := cmd.Flags().GetBool("clean")
@@ -47,7 +49,6 @@ func addServeCommand(parent *cobra.Command) error {
 
 			in := args[0]
 
-			conf := getConfig(true)
 			conf.Server.Addr = addr
 
 			return bundle.Serve(ctx, conf, in, clean, devMode)
@@ -63,10 +64,6 @@ func addServeCommand(parent *cobra.Command) error {
 		return nil
 	}
 
-	if err := empirica.ConfigFlags(cmd); err != nil {
-		return errors.Wrap(err, "define flags")
-	}
-
 	flag := "addr"
 	sval := ":3000"
 	cmd.Flags().String(flag, sval, "Address of the server")
@@ -77,8 +74,16 @@ func addServeCommand(parent *cobra.Command) error {
 	cmd.Flags().Bool(flag, bval, "Start in dev mode (no auth)")
 	viper.SetDefault(flag, bval)
 
+	if err := empirica.ConfigFlags(cmd); err != nil {
+		return errors.Wrap(err, "define flags")
+	}
+
 	if err := viper.BindPFlags(cmd.Flags()); err != nil {
 		return errors.Wrap(err, "bind serve flags")
+	}
+
+	if err := viper.BindPFlags(cmd.PersistentFlags()); err != nil {
+		return errors.Wrap(err, "bind persistent serve flags")
 	}
 
 	parent.AddCommand(cmd)
