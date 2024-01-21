@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.9.3
+
+### Patch Changes
+
+- fba5e09: `empirica serve` now respects the version in the bundle.
+
 ## 1.9.2
 
 ### Patch Changes
