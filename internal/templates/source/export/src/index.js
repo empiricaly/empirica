@@ -13,19 +13,27 @@ const argv = minimist(process.argv.slice(2), {
 setLogLevel(argv["loglevel"] || "info");
 
 (async () => {
-  const run = async (url, srtoken = argv["srtoken"]) => {
-    await runExport(
-      url,
-      argv["token"],
-      srtoken,
-      ExportFormat.CSV,
-      argv["filename"]
-    );
-  };
+  try {
+    const run = async (url, srtoken = argv["srtoken"]) => {
+      await runExport(
+        url,
+        argv["token"],
+        srtoken,
+        ExportFormat.CSV,
+        argv["filename"]
+      );
+    };
 
-  if (argv["url"]) {
-    await run(argv["url"]);
-  } else if (argv["tajfile"]) {
+    if (argv["url"]) {
+      await run(argv["url"]);
+
+      return;
+    }
+
+    if (!argv["tajfile"]) {
+      throw new Error("Missing tajfile");
+    }
+
     await withTajriba(
       async ({ url, srtoken }) => {
         await run(url, srtoken);
@@ -35,7 +43,10 @@ setLogLevel(argv["loglevel"] || "info");
         printLogs: false,
       }
     );
-  }
 
-  process.exit();
+    process.exit(0);
+  } catch (err) {
+    console.error(err);
+    process.exit(1);
+  }
 })();

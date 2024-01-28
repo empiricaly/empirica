@@ -40,7 +40,7 @@ func addBundleCommand(parent *cobra.Command) error {
 	}
 
 	cmd.Flags().Bool("gzip", false, "use gzip")
-	cmd.Flags().String("out", "", "defaults to durrent dir")
+	cmd.Flags().String("out", "", "defaults to current dir")
 
 	err := viper.BindPFlags(cmd.Flags())
 	if err != nil {

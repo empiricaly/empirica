@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import { Actor } from "./actor";
 import { Step } from "./step";
+import { sleep } from "./utils";
 const { expect } = require("@playwright/test");
 
 export class Player extends Actor {
@@ -76,18 +77,32 @@ export class Player extends Actor {
   }
 
   async get(kind, key) {
+    const subKind = getSubKind(kind);
+
     return await this.page.evaluate(
-      ({ kind, key }) => window["empirica_test_collector"][kind].get(key),
-      { kind, key }
+      ({ kind, key, subKind }) => {
+        if (subKind) {
+          return window["empirica_test_collector"]["player"][subKind].get(key);
+        } else {
+          return window["empirica_test_collector"][kind].get(key);
+        }
+      },
+      { kind, key, subKind }
     );
   }
 
   async set(kind, key, value) {
+    const subKind = getSubKind(kind);
+
     await this.page.evaluate(
-      ({ kind, key, value }) => {
-        window["empirica_test_collector"][kind].set(key, value);
+      ({ kind, subKind, key, value }) => {
+        if (subKind) {
+          window["empirica_test_collector"]["player"][subKind].set(key, value);
+        } else {
+          window["empirica_test_collector"][kind].set(key, value);
+        }
       },
-      { kind, key, value }
+      { kind, subKind, key, value }
     );
   }
 
@@ -266,14 +281,28 @@ export class Player extends Actor {
     };
   }
 
-  async expect(kind, key, value) {
+  async expect(kind, key, value, options = { wait: 5000, interval: 200 }) {
+    const start = Date.now();
+
+    while (true) {
+      if (await this.valueEquals(kind, key, value)) {
+        return;
+      }
+
+      if (Date.now() - start > options.wait) {
+        break;
+      }
+
+      await sleep(options.interval);
+    }
+
+    throw new Error(`value not as expected (${kind}/${key}${value})`);
+  }
+
+  async valueEquals(kind, key, value) {
     const val = JSON.stringify(await this.get(kind, key));
     const valueJSON = JSON.stringify(value);
-    if (val !== valueJSON) {
-      throw new Error(
-        `value was not as expected, expected: ${valueJSON}, got: ${val}`
-      );
-    }
+    return val === valueJSON;
   }
 
   // mutObj is a special function that allows to mutate an object at key in
@@ -439,4 +468,10 @@ function playerReceivedPrinter(actor) {
       console.log(receive, "FAIL", payload);
     }
   };
+}
+
+function getSubKind(kind) {
+  if (kind.startsWith("player") && kind.length > 6) {
+    return kind.slice(6).toLowerCase();
+  }
 }

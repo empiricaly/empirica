@@ -41,23 +41,19 @@ test("attribute as object, correct equality check", async ({ browser }) => {
 
   // Initial value
   await ctx.players[0].set("game", "key1", { hello: "world" });
-  await sleep(200);
   await ctx.expectPlayers("game", "key1", { hello: "world" });
 
   // Mutate object in place, verify that value is updated
   await ctx.players[1].mutObj("game", "key1", "hello", "all");
-  await sleep(200);
   await ctx.expectPlayers("game", "key1", { hello: "all" });
 
   // And again
   await ctx.players[1].mutObj("game", "key1", "hello", "everyone");
-  await sleep(200);
   await ctx.expectPlayers("game", "key1", { hello: "everyone" });
 
   // This should be a noop, you wouldn't see it from the interface, but you
   // should be able to see from the test logs (confirmed at time of writing).
   await ctx.players[1].mutObj("game", "key1", "hello", "everyone");
-  await sleep(200);
   await ctx.expectPlayers("game", "key1", { hello: "everyone" });
 
   await ctx.applyPlayers(submitStage);

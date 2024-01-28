@@ -19,7 +19,7 @@ export async function runExport(
 ) {
   const taj = await connect(url, token, srtoken);
 
-  console.log("\nExporting", format.toUpperCase(), "to", output, "\n");
+  console.info("\nExporting", format.toUpperCase(), "to", output, "\n");
 
   switch (format) {
     case ExportFormat.CSV:

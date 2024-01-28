@@ -88,7 +88,17 @@ export async function startTajriba(
 
   // console.log(args);
 
-  const taj = spawn("empirica", args);
+  let empiricaCmd = "empirica";
+
+  if (process.env.EMPIRICA_DEV !== "") {
+    empiricaCmd = "emp";
+  }
+
+  console.info(
+    `Starting Tajriba server with: ${empiricaCmd} ${args.join(" ")}`
+  );
+
+  const taj = spawn(empiricaCmd, args);
 
   readline.createInterface({ input: taj.stdout! }).on("line", (data) => {
     console.log(`stdout: ${data}`);
