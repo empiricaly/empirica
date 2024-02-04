@@ -1,6 +1,7 @@
 import { ParticipantIdent, Tajriba } from "@empirica/tajriba";
-import { bs } from "../utils/object";
 import { BehaviorSubject } from "rxjs";
+import { error } from "../utils/console";
+import { bs } from "../utils/object";
 
 export const ErrNotConnected = new Error("not connected");
 
@@ -20,8 +21,16 @@ export class TajribaConnection {
     });
 
     this.tajriba.on("disconnected", () => {
-      this._connected.next(false);
-      this._connecting.next(true);
+      if (this._connected.getValue()) {
+        this._connected.next(false);
+      }
+      if (!this._connecting.getValue()) {
+        this._connecting.next(true);
+      }
+    });
+
+    this.tajriba.on("error", (err) => {
+      error("connection error", err);
     });
   }
 
