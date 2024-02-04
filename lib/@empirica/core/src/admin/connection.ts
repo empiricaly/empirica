@@ -6,6 +6,7 @@ import {
 } from "../shared/tajriba_connection";
 import { bs, bsu } from "../utils/object";
 import { subscribeAsync } from "./observables";
+import { error } from "../utils/console";
 
 export class AdminConnection {
   private _tajriba = bsu<TajribaAdmin>();
@@ -51,6 +52,9 @@ export class AdminConnection {
             if (!this._connected.getValue()) {
               this._connected.next(true);
             }
+          });
+          tajAdmin.on("error", (err) => {
+            error("connection error", err);
           });
           tajAdmin.on("disconnected", () => {
             if (this._connected.getValue()) {

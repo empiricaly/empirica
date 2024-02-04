@@ -62,16 +62,19 @@ export class ParticipantConnection {
           tajPart.on("disconnected", () => {
             if (this._connected.getValue()) {
               this._connected.next(false);
+            }
+            if (this._connecting.getValue()) {
               this._connecting.next(false);
             }
           });
           tajPart.on("error", (err) => {
-            this._connecting.next(false);
-            error("conn error", err);
+            error("connection error", err);
           });
           tajPart.on("accessDenied", () => {
             if (this._connected.getValue()) {
               this._connected.next(false);
+            }
+            if (this._connecting.getValue()) {
               this._connecting.next(false);
             }
             console.log(
