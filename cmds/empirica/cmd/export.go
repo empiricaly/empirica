@@ -31,6 +31,15 @@ func addExportCommand(parent *cobra.Command) error {
 			conf := getConfig(true)
 			ctx := cmd.Context()
 
+			if err := settings.InstallVoltaIfNeeded(ctx); err != nil {
+				return errors.Wrap(err, "check node")
+			}
+
+			out, err := cmd.Flags().GetString("out")
+			if err != nil {
+				return errors.Wrap(err, "parse out flag")
+			}
+
 			fmt.Println("Setting up export environment...")
 
 			wd, err := os.Getwd()
@@ -79,8 +88,12 @@ func addExportCommand(parent *cobra.Command) error {
 				}
 			}
 
+			empiricaCmd := "empirica"
+
 			if os.Getenv("EMPIRICA_DEV") != "" {
 				resolvedVersion = "link"
+
+				empiricaCmd = os.Args[0]
 
 				log.Warn().
 					Str("package", build.EmpiricaPackageName).
@@ -92,21 +105,23 @@ func addExportCommand(parent *cobra.Command) error {
 				}
 			}
 
+			fmt.Println("Exporting data...", empiricaCmd)
+
 			if _, err := os.Stat(exportScriptDir); err != nil {
 				if err := templates.CopyDir("", exportScriptDir, "export"); err != nil {
 					return errors.Wrap(err, "export: copy export script")
 				}
 
 				if resolvedVersion == "link" {
-					if err := experiment.RunCmd(ctx, exportScriptDir, "empirica", "npm", "link", "@empirica/core"); err != nil {
+					if err := experiment.RunCmd(ctx, exportScriptDir, empiricaCmd, "npm", "link", "@empirica/core"); err != nil {
 						return errors.Wrap(err, "server")
 					}
 				} else {
-					if err := experiment.RunCmdSilent(ctx, exportScriptDir, "empirica", "npm", "install", "--silent"); err != nil {
+					if err := experiment.RunCmdSilent(ctx, exportScriptDir, empiricaCmd, "npm", "install", "--silent"); err != nil {
 						return errors.Wrap(err, "server")
 					}
 
-					if err := experiment.RunCmdSilent(ctx, exportScriptDir, "empirica", "npm", "install", "--silent", "-E", "@empirica/core@"+resolvedVersion); err != nil {
+					if err := experiment.RunCmdSilent(ctx, exportScriptDir, empiricaCmd, "npm", "install", "--silent", "-E", "@empirica/core@"+resolvedVersion); err != nil {
 						return errors.Wrap(err, "upgrade client")
 					}
 				}
@@ -117,7 +132,10 @@ func addExportCommand(parent *cobra.Command) error {
 				experimentName = "empirica"
 			}
 
-			filename := fmt.Sprintf("%s-%s.zip", experimentName, time.Now().Format("2006-01-02-15-04-05"))
+			filename := out
+			if out == "" {
+				filename = path.Join(wd, fmt.Sprintf("%s-%s.zip", experimentName, time.Now().Format("2006-01-02-15-04-05")))
+			}
 
 			exportArgs := []string{
 				"npm",
@@ -125,17 +143,8 @@ func addExportCommand(parent *cobra.Command) error {
 				"export",
 				"--",
 				"--filename",
-				path.Join(wd, filename),
+				filename,
 			}
-
-			// tokenFile := conf.Callbacks.SessionToken
-			// tokenb, err := os.ReadFile(tokenFile)
-
-			// var token string
-			// if err == nil {
-			// 	token = string(tokenb)
-			// 	token = strings.TrimSpace(token)
-			// }
 
 			srtoken := conf.Tajriba.Auth.ServiceRegistrationToken
 
@@ -157,7 +166,7 @@ func addExportCommand(parent *cobra.Command) error {
 				Str("args", strings.Join(exportArgs, " ")).
 				Msg("exporting data")
 
-			c := exec.CommandContext(ctx, "empirica", exportArgs...)
+			c := exec.CommandContext(ctx, empiricaCmd, exportArgs...)
 
 			c.Stderr = os.Stderr
 			c.Stdout = os.Stdout
@@ -170,6 +179,8 @@ func addExportCommand(parent *cobra.Command) error {
 			return nil
 		},
 	}
+
+	cmd.Flags().String("out", "", "output zip file name")
 
 	parent.AddCommand(cmd)
 

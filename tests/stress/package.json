@@ -7,6 +7,13 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "volta": {
+    "node": "20.10.0",
+    "npm": "10.2.3"
+  },
+  "engines": {
+    "node": ">= 16.17.0"
+  },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
     "@types/node": "^20.10.0"
