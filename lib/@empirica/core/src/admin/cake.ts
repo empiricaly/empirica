@@ -1,3 +1,4 @@
+import { Mutex } from "async-mutex";
 import { Observable } from "rxjs";
 import { Attribute } from "../shared/attributes";
 import { ScopeConstructor } from "../shared/scopes";
@@ -14,7 +15,7 @@ import {
   TajEventListener,
   TajribaEvent,
 } from "./events";
-import { subscribeAsync } from "./observables";
+import { lockedAsyncSubscribe } from "./observables";
 import { Connection, ConnectionMsg } from "./participants";
 import { PromiseHandle, promiseHandle } from "./promises";
 import { Scope, ScopeMsg } from "./scopes";
@@ -33,6 +34,7 @@ export class Cake<
   postCallback: (() => Promise<void>) | undefined;
   private stopped = false;
   private unsubs: unsuber[] = [];
+  private mutex = new Mutex();
 
   constructor(
     private evtctx: EventContext<Context, Kinds>,
@@ -212,7 +214,8 @@ export class Cake<
     until?: Scope<Context, Kinds>
   ) {
     let handle: PromiseHandle | undefined = promiseHandle();
-    const unsub = subscribeAsync(
+    const unsub = lockedAsyncSubscribe(
+      this.mutex,
       this.kindSubscription(kind),
       async ({ scope, done }) => {
         if (this.stopped) {
@@ -371,30 +374,34 @@ export class Cake<
 
   transitionEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
   startTransitionAdd() {
-    const unsub = subscribeAsync(this.transitions, async (transition) => {
-      for (const callback of this.transitionEvents) {
-        if (this.stopped) {
-          return;
-        }
+    const unsub = lockedAsyncSubscribe(
+      this.mutex,
+      this.transitions,
+      async (transition) => {
+        for (const callback of this.transitionEvents) {
+          if (this.stopped) {
+            return;
+          }
 
-        debug(
-          `transition callback from '${transition.from}' to '${transition.to}'`
-        );
+          debug(
+            `transition callback from '${transition.from}' to '${transition.to}'`
+          );
 
-        try {
-          await callback.callback(this.evtctx, {
-            transition,
-            step: transition.step,
-          });
-        } catch (err) {
-          prettyPrintError("transition", err as Error);
-        }
+          try {
+            await callback.callback(this.evtctx, {
+              transition,
+              step: transition.step,
+            });
+          } catch (err) {
+            prettyPrintError("transition", err as Error);
+          }
 
-        if (this.postCallback) {
-          await this.postCallback();
+          if (this.postCallback) {
+            await this.postCallback();
+          }
         }
       }
-    });
+    );
 
     this.unsubs.push(unsub);
   }
@@ -403,7 +410,8 @@ export class Cake<
   connectionsMap = new Map<string, Connection>();
   async startConnected() {
     let handle: PromiseHandle | undefined = promiseHandle();
-    const unsub = subscribeAsync(
+    const unsub = lockedAsyncSubscribe(
+      this.mutex,
       this.connections,
       async ({ connection, done }) => {
         if (this.stopped) {
@@ -454,33 +462,37 @@ export class Cake<
 
   disconnectedEvents: TajEventListener<EvtCtxCallback<Context, Kinds>>[] = [];
   startDisconnected() {
-    const unsub = subscribeAsync(this.connections, async ({ connection }) => {
-      if (this.stopped) {
-        return;
-      }
-
-      if (!connection || connection.connected) {
-        return;
-      }
-
-      this.connectionsMap.delete(connection.participant.id);
-
-      for (const callback of this.disconnectedEvents) {
-        debug(`disconnected callback`);
-
-        try {
-          await callback.callback(this.evtctx, {
-            participant: connection.participant,
-          });
-        } catch (err) {
-          prettyPrintError("participant disconnect", err as Error);
+    const unsub = lockedAsyncSubscribe(
+      this.mutex,
+      this.connections,
+      async ({ connection }) => {
+        if (this.stopped) {
+          return;
         }
 
-        if (this.postCallback) {
-          await this.postCallback();
+        if (!connection || connection.connected) {
+          return;
+        }
+
+        this.connectionsMap.delete(connection.participant.id);
+
+        for (const callback of this.disconnectedEvents) {
+          debug(`disconnected callback`);
+
+          try {
+            await callback.callback(this.evtctx, {
+              participant: connection.participant,
+            });
+          } catch (err) {
+            prettyPrintError("participant disconnect", err as Error);
+          }
+
+          if (this.postCallback) {
+            await this.postCallback();
+          }
         }
       }
-    });
+    );
 
     this.unsubs.push(unsub);
   }

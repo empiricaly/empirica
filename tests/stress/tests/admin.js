@@ -111,6 +111,8 @@ export const adminNewBatch = ({
       throw new Error("lastNewBatch not found");
     }
 
+    console.log(`LAST BATCH ID: ${lastNewBatch.id}`);
+
     // Get the line of the last batch
     const lineSelector = `li[data-batch-line-id="${lastNewBatch.id}"]`;
     const line = actor.page.locator(lineSelector);

@@ -111,6 +111,7 @@ export class Runloop<
       this.scopes,
       new Flusher(this.postCallback.bind(this, true))
     );
+
     this.cake = new Cake(
       this.evtctx,
       this.scopes.scope.bind(this.scopes),
@@ -264,17 +265,12 @@ export class Runloop<
 
   async addScopes(inputs: AddScopeInput[]) {
     if (this.stopped) {
-      // warn("addScopes on stopped", inputs);
-
       return [];
     }
 
-    const addScopes = this.taj.addScopes(inputs).catch((err) => {
-      warn(err.message);
-      return [];
-    });
-    this.scopePromises.push(
-      addScopes.then((scopes) => {
+    const addScopes = this.taj
+      .addScopes(inputs)
+      .then((scopes) => {
         for (const scope of scopes) {
           for (const attrEdge of scope.attributes.edges) {
             this.attributesSub.next({
@@ -293,15 +289,18 @@ export class Runloop<
 
         return scopes;
       })
-    );
+      .catch((err) => {
+        warn(err.message);
+        return [];
+      });
+
+    this.scopePromises.push(addScopes);
 
     return addScopes;
   }
 
   async addGroups(inputs: AddGroupInput[]) {
     if (this.stopped) {
-      // warn("addGroups on stopped", inputs);
-
       return [];
     }
 
@@ -312,8 +311,6 @@ export class Runloop<
 
   async addLinks(inputs: LinkInput[]) {
     if (this.stopped) {
-      // warn("addLinks on stopped", inputs);
-
       return [];
     }
 
@@ -329,8 +326,6 @@ export class Runloop<
 
   async addSteps(inputs: AddStepInput[]) {
     if (this.stopped) {
-      // warn("addSteps on stopped", inputs);
-
       return [];
     }
 
@@ -341,8 +336,6 @@ export class Runloop<
 
   async addTransitions(inputs: TransitionInput[]) {
     if (this.stopped) {
-      // warn("addTransitions on stopped", inputs);
-
       return [];
     }
 
