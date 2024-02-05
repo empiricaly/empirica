@@ -1,5 +1,16 @@
 # @empirica/core
 
+## 1.9.4
+
+### Patch Changes
+
+- 40a5d5c: Improve callback ordering by only allowing 1 callback to run at a time. This is
+  change also make addScopes await for the scope changes to be added locally
+  before returning.
+- 0994940: Enable `empirica serve` to run in the official Docker container image.
+- aa7fd43: Log connection errors instead of throwing unhanded exceptions.
+- 434e36a: Avoid blocking on concurrent release of step stopping timer.
+
 ## 1.9.3
 
 ### Patch Changes
