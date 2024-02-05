@@ -477,6 +477,7 @@ export class Flusher {
 
   flushAfter(cb: () => Promise<void>): (() => Promise<void>) | void {
     if (!this.postCallback) {
+      cb();
       return;
     }
 

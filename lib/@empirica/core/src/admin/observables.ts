@@ -1,3 +1,4 @@
+import { E_CANCELED, Mutex } from "async-mutex";
 import { Observable, Subject, concatMap, takeUntil } from "rxjs";
 import { warn } from "../utils/console";
 
@@ -60,6 +61,37 @@ export async function awaitObsValueChange<T>(obs: Observable<T>): Promise<T> {
   unsub.unsubscribe();
 
   return val;
+}
+
+// Subscribe to an observable and use the lock for sequential execution of async
+// functions.
+export function lockedAsyncSubscribe<T>(
+  mutex: Mutex,
+  obs: Observable<T>,
+  fn: (val: T) => Promise<any>
+) {
+  return obs.subscribe({
+    next: async (val) => {
+      try {
+        const release = await mutex.acquire();
+        try {
+          await fn(val);
+        } catch (err) {
+          console.error("error in async observable subscription");
+          console.error(err);
+        } finally {
+          release();
+        }
+      } catch (err) {
+        if (err !== E_CANCELED) {
+          console.error(
+            "error acquiring lock in async observable subscription"
+          );
+          console.error(err);
+        }
+      }
+    },
+  });
 }
 
 // This does not behave correctly with a ReplaySubject
