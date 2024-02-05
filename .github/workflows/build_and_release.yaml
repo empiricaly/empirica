@@ -8,10 +8,10 @@ on:
     paths-ignore:
       - "cmds/proxy/**"
       - ".github/workflows/on_push_proxy.yaml"
-  pull_request:
-    paths-ignore:
-      - "cmds/proxy/**"
-      - ".github/workflows/on_push_proxy.yaml"
+  # pull_request:
+  #   paths-ignore:
+  #     - "cmds/proxy/**"
+  #     - ".github/workflows/on_push_proxy.yaml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -25,7 +25,8 @@ jobs:
   npm:
     name: Build npm package
     runs-on: ubuntu-latest
-    if: github.repository == 'empiricaly/empirica' && github.event.pull_request.draft == false
+    if: github.repository == 'empiricaly/empirica'
+    #  && github.event.pull_request.draft == false
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3

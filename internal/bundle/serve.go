@@ -34,16 +34,15 @@ func Serve(ctx context.Context, config *empirica.Config, in string, clean, devMo
 		log.Fatal().Err(err).Msg("invalid config")
 	}
 
-	b, err := build.FindCurrentBinaryVersion()
-	if err != nil {
-		log.Fatal().Err(err).Msg("failed to find bundle version")
-	}
-
-	// If we are not running the correct version, restart with the correct
-	// version. The new version will automatically be picked up on restart since
-	// the version in the bundle will have already been exported to the
-	// .empirica/release file in the current dir.
-	if b.Version != build.Current().Version && os.Getenv(build.BuildSelectionEnvVar) == "" {
+	if b, err := build.FindCurrentBinaryVersion(); err != nil {
+		if !errors.Is(err, build.ErrNoInstalledVersions) {
+			log.Fatal().Err(err).Msg("failed to find bundle version")
+		}
+	} else if b.Version != build.Current().Version && os.Getenv(build.BuildSelectionEnvVar) == "" {
+		// If we are not running the correct version, restart with the correct
+		// version. The new version will automatically be picked up on restart since
+		// the version in the bundle will have already been exported to the
+		// .empirica/release file in the current dir.
 		log.Info().
 			Str("from", build.Current().Version).
 			Str("to", b.Version).

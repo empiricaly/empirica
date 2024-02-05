@@ -146,6 +146,10 @@ func FindCurrentBinaryVersion() (*Build, error) {
 	return build, nil
 }
 
+// errNoInstalledVersions is returned when no versions are installed, which
+// would imply we are running empirica without the proxy.
+var ErrNoInstalledVersions = errors.New("no installed versions")
+
 func GetLatestInstalledVersion() (*Build, error) {
 	versions, err := GetInstalledVersions()
 	if err != nil {
@@ -153,7 +157,7 @@ func GetLatestInstalledVersion() (*Build, error) {
 	}
 
 	if len(versions) == 0 {
-		return nil, errors.New("no installed versions")
+		return nil, ErrNoInstalledVersions
 	}
 
 	return versions[len(versions)-1], nil
