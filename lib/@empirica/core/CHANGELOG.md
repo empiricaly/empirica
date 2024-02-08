@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.9.5
+
+### Patch Changes
+
+- e70565d: Fix broken export command.
+
 ## 1.9.4
 
 ### Patch Changes
