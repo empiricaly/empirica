@@ -90,7 +90,7 @@ export async function startTajriba(
 
   let empiricaCmd = "empirica";
 
-  if (process.env.EMPIRICA_DEV !== "") {
+  if (process.env.EMPIRICA_DEV) {
     empiricaCmd = "emp";
   }
 
