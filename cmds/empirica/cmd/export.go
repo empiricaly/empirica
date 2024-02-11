@@ -11,6 +11,7 @@ import (
 
 	"github.com/empiricaly/empirica/internal/build"
 	"github.com/empiricaly/empirica/internal/experiment"
+	"github.com/empiricaly/empirica/internal/export"
 	"github.com/empiricaly/empirica/internal/settings"
 	"github.com/empiricaly/empirica/internal/templates"
 	"github.com/pkg/errors"
@@ -40,8 +41,7 @@ func addExportCommand(parent *cobra.Command) error {
 				return errors.Wrap(err, "parse out flag")
 			}
 
-			fmt.Println("Setting up export environment...")
-
+			// fmt.Println("Setting up export environment...")
 			wd, err := os.Getwd()
 			if err != nil {
 				return errors.Wrap(err, "get working directory")
@@ -52,6 +52,33 @@ func addExportCommand(parent *cobra.Command) error {
 			if _, err := os.Stat(localDir); err != nil {
 				return errors.New("no .empirica folder found, export must run within a project folder")
 			}
+
+			tajfile := path.Join(localDir, "tajriba.json")
+
+			if _, err := os.Stat(tajfile); err != nil {
+				return errors.New("no tajriba.json file found, export must run within a project folder")
+			}
+
+			experimentName := conf.Name
+			if experimentName == "" {
+				experimentName = "empirica"
+			}
+
+			filename := out
+			if filename == "" {
+				filename = path.Join(wd, fmt.Sprintf("%s-%s.zip", experimentName, time.Now().Format("2006-01-02-15-04-05")))
+			}
+
+			log.Info().
+				Str("output", filename).
+				Str("tajriba", tajfile).
+				Msg("Starting CSV export...")
+
+			if err := export.ExportCSV(tajfile, filename); err != nil {
+				return errors.Wrap(err, "export csv")
+			}
+
+			return nil
 
 			exportScriptDir := path.Join(localDir, "export")
 
@@ -127,15 +154,15 @@ func addExportCommand(parent *cobra.Command) error {
 				}
 			}
 
-			experimentName := conf.Name
-			if experimentName == "" {
-				experimentName = "empirica"
-			}
+			// experimentName := conf.Name
+			// if experimentName == "" {
+			// 	experimentName = "empirica"
+			// }
 
-			filename := out
-			if out == "" {
-				filename = path.Join(wd, fmt.Sprintf("%s-%s.zip", experimentName, time.Now().Format("2006-01-02-15-04-05")))
-			}
+			// filename := out
+			// if out == "" {
+			// 	filename = path.Join(wd, fmt.Sprintf("%s-%s.zip", experimentName, time.Now().Format("2006-01-02-15-04-05")))
+			// }
 
 			exportArgs := []string{
 				"npm",
