@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.9.6
+
+### Patch Changes
+
+- 0c39a7c: New export to fix consistency and performance issues.
+
 ## 1.9.5
 
 ### Patch Changes
