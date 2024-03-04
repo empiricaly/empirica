@@ -1,8 +1,16 @@
-import reactRefresh from "@vitejs/plugin-react-refresh";
-import { resolve } from "path";
+import react from "@vitejs/plugin-react";
+import builtins from "rollup-plugin-polyfill-node";
 import { defineConfig, searchForWorkspaceRoot } from "vite";
 import restart from "vite-plugin-restart";
 import UnoCSS from "unocss/vite";
+import dns from "dns";
+
+dns.setDefaultResultOrder("verbatim");
+
+const builtinsPlugin = {
+  ...builtins({ include: ["fs/promises"] }),
+  name: "rollup-plugin-polyfill-node",
+};
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -14,6 +22,11 @@ export default defineConfig({
     open: false,
     strictPort: true,
     host: "0.0.0.0",
+    hmr: {
+      host: "localhost",
+      protocol: "ws",
+      port: 8844,
+    },
     fs: {
       allow: [
         // search up for workspace root
@@ -23,6 +36,15 @@ export default defineConfig({
   },
   build: {
     minify: false,
+    target: "esnext",
+    sourcemap: true,
+    rollupOptions: {
+      preserveEntrySignatures: "strict",
+      plugins: [builtinsPlugin],
+      output: {
+        sourcemap: true,
+      },
+    },
   },
   clearScreen: false,
   plugins: [
@@ -34,7 +56,7 @@ export default defineConfig({
       ],
     }),
     UnoCSS(),
-    reactRefresh(),
+    react(),
   ],
   define: {
     "process.env": {

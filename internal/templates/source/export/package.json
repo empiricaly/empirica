@@ -11,8 +11,8 @@
   },
   "version": "1.0.0",
   "volta": {
-    "node": "20.10.0",
-    "npm": "10.2.3"
+    "node": "20.11.1",
+    "npm": "10.2.4"
   },
   "dependencies": {
     "@empirica/core": "latest",
