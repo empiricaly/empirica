@@ -399,6 +399,7 @@ export class Attribute {
     }
 
     this.attr = attr;
+    this.serVal = attr?.val === undefined || attr?.val === null ? "" : attr.val;
     let value: JsonValue | undefined = undefined;
     if (this.attr?.val) {
       value = JSON.parse(this.attr.val);

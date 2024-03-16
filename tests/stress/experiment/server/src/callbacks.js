@@ -14,7 +14,10 @@ Empirica.onGameStart(({ game }) => {
 
 Empirica.onRoundStart(({ round }) => {});
 
-Empirica.onStageStart(({ stage }) => {});
+Empirica.onStageStart(({ stage }) => {
+  // Used for test called: "attribute as bool, correct equality check"
+  stage.currentGame.set("key1", false);
+});
 
 Empirica.onStageEnded(({ stage }) => {});
 
