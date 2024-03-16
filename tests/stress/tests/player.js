@@ -296,7 +296,7 @@ export class Player extends Actor {
       await sleep(options.interval);
     }
 
-    throw new Error(`value not as expected (${kind}/${key}${value})`);
+    throw new Error(`value not as expected (${kind}.${key}=${value})`);
   }
 
   async valueEquals(kind, key, value) {
