@@ -1,5 +1,13 @@
 # @empirica/core
 
+## 1.9.7
+
+### Patch Changes
+
+- c8319ce: Fix a bug where setting an attribute to `false` on the server, after it was
+  initially set to true on the client, would not work as expected.
+- 144f928: Upgrade `empirica create` templates with updated packages and build tools
+
 ## 1.9.6
 
 ### Patch Changes
