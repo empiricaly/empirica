@@ -47,14 +47,18 @@ export function quickGame(playerCount, roundCount, stageCount, factors = {}) {
 }
 
 /**
- * @param {Object} params Information about the user.
- * @param {string} [params.treatmentName] The name of the user.
- * @param {Object} [params.treatmentConfig] The email of the user.
+ * @param {Object} params The parameters for the new batch.
+ * @param {string} [params.treatmentName] The name of the treatment to select.
+ * @param {Object} [params.treatmentConfig] The raw treatment config to use.
+ * @param {string?} [params.lobbyName] The name of the lobby to select.
+ * @param {Object} [params.lobbyConfig] The raw lobby config to use.
  * @param {number} [params.gameCount] The email of the user.
  */
 export const adminNewBatch = ({
   treatmentName = "10player",
   treatmentConfig = null,
+  lobbyName = null,
+  lobbyConfig = null,
   gameCount = 1,
 }) =>
   new Step("new batch", async (actor) => {
@@ -95,6 +99,21 @@ export const adminNewBatch = ({
           .first()
           .fill(`${gameCount}`);
       }
+    }
+
+    if (lobbyName) {
+      await actor.page
+        .locator('[data-test="lobbySelect"]')
+        .selectOption({ label: lobbyName });
+
+      await actor.screenshot("lobby-selected");
+    }
+
+    if (lobbyConfig !== null) {
+      // Fill in a custom lobby
+      await actor.page.evaluate((lobbyConfig) => {
+        window["rawLobbyConfig"] = JSON.stringify(lobbyConfig);
+      }, lobbyConfig);
     }
 
     // Create the batch

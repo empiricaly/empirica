@@ -1,4 +1,5 @@
 import { AddScopeInput, State } from "@empirica/tajriba";
+import { debug, trace } from "console";
 import { z } from "zod";
 import { Constructor } from "../../shared/helpers";
 import { Attributable } from "../../shared/scopes";
@@ -8,7 +9,6 @@ import { AddScopePayload, StepPayload } from "../context";
 import { EventContext } from "../events";
 import { Scope } from "../scopes";
 import { AttrInput, attrs, scopeConstructor } from "./helpers";
-import { debug, trace } from "console";
 
 const isString = z.string().parse;
 const isOptionalNumber = z.number().optional().parse;
@@ -171,8 +171,13 @@ export class Game extends BatchOwned {
   // Starts the game if it is not already started.
   start() {
     if (!this.get("start")) {
+      this.setActualPlayerCount();
       this.set("start", true);
     }
+  }
+
+  private setActualPlayerCount() {
+    this.set("actualPlayerCount", this.players.length);
   }
 
   async assignPlayer(player: Player) {
@@ -302,6 +307,8 @@ export class Game extends BatchOwned {
         nodeIDs: otherNodeIDs,
       },
     ]);
+
+    this.setActualPlayerCount();
   }
 
   // Remove player from running game
@@ -366,6 +373,8 @@ export class Game extends BatchOwned {
         nodeIDs: otherNodeIDs,
       },
     ]);
+
+    this.setActualPlayerCount();
   }
 
   addRound(attributes: { [key: string]: JsonValue } | AttrInput[]) {
