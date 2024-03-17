@@ -73,6 +73,10 @@
     ];
 
     if (assignmentMethod !== "custom" || window["rawCustomConfig"]) {
+      if (window["rawLobbyConfig"]) {
+        lobby = JSON.parse(window["rawLobbyConfig"]);
+      }
+
       attributes.push({
         key: "lobbyConfig",
         val: JSON.stringify(lobby),

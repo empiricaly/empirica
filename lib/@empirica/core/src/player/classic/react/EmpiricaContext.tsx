@@ -232,11 +232,9 @@ function useAllReady() {
     return false;
   }
 
-  const treatment = game.get("treatment") as { playerCount: number };
+  const playerCount = game.get("actualPlayerCount") as number | undefined;
 
-  const playerCount = treatment!["playerCount"];
-
-  if (players.length < playerCount) {
+  if (playerCount !== undefined && players.length < playerCount) {
     return false;
   }
 
