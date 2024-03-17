@@ -1,5 +1,12 @@
 # @empirica/core
 
+## 1.9.8
+
+### Patch Changes
+
+- 9e24313: Fix an issue with the shared/ignore lobby configuration, and more generally with
+  a number of players in a game that is not equal to the `treatment.playerCount`.
+
 ## 1.9.7
 
 ### Patch Changes
