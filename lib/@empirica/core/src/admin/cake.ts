@@ -285,7 +285,9 @@ export class Cake<
   ) {
     let handle: PromiseHandle | undefined = promiseHandle();
 
-    const unsub = this.attributeSubscription(kind, key).subscribe(
+    const unsub = lockedAsyncSubscribe(
+      this.mutex,
+      this.attributeSubscription(kind, key),
       async ({ attribute, done }) => {
         if (this.stopped) {
           if (handle) {
