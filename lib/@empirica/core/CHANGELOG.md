@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.9.9
+
+### Patch Changes
+
+- 9197232: Attribute callbacks could be run out of order.
+
 ## 1.9.8
 
 ### Patch Changes
