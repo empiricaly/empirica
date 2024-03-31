@@ -491,6 +491,28 @@ export function Classic({
       game.start();
     });
 
+    // If a player gets their ended state reset, try to reassign them.
+    _.on(
+      "player",
+      "ended",
+      async (
+        ctx,
+        { player, ended }: { player: Player; ended: string | undefined }
+      ) => {
+        const participantID = player.get("participantID");
+        if (
+          player.currentGame ||
+          ended ||
+          !participantID ||
+          !online.has(participantID as string)
+        ) {
+          return;
+        }
+
+        await await assignplayer(ctx, player);
+      }
+    );
+
     type BeforeGameStart = { game: Game; start: boolean };
     _.unique.before(
       "game",

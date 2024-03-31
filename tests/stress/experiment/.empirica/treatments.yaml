@@ -65,3 +65,10 @@ treatments:
       roundCount: 10
       stageCount: 3
       newKeyRate: 0.5
+  - name: solo
+    desc: "1 player"
+    factors:
+      playerCount: 1
+      roundCount: 1
+      stageCount: 1
+      newKeyRate: 0.5
