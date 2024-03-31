@@ -205,6 +205,12 @@ function Exit({
   exitSteps: React.ElementType[] | StepsFunc;
   finished: React.ElementType;
 }) {
+  const gameReady = useGameReady();
+
+  if (!gameReady) {
+    return <Loading />;
+  }
+
   return (
     <Steps progressKey="exitStep" doneKey="exitStepDone" steps={exitSteps}>
       <Finished />
@@ -240,6 +246,30 @@ function useAllReady() {
 
   for (const p of players) {
     if (!p.game || !p.round || !p.stage) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function useGameReady() {
+  const player = usePlayer();
+  const players = usePlayers();
+  const game = useGame();
+
+  if (!player || !players || !game || !player.game) {
+    return false;
+  }
+
+  const playerCount = game.get("actualPlayerCount") as number | undefined;
+
+  if (playerCount !== undefined && players.length < playerCount) {
+    return false;
+  }
+
+  for (const p of players) {
+    if (!p.game) {
       return false;
     }
   }
