@@ -219,6 +219,11 @@ export interface AttributeOptions {
   protected: boolean;
   /** Immutable creates an Attribute that cannot be updated. */
   immutable: boolean;
+  /** ephemeral indicates the Attribute should not be persisted. Ephemeral
+   * Attributes are not stored in the database and are only synced to the
+   * connected clients. An ephemeral Attribute cannot become non-ephemeral and
+   * vice versa. */
+  ephemeral: boolean;
   /**
    * Index, only used if the Attribute is a vector, indicates which index to
    * update the value at.
@@ -349,6 +354,7 @@ export class Attribute {
       attrProps.private = ao.private;
       attrProps.protected = ao.protected;
       attrProps.immutable = ao.immutable;
+      attrProps.ephemeral = ao.ephemeral;
       attrProps.append = ao.append;
       attrProps.index = ao.index;
     }

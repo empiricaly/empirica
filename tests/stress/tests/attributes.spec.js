@@ -1,16 +1,15 @@
 // @ts-check
-/// <reference path="./index.d.ts" />
 
-const { test } = require("@playwright/test");
-import { Context } from "./context";
+const { test, expect } = require("@playwright/test");
 import { adminNewBatch, quickGame } from "./admin";
+import { Context } from "./context";
 import {
   playerStart,
   submitStage,
   waitGameFinished,
   waitNextStage,
 } from "./player";
-import { sleep } from "./utils";
+import { randomString, sleep } from "./utils";
 
 // At the moment, we use the same empirica server for all tests, so we need to
 // run them serially. This will change when we have a dedicated server for eac XLh
@@ -102,6 +101,65 @@ test("attribute as bool, correct equality check", async ({ browser }) => {
   // callback, here we verify that value is updated.
   await ctx.expectPlayers("game", "key1", false);
 
+  await ctx.applyPlayers(submitStage);
+  await ctx.applyPlayers(waitGameFinished);
+
+  await ctx.close();
+});
+
+test("attribute persistent or ephemeral", async ({ browser }) => {
+  const ctx = new Context(browser);
+
+  const playerCount = 2;
+  const roundCount = 1;
+  const stageCount = 2;
+
+  ctx.logMatching(/keya/);
+  ctx.logMatching(/keyb/);
+
+  await ctx.start();
+  await ctx.addPlayers(playerCount);
+  ctx.players[0].logWS();
+  ctx.players[1].logWS();
+
+  await ctx.applyAdmin(
+    adminNewBatch({
+      treatmentConfig: quickGame(playerCount, roundCount, stageCount),
+    })
+  );
+
+  await ctx.applyPlayers(playerStart);
+
+  // Baseline, normal keya is saved
+  await ctx.players[0].set("game", "keya", "123");
+  await ctx.expectPlayers("game", "keya", "123");
+
+  // Ephemeral keyb is NOT saved
+  const randstr = randomString(12);
+  const key = `key-${randstr}`;
+  const val = `val-${randstr}`;
+  await ctx.players[0].set("game", key, val, { ephemeral: true });
+  await ctx.expectPlayers("game", key, val);
+
+  // Next stage
+  await ctx.applyPlayers(submitStage);
+  await ctx.applyPlayers(waitNextStage);
+
+  // Check both keys are available to all players
+  await ctx.expectPlayers("game", "keya", "123");
+  await ctx.expectPlayers("game", key, val);
+
+  // Wait a bit for the tajriba file to be written
+  await sleep(1200);
+
+  // keya should exist
+  expect(await ctx.tajContains("keya"), "keya exists").toBeTruthy();
+
+  // ephemeral key and value should NOT exist
+  expect(await ctx.tajContains(key), "ephemeral key exists").toBeFalsy();
+  expect(await ctx.tajContains(val), "ephemeral value exists").toBeFalsy();
+
+  // Finish game
   await ctx.applyPlayers(submitStage);
   await ctx.applyPlayers(waitGameFinished);
 

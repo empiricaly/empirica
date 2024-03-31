@@ -1,5 +1,7 @@
+import { exec } from "child_process";
 import { Admin } from "./admin";
 import { Player } from "./player";
+import path from "path";
 
 export class Context {
   constructor(browser) {
@@ -87,6 +89,34 @@ export class Context {
   async expectPlayers(kind, key, value) {
     for (const player of this.players) {
       await player.expect(kind, key, value);
+    }
+  }
+
+  // Execute a command and return the output
+  async exec(cmd) {
+    return new Promise((resolve, reject) => {
+      let proc;
+      proc = exec(cmd, (error, stdout, stderr) => {
+        if (error) {
+          reject(error);
+        }
+        resolve({ stdout, stderr, exitCode: proc.exitCode });
+      });
+    });
+  }
+
+  // Check if the tajriba file contains a string
+  async tajContains(string) {
+    const tajfile = path.resolve(
+      __dirname,
+      "../experiment/.empirica/local/tajriba.json"
+    );
+
+    try {
+      await this.exec(`cat ${tajfile} | grep ${string}`);
+      return true;
+    } catch (e) {
+      return false;
     }
   }
 }

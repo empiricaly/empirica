@@ -39,8 +39,8 @@ class Scope {
     return this.scope?.get(key);
   }
 
-  set(key, value) {
-    this.scope?.set(key, value);
+  set(key, value, options) {
+    this.scope?.set(key, value, options);
   }
 
   get game() {

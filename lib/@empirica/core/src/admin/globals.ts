@@ -34,6 +34,7 @@ export class Globals extends SharedGlobals {
       attrProps.private = ao.private;
       attrProps.protected = ao.protected;
       attrProps.immutable = ao.immutable;
+      attrProps.ephemeral = ao.ephemeral;
       attrProps.append = ao.append;
       attrProps.index = ao.index;
     }

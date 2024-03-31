@@ -57,6 +57,7 @@ export function attrPayload(
       immutable: false,
       private: false,
       protected: false,
+      ephemeral: false,
     },
     done,
     isNew: false,

@@ -59,6 +59,7 @@ export function scopeConstructor(input: AddScopeInput) {
 export type AttrInput = {
   append?: boolean;
   immutable?: boolean;
+  ephemeral?: boolean;
   index?: number;
   key: string;
   nodeID?: string;
@@ -75,6 +76,7 @@ export function attrs(attrs: AttrInput[]) {
     const {
       append,
       immutable,
+      ephemeral,
       index,
       key,
       nodeID,
@@ -86,6 +88,7 @@ export function attrs(attrs: AttrInput[]) {
     result.push({
       append,
       immutable,
+      ephemeral,
       index,
       key,
       nodeID,
