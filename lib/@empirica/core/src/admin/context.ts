@@ -211,6 +211,7 @@ export interface AddScopePayload {
         private: boolean;
         protected: boolean;
         immutable: boolean;
+        ephemeral: boolean;
         key: string;
         val?: string | null | undefined;
         index?: number | null | undefined;

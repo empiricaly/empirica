@@ -76,6 +76,7 @@ function attrib(props: Partial<typeof attribProps> = attribProps) {
     immutable: false,
     private: false,
     protected: false,
+    ephemeral: false,
   };
 }
 

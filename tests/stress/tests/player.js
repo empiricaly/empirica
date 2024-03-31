@@ -91,18 +91,22 @@ export class Player extends Actor {
     );
   }
 
-  async set(kind, key, value) {
+  async set(kind, key, value, options) {
     const subKind = getSubKind(kind);
 
     await this.page.evaluate(
-      ({ kind, subKind, key, value }) => {
+      ({ kind, subKind, key, value, options }) => {
         if (subKind) {
-          window["empirica_test_collector"]["player"][subKind].set(key, value);
+          window["empirica_test_collector"]["player"][subKind].set(
+            key,
+            value,
+            options
+          );
         } else {
-          window["empirica_test_collector"][kind].set(key, value);
+          window["empirica_test_collector"][kind].set(key, value, options);
         }
       },
-      { kind, subKind, key, value }
+      { kind, subKind, key, value, options }
     );
   }
 

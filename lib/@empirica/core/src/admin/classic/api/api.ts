@@ -175,6 +175,7 @@ interface AttributeEdge {
   private: boolean;
   protected: boolean;
   immutable: boolean;
+  ephemeral: boolean;
   deletedAt?: any;
   key: string;
   val?: string | null | undefined;
