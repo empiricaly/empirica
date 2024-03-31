@@ -7,11 +7,33 @@
   export let online = false;
 
   function clear() {
-    $currentAdmin.setAttribute({
-      key: "ended",
-      val: JSON.stringify(null),
-      nodeID: player.id,
-    });
+    $currentAdmin.setAttributes([
+      {
+        key: "ended",
+        val: JSON.stringify(null),
+        nodeID: player.id,
+      },
+      {
+        key: "gameID",
+        val: JSON.stringify(null),
+        nodeID: player.id,
+      },
+      {
+        key: "treatment",
+        val: JSON.stringify(null),
+        nodeID: player.id,
+      },
+      {
+        key: "treatmentName",
+        val: JSON.stringify(null),
+        nodeID: player.id,
+      },
+      {
+        key: "introDone",
+        val: JSON.stringify(null),
+        nodeID: player.id,
+      },
+    ]);
   }
 </script>
 
@@ -49,7 +71,7 @@
                 /></svg
               >
             </div>
-            Clear
+            Clear player
           </Button>
         {/if}
       </div>

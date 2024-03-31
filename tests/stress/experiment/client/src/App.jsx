@@ -11,13 +11,20 @@ export default function App() {
   const { protocol, host } = window.location;
   const url = `${protocol}//${host}/query`;
 
+  // const introSteps = [DemoIntro];
+  const introSteps = [];
+
   return (
     <EmpiricaParticipant url={url} ns={playerKey} modeFunc={EmpiricaClassic}>
       <div className="h-screen relative">
         <EmpiricaMenu position="bottom-left" />
         <div className="h-full overflow-auto">
           <ErrorBoundarySimple>
-            <EmpiricaContext disableConsent finished={Finished}>
+            <EmpiricaContext
+              disableConsent
+              finished={Finished}
+              introSteps={introSteps}
+            >
               <Game />
             </EmpiricaContext>
           </ErrorBoundarySimple>
@@ -27,6 +34,17 @@ export default function App() {
   );
 }
 
+export function DemoIntro({ next }) {
+  return (
+    <div>
+      <h2 data-test="intro-step">Intro</h2>
+
+      <button onClick={next}>
+        <p>Next</p>
+      </button>
+    </div>
+  );
+}
 export function Finished() {
   return (
     <div>
