@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import { error } from "./helpers";
+import { sleep } from "./utils";
 
 export class Actor {
   constructor(ctx, name, url) {
@@ -14,6 +15,7 @@ export class Actor {
     this.wsSent = [];
     this.wsReceived = [];
     this.wsClose = [];
+    this.matchingRegexes = [];
   }
 
   async start(context) {
@@ -23,6 +25,13 @@ export class Actor {
 
       if (!this.ctx.logMatches(text)) {
         return;
+      }
+
+      for (const { regex, cb } of this.matchingRegexes) {
+        if (regex.test(text)) {
+          cb();
+          return;
+        }
       }
 
       console.info(this.msgTypeConsole(msg.type()), text);
@@ -56,6 +65,34 @@ export class Actor {
       chalk.magentaBright(`☄ ${this.name}`),
       chalk.gray(`(${this.kind})`, chalk.gray(`created`))
     );
+  }
+
+  async expectLogMatching(regex, cb, options = { wait: 5000, interval: 200 }) {
+    const start = Date.now();
+
+    let matched = false;
+    this.matchingRegexes.push({
+      regex,
+      cb: (text) => {
+        matched = true;
+      },
+    });
+
+    await cb();
+
+    while (true) {
+      if (matched) {
+        return;
+      }
+
+      if (Date.now() - start > options.wait) {
+        break;
+      }
+
+      await sleep(options.interval);
+    }
+
+    throw new Error(`log not found ${regex} within ${options.wait}ms`);
   }
 
   /**
