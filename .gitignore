@@ -2,6 +2,7 @@
 *.db
 *.tgz
 *.tar.zst
+*.zip
 tajriba.json
 internal/vendored/transport
 yarn-error.log
