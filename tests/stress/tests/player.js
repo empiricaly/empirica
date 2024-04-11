@@ -338,6 +338,22 @@ export class Player extends Actor {
   }
 }
 
+export const playerSignIn = new Step("start game", async (actor) => {
+  // Fill the form
+  actor.info("fill form");
+  await actor.page.locator("input#playerID").fill(actor.uniqueID);
+  await actor.page.locator(`button[type="submit"]`).click();
+});
+
+export const gameStart = new Step("start game", async (actor) => {
+  // Wait for first stage to be visible
+  actor.info("signed in");
+  await actor.page.getByTestId("stage-ongoing").waitFor({ timeout: 3000000 });
+
+  actor.info("game started");
+  await actor.screenshot("game started");
+});
+
 export const playerStart = new Step("start game", async (actor) => {
   // Fill the form
   actor.info("fill form");
@@ -362,6 +378,11 @@ export const submitStage = new Step("submit stage", async (actor) => {
 
   // We can't wait for this, because it will disappear very quickly...
   // await actor.page.getByTestId("submitted").waitFor({ timeout: 5000 });
+});
+
+export const submitIntroStep = new Step("submit intro step", async (actor) => {
+  await actor.page.getByTestId("intro-step").waitFor({ timeout: 5000 });
+  await actor.page.getByTestId("submit-intro-step").click({ timeout: 5000 });
 });
 
 export const waitNextStage = new Step("wait next stage", async (actor) => {

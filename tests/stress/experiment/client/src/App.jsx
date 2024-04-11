@@ -1,5 +1,8 @@
 import { EmpiricaClassic } from "@empirica/core/player/classic";
-import { EmpiricaContext } from "@empirica/core/player/classic/react";
+import {
+  EmpiricaContext,
+  usePlayer,
+} from "@empirica/core/player/classic/react";
 import { EmpiricaMenu, EmpiricaParticipant } from "@empirica/core/player/react";
 import React from "react";
 import { Game } from "./Game";
@@ -11,6 +14,9 @@ export default function App() {
   const { protocol, host } = window.location;
   const url = `${protocol}//${host}/query`;
 
+  // const introSteps = function () {
+  //   return [DemoIntro];
+  // };
   // const introSteps = [DemoIntro];
   const introSteps = [];
 
@@ -35,11 +41,17 @@ export default function App() {
 }
 
 export function DemoIntro({ next }) {
+  const player = usePlayer();
+
+  if (player.get("treatment")) {
+    console.log("player treatment found");
+  }
+
   return (
     <div>
       <h2 data-test="intro-step">Intro</h2>
 
-      <button onClick={next}>
+      <button data-test="submit-intro-step" onClick={next}>
         <p>Next</p>
       </button>
     </div>
