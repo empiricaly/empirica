@@ -194,6 +194,7 @@ export class Game extends BatchOwned {
       warn(`game without treatment: ${this.id}`);
     }
 
+    player.set("ended", null);
     player.set("gameID", this.id);
     if (treatment) {
       player.set("treatment", treatment);
@@ -226,6 +227,11 @@ export class Game extends BatchOwned {
 
     // Add player to running game.
     await this.addPlayer(player);
+
+    if (!this.get("start") && player.get("introDone")) {
+      // Retrigger game ready check.
+      player.set("replayGameReadyCheck", true);
+    }
   }
 
   // Add player to running game
