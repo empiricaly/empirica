@@ -1,5 +1,25 @@
 # @empirica/core
 
+## 1.11.1
+
+### Patch Changes
+
+- 992d5f1: Fix reassign Player to a new Game after they played and finished a first Game.
+
+  There were 2 problems:
+
+  - the `player.get("ended")` field was not cleared
+  - the reassignment would not trigger the game to start if the introDone was not
+    reset (you don't want the player to go through intro steps again), since we
+    would never get the introDone signal, and just sit there...
+
+- 97c6837: Fix lobby fail strategy and similar straight to exit steps cases.
+
+  There was a check for the presence of the `player.game` object in front of the
+  exit steps. If the game never starts, the `player.game` object is never
+  created, and the exit steps are never executed. This also addresses the case
+  where the player is never assigned a game at all (custom assignment).
+
 ## 1.11.0
 
 ### Minor Changes
