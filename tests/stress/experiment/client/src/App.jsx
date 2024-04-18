@@ -58,9 +58,20 @@ export function DemoIntro({ next }) {
   );
 }
 export function Finished() {
+  const player = usePlayer();
+
   return (
     <div>
       <h2 data-test="game-finished">Finished</h2>
+
+      <button
+        data-test="replay"
+        onClick={() => {
+          player.set("replay", true);
+        }}
+      >
+        Replay
+      </button>
     </div>
   );
 }

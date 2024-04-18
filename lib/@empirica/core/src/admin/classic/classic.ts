@@ -451,7 +451,10 @@ export function Classic({
       return { nextStage, nextRound, stop: false };
     }
 
-    _.on("player", "introDone", async (ctx, { player }: { player: Player }) => {
+    async function introDoneCheck(
+      ctx: EventContext<Context, ClassicKinds>,
+      player: Player
+    ) {
       if (disableIntroCheck || !player.currentGame) {
         return;
       }
@@ -489,7 +492,30 @@ export function Classic({
 
       trace("introDone: starting game");
       game.start();
+    }
+
+    _.on("player", "introDone", async (ctx, { player }: { player: Player }) => {
+      await introDoneCheck(ctx, player);
     });
+
+    _.on(
+      "player",
+      "replayGameReadyCheck",
+      async (
+        ctx,
+        {
+          player,
+          replayGameReadyCheck,
+        }: { player: Player; replayGameReadyCheck: boolean }
+      ) => {
+        if (!replayGameReadyCheck) {
+          return;
+        }
+
+        player.set("replayGameReadyCheck", false);
+        await introDoneCheck(ctx, player);
+      }
+    );
 
     // If a player gets their ended state reset, try to reassign them.
     _.on(

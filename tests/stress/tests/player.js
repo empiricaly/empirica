@@ -385,6 +385,10 @@ export const submitIntroStep = new Step("submit intro step", async (actor) => {
   await actor.page.getByTestId("submit-intro-step").click({ timeout: 5000 });
 });
 
+export const clickReplay = new Step("submit intro step", async (actor) => {
+  await actor.page.getByTestId("replay").click({ timeout: 5000 });
+});
+
 export const waitNextStage = new Step("wait next stage", async (actor) => {
   // Make sure the previous stage is finished
   await actor.page

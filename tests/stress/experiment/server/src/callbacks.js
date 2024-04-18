@@ -12,6 +12,31 @@ Empirica.onGameStart(({ game }) => {
   }
 });
 
+Empirica.on("player", "replay", async (ctx, { player, replay }) => {
+  if (!replay) {
+    return;
+  }
+
+  const batches = Array.from(ctx.scopesByKind("batch").values());
+
+  for (const batch of batches) {
+    if (!batch.isRunning) {
+      continue;
+    }
+
+    for (const game of batch.games) {
+      if (game.hasEnded) {
+        continue;
+      }
+
+      console.log("REPLAYING GAME", game.id, "FOR PLAYER", player.id);
+      await game.assignPlayer(player);
+    }
+  }
+
+  player.set("replay", false);
+});
+
 Empirica.onRoundStart(({ round }) => {});
 
 Empirica.onStageStart(({ stage }) => {
