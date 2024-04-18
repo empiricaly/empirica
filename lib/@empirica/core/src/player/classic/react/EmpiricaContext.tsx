@@ -258,6 +258,16 @@ function useGameReady() {
   const players = usePlayers();
   const game = useGame();
 
+  // Player was never even assigned to a game, so no game.
+  if (player && !player.get("gameID")) {
+    return true;
+  }
+
+  // Game never started, so no player.game.
+  if (player && game && !game.get("start")) {
+    return true;
+  }
+
   if (!player || !players || !game || !player.game) {
     return false;
   }

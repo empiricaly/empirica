@@ -490,6 +490,7 @@ function playerReceivedPrinter(actor) {
           console.log(receive, "UNKNOWN", change["__typename"], change);
       }
     } catch (e) {
+      console.error(e);
       console.log(receive, "FAIL", payload);
     }
   };
