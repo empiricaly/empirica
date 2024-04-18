@@ -2,9 +2,10 @@
 /// <reference path="./index.d.ts" />
 
 const { test } = require("@playwright/test");
-import { Context } from "./context";
 import { adminNewBatch, quickGame } from "./admin";
+import { Context } from "./context";
 import {
+  playerSignIn,
   playerStart,
   submitStage,
   waitGameFinished,
@@ -42,7 +43,7 @@ test("lobby shared ignore", async ({ browser }) => {
       lobbyConfig: {
         name: "Fast shared ignore",
         kind: "shared",
-        duration: 5_000_000_000,
+        duration: 2_000_000_000,
         strategy: "ignore",
       },
     })
@@ -63,6 +64,44 @@ test("lobby shared ignore", async ({ browser }) => {
     await ctx.players[0].apply(submitStage);
   }
 
+  await ctx.players[0].apply(waitGameFinished);
+
+  await ctx.close();
+});
+
+// This test is a test for the lobby with configuration shared/fail, which
+// means that all players share a timer and we fail the game if not enough
+// players to start the game.
+// To test this, we set a very short duration for the lobby.
+test("lobby shared fail", async ({ browser }) => {
+  const ctx = new Context(browser);
+
+  const playerCount = 2;
+  const roundCount = 1;
+  const stageCount = 2;
+
+  await ctx.start();
+  await ctx.addPlayers(playerCount);
+  ctx.players[0].logWS();
+  ctx.players[0].listenScope("game");
+  ctx.logMatching(/HERE/);
+
+  await ctx.applyAdmin(
+    adminNewBatch({
+      treatmentConfig: quickGame(playerCount, roundCount, stageCount),
+      lobbyConfig: {
+        name: "Fast shared fail",
+        kind: "shared",
+        duration: 2_000_000_000, // 2s, in ns...
+        strategy: "fail",
+      },
+    })
+  );
+
+  await ctx.players[0].apply(playerSignIn);
+  await ctx.players[0].screenshot("start-game");
+  await sleep(2500);
+  await ctx.players[0].screenshot("end-maybe");
   await ctx.players[0].apply(waitGameFinished);
 
   await ctx.close();
