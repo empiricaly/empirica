@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.11.2
+
+### Patch Changes
+
+- 3123aed: Replaying with a different set of of players would fail to load the game state.
+
 ## 1.11.1
 
 ### Patch Changes
