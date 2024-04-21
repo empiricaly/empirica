@@ -320,11 +320,19 @@ export class Game extends BatchOwned {
   // Remove player from running game
   private async removePlayer(player: Player) {
     if (!this.isRunning) {
+      const nodeIDs = [this.id];
+
+      for (const plyr of this.players) {
+        if (player !== plyr) {
+          nodeIDs.push(plyr.id);
+        }
+      }
+
       await this.addLinks([
         {
           link: false,
           participantIDs: [player.participantID!],
-          nodeIDs: [this.id],
+          nodeIDs,
         },
       ]);
 

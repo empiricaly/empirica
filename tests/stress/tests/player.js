@@ -28,9 +28,13 @@ export class Player extends Actor {
       await this.page.reload();
     }
 
-    await expect(
-      this.page.getByRole("heading", { name: "No experiments available" })
-    ).toBeVisible();
+    // Wait for "no games available" or player input form
+    await Promise.race([
+      expect(this.page.locator("input#playerID")).toBeVisible(),
+      expect(
+        this.page.getByRole("heading", { name: "No experiments available" })
+      ).toBeVisible(),
+    ]);
 
     const scopeChangeIcon = chalk.gray("←");
     const name = chalk.greenBright(`(${this.name})`.padEnd(10, " "));
