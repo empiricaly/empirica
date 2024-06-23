@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.11.3
+
+### Patch Changes
+
+- bc4ede4: Expand export buffer size from 64kb to 2mb
+
 ## 1.11.2
 
 ### Patch Changes
