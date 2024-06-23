@@ -43,6 +43,8 @@ func prepare(tajfile string) ([]*Kind, error) {
 	scopeKinds := make(map[string]*Kind)
 
 	scanner := bufio.NewScanner(file)
+	buf := make([]byte, 0, 2048*1024)
+	scanner.Buffer(buf, 2048*1024)
 
 	for scanner.Scan() {
 		line := scanner.Text()
