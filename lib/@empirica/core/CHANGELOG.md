@@ -1,5 +1,14 @@
 # @empirica/core
 
+## 1.11.4
+
+### Patch Changes
+
+- fac2ea9: Support export of `null` attributes.
+
+  Previously, `null` attributes would crash the export process. Now, they are
+  exported as `null` in the CSV file.
+
 ## 1.11.3
 
 ### Patch Changes
