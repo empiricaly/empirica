@@ -88,11 +88,28 @@ func prepare(tajfile string) ([]*Kind, error) {
 
 			scopeKinds[obj["id"].(string)] = kinds[obj["kind"].(string)]
 		case "Attribute":
-			obj := data["obj"].(map[string]interface{})
+			obj, ok := data["obj"].(map[string]interface{})
+			if !ok {
+				continue
+			}
 
-			key := obj["key"].(string)
-			val := cast(obj["val"].(string))
-			createdAt := obj["createdAt"].(string)
+			key, ok := obj["key"].(string)
+			if !ok {
+				continue
+			}
+
+			valRaw, ok := obj["val"].(string)
+			if !ok {
+				valRaw = "null"
+			}
+
+			val := cast(valRaw)
+
+			createdAt, ok := obj["createdAt"].(string)
+			if !ok {
+				continue
+			}
+
 			vector, _ := obj["vector"].(bool)
 			indexf, hasIndex := obj["index"].(float64)
 			index := int(indexf)
@@ -112,7 +129,10 @@ func prepare(tajfile string) ([]*Kind, error) {
 				continue
 			}
 
-			nodeID := obj["nodeID"].(string)
+			nodeID, ok := obj["nodeID"].(string)
+			if !ok {
+				return nil, errors.New("nodeID not found")
+			}
 
 			kind, ok := scopeKinds[nodeID]
 			if !ok {
