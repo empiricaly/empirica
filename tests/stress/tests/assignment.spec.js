@@ -67,7 +67,7 @@ test("reassignment after game end", async ({ browser }) => {
 
 // This tests whether the player can be reassigned after the first game of the
 // player ends, into a game with different players.
-test.only("reassignment after game end with different players", async ({
+test("reassignment after game end with different players", async ({
   browser,
 }) => {
   const ctx = new Context(browser);
