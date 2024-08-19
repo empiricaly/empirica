@@ -1,5 +1,11 @@
 # @empirica/core
 
+## 1.11.5
+
+### Patch Changes
+
+- 9f492da: Upgrade Tajriba to v1.7.1 (concurrency fixes).
+
 ## 1.11.4
 
 ### Patch Changes
