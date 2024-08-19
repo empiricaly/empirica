@@ -12,7 +12,8 @@ require (
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/cortesi/moddwatch v0.0.0-20210323234936-df014e95c743
 	github.com/davecgh/go-spew v1.1.1
-	github.com/empiricaly/tajriba v1.7.0
+	github.com/empiricaly/tajriba v1.7.1
+	github.com/go-bindata/go-bindata v3.1.2+incompatible
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/json-iterator/go v1.1.12
@@ -47,7 +48,6 @@ require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
-	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect

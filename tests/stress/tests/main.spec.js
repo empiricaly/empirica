@@ -119,7 +119,7 @@ test.skip("4 x 10 player - staggered arrival", async ({ browser }) => {
 // (there's a race condition between the time of assignment and fetching the
 // number of players in the game). AND why overflow is not working as expected.
 // First need to debug overflow.
-test.skip("4 x 10 player - concurrent arrival", async ({ browser }) => {
+test("4 x 10 player - concurrent arrival", async ({ browser }) => {
   const ctx = new Context(browser);
 
   ctx.logMatching(/stage started/);
