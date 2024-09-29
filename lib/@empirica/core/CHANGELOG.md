@@ -1,5 +1,14 @@
 # @empirica/core
 
+## 1.11.6
+
+### Patch Changes
+
+- 33260a4: Remove extra directory creation in `empirica` command.
+
+  An extra directory was created if the path of the project contained spaces when
+  running the `empirica` command.
+
 ## 1.11.5
 
 ### Patch Changes
