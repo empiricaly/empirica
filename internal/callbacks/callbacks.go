@@ -339,13 +339,13 @@ func checkHardExit(lastHardExit time.Time, hardExits int, err error) (int, bool)
 func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 	cmd := cb.config.DevCmd
 
-	if cmd == defaultDevCommand {
-		cmd = cb.enrichCmd(cmd)
-	}
-
 	parts := strings.Split(cmd, " ")
 	if len(parts) == 0 {
 		return nil, errors.New("empty callbacks devcmd")
+	}
+
+	if cmd == defaultDevCommand {
+		parts = append(parts, cb.enrichCmd()...)
 	}
 
 	var remainder []string
@@ -367,12 +367,14 @@ func (cb *Callbacks) runOnce(ctx context.Context) (*exec.Cmd, error) {
 	return c, nil
 }
 
-func (cb *Callbacks) enrichCmd(cmd string) string {
+func (cb *Callbacks) enrichCmd() []string {
+	var parts []string
+
 	lvl := zerolog.GlobalLevel()
-	cmd = cmd + " --loglevel " + lvl.String()
+	parts = append(parts, "--loglevel", lvl.String())
 
 	if cb.config.Token != "" {
-		cmd = cmd + " --token " + cb.config.Token
+		parts = append(parts, "--token", cb.config.Token)
 	}
 
 	if cb.config.SessionToken != "" {
@@ -384,10 +386,10 @@ func (cb *Callbacks) enrichCmd(cmd string) string {
 			}
 		}
 
-		cmd = cmd + " --sessionTokenPath " + p
+		parts = append(parts, "--sessionTokenPath", p)
 	}
 
-	return cmd
+	return parts
 }
 
 type callbacksWriter struct {
