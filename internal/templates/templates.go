@@ -67,7 +67,7 @@ func CopyAsset(project, dir, root, name string) error {
 	d := filepath.Dir(p)
 	base := filepath.Base(p)
 
-	if err := os.MkdirAll(d, os.FileMode(0755)); err != nil {
+	if err := os.MkdirAll(d, os.FileMode(0o755)); err != nil {
 		return errors.Wrap(err, "mkdir asset path")
 	}
 
