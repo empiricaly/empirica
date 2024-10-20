@@ -46,6 +46,22 @@ export function quickGame(playerCount, roundCount, stageCount, factors = {}) {
   ]);
 }
 
+export function quickMultiGame(
+  playerCount,
+  roundCount,
+  stageCount,
+  gameCount,
+  factors = {}
+) {
+  return completeAssignment([
+    completeTreatment(
+      "quick",
+      { ...factors, playerCount, roundCount, stageCount },
+      gameCount
+    ),
+  ]);
+}
+
 /**
  * @param {Object} params The parameters for the new batch.
  * @param {string} [params.treatmentName] The name of the treatment to select.

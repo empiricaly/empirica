@@ -28,27 +28,65 @@ const isStage = z.instanceof(Stage).parse;
 const isString = z.string().parse;
 
 export type ClassicConfig = {
-  // Disables automatic assignment of players on the connection of a new player.
-  // It is up to the developer to call `game.assignPlayer` when they want to
-  // assign a player to a game.
+  /**
+   * Disables automatic assignment of players on the connection of a new player.
+   * It is up to the developer to call `game.assignPlayer` when they want to
+   * assign a player to a game.
+   *
+   * @type {boolean}
+   */
   disableAssignment?: boolean;
 
-  // Disable the introDone check (when the players are done with intro steps),
-  // which normally will check if enough players are ready (done with intro
-  // steps) to start a game. This means that the game will not start on its own
-  // after intro steps. It is up to the developer to start the game manually
-  // with `game.start()`.
-  // This also disables playerCount checks and overflow from one game to the
-  // next available game with the same treatment.
+  /**
+   * Disable the introDone check (when the players are done with intro steps),
+   * which normally will check if enough players are ready (done with intro
+   * steps) to start a game. This means that the game will not start on its own
+   * after intro steps. It is up to the developer to start the game manually
+   * with `game.start()`.
+   *
+   * This also disables playerCount checks and overflow from one game to the
+   * next available game with the same treatment.
+   *
+   * @type {boolean}
+   */
   disableIntroCheck?: boolean;
 
-  // Disable game creation on new batch.
+  /**
+   * Disable game creation on new batch.
+   *
+   * @type {boolean}
+   */
   disableGameCreation?: boolean;
 
-  // By default if all existing games are complete, the batch ends.
-  // This option disables this pattern so that we can leave a batch open indefinitely.
-  // It enables to spawn new games for people who arrive later, even if all previous games had already finished.
+  /**
+   * By default if all existing games are complete, the batch ends.
+   * This option disables this pattern so that we can leave a batch open
+   * indefinitely.
+   * It enables to spawn new games for people who arrive later, even if all
+   * previous games had already finished.
+   *
+   * @type {boolean}
+   */
   disableBatchAutoend?: boolean;
+
+  /**
+   * If true, players will be assigned to games that still have open slots
+   * rather than pure random assignment.
+   *
+   * @type {boolean}
+   */
+  preferUnderassignedGames?: boolean;
+
+  /**
+   * If a game is full, don't assign more players to it.
+   * If there is a subsequent batch that still has open slots, it will still try
+   * to assign players to those games.
+   * If `preferUnderassignedGames` is also set, `neverOverbookGames` will take
+   * precedence.
+   *
+   * @type {boolean}
+   */
+  neverOverbookGames?: boolean;
 };
 
 export function Classic({
@@ -56,6 +94,8 @@ export function Classic({
   disableIntroCheck,
   disableGameCreation,
   disableBatchAutoend = false,
+  preferUnderassignedGames,
+  neverOverbookGames,
 }: ClassicConfig = {}) {
   return function (_: ListenersCollector<Context, ClassicKinds>) {
     const online = new Map<string, Participant>();
@@ -80,7 +120,7 @@ export function Classic({
           continue;
         }
 
-        let availableGames = [];
+        let availableGames: Game[] = [];
         for (const game of batch.games) {
           if (
             !game.hasStarted &&
@@ -105,8 +145,48 @@ export function Classic({
           continue;
         }
 
-        const game = pickRandom(availableGames);
+        if (preferUnderassignedGames || neverOverbookGames) {
+          const filteredGames = availableGames.filter((g) => {
+            const treatment = factorsSchema.parse(g.get("treatment"));
+            const playerCount = treatment["playerCount"] as number;
+            if (!playerCount || typeof playerCount !== "number") {
+              warn(
+                "preferUnderassignedGames|neverOverbookGames: no playerCount",
+                g.id
+              );
+              return true;
+            }
 
+            trace(
+              "playerAssignedCount|neverOverbookGames",
+              g.players.length,
+              playerCount
+            );
+
+            return g.players.length < playerCount;
+          });
+
+          if (filteredGames.length === 0) {
+            if (neverOverbookGames) {
+              trace("neverOverbookGames: no games available in this batch");
+              availableGames = [];
+            } else {
+              trace(
+                "preferUnderassignedGames: no empty games in this batch, overbooking"
+              );
+            }
+          } else {
+            trace(
+              "preferUnderassignedGames|neverOverbookGames: filtered games:",
+              filteredGames.length,
+              "/",
+              availableGames.length
+            );
+            availableGames = filteredGames;
+          }
+        }
+
+        const game = pickRandom(availableGames);
         await game.assignPlayer(player);
 
         return;
@@ -486,6 +566,7 @@ export function Classic({
       for (const plyr of game.players) {
         if (!playersIDS.includes(plyr.id)) {
           plyr.set("gameID", null);
+          trace("introDone: unassigning player - REASSIGNING", plyr.id);
           await assignplayer(ctx, plyr, [game.id]);
         }
       }
@@ -535,7 +616,7 @@ export function Classic({
           return;
         }
 
-        await await assignplayer(ctx, player);
+        await assignplayer(ctx, player);
       }
     );
 
