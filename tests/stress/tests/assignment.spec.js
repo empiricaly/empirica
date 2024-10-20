@@ -2,7 +2,7 @@
 /// <reference path="./index.d.ts" />
 
 const { test } = require("@playwright/test");
-import { adminNewBatch, quickGame } from "./admin";
+import { adminNewBatch, quickGame, quickMultiGame } from "./admin";
 import { Context } from "./context";
 import {
   clickReplay,
@@ -17,6 +17,63 @@ import { sleep } from "./utils";
 // run them serially. This will change when we have a dedicated server for each
 // test.
 test.describe.configure({ mode: "serial" });
+
+// This tests the preferUnderassignedGames option of the Classic loader.
+// Since there is not way to start the experiment with this option, it must be
+// ran manually. Set the env var PREFER_UNDERASSIGNED_GAMES to 1 before running
+// the experiment, then mark this test as "test.only()" and run the tests.
+//
+// `export PREFER_UNDERASSIGNED_GAMES=1`
+//
+test.skip("prefer underassigned games", async ({ browser }) => {
+  const ctx = new Context(browser);
+
+  ctx.logMatching(/stage started/);
+
+  const gameCount = 3;
+  const playerCount = 10;
+  const roundCount = 1;
+  const stageCount = 1;
+
+  await ctx.start();
+  await ctx.addPlayers(gameCount * playerCount);
+  ctx.players[0].logWS();
+
+  await ctx.applyAdmin(
+    adminNewBatch({
+      treatmentConfig: quickMultiGame(
+        playerCount,
+        roundCount,
+        stageCount,
+        gameCount
+      ),
+    })
+  );
+
+  const starts = [];
+  for (const player of ctx.players) {
+    starts.push(player.apply(playerStart));
+    // await sleep(1000);
+  }
+
+  await Promise.all(starts);
+
+  const submits = [];
+  for (const player of ctx.players) {
+    submits.push(player.apply(submitStage));
+  }
+
+  await Promise.all(submits);
+
+  const waits = [];
+  for (const player of ctx.players) {
+    waits.push(player.apply(waitGameFinished));
+  }
+
+  await Promise.all(waits);
+
+  await ctx.close();
+});
 
 // This tests whether the player can be reassigned after the first game of the
 // player ends.

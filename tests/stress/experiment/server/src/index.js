@@ -24,8 +24,17 @@ setLogLevel(argv["loglevel"] || "info");
     classicKinds
   );
 
+  const preferUnderassignedGames =
+    process.env.PREFER_UNDERASSIGNED_GAMES === "1";
+
+  console.log("preferUnderassignedGames", preferUnderassignedGames);
+
   ctx.register(ClassicLoader);
-  ctx.register(Classic());
+  ctx.register(
+    Classic({
+      preferUnderassignedGames,
+    })
+  );
   ctx.register(Lobby());
   ctx.register(Empirica);
   ctx.register(function (_) {
