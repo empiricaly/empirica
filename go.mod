@@ -10,7 +10,7 @@ require (
 	github.com/charmbracelet/bubbles v0.13.0
 	github.com/charmbracelet/bubbletea v0.22.0
 	github.com/charmbracelet/lipgloss v0.5.0
-	github.com/cortesi/moddwatch v0.0.0-20210323234936-df014e95c743
+	github.com/cortesi/moddwatch v0.1.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/empiricaly/tajriba v1.7.1
 	github.com/go-bindata/go-bindata v3.1.2+incompatible
@@ -77,7 +77,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.0.2 // indirect
 	github.com/petermattis/goid v0.0.0-20220712135657-ac599d9cba15 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	github.com/rjeczalik/notify v0.0.0-20181126183243-629144ba06a1 // indirect
+	github.com/rjeczalik/notify v0.9.3 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/afero v1.9.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
@@ -90,7 +90,7 @@ require (
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/mod v0.12.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
-	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/tools v0.11.1 // indirect
 	gopkg.in/ini.v1 v1.66.6 // indirect
 )
