@@ -123,8 +123,11 @@ export function Classic({
         let availableGames: Game[] = [];
         for (const game of batch.games) {
           if (
+            !game.isStarting &&
             !game.hasStarted &&
-            !game.get("starting") &&
+            // A game can be ended before it has started, in case of a lobby
+            // timeout for example
+            !game.hasEnded &&
             (!skipGameIDs || !skipGameIDs?.includes(game.id))
           ) {
             availableGames.push(game);
@@ -208,7 +211,7 @@ export function Classic({
         }
 
         for (const game of batch.games) {
-          if (!game.hasStarted) {
+          if (!game.hasStarted && !game.hasEnded) {
             shouldOpenExperiment = true;
             break LOOP;
           }

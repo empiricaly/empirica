@@ -154,6 +154,10 @@ export class Game extends BatchOwned {
     return Boolean(this.get("start"));
   }
 
+  get isStarting() {
+    return Boolean(this.get("starting"));
+  }
+
   get hasNotStarted() {
     return !this.hasStarted;
   }
