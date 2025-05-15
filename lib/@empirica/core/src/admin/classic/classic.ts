@@ -102,100 +102,154 @@ export function Classic({
     const playersForParticipant = new Map<string, Player>();
     const stageForStepID = new Map<string, Stage>();
 
+    /**
+     * Assign a Player to an available Game following the rules dictated by
+     * `preferUnderassignedGames` and `neverOverbookGames`.
+     *
+     * Algorithm overview:
+     * 1. Abort early when assignment has been disabled (`disableAssignment`) or
+     *    the player is already assigned (their `gameID` attribute holds a
+     *    non-null string).
+     * 2. Iterate over *running* batches **in creation order**.  We want to keep
+     *    participants in the earliest batch that can still accommodate them so
+     *    everything moves through the pipeline together.  The only exception
+     *    is the `neverOverbookGames` flag: if all games in the current batch
+     *    are full we *may* spill over to the next batch rather than over-book.
+     * 3. For every batch construct two lists:
+     *      • `candidateGames`   – games that can *potentially* host the player
+     *        (not started/ended, not skipped, matching treatment when
+     *        required).
+     *      • `openSlotGames`    – subset of `candidateGames` whose current
+     *        player count is strictly below the `playerCount` factor (when the
+     *        factor is defined).  If the factor is missing or invalid we
+     *        conservatively treat the game as having room.
+     * 4. Decision logic inside a batch:
+     *      a) `preferUnderassignedGames`\|\|`neverOverbookGames` true
+     *          – If `openSlotGames` is non-empty ⇒ assign there.
+     *          – Else if `neverOverbookGames` ⇒ *skip to the next batch* (we
+     *            refuse to over-book).
+     *          – Else (`preferUnderassignedGames` only) ⇒ over-book within
+     *            `candidateGames`.
+     *      b) Neither flag true ⇒ assign to any `candidateGames` immediately.
+     * 5. If every batch has been inspected and we could not place the player:
+     *      – When `neverOverbookGames` is true ⇒ always mark the participant
+     *        as `ended = "no more games"` so the front-end can transition to
+     *        the exit page.
+     *      – Otherwise we only mark `ended` when the player *previously* had a
+     *        `gameID` attribute (either an active one or `null`).  This leaves
+     *        brand-new visitors waiting in the lobby so they can join future
+     *        batches that may be created later.
+     *
+     * About the `gameID` attribute:
+     *      undefined – attribute has never been created ⇒ brand-new player.
+     *      null      – player had been assigned but was un-assigned later.
+     *      string    – player is currently assigned to that game.
+     */
     async function assignplayer(
       ctx: EventContext<Context, ClassicKinds>,
       player: Player,
       skipGameIDs?: string[]
     ) {
+      // Global opt-out hook: the developer disabled automatic assignment.
       if (disableAssignment) {
         return;
       }
 
+      // Stop early for players *currently* assigned to a game.  Note that
+      // `player.get("gameID")` returns `null` for *un-assigned* players who
+      // previously had been in a game – those should continue through the
+      // rest of the algorithm.
       if (player.get("gameID")) {
         return;
       }
 
+      // ------------------------------------------------------------------
+      //  Main search loop: inspect running batches one after the other.
+      // ------------------------------------------------------------------
       for (const batch of evt(ctx).batches) {
         if (!batch.isRunning) {
           continue;
         }
 
-        let availableGames: Game[] = [];
+        // --------------------------------------------------------------
+        //  Gather *candidate* games inside this batch.
+        // --------------------------------------------------------------
+        let candidateGames: Game[] = [];
         for (const game of batch.games) {
           if (
-            !game.isStarting &&
-            !game.hasStarted &&
-            // A game can be ended before it has started, in case of a lobby
-            // timeout for example
-            !game.hasEnded &&
-            (!skipGameIDs || !skipGameIDs?.includes(game.id))
+            game.isStarting ||
+            game.hasStarted ||
+            game.hasEnded ||
+            (skipGameIDs && skipGameIDs.includes(game.id))
           ) {
-            availableGames.push(game);
+            continue;
           }
+
+          candidateGames.push(game);
         }
 
-        if (availableGames.length === 0) {
+        if (candidateGames.length === 0) {
           continue;
         }
 
+        // If the player already has a treatment we only consider matching games
         if (player.get("treatment")) {
-          availableGames = availableGames.filter((g) =>
+          candidateGames = candidateGames.filter((g) =>
             deepEqual(g.get("treatment"), player.get("treatment"))
           );
         }
 
-        if (availableGames.length === 0) {
+        if (candidateGames.length === 0) {
           continue;
         }
 
-        if (preferUnderassignedGames || neverOverbookGames) {
-          const filteredGames = availableGames.filter((g) => {
-            const treatment = factorsSchema.parse(g.get("treatment"));
-            const playerCount = treatment["playerCount"] as number;
-            if (!playerCount || typeof playerCount !== "number") {
-              warn(
-                "preferUnderassignedGames|neverOverbookGames: no playerCount",
-                g.id
-              );
-              return true;
-            }
-
-            trace(
-              "playerAssignedCount|neverOverbookGames",
-              g.players.length,
-              playerCount
-            );
-
-            return g.players.length < playerCount;
-          });
-
-          if (filteredGames.length === 0) {
-            if (neverOverbookGames) {
-              trace("neverOverbookGames: no games available in this batch");
-              availableGames = [];
-            } else {
-              trace(
-                "preferUnderassignedGames: no empty games in this batch, overbooking"
-              );
-            }
-          } else {
-            trace(
-              "preferUnderassignedGames|neverOverbookGames: filtered games:",
-              filteredGames.length,
-              "/",
-              availableGames.length
-            );
-            availableGames = filteredGames;
+        // Build the open-slot subset (games that are not yet full).
+        const openSlotGames: Game[] = candidateGames.filter((g) => {
+          const result = factorsSchema.safeParse(g.get("treatment"));
+          if (!result.success) {
+            // If schema fails we conservatively assume there is room
+            return true;
           }
+
+          const pc = result.data["playerCount"] as number | undefined;
+          if (typeof pc !== "number") {
+            return true;
+          }
+
+          return g.players.length < pc;
+        });
+
+        // ----- Decision logic within this batch -----
+        if (preferUnderassignedGames || neverOverbookGames) {
+          if (openSlotGames.length > 0) {
+            const game = pickRandom(openSlotGames);
+            await game.assignPlayer(player);
+            return;
+          }
+
+          if (neverOverbookGames) {
+            // Cannot overbook in this batch, try next batch
+            continue;
+          }
+
+          // preferUnderassignedGames fallback: allow overbooking within THIS batch
+          const game = pickRandom(candidateGames);
+          await game.assignPlayer(player);
+          return;
+        } else {
+          // Neither flag set – pick directly from this batch
+          const game = pickRandom(candidateGames);
+          await game.assignPlayer(player);
+          return;
         }
-
-        const game = pickRandom(availableGames);
-        await game.assignPlayer(player);
-
-        return;
       }
 
-      if (player.get("gameID") !== undefined) {
+      // --------------------------------------------------------------
+      //  No games available across *all* batches – decide what to do.
+      // --------------------------------------------------------------
+      if (neverOverbookGames) {
+        player.set("ended", "no more games");
+      } else if (player.get("gameID") !== undefined) {
         player.set("ended", "no more games");
       }
     }
