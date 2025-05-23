@@ -69,6 +69,69 @@ test("lobby shared ignore", async ({ browser }) => {
   await ctx.close();
 });
 
+// This test reproduces the bug described in issue #598
+// When lobby timer expires with "ignore" strategy, some players in waiting room
+// should be able to start the game while players still reading instructions
+// should be removed properly without causing infinite loading.
+test("lobby shared ignore with mixed player states", async ({ browser }) => {
+  const ctx = new Context(browser);
+
+  const playerCount = 10;
+  const readyPlayerCount = 9; // Players who will complete intro
+  const roundCount = 1;
+  const stageCount = 2;
+  const totalStages = roundCount * stageCount;
+
+  await ctx.start();
+  await ctx.addPlayers(playerCount);
+
+  // Enable logging for first player to monitor the game state
+  ctx.players[0].logWS();
+  ctx.players[0].listenScope("game");
+
+  await ctx.applyAdmin(
+    adminNewBatch({
+      treatmentConfig: quickGame(playerCount, roundCount, stageCount),
+      lobbyConfig: {
+        name: "Fast shared ignore mixed states",
+        kind: "shared",
+        duration: 2_000_000_000, // 2 seconds
+        strategy: "ignore",
+      },
+    })
+  );
+
+  // Have 9 players complete the intro (sign in), but leave 1 player reading instructions
+  for (let i = 0; i < readyPlayerCount; i++) {
+    await ctx.players[i].apply(playerSignIn);
+  }
+
+  // Wait for lobby timer to expire - this should trigger the bug scenario
+  await sleep(2500);
+
+  // Player 0 should be able to start and complete the game
+  // The game should start successfully with only the ready players
+  // The 10th player (index 9) should be excluded automatically
+
+  await ctx.players[0].screenshot("after-lobby-timeout");
+
+  for (let i = 0; i < totalStages; i++) {
+    if (i === 0) {
+      // Game should start with ready players, no infinite loading
+      await ctx.players[0].apply(waitNextStage);
+    } else {
+      await ctx.players[0].apply(waitNextStage);
+    }
+
+    await ctx.players[0].screenshot(`mixed-stage-${i}`);
+    await ctx.players[0].apply(submitStage);
+  }
+
+  await ctx.players[0].apply(waitGameFinished);
+
+  await ctx.close();
+});
+
 // This test is a test for the lobby with configuration shared/fail, which
 // means that all players share a timer and we fail the game if not enough
 // players to start the game.
