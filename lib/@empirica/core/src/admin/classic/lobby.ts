@@ -238,13 +238,22 @@ async function expiredSharedLobbyTimeout(
     case "ignore":
       debug("lobby: starting game");
 
-      for (const player of game.players) {
-        if (!player.get("introDone")) {
-          player.exit("lobby timed out before reached intro");
-        }
+      // First, identify and exit players who haven't completed intro
+      const playersToExit = game.players.filter((p) => !p.get("introDone"));
+      for (const player of playersToExit) {
+        player.exit("lobby timed out before reached intro");
+        // Remove the player's gameID to ensure they're not considered part of the game
+        player.set("gameID", null);
       }
 
-      game.start();
+      // Only start the game if we still have players who completed intro
+      if (readyPlayers.length > 0) {
+        game.start();
+      } else {
+        // This shouldn't happen due to the check above, but safety check
+        debug("lobby: no ready players after removing incomplete players");
+        game.set(lobbyTimerKey, null);
+      }
 
       break;
   }
