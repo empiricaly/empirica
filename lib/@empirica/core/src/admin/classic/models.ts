@@ -1022,11 +1022,25 @@ export class Stage extends GameOwned {
     this.set("status", status);
     this.set("endedReason", reason);
 
+    // Safely get timerID and handle case where it might be null/undefined
+    const timerIDValue = this.get("timerID");
+
+    // Only proceed with transition if timerID is available
+    if (!timerIDValue) {
+      debug(
+        `stage end: timerID not available for stage ${this.id}, skipping transition`
+      );
+      return;
+    }
+
+    // Parse timerID as string since we know it's not null
+    const timerID = isString(timerIDValue);
+
     this.addTransitions([
       {
         from: State.Running,
         to: State.Ended,
-        nodeID: this.get("timerID") as string,
+        nodeID: timerID,
         cause: reason,
       },
     ])
