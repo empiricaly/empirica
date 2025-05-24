@@ -1,5 +1,23 @@
 # @empirica/core
 
+## 1.12.4
+
+### Patch Changes
+
+- 89d254a: Fix race condition in Stage.end() when timerID is null
+
+  Fixed a race condition bug where Stage.end() would crash with "Error caught in Stage.end: possibly from addTransitions() due to null timerID" when multiple players (10+) are playing simultaneously. The issue occurred when Stage.end() was called before the stage initialization finalizer completed, resulting in a null timerID being passed to addTransitions(). The fix adds proper null checking and graceful error handling, preventing premature game termination while maintaining normal functionality when timerID is available.
+
+  Fixes: https://github.com/empiricaly/empirica/issues/595
+
+- 1cb14a8: Add memory profiling tools to help debug server memory leaks.
+
+  Updated Tajriba dependency to add memory profiling capabilities that help identify and report memory leak issues. If you've experienced servers using more and more memory over time (especially after players leave), you can now easily capture debugging data to help us fix these issues.
+
+  New flags are available like `--tajriba.memprofile.enabled=true` to automatically save memory snapshots, and `--tajriba.memprofile.http_enabled=true` for live profiling. These tools have minimal performance impact and are safe to use in production.
+
+  See the [Memory Issue Reporting Guide](MEMORY_ISSUE_GUIDE.md) for simple steps to get started.
+
 ## 1.12.3
 
 ### Patch Changes
