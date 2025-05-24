@@ -12,7 +12,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/cortesi/moddwatch v0.1.0
 	github.com/davecgh/go-spew v1.1.1
-	github.com/empiricaly/tajriba v1.7.2
+	github.com/empiricaly/tajriba v1.7.3
 	github.com/go-bindata/go-bindata v3.1.2+incompatible
 	github.com/go-playground/validator/v10 v10.11.0
 	github.com/jpillora/backoff v1.0.0
