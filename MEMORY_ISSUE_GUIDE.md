@@ -16,22 +16,13 @@ empirica serve --tajriba.memprofile.enabled=true --tajriba.memprofile.dir=~/.emp
 
 ## 📊 Step 2: When You Notice the Memory Problem
 
-When you see memory usage climbing up, do this:
+When you see memory usage climbing up:
 
-```bash
-# Find the Empirica process ID
-ps aux | grep empirica
+1. **Stop new players** from joining the experiment
+2. **Let it run for a while** - the longer the better! More snapshots = better debugging data
+3. **Keep Empirica running** - don't restart it yet! The automatic snapshots (every 5 minutes) will capture the memory leak
 
-# Send a signal to capture an immediate snapshot (replace XXXX with the process ID)
-kill -USR1 XXXX
-```
-
-**Example:**
-```bash
-ps aux | grep empirica
-# Shows: user 12345 ... empirica serve
-kill -USR1 12345
-```
+The profile files are small (under 10MB total), so don't worry about creating lots of them.
 
 ## 📁 Step 3: Collect the Files
 
@@ -65,12 +56,6 @@ Create a GitHub issue at https://github.com/empiricaly/empirica/issues with:
 - **HTTP profiling:** You can also add `--tajriba.memprofile.http_enabled=true` to get live profiling at http://localhost:6060/debug/pprof/
 
 ## ❓ Quick Troubleshooting
-
-**Q: I can't find the process ID**
-```bash
-# Try this instead:
-killall -USR1 empirica
-```
 
 **Q: The `~/.empirica/profiles/` folder is empty**
 - Make sure you added `--tajriba.memprofile.enabled=true` when starting Empirica
