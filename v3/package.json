@@ -1,0 +1,36 @@
+{
+  "name": "@empirica/v3-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Empirica v3 monorepo. Not published.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.10",
+    "pnpm": ">=9"
+  },
+  "packageManager": "pnpm@9.12.3",
+  "scripts": {
+    "build": "pnpm -r --filter './packages/**' run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "pnpm -r run lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "e2e": "playwright test",
+    "e2e:install": "playwright install --with-deps",
+    "clean": "pnpm -r exec rimraf dist coverage .turbo node_modules/.vite && rimraf node_modules"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.10.0",
+    "@vitest/coverage-v8": "^2.1.8",
+    "prettier": "^3.4.2",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

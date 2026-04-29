@@ -1,0 +1,144 @@
+:root {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --fg: #111827;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --accent: #2563eb;
+  --bad: #dc2626;
+  --good: #16a34a;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0d12;
+    --fg: #e5e7eb;
+    --muted: #9ca3af;
+    --border: #1f2937;
+    --accent: #60a5fa;
+  }
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+}
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  height: 100%;
+}
+.sidebar {
+  border-right: 1px solid var(--border);
+  padding: 12px;
+}
+.sidebar h1 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  margin: 8px 4px 12px;
+}
+.sidebar nav a {
+  display: block;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: var(--fg);
+  margin-bottom: 2px;
+}
+.sidebar nav a.active {
+  background: var(--border);
+}
+.main {
+  padding: 16px 24px;
+  overflow: auto;
+}
+.card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: var(--bg);
+}
+.card h2 {
+  margin: 0 0 8px;
+  font-size: 16px;
+}
+.row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.row > * + * {
+  margin-left: 0;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th,
+td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.btn.secondary {
+  background: transparent;
+  color: var(--fg);
+  border: 1px solid var(--border);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.input {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--fg);
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+.muted {
+  color: var(--muted);
+}
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+}
+.badge.good {
+  background: color-mix(in srgb, var(--good) 15%, transparent);
+  border-color: color-mix(in srgb, var(--good) 50%, transparent);
+}
+.badge.bad {
+  background: color-mix(in srgb, var(--bad) 15%, transparent);
+  border-color: color-mix(in srgb, var(--bad) 50%, transparent);
+}

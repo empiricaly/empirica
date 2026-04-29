@@ -1,0 +1,48 @@
+# deps
+node_modules/
+
+# build output
+dist/
+build/
+.turbo/
+.vite/
+.next/
+.tsbuildinfo
+
+# coverage
+coverage/
+.nyc_output/
+
+# logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+.idea/
+*.swp
+.DS_Store
+
+# env
+.env
+.env.local
+.env.*.local
+
+# data (SQLite, dev artifacts)
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+.empirica/
+
+# playwright
+playwright-report/
+test-results/
+.playwright/
