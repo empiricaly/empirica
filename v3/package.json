@@ -2,7 +2,7 @@
   "name": "empirica-v3",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*"],
+  "workspaces": ["packages/*", "conformance"],
   "scripts": {
     "typecheck": "tsc --build",
     "lint": "eslint packages",

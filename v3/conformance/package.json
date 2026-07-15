@@ -1,0 +1,9 @@
+{
+  "name": "@empirica/conformance",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@empirica/engine": "workspace:*"
+  }
+}

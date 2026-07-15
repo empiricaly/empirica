@@ -5,3 +5,4 @@ dist/
 *.db-shm
 .DS_Store
 coverage/
+*.tsbuildinfo
