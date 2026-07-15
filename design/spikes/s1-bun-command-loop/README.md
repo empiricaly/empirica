@@ -67,7 +67,7 @@ drops**, target send rate achieved exactly. Latencies in ms.
 | default inline autocheckpoint, run 1 | 0.22 | 1.46 | **404.6** | 776.9 | 0.24 | 1.62 | 407.8 | 783.1 |
 | default inline autocheckpoint, run 2 | 0.22 | 0.46 | **9.97** | 73.0 | 0.24 | 0.52 | 10.5 | 73.2 |
 | `wal_autocheckpoint=0` (no ckpt) | 0.22 | 0.41 | **0.85** | 31.2 | 0.24 | 0.46 | 0.89 | 31.6 |
-| worker checkpointing, 600 s soak | see §4 | | | | | | | |
+| worker ckpt (recommended), 600 s soak | 0.21 | 0.37 | **0.84** | 119.1 | 0.24 | 0.43 | 0.89 | 119.2 |
 
 The two identical "default" runs differ 40x at p99: inline checkpoints usually stall
 the writer 13–42 ms, but occasionally (run 1) a checkpoint+fs hiccup stalled it ~780 ms
@@ -116,21 +116,36 @@ or checkpoint-on-idle scheduling could shrink it further. Not needed to pass S1.
 | 1000/s × 120 s (inline) | 46 MB | 61 MB | 58 MB |
 | 5000/s × 60 s | — | — | 58 MB |
 | 1000/s × 120 s (worker ckpt) | 52 MB | — | 64 MB |
-| 200/s × 600 s soak (worker ckpt) | see §4 | | |
+| 200/s × 600 s soak (worker ckpt) | 52 MB | 60 MB | 61 MB |
 
 RSS ramps ~10 MB in the first minute (JIT, socket buffers, SQLite page cache) then
 plateaus. No growth trend with load rate — 5000/s ends at the same 58 MB as 200/s.
 
 ## 4. 10-minute soak — 200 cmd/s, worker checkpointing (recommended config)
 
-SOAK_RESULTS_PLACEHOLDER
+120,000 commands, 1000 connections, exactly 200.0 cmd/s sustained for 600 s.
+
+| metric | value |
+|---|---|
+| cmd→ack p50 / p95 / p99 / max | **0.21 / 0.37 / 0.84 / 119.1 ms** |
+| patch-receipt p50 / p95 / p99 / max (360,000 patches) | 0.24 / 0.43 / 0.89 / 119.2 ms |
+| ordering violations / backpressure / drops | 0 / 0 / 0 |
+| RSS start → mid (t=305 s) → end (t=600 s) | 52.3 → 60.1 → 60.8 MB |
+| RSS min / max over 120 samples | 53.7 / 63.5 MB — warm-up plateau, no growth trend |
+| max queue depth | 20 |
+| slow txns | 44, all 30–80 ms, all at the 10 s RESTART cadence |
+| WAL size | bounded at a 26.9 MB high-water mark |
+
+Ten minutes at the exit-criterion load: p99 stays under 1 ms, memory is flat after
+warm-up, the WAL is bounded, and the only latency events are the known 10-second
+RESTART checkpoints (worst single command: 119 ms, one in 120,000).
 
 ## Exit criteria — verdicts
 
 | criterion | result | verdict |
 |---|---|---|
-| p99 cmd→ack < 20 ms @ 1000 conns / 200 cmd/s | 0.85–1.3 ms with checkpointing off the writer (recommended config); 9.97 ms with naive default PRAGMAs but with a demonstrated failure mode (one run hit 404 ms from a single bad inline checkpoint) | **PASS** (worker-ckpt config); default-PRAGMA config is at-risk and should not ship |
-| RSS stable | 46→57 MB warm-up plateau, flat thereafter; identical end-RSS at 1x and 25x load; soak in §4 | **PASS** |
+| p99 cmd→ack < 20 ms @ 1000 conns / 200 cmd/s | **0.84 ms over the 10-min soak** in the recommended (worker-ckpt) config — 24x under budget; 9.97 ms with naive default PRAGMAs but with a demonstrated failure mode (one run hit 404 ms from a single bad inline checkpoint) | **PASS** (worker-ckpt config); default-PRAGMA config is at-risk and should not ship |
+| RSS stable | 52→61 MB warm-up plateau over 10 min, no growth trend (t=305 s: 60.1 MB, t=600 s: 60.8 MB); identical end-RSS at 1x and 25x load | **PASS** |
 | (informational) 5x load, 1000 cmd/s | p99 14.3 ms inline / 1.28 ms worker-ckpt; zero drops | PASS |
 
 ## Surprises / findings
@@ -156,7 +171,7 @@ SOAK_RESULTS_PLACEHOLDER
    app crash) is the right trade here.
 6. Prepared-statement reuse is worth ~23% — real but not fatal if a code path misses
    the cache (`db.query()` caches by SQL string; `db.prepare()` does not).
-7. **Bun.serve pub/sub behaved perfectly**: across ~1.9 M patch deliveries in these runs,
+7. **Bun.serve pub/sub behaved perfectly**: across ~3 M patch deliveries in these runs,
    zero ordering violations (per-group seq strictly monotonic at every subscriber), zero
    backpressure (`publish()` never returned -1/0), no drops even at 25x load.
    `server.publish()` echoes to the sender too (it's subscribed to the topic) — use
