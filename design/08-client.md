@@ -60,6 +60,26 @@ orthogonal to any particular flow.
 Timer display uses the server-clock offset from the transport; countdowns are correct
 under client clock skew.
 
+## Runtime constraints (mandatory — from spike S6)
+
+Measured on React 19 + `useSyncExternalStore` (exact render counts verified: zero
+extraneous re-renders across 1,500 updates; mean update→commit 0.3 ms):
+
+- **`getSnapshot` MUST return cached references** — allocating/deriving in
+  getSnapshot throws "Maximum update depth exceeded" in React 19. Selectors live in
+  a separate memo layer.
+- **Subscribe identity MUST be stable** per (store, key), or React resubscribes on
+  every render.
+- **Patch application MUST preserve identity of unchanged fields** — deep-equal-but-
+  new objects re-render (identity is the contract); the sync layer never rebuilds
+  state wholesale.
+- **Server patch batches apply in one synchronous pass** — React batching collapses
+  a 200-change patch into one render per touched component; per-change notification
+  with microtask gaps forfeits this.
+- List snapshots: copy-on-append is fine for chat-scale (< 5k items); high-volume
+  streams need range subscription or ring-buffer snapshots
+  ([spikes/s6-react-field-store](spikes/s6-react-field-store/README.md)).
+
 ## Ephemeral channels
 
 Schema-declared ephemeral fields (typing, cursors, drag ghosts) get rate-coalescing on
