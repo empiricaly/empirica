@@ -1,0 +1,21 @@
+# Spike artifacts — keep sources and READMEs, not dependencies/data/binaries
+node_modules/
+*.db
+*.sqlite
+*.sqlite3
+*.db-wal
+*.db-shm
+*.sqlite-wal
+*.sqlite-shm
+dist/
+build/
+bin/
+*.log
+# downloaded/compiled binaries
+litestream*
+minio*
+mc
+*.tar.gz
+*.zip
+sealed-server
+server-bundle

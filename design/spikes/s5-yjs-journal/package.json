@@ -1,0 +1,8 @@
+{
+  "name": "s5-yjs-journal",
+  "type": "module",
+  "private": true,
+  "dependencies": {
+    "yjs": "^13.6.31"
+  }
+}
