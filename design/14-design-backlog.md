@@ -36,11 +36,14 @@ flow versioning, rejection taxonomy. Remaining sub-questions tracked at the bott
 the spec (field-ref syntax → A2; nested submatch deferred; pause-vs-deadline
 interaction → A5 review).
 
-### A2. Schema DSL final form (blocking: 02, 06, 08)
-Exact `field()` API; entity references between fields; list/collab declaration;
-`ephemeral`; defaults; **experiment schema evolution** between deployments of the same
-study (additive = OK; destructive = migration script? refuse?); reserved names; size
-limits per field/entity.
+### A2. Schema DSL final form (blocking: 02, 06, 08) — **DRAFTED**
+Resolved in [specs/schema-and-state.md](specs/schema-and-state.md): `defineSchema`
+shape with `nodes:` section, `field()/list()/record()/field.collab()` API, safe-default
+visibility, writable ∈ {server, self} only (everything else is a command), engine-
+attributed list appends, defaults-vs-absence semantics, size limits, the full
+navigation API (handles, `ctx.at()`, `run.sibling()` — resolves F17), and the
+additive/destructive schema-evolution matrix (widening visibility = destructive).
+Remaining sub-questions tracked in the spec.
 
 ### A3. Wire protocol spec (blocking: 06, 07, 08)
 Message framing, ack/error taxonomy (machine-readable codes), snapshot format,
