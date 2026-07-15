@@ -1,0 +1,103 @@
+# 14 — Design backlog: open questions, spikes, decisions
+
+Status: Living document
+
+Everything that must be resolved before the docs freeze and autonomous implementation
+begins. Ordered by how much they constrain everything else.
+
+## A. Design questions still open
+
+### A1. Precise flow semantics (blocking: 03, 04)
+Formal spec of each node type: entry/exit conditions, rejoin semantics per node,
+group lifecycle state machine, pause semantics, what happens to in-flight runs on
+`abort`, single-position invariant vs multi-membership, flow versioning for players
+in-flight when a bundle updates mid-study.
+
+### A2. Schema DSL final form (blocking: 02, 06, 08)
+Exact `field()` API; entity references between fields; list/collab declaration;
+`ephemeral`; defaults; **experiment schema evolution** between deployments of the same
+study (additive = OK; destructive = migration script? refuse?); reserved names; size
+limits per field/entity.
+
+### A3. Wire protocol spec (blocking: 06, 07, 08)
+Message framing, ack/error taxonomy (machine-readable codes), snapshot format,
+cursor invalidation rules, view-membership backfill format, rate-limit signaling,
+protocol version negotiation.
+
+### A4. Identity & auth details (blocking: 07, 12)
+Token format/rotation; magic-link lifecycle; device switching mid-study (same player,
+new browser); admin auth (session + TOTP? PAT scopes); anonymous-preview mode for
+development.
+
+### A5. Payment & money bookkeeping (blocking: 12)
+Where amounts live (journaled fields? dedicated ledger table?); currency handling;
+partial payment on abort paths; the admin's pre-submission review surface; audit trail
+requirements.
+
+### A6. Failure UX for participants (blocking: 08, 10)
+What a participant sees on: group aborted, server restarting, kicked, screened,
+cursor-invalid resume. Stock components + declared exit paths; nothing improvised.
+
+### A7. Withdrawal/redaction mechanics (blocking: 05)
+Tombstone rewrite vs per-participant crypto-shredding; what "structure preserved"
+means exactly for lists and collab updates; legal review checklist for the docs.
+
+### A8. Observability (blocking: 15)
+Structured log schema, session-health signal (stuck groups, dead effects, slow hooks),
+optional Sentry adapter, metrics endpoint. What the operator sees *before* users
+complain.
+
+### A9. Naming freeze (blocking: everything user-facing)
+One pass over every public name (player/group/run/node/stage/allocation/intake,
+hook names, CLI verbs) optimizing for LLM ergonomics: unambiguous, greppable,
+collision-free with common libraries. Cheap now, impossible later.
+
+### A10. i18n & accessibility baseline (non-blocking for engine; blocking for stock components)
+Stock components (consent, lobby, chat, steps) must be translatable and WCAG-reasonable;
+decide the mechanism (message catalogs per experiment?) before the components multiply.
+
+### A11. Engine-upgrade policy (blocking: 11)
+Rule proposal: a deployment never changes engine mid-study (bundle pins everything);
+data format carries a version; `empirica export` from any newer engine must read any
+older data file. Confirm and specify the compatibility contract.
+
+## B. Spikes — throwaway code to retire risk before freeze
+
+| # | Spike | Retires the risk that… | Exit criterion |
+|---|---|---|---|
+| S1 | Bun command loop: `bun:sqlite` WAL + single-writer txn loop + `Bun.serve` pub/sub under simulated load (1k conns, 200 cmd/s) | Bun/runtime perf assumptions are wrong | p99 command < 20ms; no leak over 1h |
+| S2 | `bun build --compile` embedding client dist + admin assets; boot from single file | The sealed bundle isn't actually achievable | one-file binary serves the SPA |
+| S3 | Litestream drill: kill mid-write, point-in-time restore, verify cursor resume | Backup story has a hole | zero committed-loss restore, documented runbook |
+| S4 | Replay transport prototype: journal → transport → real client bundle rendering historical state | Scrubbing is harder than theorized | scrub a recorded toy session |
+| S5 | Yjs relay: opaque update journaling + compaction + replay of a collaborative doc | Collab fields fight the journal | keystroke scrub of a shared essay |
+| S6 | React per-field store: 500 live fields, chat at 20 msg/s, render-count assertions | Fine-grained subscription model doesn't scale in React | no extraneous re-renders; 60fps |
+| S7 | Node-compat pass of S1 behind the platform seam | The Bun exit door is imaginary | same suite green on Node LTS |
+
+## C. Process before implementation
+
+1. Resolve A-items → update docs → mark Frozen (each doc lists its blockers above).
+2. Run spikes S1–S7 (parallelizable; S1 first — everything leans on it).
+3. Write V1–V3 validation experiments on paper at full fidelity
+   ([13](13-reference-experiments.md)); adjust docs where they creak.
+4. Naming freeze (A9) last, once all surfaces exist on paper.
+5. Then: [15-development-plan.md](15-development-plan.md).
+
+## Decision log
+
+| # | Decision | Where argued | Status |
+|---|---|---|---|
+| D1 | Single-process TS; engine+logic+storage share transactions | 01, 04 | Accepted |
+| D2 | SQLite, journal + materialized state, same txn | 05 | Accepted |
+| D3 | Closed node algebra (5 types), open policies | 03 | Accepted |
+| D4 | Group as the sole sharing primitive; kinds; multi-membership | 02 | Accepted |
+| D5 | Sync-only hooks; effects for async; `task` nodes | 04 | Accepted |
+| D6 | Schema-declared visibility/writability; default self/server | 06 | Accepted |
+| D7 | No privileged "classic" layer; sugar in userland templates | 08, 11 | Accepted |
+| D8 | Commands/queries as the one API; REST + WS equal | 07 | Accepted |
+| D9 | Bun-first with platform seam; drop only on demonstrated breakage | 11 | Accepted |
+| D10 | Deterministic engine; simulation + replay in v1 core | 04, 09 | Accepted |
+| D11 | One experiment per deployment; no multi-tenant hub in core | 00 | Accepted |
+| D12 | CRDT collab as opt-in field type, never foundational | 08 | Accepted |
+| D13 | kv-row state (not typed columns); export views repay queryability | 05 | Accepted |
+| D14 | Redaction-in-place for withdrawal; no journal hash-chain in v1 | 05 | Proposed |
+| D15 | No per-field visibility predicates in v1 (audience = groups) | 06 | Proposed |
