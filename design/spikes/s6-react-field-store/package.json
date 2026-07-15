@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Spike S6: per-field external store via useSyncExternalStore — render-count and timing verification",
   "scripts": {
-    "test": "node test/render-counts.test.ts"
+    "test": "node test/render-counts.test.ts && node test/mixed-sim-30hz.test.ts"
   },
   "dependencies": {
     "jsdom": "^29.1.1",

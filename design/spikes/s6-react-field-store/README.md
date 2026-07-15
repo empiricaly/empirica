@@ -11,7 +11,7 @@ field changes cause exactly N subscriber re-renders, at tiny per-update cost.**
 - **react 19.2.7 / react-dom 19.2.7** (React 19), jsdom 29.1.1
 - `react-dom/client` `createRoot` into jsdom; updates driven inside `act` (imported from `react`), with `globalThis.IS_REACT_ACT_ENVIRONMENT = true`
 - Tree: 100 `PlayerCard` (3 `useField` each: name/score/connected) + 1 `ChatPane` (`useList`, renders last 50) + 1 `Timer` + 100 `Unrelated` = **202 components, 402 live subscriptions**
-- Run: `npm test` (or `node test/render-counts.test.ts`)
+- Run: `npm test` (= `node test/render-counts.test.ts && node test/mixed-sim-30hz.test.ts`)
 
 Store: `src/field-store.ts` — `Map<key, value>` + per-key `Set<listener>`;
 `set(key, v)` bails on `Object.is` equality, otherwise replaces the value and
@@ -30,6 +30,7 @@ content changes. `useField`/`useList` = `useSyncExternalStore` with a
 | (b2) 200 chat appends, 1 act each | ChatPane 200, others 0 | mean 0.35ms, p95 0.51ms | ✅ |
 | (c) 100 timer ticks | Timer 100, others 0 | mean 0.49ms, p95 0.65ms | ✅ |
 | (d) mixed seeded 1000 updates (incl. 90 to unsubscribed "ghost" keys) | **910 renders for 910 subscribed updates, 0 for ghosts, per-component counts exact** | mean 0.28ms, p95 0.38ms | ✅ |
+| (d/30Hz) mixed 10s simulation @ ~30 updates/sec: 300 ticks, each tick = 1 act batch (score + chat append every tick, unrelated field at 3Hz, timer at 1Hz; 640 field writes) | **exact per-tick render set on all 300 ticks** ({card,chat[,unrelated][,timer]}: 1 each), 0 extraneous; final full-tree DOM sweep 0/200 mismatches | batch→commit mean 0.46ms, p50 0.39ms, p95 0.67ms, max 3.6ms; whole sim 138ms wall vs 10,000ms simulated | ✅ |
 | (e1) `set()` same primitive | 0 | — | ✅ |
 | (e2) `notify()` without value change | 0 (React bails: identical snapshot ref) | — | ✅ |
 | (e3) `set()` same **object reference** | 0 | — | ✅ |
@@ -38,8 +39,8 @@ content changes. `useField`/`useList` = `useSyncExternalStore` with a
 
 **Exit criteria:**
 
-- Zero extraneous re-renders in (a)–(c): **PASS** (also holds in (d))
-- Mean update→commit < 2ms: **PASS** — all 1500 individually-timed updates: **mean 0.33ms, p50 0.30ms, p95 0.41–0.56ms, max ~4ms** (max = occasional GC/JIT hiccup)
+- Zero extraneous re-renders in (a)–(c): **PASS** (also holds in both (d) variants)
+- Mean update→commit < 2ms: **PASS** — all 1500 individually-timed updates: **mean 0.33ms, p50 0.30ms, p95 0.41–0.56ms, max ~4ms**; 30Hz-sim batches: **mean 0.46ms, p95 0.67ms** (max = occasional GC/JIT hiccup)
 
 Per-update cost includes `act()` overhead; the store-side work is a Map write +
 one Set walk, effectively free. Cost is O(subscribers-of-that-key), independent
@@ -112,4 +113,7 @@ append even though it renders only the last 50 (whole-array subscription), and
 ## Files
 
 - `src/field-store.ts` — store + `useField`/`useList` hooks
-- `test/render-counts.test.ts` — full scenario suite (a)–(g) + timings; exits non-zero on any failure
+- `test/render-counts.test.ts` — scenario suite (a)–(g) + timings, one act() per update; exits non-zero on any failure
+- `test/mixed-sim-30hz.test.ts` — scenario (d) in its literal form: 10s @ ~30 updates/sec (300 ticks), each tick one act() batch simulating a socket frame, with exact per-tick render-set assertions and per-batch timing; exits non-zero on any failure
+
+`npm test` runs both.
