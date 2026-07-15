@@ -96,19 +96,23 @@ One pass over every public name (player/group/run/node/stage/allocation/intake,
 hook names, CLI verbs) optimizing for LLM ergonomics: unambiguous, greppable,
 collision-free with common libraries. Cheap now, impossible later.
 
-### A10. i18n & accessibility baseline (non-blocking for engine; blocking for stock components)
-Stock components (consent, lobby, chat, steps) must be translatable and WCAG-reasonable;
-decide the mechanism (message catalogs per experiment?) before the components multiply.
+### A10. i18n & accessibility baseline — **DRAFTED**
+Resolved in [specs/i18n-and-a11y.md](specs/i18n-and-a11y.md): ICU catalog for stock
+strings with per-deployment overrides, Intl + timezone-labeled gate copy, RTL via
+logical properties, WCAG 2.1 AA baseline with axe-core CI, and the placeholder-content
+build guard (the Napoleon-quiz rule).
 
-### A11. Engine-upgrade policy (blocking: 11)
-Rule proposal: a deployment never changes engine mid-study (bundle pins everything);
-data format carries a version; `empirica export` from any newer engine must read any
-older data file. Confirm and specify the compatibility contract.
+### A11. Engine-upgrade policy (blocking: 11) — **DRAFTED**
+Resolved in [specs/versioning-and-upgrades.md](specs/versioning-and-upgrades.md): the
+six-part version tuple, bundle-pins-engine, boot-never-migrates, the mid-study deploy
+matrix, export-reads-every-format-forever guarantee (v2's failure inverted), semver
+deprecation with llms.txt regeneration, and the one-way v2 importer stance.
 
-### A12. Standby lifecycle (blocking: 03) — from F7
-Release trigger (duration / round marker / phase boundary), standby pay policy, the
-`standbyReleased` exit path, what standbys see while waiting (spectate? hold screen?),
-and promotion ordering when multiple standbys exist.
+### A12. Standby lifecycle (blocking: 03) — from F7 — **DRAFTED**
+Resolved in [specs/standby.md](specs/standby.md): dormancy as an engine concept
+(excluded from visibility audiences and barriers), FIFO promotion with atomic
+role-swap + view backfill and no silent state inheritance, releaseAfter triggers with
+paid `standbyReleased` exit, post-release fallback to the dropout tier.
 
 ## B. Spikes — throwaway code to retire risk before freeze
 
