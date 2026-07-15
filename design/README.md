@@ -30,6 +30,26 @@ LLM-executed development effort with full test coverage and documentation.
 | 14 | [Design backlog](14-design-backlog.md) | Open questions, required spikes, decision log | Living |
 | 15 | [Development plan](15-development-plan.md) | Path to autonomous LLM-driven implementation | Draft |
 
+### Detailed specs (`specs/`)
+
+Normative specs resolving backlog A-items; where a spec and a numbered doc differ,
+the spec wins: [flow-semantics](specs/flow-semantics.md) (A1),
+[schema-and-state](specs/schema-and-state.md) (A2),
+[wire-protocol](specs/wire-protocol.md) (A3),
+[identity-and-auth](specs/identity-and-auth.md) (A4),
+[payment-ledger](specs/payment-ledger.md) (A5), [failure-ux](specs/failure-ux.md) (A6),
+[redaction](specs/redaction.md) (A7 ⚖ legal review),
+[observability](specs/observability.md) (A8),
+[i18n-and-a11y](specs/i18n-and-a11y.md) (A10),
+[versioning-and-upgrades](specs/versioning-and-upgrades.md) (A11),
+[standby](specs/standby.md) (A12).
+
+### Validation & spikes
+
+- [`validation/`](validation/) — V1–V3 written at full `experiment.ts` fidelity
+  (all expressible; findings F1–F24 folded into the backlog).
+- [`spikes/`](spikes/) — runnable risk-retirement spikes with results READMEs.
+
 ## Design principles (summary)
 
 1. **One process, one transaction.** Engine, experiment logic, and storage live together.
