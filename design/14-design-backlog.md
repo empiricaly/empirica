@@ -91,10 +91,12 @@ session-health conditions (journaled, webhookable — the researcher gets paged,
 dashboard), journaled boot report, optional content-free Sentry adapter. OTel traces
 deferred with mappable fields.
 
-### A9. Naming freeze (blocking: everything user-facing)
-One pass over every public name (player/group/run/node/stage/allocation/intake,
-hook names, CLI verbs) optimizing for LLM ergonomics: unambiguous, greppable,
-collision-free with common libraries. Cheap now, impossible later.
+### A9. Naming freeze (blocking: everything user-facing) — **DRAFTED**
+Resolved in [specs/naming.md](specs/naming.md): the canonical glossary (domain, code
+surfaces, CLI, wire), banned-synonym rules with CI dictionary lint, collision checks,
+and four renames decided (`usePeers`, journal-not-event-log, `groups.fixedSize`, node
+types final). With this, **all twelve A-items are drafted**; freeze now waits on
+sub-question sweeps, S3/S6 verdicts, and the A7 legal review.
 
 ### A10. i18n & accessibility baseline — **DRAFTED**
 Resolved in [specs/i18n-and-a11y.md](specs/i18n-and-a11y.md): ICU catalog for stock
