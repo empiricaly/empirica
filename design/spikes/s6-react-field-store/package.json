@@ -2,17 +2,14 @@
   "name": "s6-react-field-store",
   "private": true,
   "version": "0.0.0",
-  "description": "Spike S6: field-granular external store + useSyncExternalStore render-fanout and timing verification",
+  "type": "module",
+  "description": "Spike S6: per-field external store via useSyncExternalStore — render-count and timing verification",
   "scripts": {
-    "test": "bun test"
+    "test": "node --conditions=development test/render-counts.test.ts"
   },
   "dependencies": {
-    "@happy-dom/global-registrator": "^20.10.6",
+    "jsdom": "^29.1.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
-  },
-  "devDependencies": {
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3"
   }
 }
