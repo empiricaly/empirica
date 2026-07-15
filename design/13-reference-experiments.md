@@ -13,6 +13,13 @@ Two distinct roles:
 
 ## Validation set (design-blocking)
 
+> **Status update (2026-07):** V1–V3 are drafted at full `experiment.ts` fidelity in
+> [`validation/`](validation/) — [V1](validation/v1-public-goods.md),
+> [V2](validation/v2-bilateral-market.md),
+> [V3](validation/v3-two-wave-longitudinal.md). All three are **expressible in the
+> algebra**; 24 findings (F1–F24) were folded into
+> [14-design-backlog.md](14-design-backlog.md#findings-from-paper-validation).
+
 ### V1 — Public goods with punishment & chat
 The classic multiplayer shape, done completely: 4 players, contribution → punishment →
 result stages over 10 rounds, in-group chat, treatment factors (MPCR, punishment

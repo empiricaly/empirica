@@ -5,6 +5,27 @@ Status: Living document
 Everything that must be resolved before the docs freeze and autonomous implementation
 begins. Ordered by how much they constrain everything else.
 
+## Findings from paper validation
+
+V1–V3 ([validation/](validation/)) were written at full fidelity (2026-07). Verdict:
+**all three expressible; no structural changes.** The 24 findings (F1–F24, detailed in
+the validation docs) resolve or reshape backlog items as follows:
+
+- **Resolved in direction, needs spec text**: A5 (payment = journaled **credit ledger**,
+  `ctx.pay.credit`, F8/F19); step-validation contract `ok/retry/route` (F10, → A1);
+  gates are **per-unit** with per-player timers/deadlines/reminders (F18, → A1/03);
+  dropout policy is two-tier with fallback chain (F6, → 03); phase-level `submatch`
+  with run-bound sub-group lifecycle (F11, → 03); sub-group barrier predicates
+  `allOf(kind, pred)` (F12, → 03); ≤ 1 live group per (player, kind) invariant (F14,
+  → A1); reveal-by-copy as the documented idiom, no new visibility primitive (F1,
+  upholds D15); schema `nodes:` section for run state with boot-time flow↔schema
+  validation (F2, → A2); colocated node lifecycle hooks (F3, → A1/A2).
+- **New work surfaced**: run/state navigation API needs real design, not just spec
+  (`run.node(...)`, `ctx.run(...)` felt improvised — F17, → A2); **A12 (new): standby
+  release policy** (release trigger, pay, exit path — F7); magic-link re-entry hooks
+  at gates (F20, → A4); withdrawal as a declared exit path invoking `ctx.redact`
+  (F24, → A7); matcher constraint unsatisfiability surfacing (F13, → 03/10).
+
 ## A. Design questions still open
 
 ### A1. Precise flow semantics (blocking: 03, 04)
@@ -60,6 +81,11 @@ decide the mechanism (message catalogs per experiment?) before the components mu
 Rule proposal: a deployment never changes engine mid-study (bundle pins everything);
 data format carries a version; `empirica export` from any newer engine must read any
 older data file. Confirm and specify the compatibility contract.
+
+### A12. Standby lifecycle (blocking: 03) — from F7
+Release trigger (duration / round marker / phase boundary), standby pay policy, the
+`standbyReleased` exit path, what standbys see while waiting (spectate? hold screen?),
+and promotion ordering when multiple standbys exist.
 
 ## B. Spikes — throwaway code to retire risk before freeze
 
