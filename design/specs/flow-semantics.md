@@ -90,9 +90,22 @@ F20). On satisfaction: end run, advance.
   `onSubmatchFail: route | abort(path)` — never silent. Sub-group lifecycle is bound
   to the phase run: dissolved (ended, reason `dissolved`) at phase exit.
 - **Stages** (sequence within the phase; each stage = a run, unit: group):
-  - `onEnter` → arm `duration` timer (if any) → wait for **barrier**:
-    - default: every non-exempt member has issued the built-in `submit` command
-      (exempt: role `standby`, members disconnected beyond grace, dropped members);
+  - `onEnter` → arm `duration` timer (if any; barrier-only stages with no timer are
+    legal — long consensus stages) → wait for **barrier**:
+    - default: every non-exempt member is **currently submitted** (exempt: role
+      `standby`, members disconnected beyond grace, dropped members). Submission is
+      **state, not an event**: a `submitted` boolean on the player×stage-run, set by
+      the built-in `submit` command and cleared by the built-in `retract` command
+      (`retractable: true` by default; `false` makes `retract` reject — for
+      Next-button semantics where un-submitting is meaningless). The barrier
+      re-evaluates on every change to this state. Consensus race, resolved by the
+      total order: if the closing `submit` commits first, the barrier is satisfied
+      *in that transaction* and the stage ends atomically — a subsequent `retract`
+      is `STALE_RUN`; if the `retract` commits first, the barrier is simply
+      unsatisfied again. Richer consensus (acceptances reset when the proposal
+      changes) is userland: a custom command clears members' `submitted`, or
+      version-stamped accepts feed an `advance:` predicate — built-in submit is
+      sugar over a member-run field, not a privileged mechanism;
     - `advance: allOf(kind, pred)` — all live sub-groups of `kind` satisfy `pred`
       (re-evaluated on that kind's field changes, F12);
     - `advance: (ctx, {run, group}) => bool` with explicit `on: [fieldRefs]` triggers.

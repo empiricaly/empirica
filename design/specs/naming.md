@@ -61,6 +61,9 @@ reserved for journal rows.
   *visible co-members*, and precision beats v2 muscle memory per D-log.)
 - **CLI**: `create`, `dev`, `simulate`, `build`, `deploy`, `export`, `migrate`,
   `archive`, `verify-redaction`.
+- **Built-in participant commands**: `submit`, `retract` (stage barrier state),
+  `completeStep`. ("retract", not unsubmit/cancel — it reads correctly for
+  Accept/Agree stages.)
 - **Wire** (`t:` values): `hello/welcome/snapshot/patch/command/ack/ping/pong/bye`.
 - **Packages**: `@empirica/engine`, `server`, `client-core`, `react`, `cli`, `admin`.
 
