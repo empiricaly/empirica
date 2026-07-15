@@ -15,11 +15,22 @@ const SYNCHRONOUS = process.env.SYNCHRONOUS ?? "NORMAL";
 
 // ---------------------------------------------------------------- DB setup
 const WAL_AUTOCHECKPOINT = process.env.WAL_AUTOCHECKPOINT; // pages; SQLite default is 1000
+const CHECKPOINT_MODE = process.env.CHECKPOINT_MODE ?? "inline"; // inline (SQLite default) | worker
 
 const db = new Database(DB_PATH, { create: true });
 db.exec("PRAGMA journal_mode = WAL");
 db.exec(`PRAGMA synchronous = ${SYNCHRONOUS}`);
+db.exec("PRAGMA busy_timeout = 5000"); // ride out TRUNCATE checkpoints from the worker
 if (WAL_AUTOCHECKPOINT !== undefined) db.exec(`PRAGMA wal_autocheckpoint = ${WAL_AUTOCHECKPOINT}`);
+
+// worker mode: writer never checkpoints; a Worker thread runs PASSIVE checkpoints every 1s.
+let lastCheckpoint: any = null;
+if (CHECKPOINT_MODE === "worker") {
+  db.exec("PRAGMA wal_autocheckpoint = 0");
+  const w = new Worker(new URL("./checkpointer.ts", import.meta.url));
+  w.onmessage = (e) => { lastCheckpoint = e.data; };
+  w.postMessage({ path: DB_PATH, intervalMs: 1000 });
+}
 db.exec(`
   CREATE TABLE IF NOT EXISTS kv (
     entity_type TEXT NOT NULL,
@@ -145,6 +156,7 @@ function snapshot() {
   return {
     rssMB: +(process.memoryUsage().rss / 1e6).toFixed(1),
     queueDepth: queue.length - head,
+    lastCheckpoint,
     ...stats,
     uptimeSec: Math.round((Date.now() - stats.startedAt) / 1000),
   };

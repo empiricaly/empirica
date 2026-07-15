@@ -109,6 +109,7 @@ console.log(JSON.stringify({
       rssMB: statsEnd.rssMB, processed: statsEnd.processed, maxQueue: statsEnd.maxQueue,
       pubBackpressure: statsEnd.pubBackpressure, pubDropped: statsEnd.pubDropped,
       maxTxnMs: statsEnd.maxTxnMs, slowTxns: statsEnd.slowTxns, loopStalls: statsEnd.loopStalls,
+      lastCheckpoint: statsEnd.lastCheckpoint,
     },
     rssHistory: statsEnd.rssHistory,
   },
