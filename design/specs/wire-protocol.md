@@ -66,7 +66,13 @@ socket closes (no dual-delivery). Multi-tab is supported via distinct device slo
   produced it. The client persists `(resumeKey, lastAppliedSeq)`.
 - Resume rules, in order:
   1. `resumeKey` unknown/expired (server restart beyond retention, redaction since
-     cursor, or view-membership changed since cursor) → `welcome{mode:'snapshot'}`.
+     cursor, view-membership changed since cursor), **cursor ahead of the journal
+     head, or restore-epoch mismatch** → `welcome{mode:'snapshot'}`. The restore
+     epoch (backup generation id, stamped at boot) rides in `welcome` and inside
+     `resumeKey`: after a backup restore the DB can be seconds *behind* what clients
+     already saw (S3 spike measured ≤ ~1.2 s at 1 s sync-interval), so a stale-epoch
+     or ahead-of-head cursor MUST force snapshot-resume — never incremental
+     catch-up from a future the server no longer has.
   2. else → `welcome{mode:'diff'}` followed by one synthetic patch containing all
      view fields with `updated_seq > cursor` (computed from the kv index) and current
      list tails / crdt catch-up (from the collab journal, seq-based — S5's

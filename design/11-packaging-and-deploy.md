@@ -66,6 +66,16 @@ Recovery: node dies → new node → restore → players reconnect via cursors
 ([06](06-sync-and-visibility.md)). Adapters configure it by default; a deployment
 without offsite backup warns loudly.
 
+Measured (spike S3, real S3-compatible target, 50 txn/s, 1 s sync-interval): every
+restore integrity-clean with contiguous-prefix loss only; loss gap 0–60 committed
+txns (≈ sync-interval + in-flight upload) on process kills — opened by the
+*replicator's* death, not the writer's, so litestream liveness/lag alerts are part
+of the stock monitoring ([observability spec](specs/observability.md)); PITR lands
+≤ ~1 s behind the requested instant, never ahead. Boot-after-restore stamps a
+restore epoch into resume keys so client cursors from the lost tail force
+snapshot-resume ([wire spec §4](specs/wire-protocol.md)). Runbook:
+[spikes/s3-litestream-drill](spikes/s3-litestream-drill/README.md).
+
 ### Ephemeral studies (first-class workflow)
 
 Research is bursty. `empirica deploy --ephemeral` provisions for the study window;
