@@ -1,0 +1,19 @@
+{
+  "name": "empirica-v3",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "typecheck": "tsc --build",
+    "lint": "eslint packages",
+    "test": "bun test packages conformance",
+    "conformance": "bun test conformance"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}

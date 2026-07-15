@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/engine" },
+    { "path": "packages/server" },
+    { "path": "packages/client-core" },
+    { "path": "packages/react" },
+    { "path": "packages/cli" },
+    { "path": "packages/admin" }
+  ]
+}
