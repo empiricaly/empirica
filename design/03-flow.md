@@ -1,6 +1,6 @@
 # 03 — Flow: the algebra, matching, allocations
 
-Status: Draft — **normative operational semantics now in
+Status: Frozen (2026-07-15) — **normative operational semantics now in
 [specs/flow-semantics.md](specs/flow-semantics.md)** (per-unit gates, two-tier dropout,
 `submatch`, sub-group barriers, group segments, exit paths, flow versioning). Where this
 doc and the spec differ, the spec wins.

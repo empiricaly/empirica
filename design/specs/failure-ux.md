@@ -1,6 +1,6 @@
 # Spec — Participant failure & edge-state UX (resolves A6)
 
-Status: Draft for review. Backs [08](../08-client.md), [10](../10-admin.md).
+Status: Frozen (2026-07-15). Backs [08](../08-client.md), [10](../10-admin.md).
 Principle: **no improvised screens** — every terminal state is a declared exit path
 with a stock screen; every transient state has a stock component; all overridable in
 the template, none inventable ad hoc.
@@ -70,9 +70,13 @@ defines — one vocabulary end to end.
 - Exit screens always render a code and ledger line for every declared path in the
   reference experiments.
 
-## Open sub-questions
+## Resolved sub-questions (freeze sweep, 2026-07-15)
 
-1. Offline queueing of participant *inputs* during brief disconnects (retry queue
-   for `set`/commands beyond idempotent resend) — proposal: queue `writable('self')`
-   sets, never commands; decide at client-core freeze. → 08.
-2. Accessibility/i18n of stock copy — mechanism lands with A10.
+1. **Offline input handling** (D23): during a disconnect the client queues
+   **latest-value-per-field** for `writable('self')` sets (bounded by the field
+   count; flushed on resume; rejections then surface normally). **Commands never
+   queue** — they fail fast with a visible error, because replaying a stale `bid`
+   or `accept` after reconnect is exactly the wrong semantics (STALE_RUN exists for
+   a reason). Unsent-input loss on hard navigation is documented, not hidden.
+2. Accessibility/i18n of stock copy: resolved by A10
+   ([i18n-and-a11y](i18n-and-a11y.md) — ICU catalog covers all §1/§2 copy).

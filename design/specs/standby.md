@@ -1,6 +1,6 @@
 # Spec — Standby lifecycle (resolves A12)
 
-Status: Draft for review. Backs flow spec §2.3/§4 (F7); interacts with A5 (pay),
+Status: Frozen (2026-07-15). Backs flow spec §2.3/§4 (F7); interacts with A5 (pay),
 A6 (hold screen), 06 (visibility).
 
 ## 1. Recruitment & dormancy

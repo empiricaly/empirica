@@ -154,5 +154,31 @@ paid `standbyReleased` exit, post-release fallback to the dropout tier.
 | D11 | One experiment per deployment; no multi-tenant hub in core | 00 | Accepted |
 | D12 | CRDT collab as opt-in field type, never foundational | 08 | Accepted |
 | D13 | kv-row state (not typed columns); export views repay queryability | 05 | Accepted |
-| D14 | Redaction-in-place for withdrawal; no journal hash-chain in v1 | 05 | Proposed |
-| D15 | No per-field visibility predicates in v1 (audience = groups) | 06 | Proposed |
+| D14 | Redaction-in-place for withdrawal; no journal hash-chain in v1 | 05, specs/redaction | Accepted (⚖ language pending) |
+| D15 | No per-field visibility predicates in v1 (audience = groups) | 06, S4 | Accepted (validated by S4) |
+| D16 | Submission is state, not event; `retract` built-in, retractable by default | flow spec §2.4 | Accepted |
+| D17 | Plural group kinds (`multiple: true`), context-only, union visibility | schema spec §1 | Accepted |
+| D18 | `f.*` field-ref builder for triggers/hooks (compile-checked) | schema/flow specs | Accepted |
+| D19 | Group-mode branch allowed; segment-purity compiler rule | flow spec | Accepted |
+| D20 | Pause extends gate deadlines and counts as active time for pay | flow/payment specs | Accepted |
+| D21 | Multi-tab = REPLACED (one active connection per device slot) | wire spec | Accepted |
+| D22 | `await set()/command()` resolve at commit with `{seq}` | wire spec | Accepted |
+| D23 | Offline queue: latest-value per self-writable field; commands never queue | failure-ux spec | Accepted |
+| D24 | `record().keys('members')` membership-key refinement | schema spec | Accepted |
+| D25 | `.ephemeral()` × `.collab()` not combinable; cursors via Yjs awareness | schema spec | Accepted |
+| D26 | Self-service recovery config-gated on email identity+adapter, default off | auth spec | Accepted |
+| D27 | `payment.showRate` config flag for rate display | payment spec | Accepted |
+| D28 | `verify-redaction` scans emitted logs for content values | redaction spec | Accepted |
+
+## Deferred register (explicitly post-v1, with rationale recorded in the owning spec)
+
+| Item | Owning spec |
+|---|---|
+| Nested `submatch` (one level in v1) | flow-semantics |
+| Multi-currency deployments | payment-ledger |
+| Admin roles beyond single-role + PAT scopes | identity-and-auth |
+| OpenTelemetry traces (fields kept mappable) | observability |
+| LTS cadence | versioning-and-upgrades |
+| `reveal()` sugar over reveal-by-copy | schema-and-state |
+| Binary wire framing (msgpack) | wire-protocol |
+| Diff-resume across membership deltas | wire-protocol |

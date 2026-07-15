@@ -1,6 +1,6 @@
 # Spec — Payment & the credit ledger (resolves A5)
 
-Status: Draft for review. Backs [12](../12-integrations.md); implements F8/F19.
+Status: Frozen (2026-07-15). Backs [12](../12-integrations.md); implements F8/F19.
 
 ## 1. Model: journaled credits, reviewed submission
 
@@ -74,10 +74,10 @@ spend exceeds it. Runaway-bonus bugs get caught by the cap + the per-credit
   provider calls (recorded-fixture Prolific adapter).
 - Cap drill: budget cap closes intake, never voids accrued credits.
 
-## Open sub-questions
+## Resolved sub-questions (freeze sweep, 2026-07-15)
 
-1. Multi-currency deployments (one study, two participant pools) — defer; would
-   need per-pool currency + FX-free separation. → post-v1.
-2. Points→money exchange-rate display duties (some IRBs require showing the rate
-   during the study) — proposal: `payment.showRate: true` renders it in the stock
-   header; decide with A10 copy work.
+1. **Multi-currency: deferred post-v1** (Deferred register). One deployment, one
+   currency; multi-pool studies run parallel deployments.
+2. **`payment.showRate: true` is adopted** (D27): renders the points→money rate in
+   the stock header and on exit screens (copy via the A10 catalog); default off;
+   IRB-driven deployments switch it on.

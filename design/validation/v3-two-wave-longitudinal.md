@@ -1,6 +1,7 @@
 # V3 — Two-wave longitudinal survey with treatments (paper validation)
 
-Status: Drafted against docs 02–08 + V1/V2 deltas. Findings at bottom.
+Status: **Conformed to frozen specs (2026-07-15)** — contract canary (see V1 note).
+Originally drafted against docs 02–08 + V1/V2 deltas. Findings at bottom.
 
 Stresses: **solo studies with zero group machinery**, enrollment-time treatment,
 **per-player scheduled gates** (day-7 wave), magic-link re-entry, reminders,
@@ -18,7 +19,7 @@ Pay per completed wave; wave-2 no-shows are finalized automatically with wave-1 
 ```ts
 import {
   defineExperiment, defineSchema, field, record,
-  flow, step, gate, route, ok, usd, days, z,
+  flow, step, gate, route, ok, retry, balanced, usd, days, z,
 } from '@empirica/engine';
 
 const schema = defineSchema({

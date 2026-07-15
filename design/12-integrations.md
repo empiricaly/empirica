@@ -1,6 +1,6 @@
 # 12 — Integrations: recruitment, payment, external systems
 
-Status: Draft
+Status: Frozen (2026-07-15)
 
 ## Prolific (first-class, first)
 

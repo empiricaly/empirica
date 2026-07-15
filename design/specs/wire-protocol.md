@@ -1,6 +1,6 @@
 # Spec — Wire protocol (resolves A3)
 
-Status: Draft for review. Backs [06](../06-sync-and-visibility.md), [07](../07-api.md),
+Status: Frozen (2026-07-15). Backs [06](../06-sync-and-visibility.md), [07](../07-api.md),
 [08](../08-client.md). Normative: MUST/SHOULD/MAY.
 
 ## 1. Transport & framing
@@ -129,11 +129,12 @@ dev setups and future SDKs.
 - Cap fuzz: oversized frames, deep JSON, invalid envelopes → typed `bye`/rejects,
   never a crash.
 
-## Open sub-questions
+## Resolved sub-questions (freeze sweep, 2026-07-15)
 
-1. Multi-tab UX default: `REPLACED` vs mirrored delivery to N sockets per player —
-   proposal: `REPLACED` in v1 (one active tab; the stock client shows "open here"
-   takeover), revisit with observer/spectator use cases. → A4/A6.
-2. Should `ack.seq` be exposed in the public client API (for "wait until my write is
-   visible to peers" patterns)? Proposal: yes, as `await set(...)` resolving at
-   commit. Decide with client-core API freeze.
+1. **Multi-tab default is `REPLACED`** (D21): one active connection per player
+   device slot; the stock client renders the takeover screen (failure-UX §1).
+   Spectator/observer needs use admin-class connections, not participant mirroring.
+2. **Writes resolve at commit** (D22): `await player.set(...)` and
+   `await command(...)` resolve with `{seq}` on ack (reject with the typed error) —
+   the "wait until my write is peer-visible" pattern is `await`, not polling.
+   Fire-and-forget remains the default styling in templates (no `await` needed).

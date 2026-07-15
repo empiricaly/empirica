@@ -1,6 +1,6 @@
 # 13 — Reference experiments: validation set & shipped library
 
-Status: Draft
+Status: Frozen (2026-07-15)
 
 Two distinct roles:
 

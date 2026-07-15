@@ -1,6 +1,6 @@
 # 10 — Admin: algebra-driven UI & live operations
 
-Status: Draft
+Status: Frozen (2026-07-15)
 
 ## Principle: the admin renders the algebra, not the experiment
 

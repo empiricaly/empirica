@@ -1,6 +1,6 @@
 # 01 — Diagnosis: what v2 taught us
 
-Status: Draft
+Status: Frozen (2026-07-15)
 
 This is the evidence base for the rewrite, from a full audit of the v2 codebase
 (Go orchestrator, Tajriba, `@empirica/core` admin + player layers, stress tests).

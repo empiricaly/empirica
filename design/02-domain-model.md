@@ -1,6 +1,6 @@
 # 02 — Domain model
 
-Status: Draft
+Status: Frozen (2026-07-15)
 
 Three primitives: **Player**, **Group**, **Flow**. Everything else (treatments, runs,
 memberships, allocations) hangs off them.

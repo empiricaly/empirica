@@ -1,6 +1,6 @@
 # 00 — Vision
 
-Status: Draft
+Status: Frozen (2026-07-15)
 
 ## What this system is
 

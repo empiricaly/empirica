@@ -1,6 +1,6 @@
 # Spec — i18n & accessibility baseline (resolves A10)
 
-Status: Draft for review. Scope: **stock components and engine-emitted copy only** —
+Status: Frozen (2026-07-15). Scope: **stock components and engine-emitted copy only** —
 experiment content is authored directly in the researcher's language(s); we impose no
 catalog on their code.
 

@@ -1,6 +1,6 @@
 # Spec — Observability (resolves A8)
 
-Status: Draft for review. Backs [10](../10-admin.md), [15](../15-development-plan.md).
+Status: Frozen (2026-07-15). Backs [10](../10-admin.md), [15](../15-development-plan.md).
 Principle: **the operator learns about problems before participants complain**, and
 logs/metrics never contain participant content (field keys yes, values never).
 
@@ -82,9 +82,9 @@ hash + seq. The PII scrub is ours, not Sentry's: same serializer rule as §1.
 - Metrics presence test: every series in §2 present after a reference-experiment run.
 - Boot report golden file per reference experiment.
 
-## Open sub-questions
+## Resolved sub-questions (freeze sweep, 2026-07-15)
 
-1. OpenTelemetry traces (per-command spans) — valuable for effect-heavy studies;
-   proposal: defer, design the log `cat` fields to be OTel-mappable later.
-2. Admin log-viewer in v1 vs "use the host's" — proposal: minimal tail view behind
-   admin auth; full search stays host-side.
+1. **OTel traces: deferred post-v1** (Deferred register); the log `cat`/field
+   vocabulary is OTel-mappable by design so the adapter is additive later.
+2. **Admin log viewer: minimal tail** (filter by `cat`/level, last N lines) behind
+   admin auth in v1; full search stays host-side.

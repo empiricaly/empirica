@@ -1,6 +1,6 @@
 # 09 — Simulation, bots, replay & scrubbing
 
-Status: Draft
+Status: Frozen (2026-07-15)
 
 The single feature this rewrite should be staked on. Same engine, three modes:
 

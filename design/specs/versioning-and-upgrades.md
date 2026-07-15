@@ -1,6 +1,6 @@
 # Spec — Versioning & upgrades (resolves A11)
 
-Status: Draft for review. Consolidates the compatibility contract referenced by
+Status: Frozen (2026-07-15). Consolidates the compatibility contract referenced by
 [11](../11-packaging-and-deploy.md), flow spec §7, schema spec §9, A4 §4.
 
 ## 1. The version tuple (what exists, where stamped)
@@ -51,7 +51,7 @@ Status: Draft for review. Consolidates the compatibility contract referenced by
 - Hot-swap drill: same-engine bundle with additive schema over a live simulated
   study → zero dropped connections (cursor resume), new fields live.
 
-## Open sub-questions
+## Resolved sub-questions (freeze sweep, 2026-07-15)
 
-1. LTS cadence — decide at first release; proposal: LTS = what the managed platform
-   (future) runs, community picks their own risk otherwise.
+1. **LTS cadence: deferred to first release** (Deferred register); working
+   assumption stands (LTS = what a future managed platform runs).

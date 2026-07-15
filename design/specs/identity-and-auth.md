@@ -1,6 +1,6 @@
 # Spec — Identity & auth (resolves A4)
 
-Status: Draft for review. Backs [07](../07-api.md), [12](../12-integrations.md);
+Status: Frozen (2026-07-15). Backs [07](../07-api.md), [12](../12-integrations.md);
 feeds gate `reentry` (flow spec §2.2) and protocol `hello` (wire spec §7).
 
 ## 1. Principles
@@ -85,10 +85,12 @@ same transaction — a withdrawn participant's links stop working at commit.
 - REPLACED drill: second device claims transfer link → first socket byes, second
   resumes via cursor.
 
-## Open sub-questions
+## Resolved sub-questions (freeze sweep, 2026-07-15)
 
-1. Participant-facing "resume by email code" without researcher involvement
-   (self-service recovery) — nice for longitudinal; proposal: opt-in per deployment,
-   only when an email identity exists. → 12.
-2. Admin roles (viewer vs operator vs owner) — v1 ships single role + PAT scopes;
-   revisit with multi-operator labs. → A8/10.
+1. **Self-service recovery is config-gated** (D26): `auth.selfRecovery: 'email'` —
+   available only when the player has an email identity and the deployment has an
+   email adapter (doc 12); issues an ordinary magic link (§3, purpose `recovery`);
+   default **off**.
+2. **Admin roles: deferred post-v1** (Deferred register). v1 ships a single admin
+   role + scoped PATs; every intervention is journaled by actor, which is the audit
+   property multi-role would mostly buy.

@@ -1,6 +1,7 @@
 # V2 — Bilateral-negotiation market with re-matching (paper validation)
 
-Status: Drafted against docs 02–08 + V1 deltas. Findings at bottom.
+Status: **Conformed to frozen specs (2026-07-15)** — contract canary (see V1 note).
+Originally drafted against docs 02–08 + V1 deltas. Findings at bottom.
 
 Stresses: **multi-membership** (market + per-round pair), stable **roles**,
 **within-phase re-matching** with constraints, **custom commands** with turn logic,
@@ -144,7 +145,7 @@ export default defineExperiment({
         const price = last.amount;
         pair.set('price', price); pair.set('closed', true);
 
-        const run = ctx.run('tradingRound', player);            // current run handle
+        const run = ctx.at('tradingRound');                     // schema spec §7.2
         for (const m of pair.members()) {
           const v = run.player(m).get('valuation');
           const gain = m.role === 'buyer' ? v - price : price - v;

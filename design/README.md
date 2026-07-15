@@ -9,26 +9,36 @@ recorded here, argued from experimental/scientific need, and frozen before imple
 begins. The end state is a spec complete enough to drive a largely autonomous,
 LLM-executed development effort with full test coverage and documentation.
 
+> **DESIGN FREEZE — 2026-07-15.** All numbered docs and specs are Frozen: all 12
+> backlog A-items resolved, all 7 spikes PASS, V1–V3 validated and conformed as
+> contract canaries, every open sub-question decided or explicitly deferred
+> (decision log D1–D28 + Deferred register in [14](14-design-backlog.md)).
+> Sole exception: [specs/redaction.md](specs/redaction.md) is frozen in substance
+> but pending external legal sign-off ([legal-review-brief.md](legal-review-brief.md)).
+> Changes from here go through the decision log — a spec edit without a D-entry is
+> a process violation. Next phase: [15-development-plan.md](15-development-plan.md)
+> M0/M1 (per-package specs + conformance suites).
+
 ## Reading order
 
 | # | Doc | Contents | Status |
 |---|-----|----------|--------|
-| 00 | [Vision](00-vision.md) | What the system is for, first-principles requirements, non-goals | Draft |
-| 01 | [Diagnosis](01-diagnosis.md) | Evidence-based post-mortem of v2; lessons → requirements | Draft |
-| 02 | [Domain model](02-domain-model.md) | Player, Group kinds, memberships, state universe, treatments | Draft |
-| 03 | [Flow](03-flow.md) | The flow algebra: five node types, composition, matching, allocations | Draft |
-| 04 | [Engine](04-engine.md) | Command loop, transactions, hooks vs effects, timers, determinism | Draft |
-| 05 | [Storage](05-storage.md) | SQLite layout, journal, changes log, retention, withdrawal | Draft |
-| 06 | [Sync & visibility](06-sync-and-visibility.md) | Schema-declared visibility, views, patch protocol, cursors | Draft |
-| 07 | [API](07-api.md) | Commands/queries, WS + REST framing, custom commands, SDKs | Draft |
-| 08 | [Client](08-client.md) | Transport seam, stores, React bindings, optimistic writes, collab fields | Draft |
-| 09 | [Simulation & replay](09-simulation-and-replay.md) | Sim harness, bots, deterministic replay, session scrubbing | Draft |
-| 10 | [Admin](10-admin.md) | Algebra-driven admin UI, live interventions | Draft |
-| 11 | [Packaging & deploy](11-packaging-and-deploy.md) | Project shape, sealed bundles, deploy adapters, Litestream | Draft |
-| 12 | [Integrations](12-integrations.md) | Prolific & co., payments, webhooks | Draft |
-| 13 | [Reference experiments](13-reference-experiments.md) | Validation set + shipped example library | Draft |
+| 00 | [Vision](00-vision.md) | What the system is for, first-principles requirements, non-goals | Frozen |
+| 01 | [Diagnosis](01-diagnosis.md) | Evidence-based post-mortem of v2; lessons → requirements | Frozen |
+| 02 | [Domain model](02-domain-model.md) | Player, Group kinds, memberships, state universe, treatments | Frozen |
+| 03 | [Flow](03-flow.md) | The flow algebra: five node types, composition, matching, allocations | Frozen |
+| 04 | [Engine](04-engine.md) | Command loop, transactions, hooks vs effects, timers, determinism | Frozen |
+| 05 | [Storage](05-storage.md) | SQLite layout, journal, changes log, retention, withdrawal | Frozen |
+| 06 | [Sync & visibility](06-sync-and-visibility.md) | Schema-declared visibility, views, patch protocol, cursors | Frozen |
+| 07 | [API](07-api.md) | Commands/queries, WS + REST framing, custom commands, SDKs | Frozen |
+| 08 | [Client](08-client.md) | Transport seam, stores, React bindings, optimistic writes, collab fields | Frozen |
+| 09 | [Simulation & replay](09-simulation-and-replay.md) | Sim harness, bots, deterministic replay, session scrubbing | Frozen |
+| 10 | [Admin](10-admin.md) | Algebra-driven admin UI, live interventions | Frozen |
+| 11 | [Packaging & deploy](11-packaging-and-deploy.md) | Project shape, sealed bundles, deploy adapters, Litestream | Frozen |
+| 12 | [Integrations](12-integrations.md) | Prolific & co., payments, webhooks | Frozen |
+| 13 | [Reference experiments](13-reference-experiments.md) | Validation set + shipped example library | Frozen |
 | 14 | [Design backlog](14-design-backlog.md) | Open questions, required spikes, decision log | Living |
-| 15 | [Development plan](15-development-plan.md) | Path to autonomous LLM-driven implementation | Draft |
+| 15 | [Development plan](15-development-plan.md) | Path to autonomous LLM-driven implementation | Frozen |
 
 ### Detailed specs (`specs/`)
 
@@ -78,8 +88,9 @@ the spec wins: [flow-semantics](specs/flow-semantics.md) (A1),
 
 ## Status & process
 
-Docs move `Draft → Review → Frozen`. Implementation of an area does not begin until its
-doc is Frozen. Decisions that reverse a frozen doc are recorded in the
+Docs move `Draft → Review → Frozen`. **The freeze happened 2026-07-15** (banner
+above). Implementation of an area does not begin until its doc is Frozen. Decisions
+that reverse a frozen doc are recorded in the
 [decision log](14-design-backlog.md#decision-log).
 
 The design deliberately precedes any code except **spikes** (throwaway experiments listed

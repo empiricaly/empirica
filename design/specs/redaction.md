@@ -1,6 +1,6 @@
 # Spec — Withdrawal & redaction mechanics (resolves A7)
 
-Status: Draft for review — **requires legal review before freeze** (flagged items ⚖).
+Status: Review — frozen in substance (2026-07-15) but pending external legal sign-off (⚖ items; see [../legal-review-brief.md](../legal-review-brief.md)).
 Backs [05](../05-storage.md) (D14); ties into A4 (credential revocation), A5 (credits),
 flow spec §5 (the `withdrawn` exit path), S4 (replay/keyframes), S5 (collab docs).
 
@@ -75,9 +75,14 @@ The operator handbook and consent template both state the window.
 - Backup drill extension of S3: restore a pre-redaction generation after retention
   simulation → generation absent.
 
-## Open sub-questions ⚖
+## Resolved sub-questions (freeze sweep, 2026-07-15)
 
-1. Jurisdictional review of the pseudonymization stance (§2) and collective-work
-   default (§3) — external counsel, before freeze.
-2. Whether `verify-redaction` should also scan admin/ops logs (A8 says logs carry
-   keys, never values — verify that claim in the drill).
+1. Jurisdictional review of the pseudonymization stance (§2), collective-work
+   default (§3), and backup-retention language (§4) — **external counsel; still
+   open**. The handoff document is
+   [../legal-review-brief.md](../legal-review-brief.md); this spec stays in
+   **Review** status until counsel signs off.
+2. **`verify-redaction` scans emitted logs too** (D28): the drill greps the
+   deployment's log ring buffer for any of the player's content values — it should
+   pass by construction (observability content rule), and the drill exists to prove
+   the construction holds.

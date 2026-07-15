@@ -1,6 +1,6 @@
 # 04 — Engine: commands, transactions, hooks, effects, timers
 
-Status: Draft
+Status: Frozen (2026-07-15)
 
 ## The command loop
 

@@ -1,6 +1,6 @@
 # 05 — Storage: SQLite layout, journal, retention
 
-Status: Draft
+Status: Frozen (2026-07-15)
 
 One SQLite file per deployment, WAL mode, synchronous driver, single writer
 (the command loop). Four layers, all written in the same transaction.

@@ -1,6 +1,6 @@
 # 06 — Sync & visibility
 
-Status: Draft
+Status: Frozen (2026-07-15)
 
 ## Visibility is schema, not etiquette
 

@@ -1,6 +1,6 @@
 # 08 — Client: core, React bindings, collab fields
 
-Status: Draft
+Status: Frozen (2026-07-15)
 
 ## Layering
 

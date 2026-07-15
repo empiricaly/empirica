@@ -1,6 +1,6 @@
 # 11 — Packaging & deployment
 
-Status: Draft
+Status: Frozen (2026-07-15)
 
 Three layers: **create → build → deploy**. Neither clone-repo (v1's un-upgradeable
 Meteor mistake) nor bare library (no deployable artifact).

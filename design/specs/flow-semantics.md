@@ -1,6 +1,6 @@
 # Spec — Flow operational semantics (resolves A1)
 
-Status: Draft for review. Backs [03-flow.md](../03-flow.md); incorporates validation
+Status: Frozen (2026-07-15). Backs [03-flow.md](../03-flow.md); incorporates validation
 findings F1–F24. Normative language: MUST/SHOULD/MAY.
 
 ## 1. Definitions
@@ -214,12 +214,18 @@ matrix (all policy combinations × standby availability); gate schedule survival
 across restart; segment computation (match followed by solo = boot error);
 STALE_RUN on every post-end command; deploy-over-live refusal matrix.
 
-## Open sub-questions (tracked, non-blocking for review)
+## Resolved sub-questions (freeze sweep, 2026-07-15)
 
-1. `when(pred, {on})` field-ref syntax — settle in A2 alongside the navigation API
-   (F17).
-2. Group-level `branch` inside a segment on group state — allowed (pred over group
-   state); confirm no solo/group mixing ambiguity in the compiler rules.
-3. Nested `submatch` (pairs within rooms within market) — defer; one level in v1.
-4. Whether `pause` extends per-player gate deadlines (proposal: yes, by pause
-   duration) — decide with A5 fairness review.
+1. **`when(pred, {on})` field refs use the `f.*` builder** (D18):
+   `on: [f.player('wave1DoneAt'), f.group('game','closed'), f.global('intakeOpen')]`
+   — compile-time checked against the schema; an `on:` entry naming an undeclared
+   field is a boot error. Shared with field-change hook registration (schema spec).
+2. **Group-mode `branch` inside a segment: allowed** (D19). Predicate over group
+   state; **segment purity rule**: within a group segment, every node of both arms
+   must be group-mode — a solo node inside a segment branch is a boot error (the
+   compiler already computes segments in §3.3; this extends the check into arms).
+3. **Nested `submatch`: deferred post-v1** (Deferred register). One level in v1;
+   V2/V4 need no more.
+4. **Pause extends per-player gate deadlines by the pause duration** (D20) —
+   consistent with pause counting as active time for pay (payment spec §3).
+   Reminders shift identically; already-fired reminders never re-fire.

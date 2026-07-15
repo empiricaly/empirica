@@ -1,6 +1,6 @@
 # Spec — Schema DSL & state navigation (resolves A2)
 
-Status: Draft for review. Backs [02](../02-domain-model.md), [06](../06-sync-and-visibility.md),
+Status: Frozen (2026-07-15). Backs [02](../02-domain-model.md), [06](../06-sync-and-visibility.md),
 [08](../08-client.md); incorporates F2, F5, F9, F16, F17. Normative: MUST/SHOULD/MAY.
 
 ## 1. `defineSchema` shape
@@ -224,12 +224,15 @@ On deploy over live data, compare schema hashes:
 - `run.sibling` under conditional stages (V1 punish-off treatment) returns undefined
   and hooks behave.
 
-## Open sub-questions
+## Resolved sub-questions (freeze sweep, 2026-07-15)
 
-1. Typed cross-field references in `when(pred, { on: [...] })` (flow spec §2.2) —
-   proposal: `on: [f.player('wave1DoneAt'), f.group('game', 'closed')]` builder
-   giving compile-time checked refs. Settle at implementation-spec time.
-2. `record()` key constraints (player-id-keyed records are common — validate keys
-   against group membership?). Proposal: optional `.keys('members')` refinement.
-3. Whether `.ephemeral()` may coexist with `.collab()` (live cursors inside docs) —
-   defer; Yjs awareness protocol likely covers it outside our journal.
+1. **The `f.*` field-ref builder is adopted** (D18): `f.player(key)`,
+   `f.group(kind, key)`, `f.node(name, key)`, `f.global(key)` — compile-checked
+   refs, used by gate `when(…, {on})` triggers and field-change hook registration.
+2. **`record().keys('members')` is adopted** (D24): validates record keys are live
+   co-member ids of the owner's group at write time (`VALIDATION_FAILED` otherwise).
+   V1's punishment `assigned` record uses it.
+3. **`.ephemeral()` and `.collab()` are not combinable in v1** (D25): live
+   cursors/presence inside collab docs ride the Yjs awareness protocol, relayed on
+   the ephemeral channel but never journaled — no engine feature needed. Revisit
+   only with evidence.

@@ -1,6 +1,8 @@
 # V1 — Public goods with punishment & chat (paper validation)
 
-Status: Drafted against docs 02–08 as written. **Findings at the bottom are design
+Status: **Conformed to frozen specs (2026-07-15)** — this document is a contract
+canary: any future spec change that invalidates this code goes through the decision
+log. Originally drafted against docs 02–08; **Findings at the bottom are design
 deltas** — places the docs creaked when forced to full fidelity.
 
 Stresses: stages/barriers, treatment-conditional structure, in-group chat, standby
@@ -63,6 +65,7 @@ const schema = defineSchema({
     punish: {
       player: {
         assigned: record(z.number().int().min(0).max(10))
+                    .keys('members')                       // D24: keys must be co-member ids
                     .visible('self').writable('self')
                     .refine(r => Object.values(r).reduce((a, b) => a + b, 0) <= 10,
                             'punishment budget is 10 points'),
@@ -134,7 +137,7 @@ const experimentFlow = flow.seq(
           duration: '30s',
           onEnd: (ctx, { run, group }) => {
             for (const m of group.members()) {
-              const assigned = run.node('punish').player(m).get('assigned') ?? {};
+              const assigned = run.sibling('punish').player(m).get('assigned') ?? {};
               const spent = Object.values(assigned).reduce((a, b) => a + b, 0);
               run.player(m).set('punishCost', spent);
               for (const [targetId, pts] of Object.entries(assigned)) {

@@ -1,6 +1,6 @@
 # Spec — Naming freeze (resolves A9)
 
-Status: Draft for review. The canonical glossary for every public name. After freeze,
+Status: Frozen (2026-07-15). The canonical glossary for every public name. After freeze,
 docs, templates, error messages, and `llms.txt` MUST use these names exclusively
 (CI lint: a dictionary check over docs/templates — synonyms are bugs).
 

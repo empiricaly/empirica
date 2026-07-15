@@ -1,6 +1,6 @@
 # 15 — Development plan: the path to autonomous implementation
 
-Status: Draft
+Status: Frozen (2026-07-15)
 
 Objective: once the design freezes, implementation is executed largely by LLM agents,
 with tests and documentation produced alongside code. This plan is about making that

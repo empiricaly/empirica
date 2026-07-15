@@ -1,6 +1,6 @@
 # 07 — API: commands, queries, REST + WS, SDKs
 
-Status: Draft
+Status: Frozen (2026-07-15)
 
 ## One model: commands and queries
 
