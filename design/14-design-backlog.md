@@ -124,7 +124,7 @@ paid `standbyReleased` exit, post-release fallback to the dropout tier.
 | S4 | Replay transport prototype: journal → transport → client store rendering historical state | Scrubbing is harder than theorized | scrub a recorded toy session, state-equal vs live | **PASS** — byte-equal at 40 checkpoints; view-space projection constraint → 06/09 |
 | S5 | Yjs relay: opaque update journaling + compaction + replay of a collaborative doc | Collab fields fight the journal | keystroke scrub of a shared essay | **PASS** — replay/scrub/compaction verified; ordering constraints → 08 |
 | S6 | React per-field store: 500 live fields, chat at 20 msg/s, render-count assertions | Fine-grained subscription model doesn't scale in React | no extraneous re-renders; low update cost | running |
-| S7 | Node-compat pass of S1 behind the platform seam | The Bun exit door is imaginary | same suite green on Node LTS | running |
+| S7 | Node-compat pass of S1 behind the platform seam | The Bun exit door is imaginary | same suite green on Node LTS | **PASS** — ~180-line seam, perf parity (p99 0.63 ms), one delta: ~2.6× RSS baseline |
 
 ## C. Process before implementation
 

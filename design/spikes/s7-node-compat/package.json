@@ -1,0 +1,9 @@
+{
+  "name": "s7-node-compat",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "better-sqlite3": "^12.2.0",
+    "ws": "^8.18.0"
+  }
+}

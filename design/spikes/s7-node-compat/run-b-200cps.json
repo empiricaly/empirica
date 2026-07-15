@@ -1,0 +1,242 @@
+{
+  "config": {
+    "CONNS": 1000,
+    "GROUPS": 250,
+    "RATE": 200,
+    "DURATION": 120
+  },
+  "sent": 24000,
+  "acked": 24000,
+  "sendWallSec": 120,
+  "achievedCmdPerSec": 200,
+  "maxSendLag": 12,
+  "ack": {
+    "count": 24000,
+    "p50": 0.25,
+    "p95": 0.39,
+    "p99": 0.63,
+    "max": 38.65
+  },
+  "patch": {
+    "count": 72000,
+    "p50": 0.29,
+    "p95": 0.47,
+    "p99": 0.7,
+    "max": 38.67
+  },
+  "patchesReceived": 72000,
+  "selfPatches": 24000,
+  "orderingViolations": 0,
+  "server": {
+    "start": {
+      "rssMB": 125.9,
+      "processed": 0
+    },
+    "mid": {
+      "rssMB": 144.3,
+      "processed": 12000,
+      "queueDepth": 0
+    },
+    "end": {
+      "rssMB": 159.2,
+      "processed": 24000,
+      "maxQueue": 10,
+      "pubBackpressure": 0,
+      "pubDropped": 0,
+      "maxTxnMs": 34.60642299999745,
+      "slowTxns": [
+        {
+          "seq": 2032,
+          "ms": 19.5,
+          "t": 20
+        },
+        {
+          "seq": 4034,
+          "ms": 19.3,
+          "t": 30
+        },
+        {
+          "seq": 6037,
+          "ms": 34.6,
+          "t": 40
+        },
+        {
+          "seq": 10041,
+          "ms": 19.5,
+          "t": 60
+        },
+        {
+          "seq": 12042,
+          "ms": 19.4,
+          "t": 70
+        }
+      ],
+      "loopStalls": [],
+      "lastCheckpoint": {
+        "busy": 0,
+        "log": 5967,
+        "checkpointed": 5967,
+        "mode": "PASSIVE",
+        "ms": 0.2
+      }
+    },
+    "rssHistory": [
+      {
+        "t": 5,
+        "rssMB": 121.5,
+        "queue": 0,
+        "processed": 0
+      },
+      {
+        "t": 10,
+        "rssMB": 126.1,
+        "queue": 0,
+        "processed": 9
+      },
+      {
+        "t": 15,
+        "rssMB": 130.6,
+        "queue": 0,
+        "processed": 1009
+      },
+      {
+        "t": 20,
+        "rssMB": 131.3,
+        "queue": 0,
+        "processed": 2009
+      },
+      {
+        "t": 25,
+        "rssMB": 137.7,
+        "queue": 0,
+        "processed": 3010
+      },
+      {
+        "t": 30,
+        "rssMB": 138.1,
+        "queue": 0,
+        "processed": 4010
+      },
+      {
+        "t": 35,
+        "rssMB": 138.5,
+        "queue": 0,
+        "processed": 5009
+      },
+      {
+        "t": 40,
+        "rssMB": 139.3,
+        "queue": 0,
+        "processed": 6010
+      },
+      {
+        "t": 45,
+        "rssMB": 140.3,
+        "queue": 0,
+        "processed": 7010
+      },
+      {
+        "t": 50,
+        "rssMB": 141,
+        "queue": 0,
+        "processed": 8010
+      },
+      {
+        "t": 55,
+        "rssMB": 141.6,
+        "queue": 0,
+        "processed": 9010
+      },
+      {
+        "t": 60,
+        "rssMB": 142.7,
+        "queue": 0,
+        "processed": 10010
+      },
+      {
+        "t": 65,
+        "rssMB": 143.6,
+        "queue": 0,
+        "processed": 11009
+      },
+      {
+        "t": 70,
+        "rssMB": 144.3,
+        "queue": 0,
+        "processed": 12010
+      },
+      {
+        "t": 75,
+        "rssMB": 145.6,
+        "queue": 0,
+        "processed": 13010
+      },
+      {
+        "t": 80,
+        "rssMB": 152.1,
+        "queue": 0,
+        "processed": 14009
+      },
+      {
+        "t": 85,
+        "rssMB": 158.8,
+        "queue": 0,
+        "processed": 15010
+      },
+      {
+        "t": 90,
+        "rssMB": 158.8,
+        "queue": 0,
+        "processed": 16010
+      },
+      {
+        "t": 95,
+        "rssMB": 158.8,
+        "queue": 0,
+        "processed": 17010
+      },
+      {
+        "t": 100,
+        "rssMB": 158.8,
+        "queue": 0,
+        "processed": 18010
+      },
+      {
+        "t": 105,
+        "rssMB": 158.8,
+        "queue": 0,
+        "processed": 19010
+      },
+      {
+        "t": 110,
+        "rssMB": 158.8,
+        "queue": 0,
+        "processed": 20010
+      },
+      {
+        "t": 115,
+        "rssMB": 158.8,
+        "queue": 0,
+        "processed": 21010
+      },
+      {
+        "t": 120,
+        "rssMB": 158.8,
+        "queue": 0,
+        "processed": 22010
+      },
+      {
+        "t": 125,
+        "rssMB": 159.1,
+        "queue": 0,
+        "processed": 23010
+      },
+      {
+        "t": 130,
+        "rssMB": 159.2,
+        "queue": 0,
+        "processed": 24000
+      }
+    ]
+  }
+}
