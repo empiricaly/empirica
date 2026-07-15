@@ -9,12 +9,12 @@ as executable acceptance criteria, and explicit dependencies.
 
 | Package | Depends on | Contents | Spec |
 |---|---|---|---|
-| `@empirica/engine` | — (pure; no I/O, no sockets) | schema DSL, kv/journal/changes on SQLite (via seam), command loop, timers, flow executor, matchers, effects runtime, sim harness, bots | `engine.md` (next) |
-| `@empirica/server` | engine | WS/REST transport, views & fanout, auth, checkpointer, boot report, metrics | `server.md` |
-| `@empirica/client-core` | — (protocol only) | transport seam, mirror store, command queue, offline queue, clock offset | `client-core.md` |
-| `@empirica/react` | client-core | hooks, stock components, error boundary | `react.md` |
-| `@empirica/cli` | all | create/dev/simulate/build/deploy/export/migrate/archive/verify-redaction | `cli.md` |
-| `@empirica/admin` | client-core, react | algebra-driven UI, interventions, replay pane, ledger review | `admin.md` |
+| `@empirica/engine` | — (pure; no I/O, no sockets) | schema DSL, kv/journal/changes on SQLite (via seam), command loop, timers, flow executor, matchers, effects runtime, sim harness, bots | [engine.md](engine.md) |
+| `@empirica/server` | engine | WS/REST transport, views & fanout, auth, checkpointer, boot report, metrics | [server.md](server.md) |
+| `@empirica/client-core` | — (protocol only) | transport seam, mirror store, command queue, offline queue, clock offset | [client-core.md](client-core.md) |
+| `@empirica/react` | client-core | hooks, stock components, error boundary | [react.md](react.md) |
+| `@empirica/cli` | all | create/dev/simulate/build/deploy/export/migrate/archive/verify-redaction | [cli.md](cli.md) |
+| `@empirica/admin` | client-core, react | algebra-driven UI, interventions, replay pane, ledger review | [admin.md](admin.md) |
 
 Platform seam (S1/S7-proven, ~180 lines) lives in engine as `platform/` with bun and
 node implementations; everything above it is runtime-agnostic.
@@ -56,8 +56,8 @@ node implementations; everything above it is runtime-agnostic.
 
 ## Process for the autonomous build
 
-1. Write `engine.md` first (largest, zero-I/O, most parallelizable) — then the other
-   five, which mostly consolidate already-frozen material.
+1. ~~Write the six package specs~~ — **done**; all six are in this directory,
+   Ready for review.
 2. For each package: spec review → conformance tests authored → implementation
    agents fan out → suite green → human gate.
 3. Repo conventions doc (code style, error-message style, lint walls:
