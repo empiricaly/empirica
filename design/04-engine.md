@@ -57,6 +57,27 @@ retries and an idempotency key; its *result re-enters as a command*.
 
 Two authoring shapes:
 
+Effect **types are declared** in `defineExperiment` — `ctx.effect(name, …)` refers to
+a registry entry, and the handler is where the actual async implementation lives:
+
+```ts
+effects: {
+  'llm.judge': {
+    input: z.object({ prompt: z.string() }),
+    run: async (fx, input) => {                    // async allowed HERE, not in hooks
+      const res = await fx.llm.generate(input.prompt);   // provider adapter (doc 12)
+      return { text: res.text };                   // plain data back into a command
+    },
+    retries: 3, timeout: '30s',
+  },
+},
+```
+
+The handler receives `fx` — a **restricted context** (provider adapters, secrets,
+logger; **no state handles** — handles are transaction-scoped, and the effect runs
+outside any transaction). It takes validated plain data in and returns plain data
+out; the engine journals both (the determinism boundary, §Determinism).
+
 **1. Explicit continuation** (result lands mid-phase):
 
 ```ts
@@ -87,6 +108,8 @@ task('judge', {
 })
 ```
 
+A `task` node is an **anonymous inline effect declaration** — its `run:` is the same
+restricted-context handler, declared at the point of use instead of in the registry.
 The group sits at the node (clients render it like any stage), the runner executes with
 retries, the result commits, flow advances. Docs push the task-node shape for the 90%
 case; continuations are for fire-and-forget and mid-stage enrichment.

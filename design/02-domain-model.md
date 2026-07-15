@@ -55,7 +55,10 @@ groups: {
 - **Multi-membership.** A player may belong to several groups at once (their game, this
   round's pair, a sidebar chat). Visibility rules always name the kind they refer to, so
   "the game group sees different fields than the breakout room" is expressed in the
-  schema, not in conventions.
+  schema, not in conventions. Within one *kind*, a player holds at most one live group
+  by default; kinds declared `multiple: true` allow concurrent same-kind memberships
+  (network neighborhoods, parallel chat channels) at the cost of being context-only —
+  they carry state and visibility but never flow position (schema spec §1).
 - **Roles.** Membership carries an optional role label (buyer/seller, advisor/advisee,
   `standby`). Roles participate in matching constraints and visibility.
 - **Mutable membership.** Members can be added/removed mid-flow under engine control —

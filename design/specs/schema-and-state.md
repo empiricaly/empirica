@@ -12,6 +12,7 @@ const schema = defineSchema({
   groups: {
     <kind>: {
       roles?:  string[] | Record<string, number>, // list, or counts for formation
+      multiple?: boolean,   // default false — see "singular vs plural kinds" below
       fields?: { /* group fields */ },
       member?: { /* membership (player-in-group) fields */ },
     },
@@ -29,6 +30,29 @@ Boot-time validation (F2): every `nodes:` key MUST name a flow node; every flow 
 whose hooks/clients touch run state MUST have an entry; group kinds referenced by
 `match`/`submatch`/visibility MUST be declared; violations are boot errors with the
 offending path in the message.
+
+### Singular vs plural kinds (refines P3)
+
+By default a kind is **singular**: a player has ≤ 1 live group of it (invariant P3),
+which keeps `player.group(kind)`, `members(kind)` visibility, and command code
+unambiguous. A kind declared `multiple: true` is **plural** — a player may hold many
+live memberships of it simultaneously. The canonical need is network topology: a
+player of degree k sits in k+1 `neighborhood` groups at once; also concurrent chat
+channels, observer rooms.
+
+Plural kinds trade power for restrictions, enforced at boot:
+
+- **Context-only**: a plural kind can never traverse a flow segment, be formed by a
+  pool `match` node, hold barriers, or be a `submatch` kind. It carries state,
+  visibility, and lists — not flow position. (P1/P2 stay intact.)
+- **Plural accessors**: `player.groups(kind)` returns the live list;
+  `player.group(kind)` on a plural kind is a compile/boot error, not a runtime
+  surprise.
+- **Visibility is the union**: a field `visible(members(kind))` on a player is
+  received by everyone sharing ≥ 1 live group of that kind with the owner — exactly
+  network-neighbor semantics (this is what makes stretch-validation V4 expressible).
+- Formation: by hooks/commands (`ctx.groups.create(kind, members)`) or matcher
+  decisions targeting a plural kind explicitly.
 
 ## 2. `field()` and friends
 

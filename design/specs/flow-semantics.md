@@ -20,9 +20,12 @@ findings F1–F24. Normative language: MUST/SHOULD/MAY.
   `repeat` cycle indices (1-based). Runs are created on node entry and ended on exit;
   `run.iteration` is the innermost cycle index. Run state (fields, per-player fields)
   attaches to the run row (02).
-- **Live group invariant (P3, F14)**: at any moment a player has **at most one live
-  group per kind**. `player.group(kind)` MUST resolve to it or `undefined`; historical
-  memberships are queryable but never returned by `group(kind)`.
+- **Live group invariant (P3, F14, refined)**: at any moment a player has **at most
+  one live group per *singular* kind**. `player.group(kind)` MUST resolve to it or
+  `undefined`; historical memberships are queryable but never returned by
+  `group(kind)`. Kinds declared `multiple: true` (schema spec §1) are exempt but are
+  **context-only**: they can never traverse segments, hold barriers, or be
+  match/submatch targets — so P1/P2 are unaffected.
 
 ## 2. Node semantics
 
@@ -107,6 +110,15 @@ F20). On satisfaction: end run, advance.
 - **Late data**: commands carry their target `runId`; a command referencing an ended
   run MUST be rejected with `STALE_RUN` (client drops silently) — the v2
   submit-vs-stage-end race, resolved by taxonomy instead of tolerance.
+- **Why stages are not flow nodes** (design rationale, normative consequence): a
+  stage is an *intra-phase* sequencing unit, deliberately weaker than a node — it
+  cannot contain gates/matches/tasks and has no own position. What it *shares* is the
+  point: the phase's `submatch` sub-groups, dropout policy, and resolved context
+  persist **across** stages within one phase run (V2 requires pairs to survive
+  negotiate → results; sibling phase nodes would dissolve them at each boundary,
+  since sub-group lifecycle is bound to the phase run). Stages still create runs
+  (state, timers, journal) — they are v2-stage-*shaped* for authors, but they are
+  schema-declared, barrier-rich, and never independently addressable in the flow.
 
 ### 2.5 `task` (unit: player or group)
 
