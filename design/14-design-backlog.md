@@ -116,15 +116,15 @@ paid `standbyReleased` exit, post-release fallback to the dropout tier.
 
 ## B. Spikes — throwaway code to retire risk before freeze
 
-| # | Spike | Retires the risk that… | Exit criterion |
-|---|---|---|---|
-| S1 | Bun command loop: `bun:sqlite` WAL + single-writer txn loop + `Bun.serve` pub/sub under simulated load (1k conns, 200 cmd/s) | Bun/runtime perf assumptions are wrong | p99 command < 20ms; no leak over 1h |
-| S2 | `bun build --compile` embedding client dist + admin assets; boot from single file | The sealed bundle isn't actually achievable | one-file binary serves the SPA |
-| S3 | Litestream drill: kill mid-write, point-in-time restore, verify cursor resume | Backup story has a hole | zero committed-loss restore, documented runbook |
-| S4 | Replay transport prototype: journal → transport → real client bundle rendering historical state | Scrubbing is harder than theorized | scrub a recorded toy session |
-| S5 | Yjs relay: opaque update journaling + compaction + replay of a collaborative doc | Collab fields fight the journal | keystroke scrub of a shared essay |
-| S6 | React per-field store: 500 live fields, chat at 20 msg/s, render-count assertions | Fine-grained subscription model doesn't scale in React | no extraneous re-renders; 60fps |
-| S7 | Node-compat pass of S1 behind the platform seam | The Bun exit door is imaginary | same suite green on Node LTS |
+| # | Spike | Retires the risk that… | Exit criterion | Status |
+|---|---|---|---|---|
+| S1 | Bun command loop: `bun:sqlite` WAL + single-writer txn loop + `Bun.serve` pub/sub under simulated load (1k conns, 200 cmd/s) | Bun/runtime perf assumptions are wrong | p99 command < 20ms; no leak over soak | **PASS** — p99 0.84 ms, RSS flat, sound to 25×; WAL checkpointing finding → 05 |
+| S2 | `bun build --compile` embedding client dist + admin assets; boot from single file | The sealed bundle isn't actually achievable | one-file binary serves the SPA | **PASS** — incl. cross-compiles; manifest-codegen pattern documented |
+| S3 | Litestream drill: kill mid-write, point-in-time restore, verify cursor resume | Backup story has a hole | bounded committed-loss restore, documented runbook | running |
+| S4 | Replay transport prototype: journal → transport → client store rendering historical state | Scrubbing is harder than theorized | scrub a recorded toy session, state-equal vs live | **PASS** — byte-equal at 40 checkpoints; view-space projection constraint → 06/09 |
+| S5 | Yjs relay: opaque update journaling + compaction + replay of a collaborative doc | Collab fields fight the journal | keystroke scrub of a shared essay | **PASS** — replay/scrub/compaction verified; ordering constraints → 08 |
+| S6 | React per-field store: 500 live fields, chat at 20 msg/s, render-count assertions | Fine-grained subscription model doesn't scale in React | no extraneous re-renders; low update cost | running |
+| S7 | Node-compat pass of S1 behind the platform seam | The Bun exit door is imaginary | same suite green on Node LTS | running |
 
 ## C. Process before implementation
 

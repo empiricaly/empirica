@@ -84,6 +84,25 @@ a redacted session reproduces structure but not content; no hash-chaining of the
 in v1 (it would break redaction; revisit only with per-participant crypto-shredding,
 see [14-design-backlog.md](14-design-backlog.md)).
 
+## Runtime configuration (mandatory — from spike S1)
+
+S1 measured that SQLite's default inline WAL autocheckpoint is the entire latency
+tail of the command loop (stalls up to 780 ms on the writer's COMMIT; run-to-run p99
+varied 40×). The engine MUST ship:
+
+- `journal_mode=WAL`, `synchronous=NORMAL` (FULL craters throughput ~9×),
+  `wal_autocheckpoint=0`, `busy_timeout` on the writer;
+- a **checkpointer worker thread**: `wal_checkpoint(PASSIVE)` ~1 s cadence +
+  `wal_checkpoint(RESTART)` ~10 s cadence (TRUNCATE stalls the writer 2–3× longer
+  than RESTART; PASSIVE alone leaks the WAL unboundedly under sustained writes —
+  1.5 GB in 2 min at 1000 cmd/s);
+- prepared-statement reuse (~23% throughput) and plain deferred `BEGIN`
+  (`BEGIN IMMEDIATE` measured ~25% slower single-writer in bun:sqlite).
+
+With this config: p99 command→ack 0.84 ms at 1,000 connections / 200 cmd/s over a
+10-minute soak, RSS flat, functionally sound to 5,000 cmd/s
+([spikes/s1-bun-command-loop](spikes/s1-bun-command-loop/README.md)).
+
 ## Sizing sanity
 
 A 4-player, 10-round, chat-heavy session ≈ low thousands of events, well under 5 MB.
