@@ -53,19 +53,26 @@ limits as rejects (never disconnects), slow-consumer self-healing, EWMA clock sy
 and golden-transcript conformance. Multi-tab default and ack-seq exposure tracked as
 sub-questions (→ A4/A6, client-core freeze).
 
-### A4. Identity & auth details (blocking: 07, 12)
-Token format/rotation; magic-link lifecycle; device switching mid-study (same player,
-new browser); admin auth (session + TOTP? PAT scopes); anonymous-preview mode for
-development.
+### A4. Identity & auth details (blocking: 07, 12) — **DRAFTED**
+Resolved in [specs/identity-and-auth.md](specs/identity-and-auth.md): stateful opaque
+hashed tokens (no JWT), device slots with REPLACED semantics, single-use magic links
+for wave re-entry/device switching, consent-version bumps forcing engine-inserted
+re-consent, admin argon2id+TOTP with CSRF-hardened cookies, scoped PATs, and
+revocation tied into `ctx.redact`. Self-service recovery and admin roles tracked as
+sub-questions.
 
 ### A5. Payment & money bookkeeping (blocking: 12)
 Where amounts live (journaled fields? dedicated ledger table?); currency handling;
 partial payment on abort paths; the admin's pre-submission review surface; audit trail
 requirements.
 
-### A6. Failure UX for participants (blocking: 08, 10)
-What a participant sees on: group aborted, server restarting, kicked, screened,
-cursor-invalid resume. Stock components + declared exit paths; nothing improvised.
+### A6. Failure UX for participants (blocking: 08, 10) — **DRAFTED**
+Resolved in [specs/failure-ux.md](specs/failure-ux.md): the full transient-state
+component table (reconnect, pause, barriers, grace, task-pending, REPLACED), exit-path
+screens with structural code+payment lines (anti-dark-pattern), peer-transparency
+defaults (counts not names), client error-boundary + crash-loop handling, and the
+shared state taxonomy feeding admin session-health. Offline input queueing tracked as
+a sub-question (→ 08).
 
 ### A7. Withdrawal/redaction mechanics (blocking: 05)
 Tombstone rewrite vs per-participant crypto-shredding; what "structure preserved"
