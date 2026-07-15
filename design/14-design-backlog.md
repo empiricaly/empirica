@@ -76,14 +76,20 @@ defaults (counts not names), client error-boundary + crash-loop handling, and th
 shared state taxonomy feeding admin session-health. Offline input queueing tracked as
 a sub-question (→ 08).
 
-### A7. Withdrawal/redaction mechanics (blocking: 05)
-Tombstone rewrite vs per-participant crypto-shredding; what "structure preserved"
-means exactly for lists and collab updates; legal review checklist for the docs.
+### A7. Withdrawal/redaction mechanics (blocking: 05) — **DRAFTED** ⚖
+Resolved in [specs/redaction.md](specs/redaction.md): destroy-content/preserve-
+structure table across all stores, identity deletion → pseudonymization, collab docs
+as collective works (strict destroy mode optional), backup-generation rotation with
+retention-window erasure, `verify-redaction` audit command, simulation drills.
+**Blocked on external legal review** for the pseudonymization stance, collective-work
+default, and backup retention language — the one A-item that cannot freeze in-house.
 
-### A8. Observability (blocking: 15)
-Structured log schema, session-health signal (stuck groups, dead effects, slow hooks),
-optional Sentry adapter, metrics endpoint. What the operator sees *before* users
-complain.
+### A8. Observability (blocking: 15) — **DRAFTED**
+Resolved in [specs/observability.md](specs/observability.md): structured JSONL logs
+with an *enforced* keys-not-values content rule, Prometheus metrics set, eight derived
+session-health conditions (journaled, webhookable — the researcher gets paged, not a
+dashboard), journaled boot report, optional content-free Sentry adapter. OTel traces
+deferred with mappable fields.
 
 ### A9. Naming freeze (blocking: everything user-facing)
 One pass over every public name (player/group/run/node/stage/allocation/intake,
