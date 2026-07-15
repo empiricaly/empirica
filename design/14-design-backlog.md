@@ -45,10 +45,13 @@ navigation API (handles, `ctx.at()`, `run.sibling()` — resolves F17), and the
 additive/destructive schema-evolution matrix (widening visibility = destructive).
 Remaining sub-questions tracked in the spec.
 
-### A3. Wire protocol spec (blocking: 06, 07, 08)
-Message framing, ack/error taxonomy (machine-readable codes), snapshot format,
-cursor invalidation rules, view-membership backfill format, rate-limit signaling,
-protocol version negotiation.
+### A3. Wire protocol spec (blocking: 06, 07, 08) — **DRAFTED**
+Resolved in [specs/wire-protocol.md](specs/wire-protocol.md): envelope + message set,
+compact changes encoding with atomic view backfill/eviction, cursor & resume rules
+(snapshot fallback on membership delta), per-player command idempotency LRU, rate
+limits as rejects (never disconnects), slow-consumer self-healing, EWMA clock sync,
+and golden-transcript conformance. Multi-tab default and ack-seq exposure tracked as
+sub-questions (→ A4/A6, client-core freeze).
 
 ### A4. Identity & auth details (blocking: 07, 12)
 Token format/rotation; magic-link lifecycle; device switching mid-study (same player,
