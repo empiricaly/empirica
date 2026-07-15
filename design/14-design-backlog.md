@@ -28,11 +28,13 @@ the validation docs) resolve or reshape backlog items as follows:
 
 ## A. Design questions still open
 
-### A1. Precise flow semantics (blocking: 03, 04)
-Formal spec of each node type: entry/exit conditions, rejoin semantics per node,
-group lifecycle state machine, pause semantics, what happens to in-flight runs on
-`abort`, single-position invariant vs multi-membership, flow versioning for players
-in-flight when a bundle updates mid-study.
+### A1. Precise flow semantics (blocking: 03, 04) — **DRAFTED**
+Resolved in [specs/flow-semantics.md](specs/flow-semantics.md): positions/runs/units,
+P1–P3 invariants, per-node semantics (incl. per-unit gates, step validation contract,
+two-tier dropout, submatch, barriers, task nodes), group segments, exit paths, pause,
+flow versioning, rejection taxonomy. Remaining sub-questions tracked at the bottom of
+the spec (field-ref syntax → A2; nested submatch deferred; pause-vs-deadline
+interaction → A5 review).
 
 ### A2. Schema DSL final form (blocking: 02, 06, 08)
 Exact `field()` API; entity references between fields; list/collab declaration;

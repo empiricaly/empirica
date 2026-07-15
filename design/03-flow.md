@@ -1,6 +1,9 @@
 # 03 — Flow: the algebra, matching, allocations
 
-Status: Draft
+Status: Draft — **normative operational semantics now in
+[specs/flow-semantics.md](specs/flow-semantics.md)** (per-unit gates, two-tier dropout,
+`submatch`, sub-group barriers, group segments, exit paths, flow versioning). Where this
+doc and the spec differ, the spec wins.
 
 The flow is a **structured program**, not an arbitrary state chart: a closed set of five
 node types composed with `seq`, `repeat`, and `branch`. Closed deliberately — because
